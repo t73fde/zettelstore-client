@@ -1,0 +1,4 @@
+<title>Home</title>
+
+This repository contains client software for various programming languages to
+access [https://zettelstore.de|Zettelstore] via its API.
