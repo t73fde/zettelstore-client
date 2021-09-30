@@ -60,6 +60,7 @@ const (
 
 // Predefined Metadata keys
 const (
+	KeyLang  = "lang"
 	KeyRole  = "role"
 	KeyTitle = "title"
 )
