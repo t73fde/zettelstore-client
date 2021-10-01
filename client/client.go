@@ -210,21 +210,25 @@ func encodeZettelData(buf *bytes.Buffer, data *api.ZettelDataJSON) error {
 }
 
 // ListZettel returns a list of all Zettel.
-func (c *Client) ListZettel(ctx context.Context, query url.Values) (string, error) {
+func (c *Client) ListZettel(ctx context.Context, query url.Values) ([]string, error) {
 	ub := c.jsonZettelURLBuilder('z', query)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New(resp.Status)
+		return nil, errors.New(resp.Status)
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(data), nil
+	lines := strings.Split(string(data), "\n")
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+	return lines, nil
 }
 
 // ListZettelJSON returns a list of all Zettel.
@@ -315,6 +319,17 @@ func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID
 		return "", err
 	}
 	return string(content), nil
+}
+
+// GetMeta returns the metadata of a zettel.
+func (c *Client) GetMeta(ctx context.Context, zid api.ZettelID) (api.ZettelMeta, error) {
+	// TODO: Change to future API, currently we're using just GetZettelJSON
+
+	jz, err := c.GetZettelJSON(ctx, zid)
+	if err != nil {
+		return nil, err
+	}
+	return jz.Meta, nil
 }
 
 // GetZettelOrder returns metadata of the given zettel and, more important,
