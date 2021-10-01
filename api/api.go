@@ -110,6 +110,8 @@ type RoleListJSON struct {
 type EncodeInlineReqJSON struct {
 	FirstZmk string   `json:"first-zmk"`
 	OtherZmk []string `json:"other-zmk"`
+	Lang     string   `json:"lang"`
+	NoLinks  bool     `json:"no-links"`
 }
 
 // EncodedInlineJSON contains rendered values.
