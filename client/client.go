@@ -549,3 +549,35 @@ func (c *Client) ListRoles(ctx context.Context) ([]string, error) {
 	}
 	return rl.Roles, nil
 }
+
+// EncodeInlines renders the given Zettelmarkup inline texts into HTML / Text.
+func (c *Client) EncodeInlines(
+	ctx context.Context, firstInline string, otherInlines []string,
+) (*api.EncodedInlineRespJSON, error) {
+	reqJSON := api.EncodeInlineReqJSON{
+		FirstZmk: firstInline,
+		OtherZmk: otherInlines,
+	}
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(&reqJSON); err != nil {
+		return nil, err
+	}
+	ub := c.jsonZettelURLBuilder('v', nil)
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, &buf, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
+	}
+	dec := json.NewDecoder(resp.Body)
+	var respJSON api.EncodedInlineRespJSON
+	err = dec.Decode(&respJSON)
+	if err != nil {
+		return nil, err
+	}
+	return &respJSON, nil
+}
