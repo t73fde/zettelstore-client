@@ -58,20 +58,41 @@ const (
 	ZidDefaultHome = ZettelID("00010000000000")
 )
 
-// Predefined Metadata keys
+// Predefined general Metadata keys
 const (
-	KeyID                = "id"
-	KeyTitle             = "title"
-	KeyRole              = "role"
-	KeyTags              = "tags"
-	KeySyntax            = "syntax"
-	KeyAllTags           = "all-" + KeyTags
-	KeyBack              = "back"
-	KeyBackward          = "backward"
-	KeyBoxNumber         = "box-number"
-	KeyCopyright         = "copyright"
-	KeyCredential        = "credential"
-	KeyDead              = "dead"
+	KeyID          = "id"
+	KeyTitle       = "title"
+	KeyRole        = "role"
+	KeyTags        = "tags"
+	KeySyntax      = "syntax"
+	KeyAllTags     = "all-" + KeyTags
+	KeyBack        = "back"
+	KeyBackward    = "backward"
+	KeyBoxNumber   = "box-number"
+	KeyContentTags = "content-" + KeyTags
+	KeyCopyright   = "copyright"
+	KeyCredential  = "credential"
+	KeyDead        = "dead"
+	KeyDuplicates  = "duplicates"
+	KeyFolge       = "folge"
+	KeyForward     = "forward"
+	KeyLang        = "lang"
+	KeyLicense     = "license"
+	KeyModified    = "modified"
+	KeyNoIndex     = "no-index"
+	KeyPrecursor   = "precursor"
+	KeyPublished   = "published"
+	KeyReadOnly    = "read-only"
+	KeyURL         = "url"
+	KeyUserID      = "user-id"
+	KeyUserRole    = "user-role"
+	KeyVisibility  = "visibility"
+)
+
+// Predefined Metadata keys for runtime configuration
+// See: https://zettelstore.de/manual/h/00001004020000
+const (
+	KeyZettelFileSyntax  = "zettel-file-syntax"
 	KeyDefaultCopyright  = "default-copyright"
 	KeyDefaultLang       = "default-lang"
 	KeyDefaultLicense    = "default-license"
@@ -79,28 +100,13 @@ const (
 	KeyDefaultSyntax     = "default-syntax"
 	KeyDefaultTitle      = "default-title"
 	KeyDefaultVisibility = "default-visibility"
-	KeyDuplicates        = "duplicates"
 	KeyExpertMode        = "expert-mode"
-	KeyFolge             = "folge"
 	KeyFooterHTML        = "footer-html"
-	KeyForward           = "forward"
 	KeyHomeZettel        = "home-zettel"
-	KeyLang              = "lang"
-	KeyLicense           = "license"
 	KeyMarkerExternal    = "marker-external"
 	KeyMaxTransclusions  = "max-transclusions"
-	KeyModified          = "modified"
-	KeyNoIndex           = "no-index"
-	KeyPrecursor         = "precursor"
-	KeyPublished         = "published"
-	KeyReadOnly          = "read-only"
 	KeySiteName          = "site-name"
-	KeyURL               = "url"
-	KeyUserID            = "user-id"
-	KeyUserRole          = "user-role"
-	KeyVisibility        = "visibility"
 	KeyYAMLHeader        = "yaml-header"
-	KeyZettelFileSyntax  = "zettel-file-syntax"
 )
 
 // Predefined Metadata values
@@ -126,7 +132,7 @@ const (
 	ValueVisibilityPublic  = "public"
 )
 
-// Additional HTTP constants used.
+// Additional HTTP constants.
 const (
 	MethodMove = "MOVE" // HTTP method for renaming a zettel
 
@@ -138,8 +144,8 @@ const (
 
 // Values for HTTP query parameter.
 const (
-	QueryKeyDepth    = "depth"
-	QueryKeyDir      = "dir"
+	QueryKeyDepth    = "_depth"
+	QueryKeyDir      = "_dir"
 	QueryKeyEncoding = "_enc"
 	QueryKeyLimit    = "_limit"
 	QueryKeyNegate   = "_negate"
