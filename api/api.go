@@ -98,7 +98,8 @@ type ZettelJSON struct {
 
 // ZettelListJSON contains data for a zettel list.
 type ZettelListJSON struct {
-	List []ZidMetaJSON `json:"list"`
+	Query string        `json:"query"`
+	List  []ZidMetaJSON `json:"list"`
 }
 
 // TagListJSON specifies the list/map of tags

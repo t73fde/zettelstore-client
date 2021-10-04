@@ -58,6 +58,17 @@ func NewClient(baseURL string) *Client {
 	return &c
 }
 
+// ErrNotFound is returned, if something was not found
+var ErrNotFound = errors.New("not found")
+
+func statusToError(resp *http.Response) error {
+	if resp.StatusCode == http.StatusNotFound {
+		return ErrNotFound
+	}
+	return errors.New(resp.Status)
+
+}
+
 func (c *Client) newURLBuilder(key byte) *api.URLBuilder {
 	return api.NewURLBuilder(c.baseURL, key)
 }
@@ -111,7 +122,7 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return errors.New(resp.Status)
+		return statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var tinfo api.AuthJSON
@@ -164,7 +175,7 @@ func (c *Client) CreateZettel(ctx context.Context, data string) (api.ZettelID, e
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
-		return api.InvalidZID, errors.New(resp.Status)
+		return api.InvalidZID, statusToError(resp)
 	}
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -189,7 +200,7 @@ func (c *Client) CreateZettelJSON(ctx context.Context, data *api.ZettelDataJSON)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
-		return api.InvalidZID, errors.New(resp.Status)
+		return api.InvalidZID, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var newZid api.ZidJSON
@@ -218,7 +229,7 @@ func (c *Client) ListZettel(ctx context.Context, query url.Values) ([]string, er
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return nil, statusToError(resp)
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -231,24 +242,24 @@ func (c *Client) ListZettel(ctx context.Context, query url.Values) ([]string, er
 	return lines, nil
 }
 
-// ListZettelJSON returns a list of all Zettel.
-func (c *Client) ListZettelJSON(ctx context.Context, query url.Values) ([]api.ZidMetaJSON, error) {
+// ListZettelJSON returns a list of zettel.
+func (c *Client) ListZettelJSON(ctx context.Context, query url.Values) (string, []api.ZidMetaJSON, error) {
 	ub := c.jsonZettelURLBuilder('j', query)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return "", nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var zl api.ZettelListJSON
 	err = dec.Decode(&zl)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	return zl.List, nil
+	return zl.Query, zl.List, nil
 }
 
 // GetZettel returns a zettel as a string.
@@ -263,7 +274,7 @@ func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) (
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New(resp.Status)
+		return "", statusToError(resp)
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -281,7 +292,7 @@ func (c *Client) GetZettelJSON(ctx context.Context, zid api.ZettelID) (*api.Zett
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var out api.ZettelDataJSON
@@ -312,7 +323,7 @@ func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New(resp.Status)
+		return "", statusToError(resp)
 	}
 	content, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -330,7 +341,7 @@ func (c *Client) GetMeta(ctx context.Context, zid api.ZettelID) (api.ZettelMeta,
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var out api.MetaJSON
@@ -351,7 +362,7 @@ func (c *Client) GetZettelOrder(ctx context.Context, zid api.ZettelID) (*api.Zid
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var out api.ZidMetaRelatedList
@@ -398,7 +409,7 @@ func (c *Client) GetZettelContext(
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var out api.ZidMetaRelatedList
@@ -418,7 +429,7 @@ func (c *Client) GetZettelLinks(ctx context.Context, zid api.ZettelID) (*api.Zet
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var out api.ZettelLinksJSON
@@ -438,7 +449,7 @@ func (c *Client) UpdateZettel(ctx context.Context, zid api.ZettelID, data string
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
-		return errors.New(resp.Status)
+		return statusToError(resp)
 	}
 	return nil
 }
@@ -456,7 +467,7 @@ func (c *Client) UpdateZettelJSON(ctx context.Context, zid api.ZettelID, data *a
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
-		return errors.New(resp.Status)
+		return statusToError(resp)
 	}
 	return nil
 }
@@ -473,7 +484,7 @@ func (c *Client) RenameZettel(ctx context.Context, oldZid, newZid api.ZettelID) 
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
-		return errors.New(resp.Status)
+		return statusToError(resp)
 	}
 	return nil
 }
@@ -487,7 +498,7 @@ func (c *Client) DeleteZettel(ctx context.Context, zid api.ZettelID) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
-		return errors.New(resp.Status)
+		return statusToError(resp)
 	}
 	return nil
 }
@@ -521,7 +532,7 @@ func (c *Client) ListTags(ctx context.Context) (map[string][]api.ZettelID, error
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var tl api.TagListJSON
@@ -548,7 +559,7 @@ func (c *Client) ListRoles(ctx context.Context) ([]string, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var rl api.RoleListJSON
@@ -584,7 +595,7 @@ func (c *Client) EncodeInlines(
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var respJSON api.EncodedInlineRespJSON
