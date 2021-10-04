@@ -323,13 +323,22 @@ func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID
 
 // GetMeta returns the metadata of a zettel.
 func (c *Client) GetMeta(ctx context.Context, zid api.ZettelID) (api.ZettelMeta, error) {
-	// TODO: Change to future API, currently we're using just GetZettelJSON
-
-	jz, err := c.GetZettelJSON(ctx, zid)
+	ub := c.jsonZettelURLBuilder('m', nil).SetZid(zid)
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	return jz.Meta, nil
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
+	}
+	dec := json.NewDecoder(resp.Body)
+	var out api.MetaJSON
+	err = dec.Decode(&out)
+	if err != nil {
+		return nil, err
+	}
+	return out.Meta, nil
 }
 
 // GetZettelOrder returns metadata of the given zettel and, more important,

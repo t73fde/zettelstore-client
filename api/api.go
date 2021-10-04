@@ -46,6 +46,11 @@ type ZidJSON struct {
 	ID ZettelID `json:"id"`
 }
 
+// MetaJSON contains the metadata of a zettel.
+type MetaJSON struct {
+	Meta ZettelMeta `json:"meta"`
+}
+
 // ZidMetaJSON contains the identifier and the metadata of a zettel.
 type ZidMetaJSON struct {
 	ID   ZettelID   `json:"id"`
