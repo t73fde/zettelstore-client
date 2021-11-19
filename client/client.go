@@ -168,7 +168,7 @@ func (c *Client) RefreshToken(ctx context.Context) error {
 
 // CreateZettel creates a new zettel and returns its URL.
 func (c *Client) CreateZettel(ctx context.Context, data []byte) (api.ZettelID, error) {
-	ub := c.jsonZettelURLBuilder('z', nil)
+	ub := c.newURLBuilder('z')
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, bytes.NewBuffer(data), nil)
 	if err != nil {
 		return api.InvalidZID, err
@@ -193,7 +193,7 @@ func (c *Client) CreateZettelJSON(ctx context.Context, data *api.ZettelDataJSON)
 	if err := encodeZettelData(&buf, data); err != nil {
 		return api.InvalidZID, err
 	}
-	ub := c.jsonZettelURLBuilder('j', nil)
+	ub := c.newURLBuilder('j')
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, &buf, nil)
 	if err != nil {
 		return api.InvalidZID, err
@@ -224,7 +224,7 @@ var bsLF = []byte{'\n'}
 
 // ListZettel returns a list of all Zettel.
 func (c *Client) ListZettel(ctx context.Context, query url.Values) ([][]byte, error) {
-	ub := c.jsonZettelURLBuilder('z', query)
+	ub := c.newQueryURLBuilder('z', query)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return nil, err
@@ -246,7 +246,7 @@ func (c *Client) ListZettel(ctx context.Context, query url.Values) ([][]byte, er
 
 // ListZettelJSON returns a list of zettel.
 func (c *Client) ListZettelJSON(ctx context.Context, query url.Values) (string, []api.ZidMetaJSON, error) {
-	ub := c.jsonZettelURLBuilder('j', query)
+	ub := c.newQueryURLBuilder('j', query)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return "", nil, err
@@ -266,7 +266,7 @@ func (c *Client) ListZettelJSON(ctx context.Context, query url.Values) (string, 
 
 // GetZettel returns a zettel as a string.
 func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) ([]byte, error) {
-	ub := c.jsonZettelURLBuilder('z', nil).SetZid(zid)
+	ub := c.newURLBuilder('z').SetZid(zid)
 	if part != "" && part != api.PartContent {
 		ub.AppendQuery(api.QueryKeyPart, part)
 	}
@@ -283,7 +283,7 @@ func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) (
 
 // GetZettelJSON returns a zettel as a JSON struct.
 func (c *Client) GetZettelJSON(ctx context.Context, zid api.ZettelID) (*api.ZettelDataJSON, error) {
-	ub := c.jsonZettelURLBuilder('j', nil).SetZid(zid)
+	ub := c.newURLBuilder('j').SetZid(zid)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return nil, err
@@ -312,7 +312,7 @@ func (c *Client) GetEvaluatedZettel(ctx context.Context, zid api.ZettelID, enc a
 }
 
 func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID, enc api.EncodingEnum) ([]byte, error) {
-	ub := c.jsonZettelURLBuilder(key, nil).SetZid(zid)
+	ub := c.newURLBuilder(key).SetZid(zid)
 	ub.AppendQuery(api.QueryKeyEncoding, enc.String())
 	ub.AppendQuery(api.QueryKeyPart, api.PartContent)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
@@ -328,7 +328,7 @@ func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID
 
 // GetMeta returns the metadata of a zettel.
 func (c *Client) GetMeta(ctx context.Context, zid api.ZettelID) (api.ZettelMeta, error) {
-	ub := c.jsonZettelURLBuilder('m', nil).SetZid(zid)
+	ub := c.newURLBuilder('m').SetZid(zid)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return nil, err
@@ -434,9 +434,30 @@ func (c *Client) GetZettelLinks(ctx context.Context, zid api.ZettelID) (*api.Zet
 	return &out, nil
 }
 
+// GetUnlinkedReferences returns connections to other zettel, embedded material, externals URLs.
+func (c *Client) GetUnlinkedReferences(
+	ctx context.Context, zid api.ZettelID, query url.Values) (*api.ZidMetaRelatedList, error) {
+	ub := c.newQueryURLBuilder('u', query).SetZid(zid)
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, statusToError(resp)
+	}
+	dec := json.NewDecoder(resp.Body)
+	var out api.ZidMetaRelatedList
+	err = dec.Decode(&out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // UpdateZettel updates an existing zettel.
 func (c *Client) UpdateZettel(ctx context.Context, zid api.ZettelID, data []byte) error {
-	ub := c.jsonZettelURLBuilder('z', nil).SetZid(zid)
+	ub := c.newURLBuilder('z').SetZid(zid)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPut, ub, bytes.NewBuffer(data), nil)
 	if err != nil {
 		return err
@@ -454,7 +475,7 @@ func (c *Client) UpdateZettelJSON(ctx context.Context, zid api.ZettelID, data *a
 	if err := encodeZettelData(&buf, data); err != nil {
 		return err
 	}
-	ub := c.jsonZettelURLBuilder('j', nil).SetZid(zid)
+	ub := c.newURLBuilder('j').SetZid(zid)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPut, ub, &buf, nil)
 	if err != nil {
 		return err
@@ -468,9 +489,9 @@ func (c *Client) UpdateZettelJSON(ctx context.Context, zid api.ZettelID, data *a
 
 // RenameZettel renames a zettel.
 func (c *Client) RenameZettel(ctx context.Context, oldZid, newZid api.ZettelID) error {
-	ub := c.jsonZettelURLBuilder('z', nil).SetZid(oldZid)
+	ub := c.newURLBuilder('z').SetZid(oldZid)
 	h := http.Header{
-		api.HeaderDestination: {c.jsonZettelURLBuilder('z', nil).SetZid(newZid).String()},
+		api.HeaderDestination: {c.newURLBuilder('z').SetZid(newZid).String()},
 	}
 	resp, err := c.buildAndExecuteRequest(ctx, api.MethodMove, ub, nil, h)
 	if err != nil {
@@ -485,7 +506,7 @@ func (c *Client) RenameZettel(ctx context.Context, oldZid, newZid api.ZettelID) 
 
 // DeleteZettel deletes a zettel with the given identifier.
 func (c *Client) DeleteZettel(ctx context.Context, zid api.ZettelID) error {
-	ub := c.jsonZettelURLBuilder('z', nil).SetZid(zid)
+	ub := c.newURLBuilder('z').SetZid(zid)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodDelete, ub, nil, nil)
 	if err != nil {
 		return err
@@ -497,7 +518,7 @@ func (c *Client) DeleteZettel(ctx context.Context, zid api.ZettelID) error {
 	return nil
 }
 
-func (c *Client) jsonZettelURLBuilder(key byte, query url.Values) *api.URLBuilder {
+func (c *Client) newQueryURLBuilder(key byte, query url.Values) *api.URLBuilder {
 	ub := c.newURLBuilder(key)
 	for key, values := range query {
 		if key == api.QueryKeyEncoding {
@@ -582,7 +603,7 @@ func (c *Client) EncodeInlines(
 	if err := enc.Encode(&reqJSON); err != nil {
 		return nil, err
 	}
-	ub := c.jsonZettelURLBuilder('v', nil)
+	ub := c.newURLBuilder('v')
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, &buf, nil)
 	if err != nil {
 		return nil, err

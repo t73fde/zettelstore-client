@@ -152,6 +152,7 @@ const (
 	QueryKeyOffset   = "_offset"
 	QueryKeyOrder    = "_order"
 	QueryKeyPart     = "_part"
+	QueryKeyPhrase   = "_phrase"
 	QueryKeySearch   = "_s"
 	QueryKeySort     = "_sort"
 )
