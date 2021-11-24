@@ -8,7 +8,6 @@
 // and obligations under this license.
 //-----------------------------------------------------------------------------
 
-// Package api contains common definition used for client and server.
 package api
 
 import "fmt"
@@ -24,6 +23,7 @@ const (
 	ZidDependencies         = ZettelID("00000000000006")
 	ZidBoxManager           = ZettelID("00000000000020")
 	ZidMetadataKey          = ZettelID("00000000000090")
+	ZidParser               = ZettelID("00000000000092")
 	ZidStartupConfiguration = ZettelID("00000000000096")
 	ZidConfiguration        = ZettelID("00000000000100")
 

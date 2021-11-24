@@ -8,7 +8,6 @@
 // and obligations under this license.
 //-----------------------------------------------------------------------------
 
-// Package api contains common definition used for client and server.
 package api
 
 import (
