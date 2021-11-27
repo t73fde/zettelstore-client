@@ -112,7 +112,6 @@ const (
 // Predefined Metadata values
 const (
 	ValueRoleConfiguration = "configuration"
-	ValueRoleUser          = "user"
 	ValueRoleZettel        = "zettel"
 	ValueSyntaxNone        = "none"
 	ValueSyntaxGif         = "gif"
