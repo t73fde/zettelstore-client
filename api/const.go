@@ -21,6 +21,7 @@ const (
 	ZidLicense              = ZettelID("00000000000004")
 	ZidAuthors              = ZettelID("00000000000005")
 	ZidDependencies         = ZettelID("00000000000006")
+	ZidLog                  = ZettelID("00000000000007")
 	ZidBoxManager           = ZettelID("00000000000020")
 	ZidMetadataKey          = ZettelID("00000000000090")
 	ZidParser               = ZettelID("00000000000092")
@@ -89,26 +90,6 @@ const (
 	KeyVisibility  = "visibility"
 )
 
-// Predefined Metadata keys for runtime configuration
-// See: https://zettelstore.de/manual/h/00001004020000
-const (
-	KeyZettelFileSyntax  = "zettel-file-syntax"
-	KeyDefaultCopyright  = "default-copyright"
-	KeyDefaultLang       = "default-lang"
-	KeyDefaultLicense    = "default-license"
-	KeyDefaultRole       = "default-role"
-	KeyDefaultSyntax     = "default-syntax"
-	KeyDefaultTitle      = "default-title"
-	KeyDefaultVisibility = "default-visibility"
-	KeyExpertMode        = "expert-mode"
-	KeyFooterHTML        = "footer-html"
-	KeyHomeZettel        = "home-zettel"
-	KeyMarkerExternal    = "marker-external"
-	KeyMaxTransclusions  = "max-transclusions"
-	KeySiteName          = "site-name"
-	KeyYAMLHeader        = "yaml-header"
-)
-
 // Predefined Metadata values
 const (
 	ValueRoleConfiguration = "configuration"
@@ -131,6 +112,26 @@ const (
 	ValueVisibilityPublic  = "public"
 )
 
+// Predefined Metadata keys for runtime configuration
+// See: https://zettelstore.de/manual/h/00001004020000
+const (
+	KeyZettelFileSyntax  = "zettel-file-syntax"
+	KeyDefaultCopyright  = "default-copyright"
+	KeyDefaultLang       = "default-lang"
+	KeyDefaultLicense    = "default-license"
+	KeyDefaultRole       = "default-role"
+	KeyDefaultSyntax     = "default-syntax"
+	KeyDefaultTitle      = "default-title"
+	KeyDefaultVisibility = "default-visibility"
+	KeyExpertMode        = "expert-mode"
+	KeyFooterHTML        = "footer-html"
+	KeyHomeZettel        = "home-zettel"
+	KeyMarkerExternal    = "marker-external"
+	KeyMaxTransclusions  = "max-transclusions"
+	KeySiteName          = "site-name"
+	KeyYAMLHeader        = "yaml-header"
+)
+
 // Additional HTTP constants.
 const (
 	MethodMove = "MOVE" // HTTP method for renaming a zettel
@@ -143,6 +144,7 @@ const (
 
 // Values for HTTP query parameter.
 const (
+	QueryKeyCommand  = "_cmd"
 	QueryKeyDepth    = "_depth"
 	QueryKeyDir      = "_dir"
 	QueryKeyEncoding = "_enc"
@@ -220,4 +222,12 @@ const (
 	PartMeta    = "meta"
 	PartContent = "content"
 	PartZettel  = "zettel"
+)
+
+// Command to be executed atthe Zettelstore
+type Command string
+
+// Supported command values
+const (
+	CommandRefresh = Command("refresh")
 )

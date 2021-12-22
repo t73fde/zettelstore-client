@@ -518,6 +518,20 @@ func (c *Client) DeleteZettel(ctx context.Context, zid api.ZettelID) error {
 	return nil
 }
 
+// ExecuteCommand will execute a given command at the Zettelstore.
+func (c *Client) ExecuteCommand(ctx context.Context, command api.Command) error {
+	ub := c.newURLBuilder('x').AppendQuery(api.QueryKeyCommand, string(command))
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		return statusToError(resp)
+	}
+	return nil
+}
+
 func (c *Client) newQueryURLBuilder(key byte, query url.Values) *api.URLBuilder {
 	ub := c.newURLBuilder(key)
 	for key, values := range query {
