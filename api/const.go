@@ -229,5 +229,6 @@ type Command string
 
 // Supported command values
 const (
-	CommandRefresh = Command("refresh")
+	CommandAuthenticated = Command("authenticated")
+	CommandRefresh       = Command("refresh")
 )
