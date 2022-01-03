@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2021 Detlef Stern
+// Copyright (c) 2021-2022 Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -84,6 +84,7 @@ const (
 	KeyPrecursor   = "precursor"
 	KeyPublished   = "published"
 	KeyReadOnly    = "read-only"
+	KeySummary     = "summary"
 	KeyURL         = "url"
 	KeyUserID      = "user-id"
 	KeyUserRole    = "user-role"
