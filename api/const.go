@@ -61,34 +61,34 @@ const (
 
 // Predefined general Metadata keys
 const (
-	KeyID          = "id"
-	KeyTitle       = "title"
-	KeyRole        = "role"
-	KeyTags        = "tags"
-	KeySyntax      = "syntax"
-	KeyAllTags     = "all-" + KeyTags
-	KeyBack        = "back"
-	KeyBackward    = "backward"
-	KeyBoxNumber   = "box-number"
-	KeyContentTags = "content-" + KeyTags
-	KeyCopyright   = "copyright"
-	KeyCredential  = "credential"
-	KeyDead        = "dead"
-	KeyDuplicates  = "duplicates"
-	KeyFolge       = "folge"
-	KeyForward     = "forward"
-	KeyLang        = "lang"
-	KeyLicense     = "license"
-	KeyModified    = "modified"
-	KeyNoIndex     = "no-index"
-	KeyPrecursor   = "precursor"
-	KeyPublished   = "published"
-	KeyReadOnly    = "read-only"
-	KeySummary     = "summary"
-	KeyURL         = "url"
-	KeyUserID      = "user-id"
-	KeyUserRole    = "user-role"
-	KeyVisibility  = "visibility"
+	KeyID           = "id"
+	KeyTitle        = "title"
+	KeyRole         = "role"
+	KeyTags         = "tags"
+	KeySyntax       = "syntax"
+	KeyAllTags      = "all-" + KeyTags
+	KeyBack         = "back"
+	KeyBackward     = "backward"
+	KeyBoxNumber    = "box-number"
+	KeyContentTags  = "content-" + KeyTags
+	KeyCopyright    = "copyright"
+	KeyCredential   = "credential"
+	KeyDead         = "dead"
+	KeyFolge        = "folge"
+	KeyForward      = "forward"
+	KeyLang         = "lang"
+	KeyLicense      = "license"
+	KeyModified     = "modified"
+	KeyNoIndex      = "no-index"
+	KeyPrecursor    = "precursor"
+	KeyPublished    = "published"
+	KeyReadOnly     = "read-only"
+	KeySummary      = "summary"
+	KeyURL          = "url"
+	KeyUselessFiles = "useless-files"
+	KeyUserID       = "user-id"
+	KeyUserRole     = "user-role"
+	KeyVisibility   = "visibility"
 )
 
 // Predefined Metadata values
@@ -111,26 +111,6 @@ const (
 	ValueVisibilityOwner   = "owner"
 	ValueVisibilityLogin   = "login"
 	ValueVisibilityPublic  = "public"
-)
-
-// Predefined Metadata keys for runtime configuration
-// See: https://zettelstore.de/manual/h/00001004020000
-const (
-	KeyZettelFileSyntax  = "zettel-file-syntax"
-	KeyDefaultCopyright  = "default-copyright"
-	KeyDefaultLang       = "default-lang"
-	KeyDefaultLicense    = "default-license"
-	KeyDefaultRole       = "default-role"
-	KeyDefaultSyntax     = "default-syntax"
-	KeyDefaultTitle      = "default-title"
-	KeyDefaultVisibility = "default-visibility"
-	KeyExpertMode        = "expert-mode"
-	KeyFooterHTML        = "footer-html"
-	KeyHomeZettel        = "home-zettel"
-	KeyMarkerExternal    = "marker-external"
-	KeyMaxTransclusions  = "max-transclusions"
-	KeySiteName          = "site-name"
-	KeyYAMLHeader        = "yaml-header"
 )
 
 // Additional HTTP constants.
