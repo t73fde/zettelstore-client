@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2021 Detlef Stern
+// Copyright (c) 2021-2022 Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -15,7 +15,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -58,15 +57,45 @@ func NewClient(baseURL string) *Client {
 	return &c
 }
 
-// ErrNotFound is returned, if something was not found
-var ErrNotFound = errors.New("not found")
+// Error encapsulates the possible client call errors.
+type Error struct {
+	StatusCode int
+	Message    string
+	Body       []byte
+}
+
+func (err *Error) Error() string {
+	var body string
+	if err.Body == nil {
+		body = "nil"
+	} else if bl := len(err.Body); bl == 0 {
+		body = "empty"
+	} else {
+		const maxBodyLen = 79
+		b := bytes.ToValidUTF8(err.Body, nil)
+		if len(b) > maxBodyLen {
+			if len(b)-3 > maxBodyLen {
+				b = append(b[:maxBodyLen-3], "..."...)
+			} else {
+				b = b[:maxBodyLen]
+			}
+			b = bytes.ToValidUTF8(b, nil)
+		}
+		body = string(b) + " (" + strconv.Itoa(bl) + ")"
+	}
+	return strconv.Itoa(err.StatusCode) + " " + err.Message + ", body: " + body
+}
 
 func statusToError(resp *http.Response) error {
-	if resp.StatusCode == http.StatusNotFound {
-		return ErrNotFound
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		body = nil
 	}
-	return errors.New(resp.Status)
-
+	return &Error{
+		StatusCode: resp.StatusCode,
+		Message:    resp.Status[4:],
+		Body:       body,
+	}
 }
 
 func (c *Client) newURLBuilder(key byte) *api.URLBuilder {
