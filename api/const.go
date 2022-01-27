@@ -98,6 +98,7 @@ const (
 	ValueSyntaxDraw        = "draw"
 	ValueSyntaxGif         = "gif"
 	ValueSyntaxNone        = "none"
+	ValueSyntaxSVG         = "svg"
 	ValueSyntaxText        = "text"
 	ValueSyntaxZmk         = "zmk"
 	ValueFalse             = "false"
