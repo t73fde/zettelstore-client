@@ -97,6 +97,7 @@ const (
 	ValueRoleZettel        = "zettel"
 	ValueSyntaxDraw        = "draw"
 	ValueSyntaxGif         = "gif"
+	ValueSyntaxHTML        = "html"
 	ValueSyntaxNone        = "none"
 	ValueSyntaxSVG         = "svg"
 	ValueSyntaxText        = "text"
