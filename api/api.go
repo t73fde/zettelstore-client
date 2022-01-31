@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2021 Detlef Stern
+// Copyright (c) 2021-2022 Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -34,6 +34,19 @@ func (zid ZettelID) IsValid() bool {
 // ZettelMeta is a map containg the metadata of a zettel.
 type ZettelMeta map[string]string
 
+// ZettelRights is an integer that encode access rights for a zettel.
+type ZettelRights uint8
+
+// Values for ZettelRights, can be or-ed
+const (
+	_               ZettelRights = 1 << iota
+	ZettelCanCreate              // Current user is allowed to create a new zettel
+	ZettelCanRead                // Requesting user is allowed to read the zettel
+	ZettelCanWrite               // Requesting user is allowed to update the zettel
+	ZettelCanRename              // Requesting user is allowed to provide the zettel with a new identifier
+	ZettelCanDelete              // Requesting user is allowed to delete the zettel
+)
+
 // AuthJSON contains the result of an authentication call.
 type AuthJSON struct {
 	Token   string `json:"token"`
@@ -53,8 +66,9 @@ type MetaJSON struct {
 
 // ZidMetaJSON contains the identifier and the metadata of a zettel.
 type ZidMetaJSON struct {
-	ID   ZettelID   `json:"id"`
-	Meta ZettelMeta `json:"meta"`
+	ID     ZettelID     `json:"id"`
+	Meta   ZettelMeta   `json:"meta"`
+	Rights ZettelRights `json:"rights"`
 }
 
 // ZidMetaRelatedList contains identifier/metadata of a zettel and the same for related zettel
@@ -90,10 +104,11 @@ type ZettelDataJSON struct {
 
 // ZettelJSON contains all data for a zettel, the identifier, the metadata, and the content.
 type ZettelJSON struct {
-	ID       ZettelID   `json:"id"`
-	Meta     ZettelMeta `json:"meta"`
-	Encoding string     `json:"encoding"`
-	Content  string     `json:"content"`
+	ID       ZettelID     `json:"id"`
+	Meta     ZettelMeta   `json:"meta"`
+	Encoding string       `json:"encoding"`
+	Content  string       `json:"content"`
+	Rights   ZettelRights `json:"rights"`
 }
 
 // ZettelListJSON contains data for a zettel list.
