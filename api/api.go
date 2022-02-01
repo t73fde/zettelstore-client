@@ -39,7 +39,7 @@ type ZettelRights uint8
 
 // Values for ZettelRights, can be or-ed
 const (
-	_               ZettelRights = 1 << iota
+	ZettelCanNone   ZettelRights = 1 << iota
 	ZettelCanCreate              // Current user is allowed to create a new zettel
 	ZettelCanRead                // Requesting user is allowed to read the zettel
 	ZettelCanWrite               // Requesting user is allowed to update the zettel
@@ -61,7 +61,8 @@ type ZidJSON struct {
 
 // MetaJSON contains the metadata of a zettel.
 type MetaJSON struct {
-	Meta ZettelMeta `json:"meta"`
+	Meta   ZettelMeta   `json:"meta"`
+	Rights ZettelRights `json:"rights"`
 }
 
 // ZidMetaJSON contains the identifier and the metadata of a zettel.
@@ -73,9 +74,10 @@ type ZidMetaJSON struct {
 
 // ZidMetaRelatedList contains identifier/metadata of a zettel and the same for related zettel
 type ZidMetaRelatedList struct {
-	ID   ZettelID      `json:"id"`
-	Meta ZettelMeta    `json:"meta"`
-	List []ZidMetaJSON `json:"list"`
+	ID     ZettelID      `json:"id"`
+	Meta   ZettelMeta    `json:"meta"`
+	Rights ZettelRights  `json:"rights"`
+	List   []ZidMetaJSON `json:"list"`
 }
 
 // ZettelLinksJSON store all links / connections from one zettel to other.
