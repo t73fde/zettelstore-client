@@ -150,18 +150,18 @@ const (
 
 // Supported encoding values.
 const (
-	EncodingDJSON  = "djson"
 	EncodingHTML   = "html"
 	EncodingNative = "native"
 	EncodingText   = "text"
+	EncodingZJSON  = "zjson"
 	EncodingZMK    = "zmk"
 )
 
 var mapEncodingEnum = map[string]EncodingEnum{
-	EncodingDJSON:  EncoderDJSON,
 	EncodingHTML:   EncoderHTML,
 	EncodingNative: EncoderNative,
 	EncodingText:   EncoderText,
+	EncodingZJSON:  EncoderZJSON,
 	EncodingZMK:    EncoderZmk,
 }
 var mapEnumEncoding = map[EncodingEnum]string{}
@@ -186,10 +186,10 @@ type EncodingEnum uint8
 // Values for EncoderEnum
 const (
 	EncoderUnknown EncodingEnum = iota
-	EncoderDJSON
 	EncoderHTML
 	EncoderNative
 	EncoderText
+	EncoderZJSON
 	EncoderZmk
 )
 
