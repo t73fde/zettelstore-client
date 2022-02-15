@@ -10,6 +10,22 @@
 
 package zjson
 
+// Values for Zettelmarkup element object names
+const (
+	NameType        = ""
+	NameBLOB        = "j"
+	NameBinary      = "o"
+	NameBlock       = "b"
+	NameDescription = "g"
+	NameInline      = "i"
+	NameList        = "c"
+	NameNumeric     = "n"
+	NameString      = "s"
+	NameString2     = "q"
+	NameString3     = "v"
+	NameTable       = "p"
+)
+
 // Values to specify the Zettelmarkup element type
 const (
 	TypeBLOB            = "BLOB"
@@ -45,7 +61,7 @@ const (
 	TypeParagraph       = "Para"
 	TypeQuoteBlock      = "QuoteBlock"
 	TypeSpace           = "Space"
-	TypeSpanBlock       = "Spanblock"
+	TypeSpanBlock       = "SpanBlock"
 	TypeTable           = "Table"
 	TypeTag             = "Tag"
 	TypeText            = "Text"
