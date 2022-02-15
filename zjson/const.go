@@ -13,6 +13,7 @@ package zjson
 // Values for Zettelmarkup element object names
 const (
 	NameType        = ""
+	NameAttribute   = "a"
 	NameBLOB        = "j"
 	NameBinary      = "o"
 	NameBlock       = "b"
@@ -29,12 +30,15 @@ const (
 // Values to specify the Zettelmarkup element type
 const (
 	TypeBLOB            = "BLOB"
+	TypeBlock           = "Block"
 	TypeBreakHard       = "Hard"
 	TypeBreakSoft       = "Soft"
+	TypeBreakThematic   = "Thematik"
 	TypeCitation        = "Cite"
 	TypeDescriptionList = "DescriptionList"
 	TypeEmbed           = "Embed"
 	TypeEmbedBLOB       = "EmbedBLOB"
+	TypeExcerpt         = "Excerpt"
 	TypeFootnote        = "Footnote"
 	TypeFormatDelete    = "Delete"
 	TypeFormatEmph      = "Emph"
@@ -51,21 +55,18 @@ const (
 	TypeListBullet      = "BulletList"
 	TypeListOrdered     = "OrderedList"
 	TypeListQuote       = "QuoteList"
+	TypeLiteralCode     = "Code"
 	TypeLiteralComment  = "Comment"
 	TypeLiteralHTML     = "HTML"
-	TypeLiteralKeyb     = "Input"
+	TypeLiteralInput    = "Input"
 	TypeLiteralOutput   = "Output"
-	TypeLiteralProg     = "Code"
 	TypeLiteralZettel   = "Zettel"
 	TypeMark            = "Mark"
 	TypeParagraph       = "Para"
-	TypeQuoteBlock      = "QuoteBlock"
 	TypeSpace           = "Space"
-	TypeSpanBlock       = "SpanBlock"
 	TypeTable           = "Table"
 	TypeTag             = "Tag"
 	TypeText            = "Text"
-	TypeBreakThematic   = "Thematik"
 	TypeTransclude      = "Transclude"
 	TypeVerbatimCode    = "CodeBlock"
 	TypeVerbatimComment = "CommentBlock"
@@ -84,4 +85,12 @@ const (
 	RefStateInvalid  = "invalid"
 	RefStateSelf     = "self"
 	RefStateZettel   = "zettel"
+)
+
+// Values for table cell alignment
+const (
+	AlignDefault = ""
+	AlignLeft    = "<"
+	AlignCenter  = ":"
+	AlignRight   = ">"
 )
