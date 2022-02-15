@@ -79,7 +79,6 @@ const (
 	KeyLang         = "lang"
 	KeyLicense      = "license"
 	KeyModified     = "modified"
-	KeyNoIndex      = "no-index"
 	KeyPrecursor    = "precursor"
 	KeyPublished    = "published"
 	KeyReadOnly     = "read-only"
