@@ -111,7 +111,7 @@ func itemChild(v Visitor, obj Object, pos int) {
 			for i, l := range it {
 				ef := v.Item(it, i)
 				if bl, ok := l.(Array); ok {
-					WalkBlock(v, bl, i)
+					WalkBlock(v, bl, 0)
 				} else {
 					v.NoArray(l, i)
 				}
