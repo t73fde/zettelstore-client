@@ -13,11 +13,13 @@ package client_test
 import (
 	"context"
 	"flag"
+	"log"
 	"net/http"
 	"testing"
 
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/client"
+	"zettelstore.de/c/zjson"
 )
 
 func TestZettelList(t *testing.T) {
@@ -44,7 +46,7 @@ func TestGetProtectedZettel(t *testing.T) {
 
 func TestGetZJSONZettel(t *testing.T) {
 	c := getClient()
-	data, err := c.GetEvaluatedZJSON(context.Background(), api.ZidDefaultHome, api.PartZettel)
+	data, err := c.GetEvaluatedZJSON(context.Background(), api.ZidDefaultHome, api.PartContent)
 	if err != nil {
 		t.Error(err)
 		return
@@ -52,7 +54,32 @@ func TestGetZJSONZettel(t *testing.T) {
 	if data == nil {
 		t.Error("No data")
 	}
+	var v vis
+	zjson.WalkBlock(&v, data.(zjson.Array), -1)
+	// t.Error("Argh")
 }
+
+type vis struct{}
+
+func (v *vis) Block(a zjson.Array, pos int) zjson.EndFunc {
+	log.Println("SBLO", pos, a)
+	return nil
+}
+func (v *vis) Inline(a zjson.Array, pos int) zjson.EndFunc {
+	log.Println("SINL", pos, a)
+	return nil
+}
+func (v *vis) Item(a zjson.Array, pos int) zjson.EndFunc {
+	log.Println("SITE", pos, a)
+	return nil
+}
+func (v *vis) Object(t string, obj zjson.Object, pos int) (bool, zjson.EndFunc) {
+	log.Println("SOBJ", pos, t, obj)
+	return true, nil
+}
+func (v *vis) NoValue(val zjson.Value, pos int)   { log.Println("?NOV", pos, val) }
+func (v *vis) NoArray(val zjson.Value, pos int)   { log.Println("?NOA", pos, val) }
+func (v *vis) NoObject(obj zjson.Object, pos int) { log.Println("?NOO", pos, obj) }
 
 var baseURL string
 
