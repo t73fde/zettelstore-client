@@ -355,6 +355,39 @@ func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID
 	return io.ReadAll(resp.Body)
 }
 
+// GetParsedZettelZJSON returns an parsed zettel as a JSON-decoded data structure.
+func (c *Client) GetParsedZJSON(ctx context.Context, zid api.ZettelID, part string) (interface{}, error) {
+	return c.getZJSON(ctx, 'p', zid, part)
+}
+
+// GetEvaluatedZettelZJSON returns an evaluated zettel as a JSON-decoded data structure.
+func (c *Client) GetEvaluatedZJSON(ctx context.Context, zid api.ZettelID, part string) (interface{}, error) {
+	return c.getZJSON(ctx, 'v', zid, part)
+}
+
+func (c *Client) getZJSON(ctx context.Context, key byte, zid api.ZettelID, part string) (interface{}, error) {
+	ub := c.newURLBuilder(key).SetZid(zid)
+	ub.AppendQuery(api.QueryKeyEncoding, api.EncodingZJSON)
+	if part != "" {
+		ub.AppendQuery(api.QueryKeyPart, part)
+	}
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, statusToError(resp)
+	}
+	var result interface{}
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 // GetMeta returns the metadata of a zettel.
 func (c *Client) GetMeta(ctx context.Context, zid api.ZettelID) (api.ZettelMeta, error) {
 	ub := c.newURLBuilder('m').SetZid(zid)

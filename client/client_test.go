@@ -42,6 +42,18 @@ func TestGetProtectedZettel(t *testing.T) {
 	}
 }
 
+func TestGetZJSONZettel(t *testing.T) {
+	c := getClient()
+	data, err := c.GetEvaluatedZJSON(context.Background(), api.ZidDefaultHome, api.PartZettel)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if data == nil {
+		t.Error("No data")
+	}
+}
+
 var baseURL string
 
 func init() {
