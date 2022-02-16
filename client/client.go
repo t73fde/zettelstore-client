@@ -381,6 +381,7 @@ func (c *Client) getZJSON(ctx context.Context, key byte, zid api.ZettelID, part 
 	}
 	var result interface{}
 	dec := json.NewDecoder(resp.Body)
+	dec.UseNumber()
 	err = dec.Decode(&result)
 	if err != nil {
 		return nil, err
