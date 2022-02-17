@@ -10,13 +10,16 @@
 
 package zjson
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 // Attributes store additional information about some node types.
 type Attributes map[string]string
 
 // IsEmpty returns true if there are no attributes.
-func (a Attributes) IsEmpty() bool { return len(a) == 0 }
+func (a Attributes) IsEmpty() bool { return a == nil || len(a) == 0 }
 
 // HasDefault returns true, if the default attribute "-" has been set.
 func (a Attributes) HasDefault() bool {
@@ -32,6 +35,19 @@ func (a Attributes) RemoveDefault() {
 	if a != nil {
 		a.Remove("-")
 	}
+}
+
+// Keys returns the sorted list of keys.
+func (a Attributes) Keys() []string {
+	if len(a) == 0 {
+		return nil
+	}
+	result := make([]string, 0, len(a))
+	for k := range a {
+		result = append(result, k)
+	}
+	sort.Strings(result)
+	return result
 }
 
 // Get returns the attribute value of the given key and a succes value.
