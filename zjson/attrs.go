@@ -19,7 +19,7 @@ import (
 type Attributes map[string]string
 
 // IsEmpty returns true if there are no attributes.
-func (a Attributes) IsEmpty() bool { return a == nil || len(a) == 0 }
+func (a Attributes) IsEmpty() bool { return len(a) == 0 }
 
 // HasDefault returns true, if the default attribute "-" has been set.
 func (a Attributes) HasDefault() bool {
@@ -31,10 +31,11 @@ func (a Attributes) HasDefault() bool {
 }
 
 // RemoveDefault removes the default attribute
-func (a Attributes) RemoveDefault() {
+func (a Attributes) RemoveDefault() Attributes {
 	if a != nil {
 		a.Remove("-")
 	}
+	return a
 }
 
 // Keys returns the sorted list of keys.
