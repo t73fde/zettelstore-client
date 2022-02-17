@@ -12,6 +12,11 @@
 // encoding of zettel.
 package zjson
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 // Value is the gerneric JSON value.
 type Value = interface{}
 
@@ -23,9 +28,9 @@ type Object = map[string]Value
 
 // Visitor provides functionality when a Value is traversed.
 type Visitor interface {
-	Block(a Array, pos int) EndFunc
-	Inline(a Array, pos int) EndFunc
-	Item(a Array, pos int) EndFunc
+	Block(a Array, pos int) (bool, EndFunc)
+	Inline(a Array, pos int) (bool, EndFunc)
+	Item(a Array, pos int) (bool, EndFunc)
 	Object(t string, obj Object, pos int) (bool, EndFunc)
 
 	NoValue(val Value, pos int)
@@ -38,9 +43,11 @@ type EndFunc func()
 
 // WalkBlock traverses a block array.
 func WalkBlock(v Visitor, a Array, pos int) {
-	ef := v.Block(a, pos)
-	for i, elem := range a {
-		walkObject(v, elem, i)
+	children, ef := v.Block(a, pos)
+	if children {
+		for i, elem := range a {
+			WalkObject(v, elem, i)
+		}
 	}
 	if ef != nil {
 		ef()
@@ -49,16 +56,19 @@ func WalkBlock(v Visitor, a Array, pos int) {
 
 // WalkInline traverses an inline array.
 func WalkInline(v Visitor, a Array, pos int) {
-	ef := v.Inline(a, pos)
-	for i, elem := range a {
-		walkObject(v, elem, i)
+	children, ef := v.Inline(a, pos)
+	if children {
+		for i, elem := range a {
+			WalkObject(v, elem, i)
+		}
 	}
 	if ef != nil {
 		ef()
 	}
 }
 
-func walkObject(v Visitor, val Value, pos int) {
+// WalkObject traverses a value as a JSON object.
+func WalkObject(v Visitor, val Value, pos int) {
 	obj, ok := val.(Object)
 	if !ok {
 		v.NoValue(val, pos)
@@ -78,16 +88,17 @@ func walkObject(v Visitor, val Value, pos int) {
 
 	doChilds, ef := v.Object(t, obj, pos)
 	if doChilds {
-		inlineChild(v, obj, pos)
-		blockChild(v, obj, pos)
-		itemChild(v, obj, pos)
+		WalkInlineChild(v, obj, pos)
+		WalkBlockChild(v, obj, pos)
+		WalkItemChild(v, obj, pos)
 	}
 	if ef != nil {
 		ef()
 	}
 }
 
-func inlineChild(v Visitor, obj Object, pos int) {
+// WalkInlineChild traverses the array found at the name NameInline ('i').
+func WalkInlineChild(v Visitor, obj Object, pos int) {
 	if iVal, ok := obj[NameInline]; ok {
 		if il, ok := iVal.(Array); ok {
 			WalkInline(v, il, 0)
@@ -96,7 +107,9 @@ func inlineChild(v Visitor, obj Object, pos int) {
 		}
 	}
 }
-func blockChild(v Visitor, obj Object, pos int) {
+
+// WalkBlockChild traverses the array found at the name NameBlock ('b').
+func WalkBlockChild(v Visitor, obj Object, pos int) {
 	if bVal, ok := obj[NameBlock]; ok {
 		if bl, ok := bVal.(Array); ok {
 			WalkBlock(v, bl, 0)
@@ -105,22 +118,63 @@ func blockChild(v Visitor, obj Object, pos int) {
 		}
 	}
 }
-func itemChild(v Visitor, obj Object, pos int) {
-	if iVal, ok := obj[NameList]; ok {
-		if it, ok := iVal.(Array); ok {
-			for i, l := range it {
-				ef := v.Item(it, i)
-				if bl, ok := l.(Array); ok {
-					WalkBlock(v, bl, 0)
-				} else {
-					v.NoArray(l, i)
-				}
-				if ef != nil {
-					ef()
-				}
-			}
+
+// WalkItemChild traverses the arrays found at the name NameList ('c').
+func WalkItemChild(v Visitor, obj Object, pos int) {
+	iVal, ok := obj[NameList]
+	if !ok {
+		return
+	}
+	it, ok := iVal.(Array)
+	if !ok {
+		v.NoArray(iVal, pos)
+		return
+	}
+	for i, l := range it {
+		children, ef := v.Item(it, i)
+		if !children {
+			continue
+		}
+		if bl, ok := l.(Array); ok {
+			WalkBlock(v, bl, 0)
 		} else {
-			v.NoArray(iVal, pos)
+			v.NoArray(l, i)
+		}
+		if ef != nil {
+			ef()
 		}
 	}
+}
+
+// GetArray returns the array-typed value under the given name.
+func GetArray(obj Object, name string) Array {
+	if v, ok := obj[name]; ok && v != nil {
+		if a, ok := v.(Array); ok {
+			return a
+		}
+	}
+	return nil
+}
+
+// GetNumber returns the numeric value at NameNumberic ('n') as a string.
+func GetNumber(obj Object) string {
+	if v, ok := obj[NameNumeric]; ok {
+		if n, ok := v.(json.Number); ok {
+			return string(n)
+		}
+		if f, ok := v.(float64); ok {
+			return fmt.Sprint(f)
+		}
+	}
+	return ""
+}
+
+// GetString returns the string value at the given name.
+func GetString(obj Object, name string) string {
+	if v, ok := obj[name]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
 }

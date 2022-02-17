@@ -61,17 +61,17 @@ func TestGetZJSONZettel(t *testing.T) {
 
 type vis struct{}
 
-func (v *vis) Block(a zjson.Array, pos int) zjson.EndFunc {
+func (v *vis) Block(a zjson.Array, pos int) (bool, zjson.EndFunc) {
 	log.Println("SBLO", pos, a)
-	return nil
+	return true, nil
 }
-func (v *vis) Inline(a zjson.Array, pos int) zjson.EndFunc {
+func (v *vis) Inline(a zjson.Array, pos int) (bool, zjson.EndFunc) {
 	log.Println("SINL", pos, a)
-	return nil
+	return true, nil
 }
-func (v *vis) Item(a zjson.Array, pos int) zjson.EndFunc {
+func (v *vis) Item(a zjson.Array, pos int) (bool, zjson.EndFunc) {
 	log.Println("SITE", pos, a)
-	return nil
+	return true, nil
 }
 func (v *vis) Object(t string, obj zjson.Object, pos int) (bool, zjson.EndFunc) {
 	log.Println("SOBJ", pos, t, obj)
