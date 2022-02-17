@@ -45,7 +45,6 @@ const (
 	TypeFormatInsert    = "Insert"
 	TypeFormatMonospace = "Mono"
 	TypeFormatQuote     = "Quote"
-	TypeFormatQuoted    = "Quoted"
 	TypeFormatSpan      = "Span"
 	TypeFormatStrong    = "Strong"
 	TypeFormatSub       = "Sub"

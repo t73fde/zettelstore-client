@@ -183,3 +183,26 @@ func MakeString(val Value) string {
 	}
 	return ""
 }
+
+func GetAttributes(obj Object) Attributes {
+	a := GetObject(obj, NameAttribute)
+	if len(a) == 0 {
+		return nil
+	}
+	result := make(Attributes, len(a))
+	for n, v := range a {
+		if val, ok := v.(string); ok {
+			result[n] = val
+		}
+	}
+	return result
+}
+
+func GetObject(obj Object, name string) Object {
+	if v, ok := obj[name]; ok && v != nil {
+		if o, ok := v.(Object); ok {
+			return o
+		}
+	}
+	return nil
+}
