@@ -28,9 +28,9 @@ type Object = map[string]Value
 
 // Visitor provides functionality when a Value is traversed.
 type Visitor interface {
-	Block(a Array, pos int) (bool, EndFunc)
-	Inline(a Array, pos int) (bool, EndFunc)
-	Item(a Array, pos int) (bool, EndFunc)
+	Block(a Array, pos int) EndFunc
+	Inline(a Array, pos int) EndFunc
+	Item(a Array, pos int) EndFunc
 	Object(t string, obj Object, pos int) (bool, EndFunc)
 
 	NoValue(val Value, pos int)
@@ -43,11 +43,9 @@ type EndFunc func()
 
 // WalkBlock traverses a block array.
 func WalkBlock(v Visitor, a Array, pos int) {
-	children, ef := v.Block(a, pos)
-	if children {
-		for i, elem := range a {
-			WalkObject(v, elem, i)
-		}
+	ef := v.Block(a, pos)
+	for i, elem := range a {
+		WalkObject(v, elem, i)
 	}
 	if ef != nil {
 		ef()
@@ -56,11 +54,9 @@ func WalkBlock(v Visitor, a Array, pos int) {
 
 // WalkInline traverses an inline array.
 func WalkInline(v Visitor, a Array, pos int) {
-	children, ef := v.Inline(a, pos)
-	if children {
-		for i, elem := range a {
-			WalkObject(v, elem, i)
-		}
+	ef := v.Inline(a, pos)
+	for i, elem := range a {
+		WalkObject(v, elem, i)
 	}
 	if ef != nil {
 		ef()
@@ -88,9 +84,9 @@ func WalkObject(v Visitor, val Value, pos int) {
 
 	doChilds, ef := v.Object(t, obj, pos)
 	if doChilds {
-		WalkInlineChild(v, obj, pos)
 		WalkBlockChild(v, obj, pos)
 		WalkItemChild(v, obj, pos)
+		WalkInlineChild(v, obj, pos)
 	}
 	if ef != nil {
 		ef()
@@ -131,10 +127,7 @@ func WalkItemChild(v Visitor, obj Object, pos int) {
 		return
 	}
 	for i, l := range it {
-		children, ef := v.Item(it, i)
-		if !children {
-			continue
-		}
+		ef := v.Item(it, i)
 		if bl, ok := l.(Array); ok {
 			WalkBlock(v, bl, 0)
 		} else {
@@ -149,9 +142,7 @@ func WalkItemChild(v Visitor, obj Object, pos int) {
 // GetArray returns the array-typed value under the given name.
 func GetArray(obj Object, name string) Array {
 	if v, ok := obj[name]; ok && v != nil {
-		if a, ok := v.(Array); ok {
-			return a
-		}
+		return MakeArray(v)
 	}
 	return nil
 }
@@ -172,9 +163,23 @@ func GetNumber(obj Object) string {
 // GetString returns the string value at the given name.
 func GetString(obj Object, name string) string {
 	if v, ok := obj[name]; ok {
-		if s, ok := v.(string); ok {
-			return s
-		}
+		return MakeString(v)
+	}
+	return ""
+}
+
+// MakeArray returns the given value as a JSON array.
+func MakeArray(val Value) Array {
+	if a, ok := val.(Array); ok {
+		return a
+	}
+	return nil
+}
+
+// MakeString returns the given value as a string.
+func MakeString(val Value) string {
+	if s, ok := val.(string); ok {
+		return s
 	}
 	return ""
 }
