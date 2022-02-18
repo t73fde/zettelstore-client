@@ -43,7 +43,6 @@ const (
 	TypeFormatDelete    = "Delete"
 	TypeFormatEmph      = "Emph"
 	TypeFormatInsert    = "Insert"
-	TypeFormatMonospace = "Mono"
 	TypeFormatQuote     = "Quote"
 	TypeFormatSpan      = "Span"
 	TypeFormatStrong    = "Strong"
