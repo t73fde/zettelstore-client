@@ -76,3 +76,19 @@ func AttributeEscape(w io.Writer, s string) {
 	}
 	io.WriteString(w, s[last:])
 }
+
+var unsafeSnippets = []string{
+	"<script", "</script",
+	"<iframe", "</iframe",
+}
+
+// IsSave returns true if the given string does not contain unsafe HTML elements.
+func IsSave(s string) bool {
+	lower := strings.ToLower(s)
+	for _, snippet := range unsafeSnippets {
+		if strings.Contains(lower, snippet) {
+			return false
+		}
+	}
+	return true
+}

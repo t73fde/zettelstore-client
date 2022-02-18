@@ -184,6 +184,7 @@ func MakeString(val Value) string {
 	return ""
 }
 
+// GetAttribute returns the attributes of the given object.
 func GetAttributes(obj Object) Attributes {
 	a := GetObject(obj, NameAttribute)
 	if len(a) == 0 {
@@ -198,11 +199,18 @@ func GetAttributes(obj Object) Attributes {
 	return result
 }
 
+// GetObject returns the object found at the given object with the given name.
 func GetObject(obj Object, name string) Object {
 	if v, ok := obj[name]; ok && v != nil {
-		if o, ok := v.(Object); ok {
-			return o
-		}
+		return MakeObject(v)
+	}
+	return nil
+}
+
+// MakeObject returns the given value as a JSON object.
+func MakeObject(val Value) Object {
+	if o, ok := val.(Object); ok {
+		return o
 	}
 	return nil
 }
