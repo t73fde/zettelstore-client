@@ -21,10 +21,28 @@ const (
 	NameInline      = "i"
 	NameList        = "c"
 	NameNumeric     = "n"
+	NameSet         = "y"
 	NameString      = "s"
 	NameString2     = "q"
 	NameString3     = "v"
 	NameTable       = "p"
+)
+
+// Values of the metadata key/value type.
+const (
+	MetaBool         = "Boolean"
+	MetaCredential   = "Credential"
+	MetaEmpty        = "EString"
+	MetaID           = "Identifier"
+	MetaIDSet        = "IdentifierSet"
+	MetaNumber       = "Number"
+	MetaString       = "String"
+	MetaTagSet       = "TagSet"
+	MetaTimestamp    = "Timestamp"
+	MetaURL          = "URL"
+	MetaWord         = "Word"
+	MetaWordSet      = "WordSet"
+	MetaZettelmarkup = "Zettelmarkup"
 )
 
 // Values to specify the Zettelmarkup element type
