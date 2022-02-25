@@ -45,7 +45,7 @@ type EndFunc func()
 func WalkBlock(v Visitor, a Array, pos int) {
 	ef := v.BlockArray(a, pos)
 	for i, elem := range a {
-		walkObject(v, elem, i, v.BlockObject)
+		WalkBlockObject(v, elem, i)
 	}
 	if ef != nil {
 		ef()
@@ -56,14 +56,19 @@ func WalkBlock(v Visitor, a Array, pos int) {
 func WalkInline(v Visitor, a Array, pos int) {
 	ef := v.InlineArray(a, pos)
 	for i, elem := range a {
-		walkObject(v, elem, i, v.InlineObject)
+		WalkInlineObject(v, elem, i)
 	}
 	if ef != nil {
 		ef()
 	}
 }
 
-// WalkObject traverses a value as a JSON object.
+// WalkBlockObject traverses a value as a JSON object in a block array.
+func WalkBlockObject(v Visitor, val Value, pos int) { walkObject(v, val, pos, v.BlockObject) }
+
+// WalkInlineObject traverses a value as a JSON object in an inline array.
+func WalkInlineObject(v Visitor, val Value, pos int) { walkObject(v, val, pos, v.InlineObject) }
+
 func walkObject(v Visitor, val Value, pos int, objFunc func(string, Object, int) (bool, EndFunc)) {
 	obj, ok := val.(Object)
 	if !ok {

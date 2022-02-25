@@ -56,7 +56,7 @@ func TestGetZJSONZettel(t *testing.T) {
 	}
 	var v vis
 	zjson.WalkBlock(&v, data.(zjson.Array), -1)
-	t.Error("Argh")
+	// t.Error("Argh")
 }
 
 type vis struct{}
