@@ -128,18 +128,3 @@ type TagListJSON struct {
 type RoleListJSON struct {
 	Roles []string `json:"role-list"`
 }
-
-// EncodeInlineReqJSON contains Zettelmarkup inline material to be encoded.
-type EncodeInlineReqJSON struct {
-	FirstZmk string   `json:"first-zmk"`
-	OtherZmk []string `json:"other-zmk"`
-	Lang     string   `json:"lang"`
-	NoLinks  bool     `json:"no-links"`
-}
-
-// EncodedInlineJSON contains rendered values.
-type EncodedInlineRespJSON struct {
-	FirstHTML string   `json:"first-html"`
-	FirstText string   `json:"first-text"`
-	OtherHTML []string `json:"other-html"`
-}

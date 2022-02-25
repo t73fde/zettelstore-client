@@ -61,23 +61,23 @@ func TestGetZJSONZettel(t *testing.T) {
 
 type vis struct{}
 
-func (v *vis) BlockArray(a zjson.Array, pos int) zjson.EndFunc {
+func (v *vis) BlockArray(a zjson.Array, pos int) zjson.CloseFunc {
 	log.Println("SBLO", pos, a)
 	return nil
 }
-func (v *vis) InlineArray(a zjson.Array, pos int) zjson.EndFunc {
+func (v *vis) InlineArray(a zjson.Array, pos int) zjson.CloseFunc {
 	log.Println("SINL", pos, a)
 	return nil
 }
-func (v *vis) ItemArray(a zjson.Array, pos int) zjson.EndFunc {
+func (v *vis) ItemArray(a zjson.Array, pos int) zjson.CloseFunc {
 	log.Println("SITE", pos, a)
 	return nil
 }
-func (v *vis) BlockObject(t string, obj zjson.Object, pos int) (bool, zjson.EndFunc) {
+func (v *vis) BlockObject(t string, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
 	log.Println("BOBJ", pos, t, obj)
 	return true, nil
 }
-func (v *vis) InlineObject(t string, obj zjson.Object, pos int) (bool, zjson.EndFunc) {
+func (v *vis) InlineObject(t string, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
 	log.Println("IOBJ", pos, t, obj)
 	return true, nil
 }

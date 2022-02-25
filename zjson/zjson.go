@@ -26,20 +26,30 @@ type Array = []Value
 // Object represents a JSON object.
 type Object = map[string]Value
 
+// GetMetaContent returns the metadata and the content of a zettel ZJSON.
+func GetMetaContent(zjZettel Value) (Meta, Array) {
+	if zettel, ok := zjZettel.(Object); ok {
+		meta := MakeMeta(zettel["meta"])
+		content := MakeArray(zettel["content"])
+		return meta, content
+	}
+	return nil, nil
+}
+
 // Visitor provides functionality when a Value is traversed.
 type Visitor interface {
-	BlockArray(a Array, pos int) EndFunc
-	InlineArray(a Array, pos int) EndFunc
-	ItemArray(a Array, pos int) EndFunc
+	BlockArray(a Array, pos int) CloseFunc
+	InlineArray(a Array, pos int) CloseFunc
+	ItemArray(a Array, pos int) CloseFunc
 
-	BlockObject(t string, obj Object, pos int) (bool, EndFunc)
-	InlineObject(t string, obj Object, pos int) (bool, EndFunc)
+	BlockObject(t string, obj Object, pos int) (bool, CloseFunc)
+	InlineObject(t string, obj Object, pos int) (bool, CloseFunc)
 
 	Unexpected(val Value, pos int, exp string)
 }
 
-// EndFunc is a function that executes after a ZJSON element is visited.
-type EndFunc func()
+// CloseFunc is a function that executes after a ZJSON element is visited.
+type CloseFunc func()
 
 // WalkBlock traverses a block array.
 func WalkBlock(v Visitor, a Array, pos int) {
@@ -69,7 +79,7 @@ func WalkBlockObject(v Visitor, val Value, pos int) { walkObject(v, val, pos, v.
 // WalkInlineObject traverses a value as a JSON object in an inline array.
 func WalkInlineObject(v Visitor, val Value, pos int) { walkObject(v, val, pos, v.InlineObject) }
 
-func walkObject(v Visitor, val Value, pos int, objFunc func(string, Object, int) (bool, EndFunc)) {
+func walkObject(v Visitor, val Value, pos int, objFunc func(string, Object, int) (bool, CloseFunc)) {
 	obj, ok := val.(Object)
 	if !ok {
 		v.Unexpected(val, pos, "Object")
