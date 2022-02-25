@@ -56,30 +56,32 @@ func TestGetZJSONZettel(t *testing.T) {
 	}
 	var v vis
 	zjson.WalkBlock(&v, data.(zjson.Array), -1)
-	// t.Error("Argh")
+	t.Error("Argh")
 }
 
 type vis struct{}
 
-func (v *vis) Block(a zjson.Array, pos int) zjson.EndFunc {
+func (v *vis) BlockArray(a zjson.Array, pos int) zjson.EndFunc {
 	log.Println("SBLO", pos, a)
 	return nil
 }
-func (v *vis) Inline(a zjson.Array, pos int) zjson.EndFunc {
+func (v *vis) InlineArray(a zjson.Array, pos int) zjson.EndFunc {
 	log.Println("SINL", pos, a)
 	return nil
 }
-func (v *vis) Item(a zjson.Array, pos int) zjson.EndFunc {
+func (v *vis) ItemArray(a zjson.Array, pos int) zjson.EndFunc {
 	log.Println("SITE", pos, a)
 	return nil
 }
-func (v *vis) Object(t string, obj zjson.Object, pos int) (bool, zjson.EndFunc) {
-	log.Println("SOBJ", pos, t, obj)
+func (v *vis) BlockObject(t string, obj zjson.Object, pos int) (bool, zjson.EndFunc) {
+	log.Println("BOBJ", pos, t, obj)
 	return true, nil
 }
-func (v *vis) NoValue(val zjson.Value, pos int)   { log.Println("?NOV", pos, val) }
-func (v *vis) NoArray(val zjson.Value, pos int)   { log.Println("?NOA", pos, val) }
-func (v *vis) NoObject(obj zjson.Object, pos int) { log.Println("?NOO", pos, obj) }
+func (v *vis) InlineObject(t string, obj zjson.Object, pos int) (bool, zjson.EndFunc) {
+	log.Println("IOBJ", pos, t, obj)
+	return true, nil
+}
+func (v *vis) Unexpected(val zjson.Value, pos int, exp string) { log.Println("Expect", pos, exp, val) }
 
 var baseURL string
 

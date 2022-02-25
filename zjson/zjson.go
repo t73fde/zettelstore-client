@@ -28,14 +28,14 @@ type Object = map[string]Value
 
 // Visitor provides functionality when a Value is traversed.
 type Visitor interface {
-	Block(a Array, pos int) EndFunc
-	Inline(a Array, pos int) EndFunc
-	Item(a Array, pos int) EndFunc
-	Object(t string, obj Object, pos int) (bool, EndFunc)
+	BlockArray(a Array, pos int) EndFunc
+	InlineArray(a Array, pos int) EndFunc
+	ItemArray(a Array, pos int) EndFunc
 
-	NoValue(val Value, pos int)
-	NoArray(val Value, pos int)
-	NoObject(obj Object, pos int)
+	BlockObject(t string, obj Object, pos int) (bool, EndFunc)
+	InlineObject(t string, obj Object, pos int) (bool, EndFunc)
+
+	Unexpected(val Value, pos int, exp string)
 }
 
 // EndFunc is a function that executes after a ZJSON element is visited.
@@ -43,9 +43,9 @@ type EndFunc func()
 
 // WalkBlock traverses a block array.
 func WalkBlock(v Visitor, a Array, pos int) {
-	ef := v.Block(a, pos)
+	ef := v.BlockArray(a, pos)
 	for i, elem := range a {
-		WalkObject(v, elem, i)
+		walkObject(v, elem, i, v.BlockObject)
 	}
 	if ef != nil {
 		ef()
@@ -54,9 +54,9 @@ func WalkBlock(v Visitor, a Array, pos int) {
 
 // WalkInline traverses an inline array.
 func WalkInline(v Visitor, a Array, pos int) {
-	ef := v.Inline(a, pos)
+	ef := v.InlineArray(a, pos)
 	for i, elem := range a {
-		WalkObject(v, elem, i)
+		walkObject(v, elem, i, v.InlineObject)
 	}
 	if ef != nil {
 		ef()
@@ -64,25 +64,25 @@ func WalkInline(v Visitor, a Array, pos int) {
 }
 
 // WalkObject traverses a value as a JSON object.
-func WalkObject(v Visitor, val Value, pos int) {
+func walkObject(v Visitor, val Value, pos int, objFunc func(string, Object, int) (bool, EndFunc)) {
 	obj, ok := val.(Object)
 	if !ok {
-		v.NoValue(val, pos)
+		v.Unexpected(val, pos, "Object")
 		return
 	}
 
 	tVal, ok := obj[NameType]
 	if !ok {
-		v.NoObject(obj, pos)
+		v.Unexpected(obj, pos, "Object type")
 		return
 	}
 	t, ok := tVal.(string)
 	if !ok {
-		v.NoObject(obj, pos)
+		v.Unexpected(obj, pos, "Object type value")
 		return
 	}
 
-	doChilds, ef := v.Object(t, obj, pos)
+	doChilds, ef := objFunc(t, obj, pos)
 	if doChilds {
 		WalkBlockChild(v, obj, pos)
 		WalkItemChild(v, obj, pos)
@@ -99,7 +99,7 @@ func WalkInlineChild(v Visitor, obj Object, pos int) {
 		if il, ok := iVal.(Array); ok {
 			WalkInline(v, il, 0)
 		} else {
-			v.NoArray(iVal, pos)
+			v.Unexpected(iVal, pos, "Inline array")
 		}
 	}
 }
@@ -110,7 +110,7 @@ func WalkBlockChild(v Visitor, obj Object, pos int) {
 		if bl, ok := bVal.(Array); ok {
 			WalkBlock(v, bl, 0)
 		} else {
-			v.NoArray(bVal, pos)
+			v.Unexpected(bVal, pos, "Block array")
 		}
 	}
 }
@@ -123,15 +123,15 @@ func WalkItemChild(v Visitor, obj Object, pos int) {
 	}
 	it, ok := iVal.(Array)
 	if !ok {
-		v.NoArray(iVal, pos)
+		v.Unexpected(iVal, pos, "Item array")
 		return
 	}
 	for i, l := range it {
-		ef := v.Item(it, i)
+		ef := v.ItemArray(it, i)
 		if bl, ok := l.(Array); ok {
 			WalkBlock(v, bl, 0)
 		} else {
-			v.NoArray(l, i)
+			v.Unexpected(l, i, "Item block array")
 		}
 		if ef != nil {
 			ef()
