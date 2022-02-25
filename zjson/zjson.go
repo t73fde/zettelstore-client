@@ -134,7 +134,7 @@ func WalkItemChild(v Visitor, obj Object, pos int) {
 	for i, l := range it {
 		ef := v.ItemArray(it, i)
 		if bl, ok := l.(Array); ok {
-			WalkBlock(v, bl, 0)
+			WalkBlock(v, bl, i)
 		} else {
 			v.Unexpected(l, i, "Item block array")
 		}
