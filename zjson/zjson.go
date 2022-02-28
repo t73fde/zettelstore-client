@@ -183,6 +183,9 @@ func walkDescriptionList(v Visitor, obj Object, pos int) {
 
 func walkTable(v Visitor, obj Object, pos int) {
 	tdata := GetArray(obj, NameTable)
+	if len(tdata) == 0 {
+		return
+	}
 	if len(tdata) != 2 {
 		v.Unexpected(obj, pos, "Table header/rows")
 		return
