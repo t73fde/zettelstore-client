@@ -102,6 +102,8 @@ func walkObject(v Visitor, val Value, pos int, objFunc func(string, Object, int)
 		WalkBlockChild(v, obj, pos)
 		WalkItemChild(v, obj, pos)
 		WalkInlineChild(v, obj, pos)
+		walkDescriptionList(v, obj, pos)
+		walkTable(v, obj, pos)
 	}
 	if ef != nil {
 		ef()
@@ -150,6 +152,56 @@ func WalkItemChild(v Visitor, obj Object, pos int) {
 		}
 		if ef != nil {
 			ef()
+		}
+	}
+}
+
+func walkDescriptionList(v Visitor, obj Object, pos int) {
+	descrs := GetArray(obj, NameDescrList)
+	if len(descrs) == 0 {
+		return
+	}
+	for _, elem := range descrs {
+		dObj := MakeObject(elem)
+		if dObj == nil {
+			continue
+		}
+		WalkInlineChild(v, dObj, 0)
+		descr := GetArray(dObj, NameDescription)
+		if len(descr) == 0 {
+			continue
+		}
+		for _, ddv := range descr {
+			dd := MakeArray(ddv)
+			if len(dd) == 0 {
+				continue
+			}
+			WalkBlock(v, dd, 0)
+		}
+	}
+}
+
+func walkTable(v Visitor, obj Object, pos int) {
+	tdata := GetArray(obj, NameTable)
+	if len(tdata) != 2 {
+		v.Unexpected(obj, pos, "Table header/rows")
+		return
+	}
+	walkRow(v, MakeArray(tdata[0]))
+	if bArray := MakeArray(tdata[1]); len(bArray) > 0 {
+		for _, row := range bArray {
+			if rArray := MakeArray(row); rArray != nil {
+				walkRow(v, rArray)
+			}
+		}
+	}
+}
+func walkRow(v Visitor, row Array) {
+	if len(row) > 0 {
+		for _, cell := range row {
+			if cObj := MakeObject(cell); cObj != nil {
+				WalkInlineChild(v, cObj, 0)
+			}
 		}
 	}
 }
