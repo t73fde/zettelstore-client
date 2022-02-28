@@ -161,22 +161,22 @@ func walkDescriptionList(v Visitor, obj Object, pos int) {
 	if len(descrs) == 0 {
 		return
 	}
-	for _, elem := range descrs {
+	for i, elem := range descrs {
 		dObj := MakeObject(elem)
 		if dObj == nil {
 			continue
 		}
-		WalkInlineChild(v, dObj, 0)
+		WalkInlineChild(v, dObj, i)
 		descr := GetArray(dObj, NameDescription)
 		if len(descr) == 0 {
 			continue
 		}
-		for _, ddv := range descr {
+		for j, ddv := range descr {
 			dd := MakeArray(ddv)
 			if len(dd) == 0 {
 				continue
 			}
-			WalkBlock(v, dd, 0)
+			WalkBlock(v, dd, j)
 		}
 	}
 }
