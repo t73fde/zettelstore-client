@@ -104,8 +104,10 @@ func (ub *URLBuilder) String() string {
 			sb.WriteByte('&')
 		}
 		sb.WriteString(q.key)
-		sb.WriteByte('=')
-		sb.WriteString(url.QueryEscape(q.val))
+		if val := q.val; val != "" {
+			sb.WriteByte('=')
+			sb.WriteString(url.QueryEscape(val))
+		}
 	}
 	return sb.String()
 }

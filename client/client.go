@@ -332,18 +332,21 @@ func (c *Client) GetZettelJSON(ctx context.Context, zid api.ZettelID) (*api.Zett
 
 // GetParsedZettel return a parsed zettel in a defined encoding.
 func (c *Client) GetParsedZettel(ctx context.Context, zid api.ZettelID, enc api.EncodingEnum) ([]byte, error) {
-	return c.getZettelString(ctx, 'p', zid, enc)
+	return c.getZettelString(ctx, 'p', zid, enc, false)
 }
 
 // GetEvaluatedZettel return an evaluated zettel in a defined encoding.
-func (c *Client) GetEvaluatedZettel(ctx context.Context, zid api.ZettelID, enc api.EncodingEnum) ([]byte, error) {
-	return c.getZettelString(ctx, 'v', zid, enc)
+func (c *Client) GetEvaluatedZettel(ctx context.Context, zid api.ZettelID, enc api.EncodingEnum, embed bool) ([]byte, error) {
+	return c.getZettelString(ctx, 'v', zid, enc, embed)
 }
 
-func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID, enc api.EncodingEnum) ([]byte, error) {
+func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID, enc api.EncodingEnum, embed bool) ([]byte, error) {
 	ub := c.newURLBuilder(key).SetZid(zid)
 	ub.AppendQuery(api.QueryKeyEncoding, enc.String())
 	ub.AppendQuery(api.QueryKeyPart, api.PartContent)
+	if embed {
+		ub.AppendQuery(api.QueryKeyEmbed, "")
+	}
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return nil, err
@@ -357,19 +360,22 @@ func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID
 
 // GetParsedZettelZJSON returns an parsed zettel as a JSON-decoded data structure.
 func (c *Client) GetParsedZJSON(ctx context.Context, zid api.ZettelID, part string) (interface{}, error) {
-	return c.getZJSON(ctx, 'p', zid, part)
+	return c.getZJSON(ctx, 'p', zid, part, false)
 }
 
 // GetEvaluatedZettelZJSON returns an evaluated zettel as a JSON-decoded data structure.
-func (c *Client) GetEvaluatedZJSON(ctx context.Context, zid api.ZettelID, part string) (interface{}, error) {
-	return c.getZJSON(ctx, 'v', zid, part)
+func (c *Client) GetEvaluatedZJSON(ctx context.Context, zid api.ZettelID, part string, embed bool) (interface{}, error) {
+	return c.getZJSON(ctx, 'v', zid, part, embed)
 }
 
-func (c *Client) getZJSON(ctx context.Context, key byte, zid api.ZettelID, part string) (interface{}, error) {
+func (c *Client) getZJSON(ctx context.Context, key byte, zid api.ZettelID, part string, embed bool) (interface{}, error) {
 	ub := c.newURLBuilder(key).SetZid(zid)
 	ub.AppendQuery(api.QueryKeyEncoding, api.EncodingZJSON)
 	if part != "" {
 		ub.AppendQuery(api.QueryKeyPart, part)
+	}
+	if embed {
+		ub.AppendQuery(api.QueryKeyEmbed, "")
 	}
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
