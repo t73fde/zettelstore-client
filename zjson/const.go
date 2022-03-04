@@ -31,7 +31,6 @@ const (
 
 // Values of the metadata key/value type.
 const (
-	MetaBool         = "Boolean"
 	MetaCredential   = "Credential"
 	MetaEmpty        = "EString"
 	MetaID           = "Identifier"
