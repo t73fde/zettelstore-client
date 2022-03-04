@@ -647,3 +647,22 @@ func (c *Client) ListRoles(ctx context.Context) ([]string, error) {
 	}
 	return rl.Roles, nil
 }
+
+// GetVersionJSON returns version information..
+func (c *Client) GetVersionJSON(ctx context.Context) (api.VersionJSON, error) {
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, c.newURLBuilder('x'), nil, nil)
+	if err != nil {
+		return api.VersionJSON{}, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return api.VersionJSON{}, statusToError(resp)
+	}
+	dec := json.NewDecoder(resp.Body)
+	var version api.VersionJSON
+	err = dec.Decode(&version)
+	if err != nil {
+		return api.VersionJSON{}, err
+	}
+	return version, nil
+}
