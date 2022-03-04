@@ -483,26 +483,6 @@ func (c *Client) GetZettelContext(
 	return &out, nil
 }
 
-// GetZettelLinks returns connections to other zettel, embedded material, externals URLs.
-func (c *Client) GetZettelLinks(ctx context.Context, zid api.ZettelID) (*api.ZettelLinksJSON, error) {
-	ub := c.newURLBuilder('l').SetZid(zid)
-	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, statusToError(resp)
-	}
-	dec := json.NewDecoder(resp.Body)
-	var out api.ZettelLinksJSON
-	err = dec.Decode(&out)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 // GetUnlinkedReferences returns connections to other zettel, embedded material, externals URLs.
 func (c *Client) GetUnlinkedReferences(
 	ctx context.Context, zid api.ZettelID, query url.Values) (*api.ZidMetaRelatedList, error) {
