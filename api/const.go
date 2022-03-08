@@ -59,6 +59,9 @@ const (
 	ZidDefaultHome = ZettelID("00010000000000")
 )
 
+// LengthZid factors the constant length of a zettel identifier
+const LengthZid = len(ZidDefaultHome)
+
 // Predefined general Metadata keys
 const (
 	KeyID           = "id"
