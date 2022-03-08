@@ -15,6 +15,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"zettelstore.de/c/api"
@@ -86,10 +87,24 @@ func (v *vis) Unexpected(val zjson.Value, pos int, exp string) { log.Println("Ex
 var baseURL string
 
 func init() {
-	flag.StringVar(&baseURL, "base-url", "http://localhost:23123", "Base URL")
+	flag.StringVar(&baseURL, "base-url", "http://localhost:23123/", "Base URL")
 }
 
-func getClient() *client.Client { return client.NewClient(baseURL) }
+func getClient() *client.Client {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		panic(err)
+	}
+	return client.NewClient(u)
+}
+
+func TestBase(t *testing.T) {
+	exp := baseURL
+	got := getClient().Base()
+	if exp != got {
+		t.Errorf("Base: expected=%q, but got=%q", exp, got)
+	}
+}
 
 // TestMain controls whether client API tests should run or not.
 func TestMain(m *testing.M) {

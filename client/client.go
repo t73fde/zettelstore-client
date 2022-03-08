@@ -28,7 +28,7 @@ import (
 
 // Client contains all data to execute requests.
 type Client struct {
-	baseURL   string
+	base      string
 	username  string
 	password  string
 	token     string
@@ -37,13 +37,23 @@ type Client struct {
 	client    http.Client
 }
 
+// Base returns the base part of the URLs that are used to communicate with a Zettelstore.
+func (c *Client) Base() string { return c.base }
+
 // NewClient create a new client.
-func NewClient(baseURL string) *Client {
-	if !strings.HasSuffix(baseURL, "/") {
-		baseURL += "/"
+func NewClient(u *url.URL) *Client {
+	myURL := *u
+	myURL.User = nil
+	myURL.ForceQuery = false
+	myURL.RawQuery = ""
+	myURL.Fragment = ""
+	myURL.RawFragment = ""
+	base := myURL.String()
+	if !strings.HasSuffix(base, "/") {
+		base += "/"
 	}
 	c := Client{
-		baseURL: baseURL,
+		base: base,
 		client: http.Client{
 			Timeout: 10 * time.Second,
 			Transport: &http.Transport{
@@ -99,7 +109,7 @@ func statusToError(resp *http.Response) error {
 }
 
 func (c *Client) newURLBuilder(key byte) *api.URLBuilder {
-	return api.NewURLBuilder(c.baseURL, key)
+	return api.NewURLBuilder(c.base, key)
 }
 func (*Client) newRequest(ctx context.Context, method string, ub *api.URLBuilder, body io.Reader) (*http.Request, error) {
 	return http.NewRequestWithContext(ctx, method, ub.String(), body)
