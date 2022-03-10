@@ -116,3 +116,15 @@ func (a Attributes) GetClasses() []string {
 	}
 	return strings.Fields(classes)
 }
+
+// HasClass returns true, if attributes contains the given class.
+func (a Attributes) HasClass(s string) bool {
+	if a == nil {
+		return false
+	}
+	classes, found := a["class"]
+	if !found {
+		return false
+	}
+	return strings.Contains(classes+" ", s+" ")
+}

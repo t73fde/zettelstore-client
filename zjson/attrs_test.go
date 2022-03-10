@@ -46,3 +46,29 @@ func TestAttrClone(t *testing.T) {
 		t.Error("Aliased map")
 	}
 }
+
+func TestHasClass(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		classes string
+		class   string
+		exp     bool
+	}{
+		{"", "", true},
+		{"x", "", true},
+		{"x", "x", true},
+		{"x", "y", false},
+		{"abc def ghi", "abc", true},
+		{"abc def ghi", "def", true},
+		{"abc def ghi", "ghi", true},
+		{"abc def ghi", "b", false},
+	}
+	for _, tc := range testcases {
+		var a zjson.Attributes
+		a = a.Set("class", tc.classes)
+		got := a.HasClass(tc.class)
+		if tc.exp != got {
+			t.Errorf("%q.HasDefault(%q)=%v, but got %v", tc.classes, tc.class, tc.exp, got)
+		}
+	}
+}

@@ -87,6 +87,7 @@ const (
 	TypeTransclude      = "Transclude"
 	TypeVerbatimCode    = "CodeBlock"
 	TypeVerbatimComment = "CommentBlock"
+	TypeVerbatimEval    = "EvalBlock"
 	TypeVerbatimHTML    = "HTMLBlock"
 	TypeVerbatimZettel  = "ZettelBlock"
 )
