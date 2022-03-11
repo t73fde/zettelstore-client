@@ -102,7 +102,7 @@ func walkObject(v Visitor, val Value, pos int, objFunc func(string, Object, int)
 		WalkBlockChild(v, obj, pos)
 		WalkItemChild(v, obj, pos)
 		WalkInlineChild(v, obj, pos)
-		walkDescriptionList(v, obj, pos)
+		walkDescriptionList(v, obj)
 		walkTable(v, obj, pos)
 	}
 	if ef != nil {
@@ -156,7 +156,7 @@ func WalkItemChild(v Visitor, obj Object, pos int) {
 	}
 }
 
-func walkDescriptionList(v Visitor, obj Object, pos int) {
+func walkDescriptionList(v Visitor, obj Object) {
 	descrs := GetArray(obj, NameDescrList)
 	if len(descrs) == 0 {
 		return

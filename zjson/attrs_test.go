@@ -61,7 +61,7 @@ func TestHasClass(t *testing.T) {
 		{"abc def ghi", "abc", true},
 		{"abc def ghi", "def", true},
 		{"abc def ghi", "ghi", true},
-		{"abc def ghi", "b", false},
+		{"ab de gi", "b", false},
 	}
 	for _, tc := range testcases {
 		var a zjson.Attributes

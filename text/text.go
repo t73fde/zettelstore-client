@@ -44,16 +44,16 @@ func (v *textV) WriteSpace() {
 }
 func (v *textV) WriteString(s string) { io.WriteString(v.w, s); v.canSpace = true }
 
-func (v *textV) BlockArray(a zjson.Array, pos int) zjson.CloseFunc  { return nil }
-func (v *textV) InlineArray(a zjson.Array, pos int) zjson.CloseFunc { return nil }
-func (v *textV) ItemArray(a zjson.Array, pos int) zjson.CloseFunc   { return nil }
+func (*textV) BlockArray(zjson.Array, int) zjson.CloseFunc  { return nil }
+func (*textV) InlineArray(zjson.Array, int) zjson.CloseFunc { return nil }
+func (*textV) ItemArray(zjson.Array, int) zjson.CloseFunc   { return nil }
 
-func (v *textV) BlockObject(t string, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+func (v *textV) BlockObject(string, zjson.Object, int) (bool, zjson.CloseFunc) {
 	v.WriteSpace()
 	return true, nil
 }
 
-func (v *textV) InlineObject(t string, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+func (v *textV) InlineObject(t string, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	v.WriteSpace()
 	switch t {
 	case zjson.TypeText, zjson.TypeTag:
@@ -66,6 +66,6 @@ func (v *textV) InlineObject(t string, obj zjson.Object, pos int) (bool, zjson.C
 	return false, nil
 }
 
-func (v *textV) Unexpected(val zjson.Value, pos int, exp string) {
+func (*textV) Unexpected(val zjson.Value, pos int, exp string) {
 	log.Printf("?%v %d %T %v\n", exp, pos, val, val)
 }
