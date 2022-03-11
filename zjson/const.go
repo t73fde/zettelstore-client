@@ -76,6 +76,7 @@ const (
 	TypeLiteralHTML     = "HTML"
 	TypeLiteralInput    = "Input"
 	TypeLiteralOutput   = "Output"
+	TypeLiteralMath     = "Math"
 	TypeLiteralZettel   = "Zettel"
 	TypeMark            = "Mark"
 	TypeParagraph       = "Para"
@@ -89,6 +90,7 @@ const (
 	TypeVerbatimComment = "CommentBlock"
 	TypeVerbatimEval    = "EvalBlock"
 	TypeVerbatimHTML    = "HTMLBlock"
+	TypeVerbatimMath    = "MathBlock"
 	TypeVerbatimZettel  = "ZettelBlock"
 )
 
