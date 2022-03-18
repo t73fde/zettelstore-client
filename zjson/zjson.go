@@ -269,8 +269,8 @@ func GetAttributes(obj Object) Attributes {
 	return result
 }
 
-// SetAttribute copies the attributes to the given object.
-func SetAttribute(obj Object, a Attributes) {
+// SetAttributes copies the attributes to the given object.
+func SetAttributes(obj Object, a Attributes) {
 	if len(a) == 0 {
 		delete(obj, NameAttribute)
 	}
