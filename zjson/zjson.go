@@ -254,7 +254,7 @@ func MakeString(val Value) string {
 	return ""
 }
 
-// GetAttribute returns the attributes of the given object.
+// GetAttribute returns a copy of the attributes of the given object.
 func GetAttributes(obj Object) Attributes {
 	a := GetObject(obj, NameAttribute)
 	if len(a) == 0 {
@@ -267,6 +267,18 @@ func GetAttributes(obj Object) Attributes {
 		}
 	}
 	return result
+}
+
+// SetAttribute copies the attributes to the given object.
+func SetAttribute(obj Object, a Attributes) {
+	if len(a) == 0 {
+		delete(obj, NameAttribute)
+	}
+	val := make(Object)
+	for k, v := range a {
+		val[k] = v
+	}
+	obj[NameAttribute] = val
 }
 
 // GetObject returns the object found at the given object with the given name.
