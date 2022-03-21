@@ -42,9 +42,10 @@ const (
 	ZidTagsTemplate    = ZettelID("00000000010600")
 	ZidErrorTemplate   = ZettelID("00000000010700")
 
-	// WebUI CSS zettel are in the range 20000..29999
-	ZidBaseCSS = ZettelID("00000000020001")
-	ZidUserCSS = ZettelID("00000000025001")
+	// CSS-related zettel are in the range 20000..29999
+	ZidBaseCSS    = ZettelID("00000000020001")
+	ZidUserCSS    = ZettelID("00000000025001")
+	ZidRoleCSSMap = ZettelID("00000000029000") // Maps roles to CSS zettel, which should be in the range 29001..29999.
 
 	// WebUI JS zettel are in the range 30000..39999
 
