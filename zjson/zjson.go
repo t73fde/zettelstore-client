@@ -15,6 +15,7 @@ package zjson
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 )
 
 // Value is the gerneric JSON value.
@@ -25,6 +26,18 @@ type Array = []Value
 
 // Object represents a JSON object.
 type Object = map[string]Value
+
+// Decode some JSON data and return the tree.
+func Decode(data io.Reader) (Value, error) {
+	var result interface{}
+	dec := json.NewDecoder(data)
+	dec.UseNumber()
+	err := dec.Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
 
 // GetMetaContent returns the metadata and the content of a zettel ZJSON.
 func GetMetaContent(zjZettel Value) (Meta, Array) {

@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"zettelstore.de/c/api"
+	"zettelstore.de/c/zjson"
 )
 
 // Client contains all data to execute requests.
@@ -369,16 +370,16 @@ func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID
 }
 
 // GetParsedZettelZJSON returns an parsed zettel as a JSON-decoded data structure.
-func (c *Client) GetParsedZJSON(ctx context.Context, zid api.ZettelID, part string) (interface{}, error) {
+func (c *Client) GetParsedZJSON(ctx context.Context, zid api.ZettelID, part string) (zjson.Value, error) {
 	return c.getZJSON(ctx, 'p', zid, part, false)
 }
 
 // GetEvaluatedZettelZJSON returns an evaluated zettel as a JSON-decoded data structure.
-func (c *Client) GetEvaluatedZJSON(ctx context.Context, zid api.ZettelID, part string, embed bool) (interface{}, error) {
+func (c *Client) GetEvaluatedZJSON(ctx context.Context, zid api.ZettelID, part string, embed bool) (zjson.Value, error) {
 	return c.getZJSON(ctx, 'v', zid, part, embed)
 }
 
-func (c *Client) getZJSON(ctx context.Context, key byte, zid api.ZettelID, part string, embed bool) (interface{}, error) {
+func (c *Client) getZJSON(ctx context.Context, key byte, zid api.ZettelID, part string, embed bool) (zjson.Value, error) {
 	ub := c.newURLBuilder(key).SetZid(zid)
 	ub.AppendQuery(api.QueryKeyEncoding, api.EncodingZJSON)
 	if part != "" {
@@ -395,14 +396,7 @@ func (c *Client) getZJSON(ctx context.Context, key byte, zid api.ZettelID, part 
 	if resp.StatusCode != http.StatusOK {
 		return nil, statusToError(resp)
 	}
-	var result interface{}
-	dec := json.NewDecoder(resp.Body)
-	dec.UseNumber()
-	err = dec.Decode(&result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return zjson.Decode(resp.Body)
 }
 
 // GetMeta returns the metadata of a zettel.
