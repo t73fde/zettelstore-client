@@ -296,3 +296,16 @@ func MakeObject(val Value) Object {
 	}
 	return nil
 }
+
+// GetParagraphInline return the inline list of the first paragraph (or nil if there is no such thing)
+func GetParagraphInline(a Array) Array {
+	if len(a) != 1 {
+		return nil
+	}
+	if o := MakeObject(a[0]); o != nil {
+		if GetString(o, NameType) == TypeParagraph {
+			return GetArray(o, NameInline)
+		}
+	}
+	return nil
+}

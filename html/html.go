@@ -91,8 +91,8 @@ var unsafeSnippets = []string{
 	"<iframe", "</iframe",
 }
 
-// IsSave returns true if the given string does not contain unsafe HTML elements.
-func IsSave(s string) bool {
+// IsSafe returns true if the given string does not contain unsafe HTML elements.
+func IsSafe(s string) bool {
 	lower := strings.ToLower(s)
 	for _, snippet := range unsafeSnippets {
 		if strings.Contains(lower, snippet) {
