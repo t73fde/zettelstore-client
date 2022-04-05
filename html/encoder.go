@@ -204,13 +204,30 @@ func (enc *Encoder) BlockObject(t string, obj zjson.Object, pos int) (bool, zjso
 }
 
 func (enc *Encoder) visitHeading(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-	level, err := strconv.Atoi(zjson.GetNumber(obj))
-	if err != nil {
-		return true, nil
+	strLevel := zjson.GetNumber(obj)
+	if enc.headingOffset > 0 {
+		level, err := strconv.Atoi(strLevel)
+		if err != nil {
+			return true, nil
+		}
+		strLevel = strconv.Itoa(level + enc.headingOffset)
 	}
-	level += enc.headingOffset
-	fmt.Fprintf(enc, "<h%v>", level)
-	return true, func() { fmt.Fprintf(enc, "</h%v>", level) }
+	a := zjson.GetAttributes(obj)
+	if _, found := a.Get("id"); !found {
+		if s := zjson.GetString(obj, zjson.NameString); s != "" {
+			a.Set("id", s)
+		}
+	}
+	enc.WriteString("<h")
+	enc.WriteString(strLevel)
+	enc.WriteAttributes(a)
+	enc.Write([]byte{'>'})
+
+	return true, func() {
+		enc.WriteString("</h")
+		enc.WriteString(strLevel)
+		enc.Write([]byte{'>'})
+	}
 }
 
 func (enc *Encoder) writeList(tag string) (bool, zjson.CloseFunc) {
@@ -391,7 +408,7 @@ func (enc *Encoder) writeVerbatim(obj zjson.Object, a zjson.Attributes) (bool, z
 }
 
 func (enc *Encoder) visitVerbatimComment(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-	if enc.writeComment {
+	if enc.writeComment && zjson.GetAttributes(obj).HasDefault() {
 		if s := zjson.GetString(obj, zjson.NameString); s != "" {
 			enc.WriteString("<!--\n")
 			enc.WriteEscaped(s)
