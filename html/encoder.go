@@ -145,7 +145,14 @@ func (enc *Encoder) MustGetTypeFunc(t string) TypeFunc {
 	return tf
 }
 
-func (enc *Encoder) SetUnique(s string)            { enc.unique = s }
+func (enc *Encoder) SetUnique(s string) {
+	if s == "" {
+		enc.unique = ""
+	} else {
+		enc.unique = ":" + s
+	}
+}
+
 func (enc *Encoder) TraverseBlock(bn zjson.Array)  { zjson.WalkBlock(enc, bn, 0) }
 func (enc *Encoder) TraverseInline(in zjson.Array) { zjson.WalkInline(enc, in, 0) }
 func (enc *Encoder) TraverseInlineObjects(val zjson.Value) {
@@ -177,10 +184,7 @@ func (enc *Encoder) WriteEndnotes() {
 	enc.WriteString("<ol class=\"zs-endnotes\">\n")
 	for i, fni := range enc.footnotes {
 		n := strconv.Itoa(i + 1)
-		un := n
-		if enc.unique != "" {
-			un = enc.unique + ":" + n
-		}
+		un := enc.unique + n
 		a := fni.attrs.Clone().AddClass("zs-footnote").Set("value", n)
 		if _, found := a.Get("id"); !found {
 			a = a.Set("id", "fn:"+un)
@@ -245,6 +249,11 @@ func (enc *Encoder) visitHeading(obj zjson.Object, _ int) (bool, zjson.CloseFunc
 	if _, found := a.Get("id"); !found {
 		if s := zjson.GetString(obj, zjson.NameString); s != "" {
 			a = a.Set("id", s)
+		}
+	}
+	if enc.unique != "" {
+		if val, found := a.Get("id"); found {
+			a = a.Set("id", enc.unique+val)
 		}
 	}
 	enc.WriteString("<h")
@@ -594,15 +603,10 @@ func (enc *Encoder) visitCite(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 func (enc *Encoder) visitMark(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	if q := zjson.GetString(obj, zjson.NameString2); q != "" {
 		enc.WriteString(`<a id="`)
-		if enc.unique != "" {
-			enc.WriteString(enc.unique)
-			enc.WriteByte(':')
-		}
+		enc.WriteString(enc.unique)
 		enc.WriteString(q)
 		enc.WriteString(`">`)
-		return true, func() {
-			enc.WriteString("</a>")
-		}
+		return true, func() { enc.WriteString("</a>") }
 	}
 	return true, nil
 }
@@ -612,10 +616,7 @@ func (enc *Encoder) visitFootnote(obj zjson.Object, _ int) (bool, zjson.CloseFun
 		if fn := zjson.GetArray(obj, zjson.NameInline); fn != nil {
 			enc.footnotes = append(enc.footnotes, footnodeInfo{fn, zjson.GetAttributes(obj)})
 			n := strconv.Itoa(len(enc.footnotes))
-			un := n
-			if enc.unique != "" {
-				un = enc.unique + ":" + n
-			}
+			un := enc.unique + n
 			enc.WriteString(`<sup id="fnref:`)
 			enc.WriteString(un)
 			enc.WriteString(`"><a class="zs-footnote" href="#fn:`)
