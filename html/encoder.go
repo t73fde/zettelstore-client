@@ -303,12 +303,23 @@ func (enc *Encoder) visitDescription(obj zjson.Object, _ int) (bool, zjson.Close
 				continue
 			}
 			enc.WriteString("<dd>")
-			zjson.WalkBlock(enc, dd, 0)
+			enc.writeDescriptionSlice(dd)
 			enc.WriteString("</dd>\n")
 		}
 	}
 	enc.WriteString("</dl>")
 	return false, nil
+}
+func (enc *Encoder) writeDescriptionSlice(dd zjson.Array) {
+	if len(dd) == 1 {
+		if b := zjson.MakeObject(dd[0]); b != nil {
+			if t := zjson.GetString(b, zjson.NameType); t == zjson.TypeParagraph {
+				zjson.WalkInlineChild(enc, b, 0)
+				return
+			}
+		}
+	}
+	zjson.WalkBlock(enc, dd, 0)
 }
 
 func (enc *Encoder) visitQuotation(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
