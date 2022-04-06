@@ -48,7 +48,7 @@ func NewEncoder(w io.Writer, headingOffset int) *Encoder {
 		headingOffset: headingOffset,
 		unique:        "",
 		footnotes:     nil,
-		writeFootnote: false,
+		writeFootnote: true,
 		visibleSpace:  false,
 	}
 	enc.setupTypeMap()
