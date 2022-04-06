@@ -185,7 +185,7 @@ func (enc *Encoder) WriteEndnotes() {
 	for i, fni := range enc.footnotes {
 		n := strconv.Itoa(i + 1)
 		un := enc.unique + n
-		a := fni.attrs.Clone().AddClass("zs-footnote").Set("value", n)
+		a := fni.attrs.Clone().AddClass("zs-endnote").Set("value", n)
 		if _, found := a.Get("id"); !found {
 			a = a.Set("id", "fn:"+un)
 		}
@@ -196,7 +196,7 @@ func (enc *Encoder) WriteEndnotes() {
 		enc.WriteAttributes(a)
 		enc.WriteByte('>')
 		zjson.WalkInline(enc, fni.note, 0)
-		enc.WriteString(` <a class="zs-footnote-backref" href="#fnref:`)
+		enc.WriteString(` <a class="zs-endnote-backref" href="#fnref:`)
 		enc.WriteString(un)
 		enc.WriteString("\" role=\"doc-backlink\">&#x21a9;&#xfe0e;</a></li>\n")
 	}
@@ -622,7 +622,7 @@ func (enc *Encoder) visitFootnote(obj zjson.Object, _ int) (bool, zjson.CloseFun
 			un := enc.unique + n
 			enc.WriteString(`<sup id="fnref:`)
 			enc.WriteString(un)
-			enc.WriteString(`"><a class="zs-footnote" href="#fn:`)
+			enc.WriteString(`"><a class="zs-noteref" href="#fn:`)
 			enc.WriteString(un)
 			enc.WriteString(`" role="doc-noteref">`)
 			enc.WriteString(n)
