@@ -89,7 +89,7 @@ func (enc *Encoder) setupTypeMap() {
 			return false, nil
 		},
 		zjson.TypeBreakHard: func(zjson.Object, int) (bool, zjson.CloseFunc) {
-			enc.WriteString("<br>")
+			enc.WriteString("<br>\n")
 			return false, nil
 		},
 		zjson.TypeTag:            enc.visitTag,
