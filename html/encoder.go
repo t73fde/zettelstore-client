@@ -63,8 +63,8 @@ func (enc *Encoder) setupTypeMap() {
 		},
 		zjson.TypeHeading:         enc.visitHeading,
 		zjson.TypeBreakThematic:   func(zjson.Object, int) (bool, zjson.CloseFunc) { enc.WriteString("<hr>"); return false, nil },
-		zjson.TypeListBullet:      func(zjson.Object, int) (bool, zjson.CloseFunc) { return enc.writeList("ul") },
-		zjson.TypeListOrdered:     func(zjson.Object, int) (bool, zjson.CloseFunc) { return enc.writeList("ol") },
+		zjson.TypeListBullet:      enc.visitListBullet,
+		zjson.TypeListOrdered:     enc.visitListOrdered,
 		zjson.TypeDescrList:       enc.visitDescription,
 		zjson.TypeListQuotation:   enc.visitQuotation,
 		zjson.TypeTable:           enc.visitTable,
@@ -271,15 +271,68 @@ func (enc *Encoder) visitHeading(obj zjson.Object, _ int) (bool, zjson.CloseFunc
 	}
 }
 
-func (enc *Encoder) writeList(tag string) (bool, zjson.CloseFunc) {
-	enc.WriteByte('<')
-	enc.WriteString(tag)
-	enc.WriteByte('>')
-	return true, func() {
-		enc.WriteString("</")
-		enc.WriteString(tag)
-		enc.WriteByte('>')
+func (enc *Encoder) visitListBullet(obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+	enc.WriteString("<ul>\n")
+	enc.writeListChildren(obj, pos)
+	enc.WriteString("</ul>")
+	return false, nil
+}
+func (enc *Encoder) visitListOrdered(obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+	enc.WriteString("<ol>\n")
+	enc.writeListChildren(obj, pos)
+	enc.WriteString("</ol>")
+	return false, nil
+}
+
+func (enc *Encoder) writeListChildren(obj zjson.Object, pos int) {
+	children := zjson.GetArray(obj, zjson.NameList)
+	if children == nil {
+		return
 	}
+	compact := isCompactList(children)
+	for i, l := range children {
+		ef := enc.ItemArray(children, i)
+		if items, ok := l.(zjson.Array); ok {
+			enc.writeListItems(items, i, compact)
+		} else {
+			enc.Unexpected(l, i, "Item block array")
+		}
+		if ef != nil {
+			ef()
+		}
+	}
+}
+func isCompactList(children zjson.Array) bool {
+	for _, iVal := range children {
+		items := zjson.MakeArray(iVal)
+		if len(items) < 1 {
+			continue
+		}
+		if len(items) > 1 {
+			return false
+		}
+		// Assert: len(blks) == 1
+		obj := zjson.MakeObject(items[0])
+		if obj == nil {
+			continue
+		}
+		t := zjson.GetString(obj, zjson.NameType)
+		if t != zjson.TypeParagraph {
+			return false
+		}
+	}
+	return true
+}
+func (enc *Encoder) writeListItems(items zjson.Array, pos int, compact bool) {
+	if compact && len(items) == 1 {
+		if obj := zjson.MakeObject(items[0]); obj != nil {
+			if t := zjson.GetString(obj, zjson.NameType); t == zjson.TypeParagraph {
+				zjson.WalkInlineChild(enc, obj, pos)
+				return
+			}
+		}
+	}
+	zjson.WalkBlock(enc, items, pos)
 }
 
 func (enc *Encoder) visitDescription(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
