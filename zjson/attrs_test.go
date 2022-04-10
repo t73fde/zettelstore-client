@@ -55,20 +55,21 @@ func TestHasClass(t *testing.T) {
 		exp     bool
 	}{
 		{"", "", true},
-		{"x", "", true},
+		{"x", "", false},
 		{"x", "x", true},
 		{"x", "y", false},
 		{"abc def ghi", "abc", true},
 		{"abc def ghi", "def", true},
 		{"abc def ghi", "ghi", true},
 		{"ab de gi", "b", false},
+		{"ab de gi", "d", false},
 	}
 	for _, tc := range testcases {
 		var a zjson.Attributes
 		a = a.Set("class", tc.classes)
 		got := a.HasClass(tc.class)
 		if tc.exp != got {
-			t.Errorf("%q.HasDefault(%q)=%v, but got %v", tc.classes, tc.class, tc.exp, got)
+			t.Errorf("%q.HasClass(%q)=%v, but got %v", tc.classes, tc.class, tc.exp, got)
 		}
 	}
 }

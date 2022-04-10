@@ -47,7 +47,7 @@ func TestGetProtectedZettel(t *testing.T) {
 
 func TestGetZJSONZettel(t *testing.T) {
 	c := getClient()
-	data, err := c.GetEvaluatedZJSON(context.Background(), api.ZidDefaultHome, api.PartContent, true)
+	data, err := c.GetEvaluatedZJSON(context.Background(), api.ZidDefaultHome, api.PartContent)
 	if err != nil {
 		t.Error(err)
 		return

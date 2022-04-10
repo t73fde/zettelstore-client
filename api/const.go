@@ -133,7 +133,6 @@ const (
 	QueryKeyCommand  = "_cmd"
 	QueryKeyDepth    = "_depth"
 	QueryKeyDir      = "_dir"
-	QueryKeyEmbed    = "_embed"
 	QueryKeyEncoding = "_enc"
 	QueryKeyLimit    = "_limit"
 	QueryKeyNegate   = "_negate"

@@ -126,5 +126,5 @@ func (a Attributes) HasClass(s string) bool {
 	if !found {
 		return false
 	}
-	return strings.Contains(classes+" ", s+" ")
+	return strings.Contains(" "+classes+" ", " "+s+" ")
 }
