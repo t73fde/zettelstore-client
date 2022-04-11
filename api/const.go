@@ -152,7 +152,6 @@ const (
 
 // Supported encoding values.
 const (
-	EncodingCHTML  = "chtml" // possibly just temporary
 	EncodingHTML   = "html"
 	EncodingNative = "native"
 	EncodingText   = "text"
@@ -161,7 +160,6 @@ const (
 )
 
 var mapEncodingEnum = map[string]EncodingEnum{
-	EncodingCHTML:  EncoderCHTML,
 	EncodingHTML:   EncoderHTML,
 	EncodingNative: EncoderNative,
 	EncodingText:   EncoderText,
@@ -190,7 +188,6 @@ type EncodingEnum uint8
 // Values for EncoderEnum
 const (
 	EncoderUnknown EncodingEnum = iota
-	EncoderCHTML
 	EncoderHTML
 	EncoderNative
 	EncoderText
