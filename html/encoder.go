@@ -182,7 +182,9 @@ func (enc *Encoder) WriteEndnotes() {
 		return
 	}
 	enc.WriteString("\n<ol class=\"zs-endnotes\">\n")
-	for i, fni := range enc.footnotes {
+	for i := 0; len(enc.footnotes) > 0; i++ {
+		fni := enc.footnotes[0]
+		enc.footnotes = enc.footnotes[1:]
 		n := strconv.Itoa(i + 1)
 		un := enc.unique + n
 		a := fni.attrs.Clone().AddClass("zs-endnote").Set("value", n)
@@ -195,7 +197,7 @@ func (enc *Encoder) WriteEndnotes() {
 		enc.WriteString("<li")
 		enc.WriteAttributes(a)
 		enc.WriteByte('>')
-		zjson.WalkInline(enc, fni.note, 0)
+		zjson.WalkInline(enc, fni.note, 0) // May add more footnotes
 		enc.WriteString(` <a class="zs-endnote-backref" href="#fnref:`)
 		enc.WriteString(un)
 		enc.WriteString("\" role=\"doc-backlink\">&#x21a9;&#xfe0e;</a></li>\n")
