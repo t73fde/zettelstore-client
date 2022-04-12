@@ -23,7 +23,7 @@ import (
 )
 
 // TypeFunc is a function that handles the encoding of a specific ZJSON type.
-type TypeFunc func(obj zjson.Object, pos int) (bool, zjson.CloseFunc)
+type TypeFunc func(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.CloseFunc)
 type typeMap map[string]TypeFunc
 
 // Encoder translate a ZJSON object into some HTML text.
@@ -57,20 +57,27 @@ func NewEncoder(w io.Writer, headingOffset int) *Encoder {
 func (enc *Encoder) setupTypeMap() {
 	enc.tm = typeMap{
 		// Block
-		zjson.TypeParagraph: func(zjson.Object, int) (bool, zjson.CloseFunc) {
+		zjson.TypeParagraph: func(enc *Encoder, _ zjson.Object, _ int) (bool, zjson.CloseFunc) {
 			enc.WriteString("<p>")
 			return true, func() { enc.WriteString("</p>") }
 		},
-		zjson.TypeHeading:         enc.visitHeading,
-		zjson.TypeBreakThematic:   func(zjson.Object, int) (bool, zjson.CloseFunc) { enc.WriteString("<hr>"); return false, nil },
-		zjson.TypeListBullet:      enc.visitListBullet,
-		zjson.TypeListOrdered:     enc.visitListOrdered,
-		zjson.TypeDescrList:       enc.visitDescription,
-		zjson.TypeListQuotation:   enc.visitQuotation,
-		zjson.TypeTable:           enc.visitTable,
-		zjson.TypeBlock:           enc.visitBlock,
-		zjson.TypePoem:            func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeRegion(obj, "div") },
-		zjson.TypeExcerpt:         func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeRegion(obj, "blockquote") },
+		zjson.TypeHeading: enc.visitHeading,
+		zjson.TypeBreakThematic: func(enc *Encoder, _ zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			enc.WriteString("<hr>")
+			return false, nil
+		},
+		zjson.TypeListBullet:    enc.visitListBullet,
+		zjson.TypeListOrdered:   enc.visitListOrdered,
+		zjson.TypeDescrList:     enc.visitDescription,
+		zjson.TypeListQuotation: enc.visitQuotation,
+		zjson.TypeTable:         enc.visitTable,
+		zjson.TypeBlock:         enc.visitBlock,
+		zjson.TypePoem: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			return enc.writeRegion(obj, "div")
+		},
+		zjson.TypeExcerpt: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			return enc.writeRegion(obj, "blockquote")
+		},
 		zjson.TypeVerbatimCode:    enc.visitVerbatimCode,
 		zjson.TypeVerbatimEval:    enc.visitVerbatimEval,
 		zjson.TypeVerbatimComment: enc.visitVerbatimComment,
@@ -79,40 +86,56 @@ func (enc *Encoder) setupTypeMap() {
 		zjson.TypeBLOB:            enc.visitBLOB,
 
 		// Inline
-		zjson.TypeText: func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+		zjson.TypeText: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 			enc.WriteString(zjson.GetString(obj, zjson.NameString))
 			return false, nil
 		},
 		zjson.TypeSpace: enc.visitSpace,
-		zjson.TypeBreakSoft: func(zjson.Object, int) (bool, zjson.CloseFunc) {
+		zjson.TypeBreakSoft: func(enc *Encoder, _ zjson.Object, _ int) (bool, zjson.CloseFunc) {
 			enc.WriteEOL()
 			return false, nil
 		},
-		zjson.TypeBreakHard: func(zjson.Object, int) (bool, zjson.CloseFunc) {
+		zjson.TypeBreakHard: func(enc *Encoder, _ zjson.Object, _ int) (bool, zjson.CloseFunc) {
 			enc.WriteString("<br>\n")
 			return false, nil
 		},
-		zjson.TypeTag:            enc.visitTag,
-		zjson.TypeLink:           enc.visitLink,
-		zjson.TypeEmbed:          enc.visitEmbed,
-		zjson.TypeEmbedBLOB:      enc.visitEmbedBLOB,
-		zjson.TypeCitation:       enc.visitCite,
-		zjson.TypeMark:           enc.visitMark,
-		zjson.TypeFootnote:       enc.visitFootnote,
-		zjson.TypeFormatDelete:   func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeFormat(obj, "del") },
-		zjson.TypeFormatEmph:     func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeFormat(obj, "em") },
-		zjson.TypeFormatInsert:   func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeFormat(obj, "ins") },
-		zjson.TypeFormatQuote:    func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeFormat(obj, "q") },
-		zjson.TypeFormatSpan:     func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeFormat(obj, "span") },
-		zjson.TypeFormatStrong:   func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeFormat(obj, "strong") },
-		zjson.TypeFormatSub:      func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeFormat(obj, "sub") },
-		zjson.TypeFormatSuper:    func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeFormat(obj, "sup") },
+		zjson.TypeTag:       enc.visitTag,
+		zjson.TypeLink:      enc.visitLink,
+		zjson.TypeEmbed:     enc.visitEmbed,
+		zjson.TypeEmbedBLOB: enc.visitEmbedBLOB,
+		zjson.TypeCitation:  enc.visitCite,
+		zjson.TypeMark:      enc.visitMark,
+		zjson.TypeFootnote:  enc.visitFootnote,
+		zjson.TypeFormatDelete: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			return enc.writeFormat(obj, "del")
+		},
+		zjson.TypeFormatEmph: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeFormat(obj, "em") },
+		zjson.TypeFormatInsert: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			return enc.writeFormat(obj, "ins")
+		},
+		zjson.TypeFormatQuote: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeFormat(obj, "q") },
+		zjson.TypeFormatSpan: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			return enc.writeFormat(obj, "span")
+		},
+		zjson.TypeFormatStrong: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			return enc.writeFormat(obj, "strong")
+		},
+		zjson.TypeFormatSub: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			return enc.writeFormat(obj, "sub")
+		},
+		zjson.TypeFormatSuper: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			return enc.writeFormat(obj, "sup")
+		},
 		zjson.TypeLiteralCode:    enc.visitLiteralCode,
 		zjson.TypeLiteralComment: enc.visitLiteralComment,
-		zjson.TypeLiteralInput:   func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeLiteral(obj, "kbd") },
-		zjson.TypeLiteralOutput:  func(obj zjson.Object, _ int) (bool, zjson.CloseFunc) { return enc.writeLiteral(obj, "samp") },
-		zjson.TypeLiteralHTML:    enc.visitHTML,
-		zjson.TypeLiteralMath:    enc.visitLiteralMath,
+		zjson.TypeLiteralInput: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			return enc.writeLiteral(obj, "kbd")
+		},
+		zjson.TypeLiteralOutput: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+			return enc.writeLiteral(obj, "samp")
+		},
+		zjson.TypeLiteralHTML: enc.visitHTML,
+		zjson.TypeLiteralMath: enc.visitLiteralMath,
 	}
 }
 
@@ -144,6 +167,9 @@ func (enc *Encoder) MustGetTypeFunc(t string) TypeFunc {
 	}
 	return tf
 }
+
+// ReplaceWriter flushes the previous writer and installs the new one.
+func (enc *Encoder) ReplaceWriter(w io.Writer) { enc.w = w }
 
 func (enc *Encoder) SetUnique(s string) {
 	if s == "" {
@@ -234,14 +260,14 @@ func (enc *Encoder) BlockObject(t string, obj zjson.Object, pos int) (bool, zjso
 		enc.WriteEOL()
 	}
 	if fun, found := enc.tm[t]; found {
-		return fun(obj, pos)
+		return fun(enc, obj, pos)
 	}
 	fmt.Fprintln(enc, obj)
 	log.Printf("B%T %v\n", obj, obj)
 	return true, nil
 }
 
-func (enc *Encoder) visitHeading(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitHeading(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	strLevel := zjson.GetNumber(obj)
 	if enc.headingOffset > 0 {
 		level, err := strconv.Atoi(strLevel)
@@ -273,13 +299,13 @@ func (enc *Encoder) visitHeading(obj zjson.Object, _ int) (bool, zjson.CloseFunc
 	}
 }
 
-func (enc *Encoder) visitListBullet(obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitListBullet(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
 	enc.WriteString("<ul>\n")
 	enc.writeListChildren(obj, pos)
 	enc.WriteString("</ul>")
 	return false, nil
 }
-func (enc *Encoder) visitListOrdered(obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitListOrdered(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
 	enc.WriteString("<ol>\n")
 	enc.writeListChildren(obj, pos)
 	enc.WriteString("</ol>")
@@ -337,7 +363,7 @@ func (enc *Encoder) writeListItems(items zjson.Array, pos int, compact bool) {
 	zjson.WalkBlock(enc, items, pos)
 }
 
-func (enc *Encoder) visitDescription(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitDescription(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	descrs := zjson.GetArray(obj, zjson.NameDescrList)
 	enc.WriteString("<dl>\n")
 	for _, elem := range descrs {
@@ -377,7 +403,7 @@ func (enc *Encoder) writeDescriptionSlice(dd zjson.Array) {
 	zjson.WalkBlock(enc, dd, 0)
 }
 
-func (enc *Encoder) visitQuotation(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitQuotation(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	enc.WriteString("<blockquote>")
 	inPara := false
 	for i, item := range zjson.GetArray(obj, zjson.NameList) {
@@ -409,7 +435,7 @@ func (enc *Encoder) visitQuotation(obj zjson.Object, _ int) (bool, zjson.CloseFu
 	return false, nil
 }
 
-func (enc *Encoder) visitTable(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitTable(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	tdata := zjson.GetArray(obj, zjson.NameTable)
 	if len(tdata) != 2 {
 		return false, nil
@@ -459,7 +485,7 @@ func (enc *Encoder) writeTableRow(row zjson.Array, tag string) {
 	enc.WriteString("</tr>\n")
 }
 
-func (enc *Encoder) visitBlock(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitBlock(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	a := zjson.GetAttributes(obj)
 	if val, found := a.Get(""); found {
 		zjson.SetAttributes(obj, a.Remove("").AddClass(val))
@@ -486,7 +512,7 @@ func (enc *Encoder) writeRegion(obj zjson.Object, tag string) (bool, zjson.Close
 	return false, nil
 }
 
-func (enc *Encoder) visitVerbatimCode(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitVerbatimCode(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	a := zjson.GetAttributes(obj)
 	saveVisible := enc.visibleSpace
 	if a.HasDefault() {
@@ -505,11 +531,11 @@ func (*Encoder) setProgLang(a zjson.Attributes) zjson.Attributes {
 	return a
 }
 
-func (enc *Encoder) visitVerbatimEval(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitVerbatimEval(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	return enc.writeVerbatim(obj, zjson.GetAttributes(obj).AddClass("zs-eval"))
 }
 
-func (enc *Encoder) visitVerbatimMath(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitVerbatimMath(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	return enc.writeVerbatim(obj, zjson.GetAttributes(obj).AddClass("zs-math"))
 }
 
@@ -522,7 +548,7 @@ func (enc *Encoder) writeVerbatim(obj zjson.Object, a zjson.Attributes) (bool, z
 	return false, nil
 }
 
-func (enc *Encoder) visitVerbatimComment(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitVerbatimComment(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	if zjson.GetAttributes(obj).HasDefault() {
 		if s := zjson.GetString(obj, zjson.NameString); s != "" {
 			enc.WriteString("<!--\n")
@@ -533,7 +559,7 @@ func (enc *Encoder) visitVerbatimComment(obj zjson.Object, _ int) (bool, zjson.C
 	return false, nil
 }
 
-func (enc *Encoder) visitBLOB(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitBLOB(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	switch s := zjson.GetString(obj, zjson.NameString); s {
 	case "":
 	case api.ValueSyntaxSVG:
@@ -567,14 +593,14 @@ func (enc *Encoder) WriteDataImage(obj zjson.Object, syntax, title string) {
 
 func (enc *Encoder) InlineObject(t string, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
 	if fun, found := enc.tm[t]; found {
-		return fun(obj, pos)
+		return fun(enc, obj, pos)
 	}
 	fmt.Fprintln(enc, obj)
 	log.Printf("I%T %v\n", obj, obj)
 	return true, nil
 }
 
-func (enc *Encoder) visitSpace(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitSpace(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	if s := zjson.GetString(obj, zjson.NameString); s != "" {
 		enc.WriteString(s)
 	} else {
@@ -583,7 +609,7 @@ func (enc *Encoder) visitSpace(obj zjson.Object, _ int) (bool, zjson.CloseFunc) 
 	return false, nil
 }
 
-func (enc *Encoder) visitTag(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitTag(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	if s := zjson.GetString(obj, zjson.NameString); s != "" {
 		enc.WriteByte('#')
 		enc.WriteString(s)
@@ -591,7 +617,7 @@ func (enc *Encoder) visitTag(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	return false, nil
 }
 
-func (enc *Encoder) visitLink(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitLink(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	ref := zjson.GetString(obj, zjson.NameString)
 	in := zjson.GetArray(obj, zjson.NameInline)
 	if ref == "" {
@@ -620,7 +646,7 @@ func (enc *Encoder) visitLink(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	return children, func() { enc.WriteString("</a>") }
 }
 
-func (enc *Encoder) visitEmbed(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitEmbed(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	src := zjson.GetString(obj, zjson.NameString)
 	if syntax := zjson.GetString(obj, zjson.NameString2); syntax == api.ValueSyntaxSVG {
 		enc.WriteString(`<figure><embed type="image/svg+xml" src="`)
@@ -648,7 +674,7 @@ func (enc *Encoder) WriteImageTitle(obj zjson.Object) {
 	enc.WriteByte('>')
 }
 
-func (enc *Encoder) visitEmbedBLOB(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitEmbedBLOB(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	switch s := zjson.GetString(obj, zjson.NameString); s {
 	case "":
 	case api.ValueSyntaxSVG:
@@ -659,7 +685,7 @@ func (enc *Encoder) visitEmbedBLOB(obj zjson.Object, _ int) (bool, zjson.CloseFu
 	return false, nil
 }
 
-func (enc *Encoder) visitCite(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitCite(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	if s := zjson.GetString(obj, zjson.NameString); s != "" {
 		enc.WriteString(s)
 		if zjson.GetArray(obj, zjson.NameInline) != nil {
@@ -669,7 +695,7 @@ func (enc *Encoder) visitCite(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	return true, nil
 }
 
-func (enc *Encoder) visitMark(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitMark(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	if q := zjson.GetString(obj, zjson.NameString2); q != "" {
 		enc.WriteString(`<a id="`)
 		enc.WriteString(enc.unique)
@@ -680,7 +706,7 @@ func (enc *Encoder) visitMark(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	return true, nil
 }
 
-func (enc *Encoder) visitFootnote(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitFootnote(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	if enc.writeFootnote {
 		if fn := zjson.GetArray(obj, zjson.NameInline); fn != nil {
 			enc.footnotes = append(enc.footnotes, footnodeInfo{fn, zjson.GetAttributes(obj)})
@@ -714,12 +740,12 @@ func (enc *Encoder) writeFormat(obj zjson.Object, tag string) (bool, zjson.Close
 	}
 }
 
-func (enc *Encoder) visitLiteralCode(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitLiteralCode(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	zjson.SetAttributes(obj, enc.setProgLang(zjson.GetAttributes(obj)))
 	return enc.writeLiteral(obj, "code")
 }
 
-func (enc *Encoder) visitLiteralMath(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitLiteralMath(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	zjson.SetAttributes(obj, zjson.GetAttributes(obj).AddClass("zs-math"))
 	return enc.writeLiteral(obj, "code")
 }
@@ -745,7 +771,7 @@ func (enc *Encoder) writeLiteral(obj zjson.Object, tag string) (bool, zjson.Clos
 	return false, nil
 }
 
-func (enc *Encoder) visitLiteralComment(obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitLiteralComment(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
 	if zjson.GetAttributes(obj).HasDefault() {
 		if s := zjson.GetString(obj, zjson.NameString); s != "" {
 			if pos > 0 {
@@ -760,7 +786,7 @@ func (enc *Encoder) visitLiteralComment(obj zjson.Object, pos int) (bool, zjson.
 	return false, nil
 }
 
-func (enc *Encoder) visitHTML(obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func (*Encoder) visitHTML(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	if s := zjson.GetString(obj, zjson.NameString); s != "" && IsSafe(s) {
 		enc.WriteString(s)
 	}
