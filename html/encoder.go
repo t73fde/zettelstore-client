@@ -33,7 +33,8 @@ type Encoder struct {
 	headingOffset int
 	unique        string
 	footnotes     []footnodeInfo
-	writeFootnote bool
+	writeFootnote bool // true iff output should include footnotes and marks
+	noLinks       bool // true iff output must not include links
 	visibleSpace  bool
 }
 type footnodeInfo struct {
@@ -50,6 +51,7 @@ func NewEncoder(w io.Writer, headingOffset int) *Encoder {
 		unique:        "",
 		footnotes:     nil,
 		writeFootnote: true,
+		noLinks:       false,
 		visibleSpace:  false,
 	}
 }
@@ -117,9 +119,7 @@ var defaultTypeMap = typeMap{
 	zjson.TypeFormatQuote: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 		return enc.writeFormat(obj, "q")
 	},
-	zjson.TypeFormatSpan: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-		return enc.writeFormat(obj, "span")
-	},
+	zjson.TypeFormatSpan: visitSpan,
 	zjson.TypeFormatStrong: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 		return enc.writeFormat(obj, "strong")
 	},
@@ -146,6 +146,8 @@ func (enc *Encoder) SetTypeFunc(t string, f TypeFunc) {
 	enc.MustGetTypeFunc(t)
 	enc.tm[t] = f
 }
+
+func DoNothingTypeFunc(*Encoder, zjson.Object, int) (bool, zjson.CloseFunc) { return false, nil }
 
 // ChangeTypeFunc replaces an existing TypeFunc with a new one, but allows
 // to use the previous value.
@@ -190,12 +192,16 @@ func (enc *Encoder) TraverseInlineObjects(val zjson.Value) {
 		}
 	}
 }
-func EncodeInline(baseEnc *Encoder, in zjson.Array) string {
+
+func EncodeInline(baseEnc *Encoder, in zjson.Array, withFootnotes, noLinks bool) string {
 	var buf bytes.Buffer
-	enc := Encoder{tm: defaultTypeMap, w: &buf}
+	enc := Encoder{w: &buf, noLinks: noLinks}
 	if baseEnc != nil {
-		enc.writeFootnote = baseEnc.writeFootnote
+		enc.tm = baseEnc.tm
+		enc.writeFootnote = withFootnotes && baseEnc.writeFootnote
 		enc.footnotes = baseEnc.footnotes
+	} else {
+		enc.tm = defaultTypeMap
 	}
 	zjson.WalkInline(&enc, in, 0)
 	if baseEnc != nil {
@@ -618,7 +624,10 @@ func visitTag(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	return false, nil
 }
 
-func visitLink(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func visitLink(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+	if enc.noLinks {
+		return visitSpan(enc, obj, pos)
+	}
 	ref := zjson.GetString(obj, zjson.NameString)
 	in := zjson.GetArray(obj, zjson.NameInline)
 	if ref == "" {
@@ -696,7 +705,10 @@ func visitCite(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	return true, nil
 }
 
-func visitMark(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+func visitMark(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+	if enc.noLinks {
+		return visitSpan(enc, obj, pos)
+	}
 	if q := zjson.GetString(obj, zjson.NameString2); q != "" {
 		enc.WriteString(`<a id="`)
 		enc.WriteString(enc.unique)
@@ -723,6 +735,10 @@ func visitFootnote(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc
 		}
 	}
 	return false, nil
+}
+
+func visitSpan(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+	return enc.writeFormat(obj, "span")
 }
 
 func (enc *Encoder) writeFormat(obj zjson.Object, tag string) (bool, zjson.CloseFunc) {
