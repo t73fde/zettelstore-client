@@ -28,22 +28,26 @@ func MakeMeta(val Value) Meta {
 		if len(mvObj) == 0 {
 			continue
 		}
-		mv := MetaValue{}
-		for n, val := range mvObj {
-			if n == NameType {
-				if t, ok := val.(string); ok {
-					mv.Type = t
-				}
-			} else {
-				mv.Key = n
-				mv.Value = val
-			}
-		}
+		mv := makeMetaValue(obj)
 		if mv.Type != "" {
 			result[k] = mv
 		}
 	}
 	return result
+}
+func makeMetaValue(mvObj Object) MetaValue {
+	mv := MetaValue{}
+	for n, val := range mvObj {
+		if n == NameType {
+			if t, ok := val.(string); ok {
+				mv.Type = t
+			}
+		} else {
+			mv.Key = n
+			mv.Value = val
+		}
+	}
+	return mv
 }
 
 func (m Meta) GetArray(key string) Array {

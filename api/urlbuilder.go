@@ -50,7 +50,8 @@ func (ub *URLBuilder) Clone() *URLBuilder {
 
 // SetRawLocal sets everything that follows the prefix / key.
 func (ub *URLBuilder) SetRawLocal(rawLocal string) *URLBuilder {
-	for ; len(rawLocal) > 0 && rawLocal[0] == '/'; rawLocal = rawLocal[1:] {
+	for len(rawLocal) > 0 && rawLocal[0] == '/' {
+		rawLocal = rawLocal[1:]
 	}
 	ub.rawLocal = rawLocal
 	ub.path = nil
@@ -72,7 +73,8 @@ func (ub *URLBuilder) SetZid(zid ZettelID) *URLBuilder {
 // AppendPath adds a new path element
 func (ub *URLBuilder) AppendPath(p string) *URLBuilder {
 	ub.rawLocal = ""
-	for ; len(p) > 0 && p[0] == '/'; p = p[1:] {
+	for len(p) > 0 && p[0] == '/' {
+		p = p[1:]
 	}
 	if p != "" {
 		ub.path = append(ub.path, p)

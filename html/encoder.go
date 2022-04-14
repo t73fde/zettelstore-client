@@ -324,7 +324,7 @@ func visitListOrdered(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.Clos
 	return false, nil
 }
 
-func (enc *Encoder) writeListChildren(obj zjson.Object, pos int) {
+func (enc *Encoder) writeListChildren(obj zjson.Object, _ int) {
 	children := zjson.GetArray(obj, zjson.NameList)
 	if children == nil {
 		return
