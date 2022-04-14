@@ -85,6 +85,7 @@ var defaultTypeMap = typeMap{
 	zjson.TypeVerbatimHTML:    visitHTML,
 	zjson.TypeVerbatimMath:    visitVerbatimMath,
 	zjson.TypeBLOB:            visitBLOB,
+	zjson.TypeTransclude:      visitTransclude,
 
 	// Inline
 	zjson.TypeText: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
@@ -140,6 +141,10 @@ var defaultTypeMap = typeMap{
 	zjson.TypeLiteralHTML: visitHTML,
 	zjson.TypeLiteralMath: visitLiteralMath,
 }
+
+// IgnoreLinks returns true, if HTML links must not be encoded. This happens if
+// the encoded HTML is used in a link itself.
+func (enc *Encoder) IgnoreLinks() bool { return enc.noLinks }
 
 // SetTypeFunc replaces an existing TypeFunc with a new one.
 func (enc *Encoder) SetTypeFunc(t string, f TypeFunc) {
@@ -596,6 +601,22 @@ func (enc *Encoder) WriteDataImage(obj zjson.Object, syntax, title string) {
 		}
 		enc.WriteString(`"></p>`)
 	}
+}
+
+func visitTransclude(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+	if s := zjson.GetString(obj, zjson.NameString); s != "" {
+		if q := zjson.GetString(obj, zjson.NameString2); q == zjson.RefStateExternal {
+			a := zjson.GetAttributes(obj).Set("src", s).AddClass("external")
+			enc.WriteString("<p><img")
+			enc.WriteAttributes(a)
+			enc.WriteString("/></p>")
+			return false, nil
+		}
+	}
+
+	fmt.Fprintf(enc, "%v\n", obj)
+	log.Println("TRAN", pos, obj)
+	return false, nil
 }
 
 func (enc *Encoder) InlineObject(t string, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
