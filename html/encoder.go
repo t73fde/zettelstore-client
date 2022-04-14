@@ -685,24 +685,17 @@ func visitEmbed(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 		enc.WriteString("\" /></figure>\n")
 		return false, nil
 	}
-	zid := api.ZettelID(src)
-	if zid.IsValid() {
-		src = "/" + src + ".content"
-	}
-	enc.WriteString(`<img src="`)
-	enc.WriteString(src)
-	enc.WriteImageTitle(obj)
+	enc.WriteImage(obj, src)
 	return false, nil
 }
-func (enc *Encoder) WriteImageTitle(obj zjson.Object) {
+func (enc *Encoder) WriteImage(obj zjson.Object, src string) {
+	a := zjson.GetAttributes(obj).Set("src", src)
 	if title := zjson.GetArray(obj, zjson.NameInline); len(title) > 0 {
-		s := text.EncodeInlineString(title)
-		enc.WriteString(`" title="`)
-		enc.WriteEscaped(s)
+		a = a.Set("title", text.EncodeInlineString(title))
 	}
-	enc.WriteByte('"')
-	enc.WriteAttributes(zjson.GetAttributes(obj))
-	enc.WriteByte('>')
+	enc.WriteString("<img")
+	enc.WriteAttributes(a)
+	enc.WriteString("/>")
 }
 
 func visitEmbedBLOB(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
