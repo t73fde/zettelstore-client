@@ -21,6 +21,7 @@ type urlQuery struct{ key, val string }
 type URLBuilder struct {
 	prefix   string
 	key      byte
+	rawLocal string
 	path     []string
 	query    []urlQuery
 	fragment string
@@ -47,29 +48,48 @@ func (ub *URLBuilder) Clone() *URLBuilder {
 	return cpy
 }
 
+// SetRawLocal sets everything that follows the prefix / key.
+func (ub *URLBuilder) SetRawLocal(rawLocal string) *URLBuilder {
+	for ; len(rawLocal) > 0 && rawLocal[0] == '/'; rawLocal = rawLocal[1:] {
+	}
+	ub.rawLocal = rawLocal
+	ub.path = nil
+	ub.query = nil
+	ub.fragment = ""
+	return ub
+}
+
 // SetZid sets the zettel identifier.
 func (ub *URLBuilder) SetZid(zid ZettelID) *URLBuilder {
 	if len(ub.path) > 0 {
 		panic("Cannot add Zid")
 	}
+	ub.rawLocal = ""
 	ub.path = append(ub.path, string(zid))
 	return ub
 }
 
 // AppendPath adds a new path element
 func (ub *URLBuilder) AppendPath(p string) *URLBuilder {
-	ub.path = append(ub.path, p)
+	ub.rawLocal = ""
+	for ; len(p) > 0 && p[0] == '/'; p = p[1:] {
+	}
+	if p != "" {
+		ub.path = append(ub.path, p)
+	}
 	return ub
 }
 
 // AppendQuery adds a new query parameter
 func (ub *URLBuilder) AppendQuery(key, value string) *URLBuilder {
+	ub.rawLocal = ""
 	ub.query = append(ub.query, urlQuery{key, value})
 	return ub
 }
 
 // ClearQuery removes all query parameters.
 func (ub *URLBuilder) ClearQuery() *URLBuilder {
+	ub.rawLocal = ""
 	ub.query = nil
 	ub.fragment = ""
 	return ub
@@ -77,6 +97,7 @@ func (ub *URLBuilder) ClearQuery() *URLBuilder {
 
 // SetFragment stores the fragment
 func (ub *URLBuilder) SetFragment(s string) *URLBuilder {
+	ub.rawLocal = ""
 	ub.fragment = s
 	return ub
 }
@@ -89,8 +110,14 @@ func (ub *URLBuilder) String() string {
 	if ub.key != '/' {
 		sb.WriteByte(ub.key)
 	}
-	for _, p := range ub.path {
-		sb.WriteByte('/')
+	if ub.rawLocal != "" {
+		sb.WriteString(ub.rawLocal)
+		return sb.String()
+	}
+	for i, p := range ub.path {
+		if i > 0 || ub.key != '/' {
+			sb.WriteByte('/')
+		}
 		sb.WriteString(url.PathEscape(p))
 	}
 	if len(ub.fragment) > 0 {
