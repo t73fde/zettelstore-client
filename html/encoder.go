@@ -695,7 +695,7 @@ func (enc *Encoder) WriteImage(obj zjson.Object, src string) {
 	}
 	enc.WriteString("<img")
 	enc.WriteAttributes(a)
-	enc.WriteString("/>")
+	enc.WriteByte('>')
 }
 
 func visitEmbedBLOB(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
