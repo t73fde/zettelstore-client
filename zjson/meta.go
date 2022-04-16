@@ -28,7 +28,7 @@ func MakeMeta(val Value) Meta {
 		if len(mvObj) == 0 {
 			continue
 		}
-		mv := makeMetaValue(obj)
+		mv := makeMetaValue(mvObj)
 		if mv.Type != "" {
 			result[k] = mv
 		}
