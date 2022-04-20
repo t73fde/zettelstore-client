@@ -26,6 +26,17 @@ import (
 type TypeFunc func(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.CloseFunc)
 type typeMap map[string]TypeFunc
 
+func (tm typeMap) Clone() typeMap {
+	if l := len(tm); l > 0 {
+		result := make(typeMap, l)
+		for k, v := range tm {
+			result[k] = v
+		}
+		return result
+	}
+	return nil
+}
+
 // Encoder translate a ZJSON object into some HTML text.
 type Encoder struct {
 	tm            typeMap
@@ -45,7 +56,7 @@ type footnodeInfo struct {
 // NewEncoder creates a new HTML encoder.
 func NewEncoder(w io.Writer, headingOffset int) *Encoder {
 	return &Encoder{
-		tm:            defaultTypeMap,
+		tm:            defaultTypeMap.Clone(),
 		w:             w,
 		headingOffset: headingOffset,
 		unique:        "",
