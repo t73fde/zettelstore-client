@@ -154,6 +154,7 @@ const (
 const (
 	EncodingHTML   = "html"
 	EncodingNative = "native"
+	EncodingSexpr  = "sexpr"
 	EncodingText   = "text"
 	EncodingZJSON  = "zjson"
 	EncodingZMK    = "zmk"
@@ -162,6 +163,7 @@ const (
 var mapEncodingEnum = map[string]EncodingEnum{
 	EncodingHTML:   EncoderHTML,
 	EncodingNative: EncoderNative,
+	EncodingSexpr:  EncoderSexpr,
 	EncodingText:   EncoderText,
 	EncodingZJSON:  EncoderZJSON,
 	EncodingZMK:    EncoderZmk,
@@ -190,6 +192,7 @@ const (
 	EncoderUnknown EncodingEnum = iota
 	EncoderHTML
 	EncoderNative
+	EncoderSexpr
 	EncoderText
 	EncoderZJSON
 	EncoderZmk
