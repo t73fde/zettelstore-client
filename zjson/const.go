@@ -29,22 +29,6 @@ const (
 	NameTable       = "p"
 )
 
-// Values of the metadata key/value type.
-const (
-	MetaCredential   = "Credential"
-	MetaEmpty        = "EString"
-	MetaID           = "Identifier"
-	MetaIDSet        = "IdentifierSet"
-	MetaNumber       = "Number"
-	MetaString       = "String"
-	MetaTagSet       = "TagSet"
-	MetaTimestamp    = "Timestamp"
-	MetaURL          = "URL"
-	MetaWord         = "Word"
-	MetaWordSet      = "WordSet"
-	MetaZettelmarkup = "Zettelmarkup"
-)
-
 // Values to specify the Zettelmarkup element type
 const (
 	TypeBLOB            = "BLOB"
