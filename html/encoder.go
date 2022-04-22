@@ -95,6 +95,7 @@ var defaultTypeMap = typeMap{
 	zjson.TypeVerbatimComment: visitVerbatimComment,
 	zjson.TypeVerbatimHTML:    visitHTML,
 	zjson.TypeVerbatimMath:    visitVerbatimMath,
+	zjson.TypeVerbatimZettel:  DoNothingTypeFunc,
 	zjson.TypeBLOB:            visitBLOB,
 	zjson.TypeTransclude:      visitTransclude,
 
@@ -112,35 +113,21 @@ var defaultTypeMap = typeMap{
 		enc.WriteString("<br>\n")
 		return false, nil
 	},
-	zjson.TypeTag:       visitTag,
-	zjson.TypeLink:      visitLink,
-	zjson.TypeEmbed:     visitEmbed,
-	zjson.TypeEmbedBLOB: visitEmbedBLOB,
-	zjson.TypeCitation:  visitCite,
-	zjson.TypeMark:      visitMark,
-	zjson.TypeFootnote:  visitFootnote,
-	zjson.TypeFormatDelete: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-		return enc.writeFormat(obj, "del")
-	},
-	zjson.TypeFormatEmph: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-		return enc.writeFormat(obj, "em")
-	},
-	zjson.TypeFormatInsert: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-		return enc.writeFormat(obj, "ins")
-	},
-	zjson.TypeFormatQuote: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-		return enc.writeFormat(obj, "q")
-	},
-	zjson.TypeFormatSpan: visitSpan,
-	zjson.TypeFormatStrong: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-		return enc.writeFormat(obj, "strong")
-	},
-	zjson.TypeFormatSub: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-		return enc.writeFormat(obj, "sub")
-	},
-	zjson.TypeFormatSuper: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-		return enc.writeFormat(obj, "sup")
-	},
+	zjson.TypeTag:            visitTag,
+	zjson.TypeLink:           visitLink,
+	zjson.TypeEmbed:          visitEmbed,
+	zjson.TypeEmbedBLOB:      visitEmbedBLOB,
+	zjson.TypeCitation:       visitCite,
+	zjson.TypeMark:           visitMark,
+	zjson.TypeFootnote:       visitFootnote,
+	zjson.TypeFormatDelete:   makeVisitFormat("del"),
+	zjson.TypeFormatEmph:     makeVisitFormat("em"),
+	zjson.TypeFormatInsert:   makeVisitFormat("ins"),
+	zjson.TypeFormatQuote:    makeVisitFormat("q"),
+	zjson.TypeFormatSpan:     makeVisitFormat("span"),
+	zjson.TypeFormatStrong:   makeVisitFormat("strong"),
+	zjson.TypeFormatSub:      makeVisitFormat("sub"),
+	zjson.TypeFormatSuper:    makeVisitFormat("sup"),
 	zjson.TypeLiteralCode:    visitLiteralCode,
 	zjson.TypeLiteralComment: visitLiteralComment,
 	zjson.TypeLiteralInput: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
@@ -149,8 +136,9 @@ var defaultTypeMap = typeMap{
 	zjson.TypeLiteralOutput: func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 		return enc.writeLiteral(obj, "samp")
 	},
-	zjson.TypeLiteralHTML: visitHTML,
-	zjson.TypeLiteralMath: visitLiteralMath,
+	zjson.TypeLiteralHTML:   visitHTML,
+	zjson.TypeLiteralMath:   visitLiteralMath,
+	zjson.TypeLiteralZettel: DoNothingTypeFunc,
 }
 
 // IgnoreLinks returns true, if HTML links must not be encoded. This happens if
@@ -186,6 +174,13 @@ func (enc *Encoder) MustGetTypeFunc(t string) TypeFunc {
 		panic(t)
 	}
 	return tf
+}
+
+func (enc *Encoder) CallTypeFunc(t string, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
+	if tf, found := enc.tm[t]; found {
+		return tf(enc, obj, pos)
+	}
+	panic(t)
 }
 
 // ReplaceWriter flushes the previous writer and installs the new one.
@@ -621,8 +616,14 @@ func visitTransclude(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.Close
 			enc.WriteString("<p><img")
 			enc.WriteAttributes(a)
 			enc.WriteString("/></p>")
-			return false, nil
+		} else {
+			enc.WriteString("<!-- transclude ")
+			enc.WriteString(q)
+			enc.WriteString(": ")
+			enc.WriteEscaped(s)
+			enc.WriteString(" -->")
 		}
+		return false, nil
 	}
 
 	fmt.Fprintf(enc, "%v\n", obj)
@@ -658,7 +659,7 @@ func visitTag(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 
 func visitLink(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
 	if enc.noLinks {
-		return visitSpan(enc, obj, pos)
+		return enc.CallTypeFunc(zjson.TypeFormatSpan, obj, pos)
 	}
 	ref := zjson.GetString(obj, zjson.NameString)
 	in := zjson.GetArray(obj, zjson.NameInline)
@@ -732,7 +733,7 @@ func visitCite(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 
 func visitMark(enc *Encoder, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
 	if enc.noLinks {
-		return visitSpan(enc, obj, pos)
+		return enc.CallTypeFunc(zjson.TypeFormatSpan, obj, pos)
 	}
 	if q := zjson.GetString(obj, zjson.NameString2); q != "" {
 		enc.WriteString(`<a id="`)
@@ -762,23 +763,21 @@ func visitFootnote(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc
 	return false, nil
 }
 
-func visitSpan(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-	return enc.writeFormat(obj, "span")
-}
-
-func (enc *Encoder) writeFormat(obj zjson.Object, tag string) (bool, zjson.CloseFunc) {
-	enc.WriteByte('<')
-	enc.WriteString(tag)
-	a := zjson.GetAttributes(obj)
-	if val, found := a.Get(""); found {
-		a = a.Remove("").AddClass(val)
-	}
-	enc.WriteAttributes(a)
-	enc.WriteByte('>')
-	return true, func() {
-		enc.WriteString("</")
-		enc.WriteString(tag)
+func makeVisitFormat(htmlTag string) TypeFunc {
+	return func(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
+		enc.WriteByte('<')
+		enc.WriteString(htmlTag)
+		a := zjson.GetAttributes(obj)
+		if val, found := a.Get(""); found {
+			a = a.Remove("").AddClass(val)
+		}
+		enc.WriteAttributes(a)
 		enc.WriteByte('>')
+		return true, func() {
+			enc.WriteString("</")
+			enc.WriteString(htmlTag)
+			enc.WriteByte('>')
+		}
 	}
 }
 
