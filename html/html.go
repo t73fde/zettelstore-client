@@ -64,7 +64,8 @@ var (
 
 // AttributeEscape writes to w the escaped HTML equivalent of the given string to be used
 // in attributes.
-func AttributeEscape(w io.Writer, s string) {
+func AttributeEscape(w io.Writer, s string) (int, error) {
+	length := 0
 	last := 0
 	var html []byte
 	lenS := len(s)
@@ -79,11 +80,20 @@ func AttributeEscape(w io.Writer, s string) {
 		default:
 			continue
 		}
-		io.WriteString(w, s[last:i])
-		w.Write(html)
+		l, err := io.WriteString(w, s[last:i])
+		length += l
+		if err != nil {
+			return length, err
+		}
+		l, err = w.Write(html)
+		length += l
+		if err != nil {
+			return length, err
+		}
 		last = i + 1
 	}
-	io.WriteString(w, s[last:])
+	l, err := io.WriteString(w, s[last:])
+	return length + l, err
 }
 
 var unsafeSnippets = []string{
