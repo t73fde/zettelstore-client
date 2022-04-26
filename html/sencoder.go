@@ -11,6 +11,7 @@
 package html
 
 import (
+	"fmt"
 	"io"
 	"strconv"
 
@@ -65,6 +66,24 @@ func (env *EncEnvironment) WriteEscaped(s string) {
 	}
 }
 
+func (env *EncEnvironment) GetString(args []sexpr.Value, idx int) string {
+	if env.err != nil {
+		return ""
+	}
+	if idx < 0 && len(args) <= idx {
+		env.SetError(fmt.Errorf("index %d out of bounds: %v", idx, args))
+		return ""
+	}
+	if val, ok := args[idx].(*sexpr.String); ok {
+		return val.GetValue()
+	}
+	if val, ok := args[idx].(*sexpr.Symbol); ok {
+		return val.GetValue()
+	}
+	env.SetError(fmt.Errorf("%v / %d is not a string", args[idx], idx))
+	return ""
+}
+
 func (env *EncEnvironment) WriteAttributes(value sexpr.Value) {
 	attrList, ok := value.(*sexpr.List)
 	if !ok {
@@ -79,19 +98,11 @@ func (env *EncEnvironment) WriteAttributes(value sexpr.Value) {
 		if len(attrs) < 2 {
 			continue
 		}
-		keyV, ok := attrs[0].(*sexpr.String)
-		if !ok {
-			continue
-		}
-		key := keyV.GetValue()
+		key := env.GetString(attrs, 0)
 		if key == "" || key == "-" {
 			continue
 		}
-		valV, ok := attrs[1].(*sexpr.String)
-		if !ok {
-			continue
-		}
-		val := valV.GetValue()
+		val := env.GetString(attrs, 1)
 		env.WriteString(" ")
 		env.WriteString(key)
 		if val != "" {
@@ -114,20 +125,24 @@ func (env *EncEnvironment) Encode(value sexpr.Value) {
 	case *sexpr.String:
 		env.WriteEscaped(val.GetValue())
 	case *sexpr.List:
-		lstVals := val.GetValue()
-		if len(lstVals) == 0 {
+		env.EncodeList(val.GetValue())
+	}
+}
+func (env *EncEnvironment) EncodeList(lst []sexpr.Value) {
+	if len(lst) == 0 {
+		return
+	}
+	if sym, ok := lst[0].(*sexpr.Symbol); ok {
+		symStr := sym.GetValue()
+		if f, found := env.builtins[symStr]; found {
+			f(env, lst[1:])
 			return
 		}
-		if sym, ok := lstVals[0].(*sexpr.Symbol); ok {
-			symStr := sym.GetValue()
-			if f, found := env.builtins[symStr]; found {
-				f(env, lstVals[1:])
-				return
-			}
-		}
-		for _, value := range lstVals {
-			env.Encode(value)
-		}
+		env.SetError(fmt.Errorf("unbound identifier: %q", symStr))
+		return
+	}
+	for _, value := range lst {
+		env.Encode(value)
 	}
 }
 
@@ -141,43 +156,33 @@ var defaultEncodingFunctions = encodingMap{
 		if len(args) < 5 {
 			return
 		}
-		levelSym, ok := args[0].(*sexpr.Symbol)
-		if !ok {
-			return
-		}
-		level, err := strconv.Atoi(levelSym.GetValue())
+		nLevel, err := strconv.Atoi(env.GetString(args, 0))
 		if err != nil {
 			env.SetError(err)
 			return
 		}
-		levelS := strconv.Itoa(level + env.headingOffset)
-		fragmentStr, ok := args[3].(*sexpr.String)
-		if !ok {
-			return
-		}
-		fragmentS := fragmentStr.GetValue()
+		level := strconv.Itoa(nLevel + env.headingOffset)
+		fragment := env.GetString(args, 3)
 
 		env.WriteString("<h")
-		env.WriteString(levelS)
+		env.WriteString(level)
 		env.WriteAttributes(args[1])
-		if fragmentS != "" {
+		if fragment != "" {
 			env.WriteString(` id="`)
-			env.WriteString(fragmentS)
+			env.WriteString(fragment)
 			env.WriteString(`">`)
 		} else {
 			env.WriteString(">")
 		}
-		env.Encode(sexpr.NewList(args[4:]...))
+		env.EncodeList(args[4:])
 		env.WriteString("</h")
-		env.WriteString(levelS)
+		env.WriteString(level)
 		env.WriteString(">")
 	},
 	sexpr.SymThematic.GetValue(): func(env *EncEnvironment, _ []sexpr.Value) { env.WriteString("<hr>") },
 	sexpr.SymText.GetValue(): func(env *EncEnvironment, args []sexpr.Value) {
 		if len(args) > 0 {
-			if arg, ok := args[0].(*sexpr.String); ok {
-				env.WriteEscaped(arg.GetValue())
-			}
+			env.WriteEscaped(env.GetString(args, 0))
 		}
 	},
 	sexpr.SymSpace.GetValue(): func(env *EncEnvironment, args []sexpr.Value) {
@@ -185,17 +190,13 @@ var defaultEncodingFunctions = encodingMap{
 			env.WriteString(" ")
 			return
 		}
-		if arg, ok := args[0].(*sexpr.String); ok {
-			env.WriteString(arg.GetValue())
-		}
+		env.WriteEscaped(env.GetString(args, 0))
 	},
 	sexpr.SymSoft.GetValue(): func(env *EncEnvironment, _ []sexpr.Value) { env.WriteString("\n") },
 	sexpr.SymHard.GetValue(): func(env *EncEnvironment, _ []sexpr.Value) { env.WriteString("<br>\n") },
 	sexpr.SymTag.GetValue(): func(env *EncEnvironment, args []sexpr.Value) {
 		if len(args) > 0 {
-			if arg, ok := args[0].(*sexpr.String); ok {
-				env.WriteEscaped(arg.GetValue())
-			}
+			env.WriteEscaped(env.GetString(args, 0))
 		}
 	},
 }
