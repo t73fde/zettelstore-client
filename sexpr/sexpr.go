@@ -12,6 +12,8 @@
 package sexpr
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -21,6 +23,7 @@ import (
 type Value interface {
 	Equal(Value) bool
 	Encode(io.Writer) (int, error)
+	String() string
 }
 
 // ---------------------------------------------------------------------------
@@ -35,8 +38,8 @@ var (
 	symbolMap = map[string]*Symbol{}
 )
 
-// GetSymbol creates or reuses a symbol with the given string representation.
-func GetSymbol(symVal string) *Symbol {
+// NewSymbol creates or reuses a symbol with the given string representation.
+func NewSymbol(symVal string) *Symbol {
 	if symVal == "" {
 		return nil
 	}
@@ -69,6 +72,7 @@ func (sym *Symbol) Equal(other Value) bool {
 func (sym *Symbol) Encode(w io.Writer) (int, error) {
 	return io.WriteString(w, sym.val)
 }
+func (sym *Symbol) String() string { return sym.val }
 
 // ---------------------------------------------------------------------------
 
@@ -154,7 +158,14 @@ func (str *String) Encode(w io.Writer) (int, error) {
 	}
 	l, err = w.Write(quote)
 	return length + l, err
+}
 
+func (str *String) String() string {
+	var buf bytes.Buffer
+	if _, err := str.Encode(&buf); err != nil {
+		return err.Error()
+	}
+	return buf.String()
 }
 
 // ---------------------------------------------------------------------------
@@ -244,4 +255,50 @@ func (lst *List) Encode(w io.Writer) (int, error) {
 	}
 	l, err := w.Write(rParen)
 	return length + l, err
+}
+
+func (lst *List) String() string {
+	var buf bytes.Buffer
+	if _, err := lst.Encode(&buf); err != nil {
+		return err.Error()
+	}
+	return buf.String()
+}
+
+// ---------------------------------------------------------------------------
+
+func GetSymbol(args []Value, idx int) (*Symbol, error) {
+	if idx < 0 && len(args) <= idx {
+		return nil, fmt.Errorf("index %d out of bounds: %v", idx, args)
+	}
+	if val, ok := args[idx].(*Symbol); ok {
+		return val, nil
+	}
+	return nil, fmt.Errorf("%v / %d is not a symbol", args[idx], idx)
+}
+
+func GetString(args []Value, idx int) (string, error) {
+	if idx < 0 && len(args) <= idx {
+		return "", fmt.Errorf("index %d out of bounds: %v", idx, args)
+
+	}
+	if val, ok := args[idx].(*String); ok {
+		return val.GetValue(), nil
+	}
+	if val, ok := args[idx].(*Symbol); ok {
+		return val.GetValue(), nil
+	}
+	return "", fmt.Errorf("%v / %d is not a string", args[idx], idx)
+}
+
+func GetList(args []Value, idx int) (*List, error) {
+	if idx < 0 && len(args) <= idx {
+		return nil, fmt.Errorf("index %d out of bounds: %v", idx, args)
+
+	}
+	if val, ok := args[idx].(*List); ok {
+		return val, nil
+	}
+	return nil, fmt.Errorf("%v / %d is not a list", args[idx], idx)
+
 }

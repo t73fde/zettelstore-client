@@ -13,8 +13,10 @@ package html
 import (
 	"fmt"
 	"io"
+	"log"
 	"strconv"
 
+	"zettelstore.de/c/attrs"
 	"zettelstore.de/c/sexpr"
 )
 
@@ -38,6 +40,7 @@ type EncEnvironment struct {
 	builtins      encodingMap
 	w             io.Writer
 	headingOffset int
+	noLinks       bool // true iff output must not include links
 }
 
 func NewEncEnvironment(w io.Writer, headingOffset int) *EncEnvironment {
@@ -66,43 +69,47 @@ func (env *EncEnvironment) WriteEscaped(s string) {
 	}
 }
 
-func (env *EncEnvironment) GetString(args []sexpr.Value, idx int) string {
+func (env *EncEnvironment) MissingArgs(args []sexpr.Value, minArgs int) bool {
+	if len(args) < minArgs {
+		env.SetError(fmt.Errorf("required args: %d, but got only: %d", minArgs, len(args)))
+		return true
+	}
+	return false
+}
+func (env *EncEnvironment) GetSymbol(args []sexpr.Value, idx int) (res *sexpr.Symbol) {
+	if env.err != nil {
+		return nil
+	}
+	res, env.err = sexpr.GetSymbol(args, idx)
+	return res
+}
+func (env *EncEnvironment) GetString(args []sexpr.Value, idx int) (res string) {
 	if env.err != nil {
 		return ""
 	}
-	if idx < 0 && len(args) <= idx {
-		env.SetError(fmt.Errorf("index %d out of bounds: %v", idx, args))
-		return ""
+	res, env.err = sexpr.GetString(args, idx)
+	return res
+}
+func (env *EncEnvironment) GetList(args []sexpr.Value, idx int) (res *sexpr.List) {
+	if env.err != nil {
+		return nil
 	}
-	if val, ok := args[idx].(*sexpr.String); ok {
-		return val.GetValue()
-	}
-	if val, ok := args[idx].(*sexpr.Symbol); ok {
-		return val.GetValue()
-	}
-	env.SetError(fmt.Errorf("%v / %d is not a string", args[idx], idx))
-	return ""
+	res, env.err = sexpr.GetList(args, idx)
+	return res
 }
 
-func (env *EncEnvironment) WriteAttributes(value sexpr.Value) {
-	attrList, ok := value.(*sexpr.List)
-	if !ok {
+func (env *EncEnvironment) WriteAttributes(a attrs.Attributes) {
+	if len(a) == 0 {
 		return
 	}
-	for _, attrVal := range attrList.GetValue() {
-		attrPair, ok := attrVal.(*sexpr.List)
-		if !ok {
+	for _, key := range a.Keys() {
+		if key == "" || key == attrs.DefaultAttribute {
 			continue
 		}
-		attrs := attrPair.GetValue()
-		if len(attrs) < 2 {
+		val, found := a.Get(key)
+		if !found {
 			continue
 		}
-		key := env.GetString(attrs, 0)
-		if key == "" || key == "-" {
-			continue
-		}
-		val := env.GetString(attrs, 1)
 		env.WriteString(" ")
 		env.WriteString(key)
 		if val != "" {
@@ -153,7 +160,7 @@ var defaultEncodingFunctions = encodingMap{
 		env.WriteString("</p>")
 	},
 	sexpr.SymHeading.GetValue(): func(env *EncEnvironment, args []sexpr.Value) {
-		if len(args) < 5 {
+		if env.MissingArgs(args, 5) {
 			return
 		}
 		nLevel, err := strconv.Atoi(env.GetString(args, 0))
@@ -162,24 +169,28 @@ var defaultEncodingFunctions = encodingMap{
 			return
 		}
 		level := strconv.Itoa(nLevel + env.headingOffset)
-		fragment := env.GetString(args, 3)
+
+		a := sexpr.GetAttributes(env.GetList(args, 1))
+		if fragment := env.GetString(args, 3); fragment != "" {
+			a = a.Set("id", fragment)
+		}
 
 		env.WriteString("<h")
 		env.WriteString(level)
-		env.WriteAttributes(args[1])
-		if fragment != "" {
-			env.WriteString(` id="`)
-			env.WriteString(fragment)
-			env.WriteString(`">`)
-		} else {
-			env.WriteString(">")
-		}
+		env.WriteAttributes(a)
+		env.WriteString(">")
 		env.EncodeList(args[4:])
 		env.WriteString("</h")
 		env.WriteString(level)
 		env.WriteString(">")
 	},
-	sexpr.SymThematic.GetValue(): func(env *EncEnvironment, _ []sexpr.Value) { env.WriteString("<hr>") },
+	sexpr.SymThematic.GetValue(): func(env *EncEnvironment, args []sexpr.Value) {
+		env.WriteString("<hr")
+		if len(args) > 0 {
+			env.WriteAttributes(sexpr.GetAttributes(env.GetList(args, 0)))
+		}
+		env.WriteString(">")
+	},
 	sexpr.SymText.GetValue(): func(env *EncEnvironment, args []sexpr.Value) {
 		if len(args) > 0 {
 			env.WriteEscaped(env.GetString(args, 0))
@@ -198,5 +209,47 @@ var defaultEncodingFunctions = encodingMap{
 		if len(args) > 0 {
 			env.WriteEscaped(env.GetString(args, 0))
 		}
+	},
+	sexpr.SymLink.GetValue(): func(env *EncEnvironment, args []sexpr.Value) {
+		if env.noLinks {
+			spanList := sexpr.NewList(sexpr.SymFormatSpan)
+			spanList.Append(args...)
+			env.Encode(spanList)
+			return
+		}
+		if env.MissingArgs(args, 2) {
+			return
+		}
+		a := sexpr.GetAttributes(env.GetList(args, 0))
+		ref := env.GetList(args, 1)
+		if ref == nil {
+			return
+		}
+		refPair := ref.GetValue()
+		refKind := env.GetSymbol(refPair, 0)
+		if refKind == nil {
+			return
+		}
+		refValue := env.GetString(refPair, 1)
+		switch {
+		case sexpr.SymRefStateExternal.Equal(refKind):
+			a = a.Set("href", refValue).AddClass("external")
+		case sexpr.SymRefStateZettel.Equal(refKind), sexpr.SymRefStateBased.Equal(refKind), sexpr.SymRefStateHosted.Equal(refKind), sexpr.SymRefStateSelf.Equal(refKind):
+			a = a.Set("href", refValue)
+		case sexpr.SymRefStateBroken.Equal(refKind):
+			a = a.AddClass("broken")
+		default:
+			log.Println("LINK", sexpr.NewList(args...))
+		}
+		env.WriteString("<a")
+		env.WriteAttributes(a)
+		env.WriteString(">")
+
+		if in := args[2:]; len(in) != 0 {
+			env.WriteString(refValue)
+		} else {
+			env.EncodeList(in)
+		}
+		env.WriteString("</a>")
 	},
 }

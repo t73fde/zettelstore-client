@@ -22,10 +22,13 @@ type Attributes map[string]string
 // IsEmpty returns true if there are no attributes.
 func (a Attributes) IsEmpty() bool { return len(a) == 0 }
 
+// DefaultAttribute is the value of the key of the default attribute
+const DefaultAttribute = "-"
+
 // HasDefault returns true, if the default attribute "-" has been set.
 func (a Attributes) HasDefault() bool {
 	if a != nil {
-		_, ok := a["-"]
+		_, ok := a[DefaultAttribute]
 		return ok
 	}
 	return false
@@ -34,7 +37,7 @@ func (a Attributes) HasDefault() bool {
 // RemoveDefault removes the default attribute
 func (a Attributes) RemoveDefault() Attributes {
 	if a != nil {
-		a.Remove("-")
+		a.Remove(DefaultAttribute)
 	}
 	return a
 }

@@ -29,12 +29,12 @@ func TestSymbol(t *testing.T) {
 		{"a", true, "A"},
 	}
 	for i, tc := range testcases {
-		s := sexpr.GetSymbol(tc.val)
+		s := sexpr.NewSymbol(tc.val)
 		if (s != nil) != tc.ok {
 			if s == nil {
-				t.Errorf("%d: GetSymbol(%q) must not be nil, but is", i, tc.val)
+				t.Errorf("%d: NewSymbol(%q) must not be nil, but is", i, tc.val)
 			} else {
-				t.Errorf("%d: GetSymbol(%q) must be nil, but is not: %q", i, tc.val, s.GetValue())
+				t.Errorf("%d: NewSymbol(%q) must be nil, but is not: %q", i, tc.val, s.GetValue())
 			}
 			continue
 		}
@@ -49,9 +49,9 @@ func TestSymbol(t *testing.T) {
 			t.Errorf("%d: %q is not equal to itself", i, got)
 		}
 
-		s2 := sexpr.GetSymbol(tc.val)
+		s2 := sexpr.NewSymbol(tc.val)
 		if s2 != s {
-			t.Errorf("%d: GetSymbol(%q) produces different values if called multiple times", i, tc.val)
+			t.Errorf("%d: NewSymbol(%q) produces different values if called multiple times", i, tc.val)
 		}
 	}
 }
@@ -59,7 +59,7 @@ func TestSymbol(t *testing.T) {
 func FuzzSymbol(f *testing.F) {
 	f.Fuzz(func(t *testing.T, in string) {
 		t.Parallel()
-		s := sexpr.GetSymbol(in)
+		s := sexpr.NewSymbol(in)
 		if !s.Equal(s) {
 			if s == nil {
 				t.Errorf("nil symbol is not equal to itself")
