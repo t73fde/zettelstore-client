@@ -18,6 +18,7 @@ import (
 	"strconv"
 
 	"zettelstore.de/c/api"
+	"zettelstore.de/c/attrs"
 	"zettelstore.de/c/text"
 	"zettelstore.de/c/zjson"
 )
@@ -50,7 +51,7 @@ type Encoder struct {
 }
 type footnodeInfo struct {
 	note  zjson.Array
-	attrs zjson.Attributes
+	attrs attrs.Attributes
 }
 
 // NewEncoder creates a new HTML encoder.
@@ -542,7 +543,7 @@ func visitVerbatimCode(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.Close
 	return b, c
 }
 
-func (*Encoder) setProgLang(a zjson.Attributes) zjson.Attributes {
+func (*Encoder) setProgLang(a attrs.Attributes) attrs.Attributes {
 	if val, found := a.Get(""); found {
 		a = a.AddClass("language-" + val).Remove("")
 	}
@@ -557,7 +558,7 @@ func visitVerbatimMath(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.Close
 	return enc.writeVerbatim(obj, zjson.GetAttributes(obj).AddClass("zs-math"))
 }
 
-func (enc *Encoder) writeVerbatim(obj zjson.Object, a zjson.Attributes) (bool, zjson.CloseFunc) {
+func (enc *Encoder) writeVerbatim(obj zjson.Object, a attrs.Attributes) (bool, zjson.CloseFunc) {
 	enc.WriteString("<pre><code")
 	enc.WriteAttributes(a)
 	enc.WriteByte('>')
@@ -834,7 +835,7 @@ func visitHTML(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	return false, nil
 }
 
-func (enc *Encoder) WriteAttributes(a zjson.Attributes) {
+func (enc *Encoder) WriteAttributes(a attrs.Attributes) {
 	if len(a) == 0 {
 		return
 	}

@@ -8,7 +8,8 @@
 // and obligations under this license.
 //-----------------------------------------------------------------------------
 
-package zjson
+// Package attrs stores attributes of zettel parts.
+package attrs
 
 import (
 	"sort"

@@ -16,6 +16,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+
+	"zettelstore.de/c/attrs"
 )
 
 // Value is the gerneric JSON value.
@@ -268,12 +270,12 @@ func MakeString(val Value) string {
 }
 
 // GetAttribute returns a copy of the attributes of the given object.
-func GetAttributes(obj Object) Attributes {
+func GetAttributes(obj Object) attrs.Attributes {
 	a := GetObject(obj, NameAttribute)
 	if len(a) == 0 {
 		return nil
 	}
-	result := make(Attributes, len(a))
+	result := make(attrs.Attributes, len(a))
 	for n, v := range a {
 		if val, ok := v.(string); ok {
 			result[n] = val
@@ -283,7 +285,7 @@ func GetAttributes(obj Object) Attributes {
 }
 
 // SetAttributes copies the attributes to the given object.
-func SetAttributes(obj Object, a Attributes) {
+func SetAttributes(obj Object, a attrs.Attributes) {
 	if len(a) == 0 {
 		delete(obj, NameAttribute)
 	}

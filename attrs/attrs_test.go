@@ -8,21 +8,21 @@
 // and obligations under this license.
 //-----------------------------------------------------------------------------
 
-package zjson_test
+package attrs_test
 
 import (
 	"testing"
 
-	"zettelstore.de/c/zjson"
+	"zettelstore.de/c/attrs"
 )
 
 func TestHasDefault(t *testing.T) {
 	t.Parallel()
-	attr := zjson.Attributes{}
+	attr := attrs.Attributes{}
 	if attr.HasDefault() {
 		t.Error("Should not have default attr")
 	}
-	attr = zjson.Attributes(map[string]string{"-": "value"})
+	attr = attrs.Attributes(map[string]string{"-": "value"})
 	if !attr.HasDefault() {
 		t.Error("Should have default attr")
 	}
@@ -30,13 +30,13 @@ func TestHasDefault(t *testing.T) {
 
 func TestAttrClone(t *testing.T) {
 	t.Parallel()
-	orig := zjson.Attributes{}
+	orig := attrs.Attributes{}
 	clone := orig.Clone()
 	if !clone.IsEmpty() {
 		t.Error("Attrs must be empty")
 	}
 
-	orig = zjson.Attributes(map[string]string{"": "0", "-": "1", "a": "b"})
+	orig = attrs.Attributes(map[string]string{"": "0", "-": "1", "a": "b"})
 	clone = orig.Clone()
 	if clone[""] != "0" || clone["-"] != "1" || clone["a"] != "b" || len(clone) != len(orig) {
 		t.Error("Wrong cloned map")
@@ -65,7 +65,7 @@ func TestHasClass(t *testing.T) {
 		{"ab de gi", "d", false},
 	}
 	for _, tc := range testcases {
-		var a zjson.Attributes
+		var a attrs.Attributes
 		a = a.Set("class", tc.classes)
 		got := a.HasClass(tc.class)
 		if tc.exp != got {
