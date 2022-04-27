@@ -245,7 +245,7 @@ var defaultEncodingFunctions = encodingMap{
 		env.WriteAttributes(a)
 		env.WriteString(">")
 
-		if in := args[2:]; len(in) != 0 {
+		if in := args[2:]; len(in) == 0 {
 			env.WriteString(refValue)
 		} else {
 			env.EncodeList(in)
