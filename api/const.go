@@ -173,6 +173,7 @@ const (
 	EncodingText  = "text"
 	EncodingZJSON = "zjson"
 	EncodingZMK   = "zmk"
+	EncodingSHTML = "shtml"
 )
 
 var mapEncodingEnum = map[string]EncodingEnum{
@@ -181,6 +182,7 @@ var mapEncodingEnum = map[string]EncodingEnum{
 	EncodingText:  EncoderText,
 	EncodingZJSON: EncoderZJSON,
 	EncodingZMK:   EncoderZmk,
+	EncodingSHTML: EncoderSHTML,
 }
 var mapEnumEncoding = map[EncodingEnum]string{}
 
@@ -209,6 +211,7 @@ const (
 	EncoderText
 	EncoderZJSON
 	EncoderZmk
+	EncoderSHTML
 )
 
 // String representation of an encoder key.
