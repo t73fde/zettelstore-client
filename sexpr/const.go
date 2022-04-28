@@ -47,7 +47,7 @@ var (
 	SymLiteralZettel   = NewSymbol("LITERAL-ZETTEL")
 	SymMark            = NewSymbol("MARK")
 	SymPara            = NewSymbol("PARA")
-	SymRegionSpan      = NewSymbol("REGION-BLOCK")
+	SymRegionBlock     = NewSymbol("REGION-BLOCK")
 	SymRegionQuote     = NewSymbol("REGION-QUOTE")
 	SymRegionVerse     = NewSymbol("REGION-VERSE")
 	SymSoft            = NewSymbol("SOFT")

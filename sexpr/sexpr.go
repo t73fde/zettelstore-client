@@ -208,7 +208,12 @@ func (lst *List) Extend(o *List) {
 }
 
 // GetValue returns the list value.
-func (lst *List) GetValue() []Value { return lst.val }
+func (lst *List) GetValue() []Value {
+	if lst == nil {
+		return nil
+	}
+	return lst.val
+}
 
 // Equal retruns true if the other value is equal to this one.
 func (lst *List) Equal(other Value) bool {

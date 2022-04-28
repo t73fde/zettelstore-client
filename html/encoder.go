@@ -543,13 +543,6 @@ func visitVerbatimCode(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.Close
 	return b, c
 }
 
-func (*Encoder) setProgLang(a attrs.Attributes) attrs.Attributes {
-	if val, found := a.Get(""); found {
-		a = a.AddClass("language-" + val).Remove("")
-	}
-	return a
-}
-
 func visitVerbatimEval(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
 	return enc.writeVerbatim(obj, zjson.GetAttributes(obj).AddClass("zs-eval"))
 }
@@ -783,7 +776,7 @@ func makeVisitFormat(htmlTag string) TypeFunc {
 }
 
 func visitLiteralCode(enc *Encoder, obj zjson.Object, _ int) (bool, zjson.CloseFunc) {
-	zjson.SetAttributes(obj, enc.setProgLang(zjson.GetAttributes(obj)))
+	zjson.SetAttributes(obj, setProgLang(zjson.GetAttributes(obj)))
 	return enc.writeLiteral(obj, "code")
 }
 
