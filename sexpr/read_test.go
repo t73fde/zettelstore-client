@@ -47,3 +47,10 @@ func TestReadString(t *testing.T) {
 		}
 	}
 }
+
+func FuzzReadBytes(f *testing.F) {
+	f.Fuzz(func(t *testing.T, src []byte) {
+		t.Parallel()
+		sexpr.ReadBytes(src)
+	})
+}
