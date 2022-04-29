@@ -16,8 +16,10 @@ import (
 	"log"
 	"strconv"
 
+	"zettelstore.de/c/api"
 	"zettelstore.de/c/attrs"
 	"zettelstore.de/c/sexpr"
+	"zettelstore.de/c/text"
 )
 
 type EncodingFunc func(env *EncEnvironment, args []sexpr.Value)
@@ -68,11 +70,14 @@ func (env *EncEnvironment) SetError(err error) {
 		env.err = err
 	}
 }
+
+// GetError returns the first encountered error during encoding.
 func (env *EncEnvironment) GetError() error { return env.err }
 
 // ReplaceWriter flushes the previous writer and installs the new one.
 func (env *EncEnvironment) ReplaceWriter(w io.Writer) { env.w = w }
 
+// SetUnique sets a string that maked footnote, heading, and mark fragments unique.
 func (env *EncEnvironment) SetUnique(s string) {
 	if s == "" {
 		env.unique = ""
@@ -85,16 +90,32 @@ func (env *EncEnvironment) SetUnique(s string) {
 // the encoded HTML is used in a link itself.
 func (env *EncEnvironment) IgnoreLinks() bool { return env.noLinks }
 
+// WriteString encodes a string literally.
 func (env *EncEnvironment) WriteString(s string) {
 	if env.err == nil {
 		_, env.err = io.WriteString(env.w, s)
 	}
 }
+
+// WriteStrings encodes many string literally.
+func (env *EncEnvironment) WriteStrings(sl ...string) {
+	if env.err == nil {
+		for _, s := range sl {
+			_, env.err = io.WriteString(env.w, s)
+			if env.err != nil {
+				return
+			}
+		}
+	}
+}
+
+// WriteEscape encodes a string so that it cannot interfere with other HTML code.
 func (env *EncEnvironment) WriteEscaped(s string) {
 	if env.err == nil {
 		_, env.err = Escape(env.w, s)
 	}
 }
+
 func (env *EncEnvironment) WriteEscapedLiteral(s string) {
 	if env.err == nil {
 		if env.visibleSpace {
@@ -133,6 +154,12 @@ func (env *EncEnvironment) GetList(args []sexpr.Value, idx int) (res *sexpr.List
 	res, env.err = sexpr.GetList(args, idx)
 	return res
 }
+func (env *EncEnvironment) GetAttributes(args []sexpr.Value, idx int) attrs.Attributes {
+	if env.err != nil {
+		return nil
+	}
+	return sexpr.GetAttributes(env.GetList(args, idx))
+}
 
 func (env *EncEnvironment) WriteAttributes(a attrs.Attributes) {
 	if len(a) == 0 {
@@ -147,28 +174,40 @@ func (env *EncEnvironment) WriteAttributes(a attrs.Attributes) {
 			continue
 		}
 		env.WriteString(" ")
+		env.WriteOneAttribute(key, val)
+	}
+}
+
+func (env *EncEnvironment) WriteOneAttribute(key, val string) {
+	if env.err == nil {
 		env.WriteString(key)
 		if val != "" {
 			env.WriteString(`="`)
-			if env.err == nil {
-				_, env.err = AttributeEscape(env.w, val)
-			}
+			_, env.err = AttributeEscape(env.w, val)
 			env.WriteString(`"`)
 		}
 	}
 }
 
 func (env *EncEnvironment) WriteStartTag(tag string, a attrs.Attributes) {
-	env.WriteString("<")
-	env.WriteString(tag)
+	env.WriteStrings("<", tag)
 	env.WriteAttributes(a)
 	env.WriteString(">")
 }
 
 func (env *EncEnvironment) WriteEndTag(tag string) {
-	env.WriteString("</")
-	env.WriteString(tag)
-	env.WriteString(">")
+	env.WriteStrings("</", tag, ">")
+}
+
+func (env *EncEnvironment) WriteImage(args []sexpr.Value) {
+	a := sexpr.GetAttributes(env.GetList(args, 0))
+	ref := env.GetList(args, 1)
+	refPair := ref.GetValue()
+	a = a.Set("src", env.GetString(refPair, 1))
+	if title := args[3:]; len(title) > 0 {
+		a = a.Set("title", text.SEncodeInlineString(title))
+	}
+	env.WriteStartTag("img", a)
 }
 
 func (env *EncEnvironment) Encode(value sexpr.Value) {
@@ -184,6 +223,7 @@ func (env *EncEnvironment) Encode(value sexpr.Value) {
 		env.EncodeList(val.GetValue())
 	}
 }
+
 func (env *EncEnvironment) EncodeList(lst []sexpr.Value) {
 	if len(lst) == 0 {
 		return
@@ -200,6 +240,7 @@ func (env *EncEnvironment) EncodeList(lst []sexpr.Value) {
 		env.Encode(value)
 	}
 }
+
 func (env *EncEnvironment) WriteEndnotes() {
 	if len(env.footnotes) == 0 {
 		return
@@ -219,9 +260,10 @@ func (env *EncEnvironment) WriteEndnotes() {
 		}
 		env.WriteStartTag("li", a)
 		env.EncodeList(fni.note)
-		env.WriteString(` <a class="zs-endnote-backref" href="#fnref:`)
-		env.WriteString(un)
-		env.WriteString("\" role=\"doc-backlink\">&#x21a9;&#xfe0e;</a></li>")
+		env.WriteStrings(
+			` <a class="zs-endnote-backref" href="#fnref:`,
+			un,
+			"\" role=\"doc-backlink\">&#x21a9;&#xfe0e;</a></li>")
 	}
 	env.footnotes = nil
 	env.WriteString("</ol>")
@@ -244,24 +286,21 @@ var defaultEncodingFunctions = encodingMap{
 		}
 		level := strconv.Itoa(nLevel + env.headingOffset)
 
-		a := sexpr.GetAttributes(env.GetList(args, 1))
+		a := env.GetAttributes(args, 1)
 		if fragment := env.GetString(args, 3); fragment != "" {
 			a = a.Set("id", fragment)
 		}
 
-		env.WriteString("<h")
-		env.WriteString(level)
+		env.WriteStrings("<h", level)
 		env.WriteAttributes(a)
 		env.WriteString(">")
 		env.EncodeList(args[4:])
-		env.WriteString("</h")
-		env.WriteString(level)
-		env.WriteString(">")
+		env.WriteStrings("</h", level, ">")
 	},
 	sexpr.SymThematic: func(env *EncEnvironment, args []sexpr.Value) {
 		env.WriteString("<hr")
 		if len(args) > 0 {
-			env.WriteAttributes(sexpr.GetAttributes(env.GetList(args, 0)))
+			env.WriteAttributes(env.GetAttributes(args, 0))
 		}
 		env.WriteString(">")
 	},
@@ -323,7 +362,7 @@ var defaultEncodingFunctions = encodingMap{
 	sexpr.SymCellLeft:   makeCellFn("left"),
 	sexpr.SymCellRight:  makeCellFn("right"),
 	sexpr.SymRegionBlock: func(env *EncEnvironment, args []sexpr.Value) {
-		a := sexpr.GetAttributes(env.GetList(args, 0))
+		a := env.GetAttributes(args, 0)
 		if val, found := a.Get(""); found {
 			a = a.Remove("").AddClass(val)
 		}
@@ -336,7 +375,7 @@ var defaultEncodingFunctions = encodingMap{
 		env.writeRegion(args, nil, "div")
 	},
 	sexpr.SymVerbatimComment: func(env *EncEnvironment, args []sexpr.Value) {
-		if sexpr.GetAttributes(env.GetList(args, 0)).HasDefault() {
+		if env.GetAttributes(args, 0).HasDefault() {
 			if s := env.GetString(args, 1); s != "" {
 				env.WriteString("<!--\n")
 				env.WriteEscaped(s)
@@ -345,16 +384,16 @@ var defaultEncodingFunctions = encodingMap{
 		}
 	},
 	sexpr.SymVerbatimEval: func(env *EncEnvironment, args []sexpr.Value) {
-		a := sexpr.GetAttributes(env.GetList(args, 0)).AddClass("zs-eval")
+		a := env.GetAttributes(args, 0).AddClass("zs-eval")
 		env.writeVerbatim(args, a)
 	},
-	sexpr.SymVerbatimHTML: nil,
+	sexpr.SymVerbatimHTML: execHTML,
 	sexpr.SymVerbatimMath: func(env *EncEnvironment, args []sexpr.Value) {
-		a := sexpr.GetAttributes(env.GetList(args, 0)).AddClass("zs-math")
+		a := env.GetAttributes(args, 0).AddClass("zs-math")
 		env.writeVerbatim(args, a)
 	},
 	sexpr.SymVerbatimProg: func(env *EncEnvironment, args []sexpr.Value) {
-		a := setProgLang(sexpr.GetAttributes(env.GetList(args, 0)))
+		a := setProgLang(env.GetAttributes(args, 0))
 		oldVisible := env.visibleSpace
 		if a.HasDefault() {
 			a = a.RemoveDefault()
@@ -364,8 +403,34 @@ var defaultEncodingFunctions = encodingMap{
 		env.visibleSpace = oldVisible
 	},
 	sexpr.SymVerbatimZettel: DoNothingFn,
-	sexpr.SymBLOB:           nil,
-	sexpr.SymTransclude:     nil,
+	sexpr.SymBLOB: func(env *EncEnvironment, args []sexpr.Value) {
+		env.writeBLOB(env.GetString(args, 0), env.GetString(args, 1), env.GetString(args, 2))
+	},
+	sexpr.SymTransclude: func(env *EncEnvironment, args []sexpr.Value) {
+		ref := env.GetList(args, 0)
+		refPair := ref.GetValue()
+		refKind := env.GetSymbol(refPair, 0)
+		if refKind == nil {
+			return
+		}
+		if refValue := env.GetString(refPair, 1); refValue != "" {
+			if sexpr.SymRefStateExternal.Equal(refKind) {
+				a := attrs.Attributes{}.Set("src", refValue).AddClass("external")
+				env.WriteString("<p><img")
+				env.WriteAttributes(a)
+				env.WriteString("></p>")
+				return
+			}
+			env.WriteStrings("<!-- transclude ", refKind.GetValue(), ": ")
+			env.WriteEscaped(refValue)
+			env.WriteString(" -->")
+			return
+		}
+		if env.err == nil {
+			_, env.err = fmt.Fprintf(env.w, "%v\n", args)
+		}
+		log.Println("TRAN", args)
+	},
 	sexpr.SymText: func(env *EncEnvironment, args []sexpr.Value) {
 		if len(args) > 0 {
 			env.WriteEscaped(env.GetString(args, 0))
@@ -395,7 +460,7 @@ var defaultEncodingFunctions = encodingMap{
 		if env.MissingArgs(args, 2) {
 			return
 		}
-		a := sexpr.GetAttributes(env.GetList(args, 0))
+		a := env.GetAttributes(args, 0)
 		ref := env.GetList(args, 1)
 		if ref == nil {
 			return
@@ -427,9 +492,32 @@ var defaultEncodingFunctions = encodingMap{
 		}
 		env.WriteString("</a>")
 	},
-	sexpr.SymEmbed:     nil,
-	sexpr.SymEmbedBLOB: nil,
-	sexpr.SymCite:      nil,
+	sexpr.SymEmbed: func(env *EncEnvironment, args []sexpr.Value) {
+		if syntax := env.GetString(args, 2); syntax == api.ValueSyntaxSVG {
+			ref := env.GetList(args, 1)
+			refPair := ref.GetValue()
+			env.WriteStrings(
+				`<figure><embed type="image/svg+xml" src="`, "/", env.GetString(refPair, 1), ".svg", "\" /></figure>")
+		} else {
+			env.WriteImage(args)
+		}
+	},
+	sexpr.SymEmbedBLOB: func(env *EncEnvironment, args []sexpr.Value) {
+		a, syntax, data := env.GetAttributes(args, 0), env.GetString(args, 1), env.GetString(args, 2)
+		title, _ := a.Get("title")
+		env.writeBLOB(title, syntax, data)
+	},
+	sexpr.SymCite: func(env *EncEnvironment, args []sexpr.Value) {
+		env.WriteStartTag("span", env.GetAttributes(args, 0))
+		if key := env.GetString(args, 1); key != "" {
+			env.WriteEscaped(key)
+			if text := args[2:]; len(text) > 0 {
+				env.WriteString(", ")
+				env.EncodeList(text)
+			}
+		}
+		env.WriteString("</span>")
+	},
 	sexpr.SymMark: func(env *EncEnvironment, args []sexpr.Value) {
 		if env.noLinks {
 			spanList := sexpr.NewList(sexpr.SymFormatSpan)
@@ -450,44 +538,48 @@ var defaultEncodingFunctions = encodingMap{
 	},
 	sexpr.SymFootnote: func(env *EncEnvironment, args []sexpr.Value) {
 		if env.writeFootnote {
-			a := sexpr.GetAttributes(env.GetList(args, 0))
+			a := env.GetAttributes(args, 0)
 			env.footnotes = append(env.footnotes, sfootnodeInfo{args[1:], a})
 			n := strconv.Itoa(len(env.footnotes))
 			un := env.unique + n
-			env.WriteString(`<sup id="fnref:`)
-			env.WriteString(un)
-			env.WriteString(`"><a class="zs-noteref" href="#fn:`)
-			env.WriteString(un)
-			env.WriteString(`" role="doc-noteref">`)
-			env.WriteString(n)
-			env.WriteString(`</a></sup>`)
+			env.WriteStrings(
+				`<sup id="fnref:`, un, `"><a class="zs-noteref" href="#fn:`, un,
+				`" role="doc-noteref">`, n, `</a></sup>`)
 		}
 	},
-	sexpr.SymFormatDelete:   makeFormatFn("del"),
-	sexpr.SymFormatEmph:     makeFormatFn("em"),
-	sexpr.SymFormatInsert:   makeFormatFn("ins"),
-	sexpr.SymFormatQuote:    makeFormatFn("q"),
-	sexpr.SymFormatSpan:     makeFormatFn("span"),
-	sexpr.SymFormatStrong:   makeFormatFn("strong"),
-	sexpr.SymFormatSub:      makeFormatFn("sub"),
-	sexpr.SymFormatSuper:    makeFormatFn("sup"),
-	sexpr.SymLiteralComment: nil,
-	sexpr.SymLiteralHTML:    nil,
-	sexpr.SymLiteralInput:   func(env *EncEnvironment, args []sexpr.Value) { env.writeLiteral(args, nil, "kbd") },
+	sexpr.SymFormatDelete: makeFormatFn("del"),
+	sexpr.SymFormatEmph:   makeFormatFn("em"),
+	sexpr.SymFormatInsert: makeFormatFn("ins"),
+	sexpr.SymFormatQuote:  makeFormatFn("q"),
+	sexpr.SymFormatSpan:   makeFormatFn("span"),
+	sexpr.SymFormatStrong: makeFormatFn("strong"),
+	sexpr.SymFormatSub:    makeFormatFn("sub"),
+	sexpr.SymFormatSuper:  makeFormatFn("sup"),
+	sexpr.SymLiteralComment: func(env *EncEnvironment, args []sexpr.Value) {
+		if env.GetAttributes(args, 0).HasDefault() {
+			if s := env.GetString(args, 1); s != "" {
+				env.WriteString("<!-- ")
+				env.WriteEscaped(s)
+				env.WriteString("-->")
+			}
+		}
+	},
+	sexpr.SymLiteralHTML:  execHTML,
+	sexpr.SymLiteralInput: func(env *EncEnvironment, args []sexpr.Value) { env.writeLiteral(args, nil, "kbd") },
 	sexpr.SymLiteralMath: func(env *EncEnvironment, args []sexpr.Value) {
-		a := sexpr.GetAttributes(env.GetList(args, 0)).AddClass("zs-math")
+		a := env.GetAttributes(args, 0).AddClass("zs-math")
 		env.writeLiteral(args, a, "code")
 	},
 	sexpr.SymLiteralOutput: func(env *EncEnvironment, args []sexpr.Value) { env.writeLiteral(args, nil, "samp") },
 	sexpr.SymLiteralProg: func(env *EncEnvironment, args []sexpr.Value) {
-		a := setProgLang(sexpr.GetAttributes(env.GetList(args, 0)))
+		a := setProgLang(env.GetAttributes(args, 0))
 		env.writeLiteral(args, a, "code")
 	},
 	sexpr.SymLiteralZettel: DoNothingFn,
 }
 
 // DoNothingFn is a function that does nothing.
-func DoNothingFn(*EncEnvironment, []sexpr.Value) {}
+func DoNothingFn(*EncEnvironment, []sexpr.Value) { /* Should really do nothing */ }
 
 func makeListFn(tag string) EncodingFunc {
 	return func(env *EncEnvironment, args []sexpr.Value) {
@@ -515,9 +607,7 @@ func makeCellFn(align string) EncodingFunc {
 		if align == "" {
 			env.WriteString("<td>")
 		} else {
-			env.WriteString(`<td class="`)
-			env.WriteString(align)
-			env.WriteString(`">`)
+			env.WriteStrings(`<td class="`, align, `">`)
 		}
 		env.EncodeList(args)
 		env.WriteString("</td>")
@@ -526,7 +616,7 @@ func makeCellFn(align string) EncodingFunc {
 
 func (env *EncEnvironment) writeRegion(args []sexpr.Value, a attrs.Attributes, tag string) {
 	if a == nil {
-		a = sexpr.GetAttributes(env.GetList(args, 0))
+		a = env.GetAttributes(args, 0)
 	}
 	env.WriteStartTag(tag, a)
 	env.Encode(env.GetList(args, 1))
@@ -545,12 +635,37 @@ func (env *EncEnvironment) writeVerbatim(args []sexpr.Value, a attrs.Attributes)
 	env.WriteString("</code></pre>")
 }
 
+func execHTML(env *EncEnvironment, args []sexpr.Value) {
+	if s := env.GetString(args, 1); s != "" && IsSafe(s) {
+		env.WriteString(s)
+	}
+}
+
+func (env *EncEnvironment) writeBLOB(title, syntax, data string) {
+	if data == "" {
+		return
+	}
+	switch syntax {
+	case "":
+	case api.ValueSyntaxSVG:
+		// TODO: add  title as description
+		env.WriteStrings("<p>", data, "</p>")
+	default:
+		env.WriteStrings(`<p><img src="data:image/`, syntax, ";base64,", data)
+		if title != "" {
+			env.WriteString(`" `)
+			env.WriteOneAttribute("title", title)
+		}
+		env.WriteString(`"></p>`)
+	}
+}
+
 func makeFormatFn(tag string) EncodingFunc {
 	return func(env *EncEnvironment, args []sexpr.Value) {
 		if env.MissingArgs(args, 1) {
 			return
 		}
-		a := sexpr.GetAttributes(env.GetList(args, 0))
+		a := env.GetAttributes(args, 0)
 		if val, found := a.Get(""); found {
 			a = a.Remove("").AddClass(val)
 		}
@@ -566,7 +681,7 @@ func (env *EncEnvironment) writeLiteral(args []sexpr.Value, a attrs.Attributes, 
 	}
 
 	if a == nil {
-		a = sexpr.GetAttributes(env.GetList(args, 0))
+		a = env.GetAttributes(args, 0)
 	}
 	oldVisible := env.visibleSpace
 	if a.HasDefault() {
@@ -578,6 +693,7 @@ func (env *EncEnvironment) writeLiteral(args []sexpr.Value, a attrs.Attributes, 
 	env.WriteString(env.GetString(args, 1))
 	env.WriteEndTag(tag)
 }
+
 func setProgLang(a attrs.Attributes) attrs.Attributes {
 	if val, found := a.Get(""); found {
 		a = a.AddClass("language-" + val).Remove("")
