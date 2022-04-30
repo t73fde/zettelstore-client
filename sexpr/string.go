@@ -44,7 +44,7 @@ var (
 	encNewline   = []byte{'\\', 'n'}
 	encTab       = []byte{'\\', 't'}
 	encCr        = []byte{'\\', 'r'}
-	encUnicode   = []byte{'\\', 'u', '0', '0', '0', '0'}
+	encUnicode   = []byte{'\\', 'x', '0', '0'}
 	encHex       = []byte("0123456789ABCDEF")
 )
 
@@ -73,10 +73,8 @@ func (str *String) Encode(w io.Writer) (int, error) {
 				continue
 			}
 			b = encUnicode
-			b[2] = '0'
-			b[3] = '0'
-			b[4] = encHex[ch>>4]
-			b[5] = encHex[ch&0xF]
+			b[2] = encHex[ch>>4]
+			b[3] = encHex[ch&0xF]
 		}
 		l, err2 := io.WriteString(w, str.val[last:i])
 		length += l

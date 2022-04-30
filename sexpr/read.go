@@ -13,6 +13,7 @@ package sexpr
 import (
 	"bytes"
 	"errors"
+	"strconv"
 	"unicode"
 
 	"zettelstore.de/c/input"
@@ -34,7 +35,7 @@ func ReadBytes(src []byte) (Value, error) {
 
 func ReadValue(inp *input.Input) (Value, error) {
 	skipSpace(inp)
-	return readValue(inp)
+	return parseValue(inp)
 }
 
 func skipSpace(inp *input.Input) {
@@ -43,20 +44,20 @@ func skipSpace(inp *input.Input) {
 	}
 }
 
-func readValue(inp *input.Input) (Value, error) {
+func parseValue(inp *input.Input) (Value, error) {
 	switch inp.Ch {
 	case input.EOS:
 		return nil, ErrEOF
 	case '(': // List
-		return readList(inp)
+		return parseList(inp)
 	case '"': // String
-		return readString(inp)
+		return parseString(inp)
 	default: // Must be symbol
-		return readSymbol(inp)
+		return parseSymbol(inp)
 	}
 }
 
-func readSymbol(inp *input.Input) (Value, error) {
+func parseSymbol(inp *input.Input) (Value, error) {
 	var buf bytes.Buffer
 	buf.WriteRune(inp.Ch)
 	for {
@@ -72,7 +73,7 @@ func readSymbol(inp *input.Input) (Value, error) {
 	}
 }
 
-func readString(inp *input.Input) (Value, error) {
+func parseString(inp *input.Input) (Value, error) {
 	var buf bytes.Buffer
 	for {
 		inp.Next()
@@ -82,12 +83,60 @@ func readString(inp *input.Input) (Value, error) {
 		case '"':
 			inp.Next() // skip '"'
 			return NewString(buf.String()), nil
+		case '\\':
+			inp.Next()
+			switch inp.Ch {
+			case 't':
+				buf.WriteByte('\t')
+			case 'r':
+				buf.WriteByte('\r')
+			case 'n':
+				buf.WriteByte('\n')
+			case 'x':
+				parseRune(inp, &buf, 2)
+			case 'u':
+				parseRune(inp, &buf, 4)
+			case 'U':
+				parseRune(inp, &buf, 6)
+			default:
+				buf.WriteRune(inp.Ch)
+			}
+		default:
+			buf.WriteRune(inp.Ch)
 		}
+	}
+}
+func parseRune(inp *input.Input, buf *bytes.Buffer, numDigits int) {
+	endPos := inp.Pos + numDigits
+	if len(inp.Src) <= endPos {
 		buf.WriteRune(inp.Ch)
+		return
+	}
+	n, err := strconv.ParseInt(string(inp.Src[inp.Pos+1:endPos+1]), 16, 4*numDigits)
+	if err != nil {
+		buf.WriteRune(inp.Ch)
+		return
+	}
+	buf.WriteRune(rune(n))
+
+	switch numDigits {
+	case 6:
+		inp.Next()
+		inp.Next()
+		fallthrough
+	case 4:
+		inp.Next()
+		inp.Next()
+		fallthrough
+	case 2:
+		inp.Next()
+		inp.Next()
+	default:
+		panic(numDigits)
 	}
 }
 
-func readList(inp *input.Input) (Value, error) {
+func parseList(inp *input.Input) (Value, error) {
 	inp.Next() // Skip '('
 	elems := []Value{}
 	for {
@@ -99,7 +148,7 @@ func readList(inp *input.Input) (Value, error) {
 			inp.Next() // Skip ')'
 			return NewList(elems...), nil
 		}
-		val, err := readValue(inp)
+		val, err := parseValue(inp)
 		if err != nil {
 			return nil, err
 		}
