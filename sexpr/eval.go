@@ -12,18 +12,8 @@ package sexpr
 
 import "fmt"
 
-// PrimitiveFn is a primitve function that is implemented in Go.
-type PrimitiveFn func(Environment, []Value) (Value, error)
-
-// Lookuper can look-up symbols and return a function plus indication of special value.
-type Lookuper interface {
-	Lookup(*Symbol) (PrimitiveFn, bool)
-}
-
 // Environment provides data to evaluate a s-expression.
 type Environment interface {
-	Lookuper
-
 	EvaluateString(*String) (Value, error)
 	EvaluateSymbol(*Symbol) (Value, error)
 	EvaluateList(*List) (Value, error)
@@ -37,8 +27,10 @@ func Evaluate(env Environment, value Value) (Value, error) {
 		return env.EvaluateString(val)
 	case *List:
 		return env.EvaluateList(val)
+	default:
+		// Other types evaluate to themself
+		return value, nil
 	}
-	return value, nil // error
 }
 
 func EvaluateCall(env Environment, vals []Value) (Value, error, bool) {
@@ -46,35 +38,35 @@ func EvaluateCall(env Environment, vals []Value) (Value, error, bool) {
 		return nil, nil, false
 	}
 	if sym, ok := vals[0].(*Symbol); ok {
-		fn, primitive := env.Lookup(sym)
-		if fn == nil {
+		sval, err := env.EvaluateSymbol(sym)
+		if err != nil {
+			return nil, err, true
+		}
+		fn, ok := sval.(*Function)
+		if !ok {
 			return nil, fmt.Errorf("unbound identifier: %q", sym.GetValue()), true
 		}
 		params := vals[1:]
-		if !primitive {
-			args := make([]Value, len(params))
-			for i, param := range params {
-				val, err := Evaluate(env, param)
-				if val == nil || err != nil {
-					return nil, err, true
-				}
-				args[i] = val
+		if !fn.IsSpecial() {
+			var err error
+			params, err = EvaluateSlice(env, params)
+			if err != nil {
+				return nil, err, true
 			}
-			params = args
 		}
-		res, err := fn(env, params)
+		res, err := fn.Call(env, params)
 		return res, err, true
 	}
 	return nil, nil, false
 }
 
-func EvaluateSlice(env Environment, vals []Value) (res *List, err error) {
-	result := make([]Value, len(vals))
+func EvaluateSlice(env Environment, vals []Value) (res []Value, err error) {
+	res = make([]Value, len(vals))
 	for i, value := range vals {
-		result[i], err = Evaluate(env, value)
+		res[i], err = Evaluate(env, value)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return NewList(result...), nil
+	return res, nil
 }

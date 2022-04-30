@@ -48,32 +48,52 @@ func TestEvaluate(t *testing.T) {
 
 type testEnv struct{}
 
-func (e *testEnv) Lookup(sym *sexpr.Symbol) (sexpr.PrimitiveFn, bool) {
-	switch sym.GetValue() {
-	case "CAT":
-		return func(env sexpr.Environment, args []sexpr.Value) (sexpr.Value, error) {
+var testFns = []*sexpr.Function{
+	sexpr.NewPrimitive(
+		"CAT",
+		false,
+		func(env sexpr.Environment, args []sexpr.Value) (sexpr.Value, error) {
 			var buf bytes.Buffer
 			for _, arg := range args {
 				buf.WriteString(arg.String())
 			}
 			return sexpr.NewString(buf.String()), nil
-		}, false
-	case "QUOTE":
-		return func(env sexpr.Environment, args []sexpr.Value) (sexpr.Value, error) {
+		},
+	),
+	sexpr.NewPrimitive(
+		"QUOTE",
+		true,
+		func(env sexpr.Environment, args []sexpr.Value) (sexpr.Value, error) {
 			return sexpr.NewList(args...), nil
-		}, true
+		},
+	),
+}
+
+var testFnMap = map[string]*sexpr.Function{}
+
+func init() {
+	for _, fn := range testFns {
+		testFnMap[fn.Name()] = fn
 	}
-	return nil, false
 }
 
 func (e *testEnv) EvaluateSymbol(sym *sexpr.Symbol) (sexpr.Value, error) {
+	if fn, found := testFnMap[sym.GetValue()]; found {
+		return fn, nil
+	}
 	return sym, nil
 }
+
 func (e *testEnv) EvaluateString(str *sexpr.String) (sexpr.Value, error) { return str, nil }
 func (e *testEnv) EvaluateList(lst *sexpr.List) (sexpr.Value, error) {
-	res, err, done := sexpr.EvaluateCall(e, lst.GetValue())
+	vals := lst.GetValue()
+	res, err, done := sexpr.EvaluateCall(e, vals)
 	if done {
 		return res, err
 	}
-	return sexpr.EvaluateSlice(e, lst.GetValue())
+	result, err := sexpr.EvaluateSlice(e, vals)
+	if err != nil {
+		return nil, err
+	}
+	return sexpr.NewList(result...), nil
 }
