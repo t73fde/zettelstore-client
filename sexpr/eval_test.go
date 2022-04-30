@@ -48,9 +48,7 @@ func TestEvaluate(t *testing.T) {
 
 type testEnv struct{}
 
-func (e *testEnv) Continue() (sexpr.Value, error) { return nil, nil }
-
-func (e *testEnv) Lookup(sym *sexpr.Symbol) (sexpr.PrimitiveFn, bool, bool) {
+func (e *testEnv) Lookup(sym *sexpr.Symbol) (sexpr.PrimitiveFn, bool) {
 	switch sym.GetValue() {
 	case "CAT":
 		return func(env sexpr.Environment, args []sexpr.Value) (sexpr.Value, error) {
@@ -59,13 +57,13 @@ func (e *testEnv) Lookup(sym *sexpr.Symbol) (sexpr.PrimitiveFn, bool, bool) {
 				buf.WriteString(arg.String())
 			}
 			return sexpr.NewString(buf.String()), nil
-		}, false, true
+		}, false
 	case "QUOTE":
 		return func(env sexpr.Environment, args []sexpr.Value) (sexpr.Value, error) {
 			return sexpr.NewList(args...), nil
-		}, true, true
+		}, true
 	}
-	return nil, false, false
+	return nil, false
 }
 
 func (e *testEnv) EvaluateSymbol(sym *sexpr.Symbol) (sexpr.Value, error) {
