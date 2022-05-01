@@ -12,143 +12,176 @@ package sexpr
 
 import (
 	"bytes"
-	"errors"
-	"strconv"
+	"io"
+	"strings"
 	"unicode"
-
-	"zettelstore.de/c/input"
-)
-
-// Error values
-var (
-	ErrEOF = errors.New("unexpected eof")
 )
 
 func ReadString(src string) (Value, error) {
-	return ReadBytes([]byte(src))
+	return ReadValue(strings.NewReader(src))
 }
 
 func ReadBytes(src []byte) (Value, error) {
-	inp := input.NewInput(src)
-	return ReadValue(inp)
+	return ReadValue(bytes.NewBuffer(src))
 }
 
-func ReadValue(inp *input.Input) (Value, error) {
-	skipSpace(inp)
-	return parseValue(inp)
+type Reader interface {
+	ReadRune() (r rune, size int, err error)
+	UnreadRune() error
 }
 
-func skipSpace(inp *input.Input) {
-	for unicode.IsSpace(inp.Ch) {
-		inp.Next()
+func ReadValue(r Reader) (Value, error) {
+	ch, err := skipSpace(r)
+	if err != nil {
+		return nil, err
+	}
+	return parseValue(r, ch)
+}
+
+func skipSpace(r Reader) (rune, error) {
+	for {
+		ch, _, err := r.ReadRune()
+		if err != nil {
+			return 0, err
+		}
+		if unicode.IsSpace(ch) {
+			continue
+		}
+		return ch, nil
 	}
 }
 
-func parseValue(inp *input.Input) (Value, error) {
-	switch inp.Ch {
-	case input.EOS:
-		return nil, ErrEOF
-	case '(': // List
-		return parseList(inp)
-	case '"': // String
-		return parseString(inp)
+func parseValue(r Reader, ch rune) (Value, error) {
+	switch ch {
+	case '(':
+		return parseList(r)
+	case '"':
+		return parseString(r)
 	default: // Must be symbol
-		return parseSymbol(inp)
+		return parseSymbol(r, ch)
 	}
 }
 
-func parseSymbol(inp *input.Input) (Value, error) {
+func parseSymbol(r Reader, ch rune) (res Value, err error) {
 	var buf bytes.Buffer
-	buf.WriteRune(inp.Ch)
+	buf.WriteRune(ch)
 	for {
-		inp.Next()
-		switch inp.Ch {
-		case input.EOS, '(', ')', '"':
+		ch, _, err = r.ReadRune()
+		if err == io.EOF {
 			return NewSymbol(buf.String()), nil
 		}
-		if unicode.In(inp.Ch, unicode.Space, unicode.C) {
+		if err != nil {
+			return nil, err
+		}
+		switch ch {
+		case ')':
+			err = r.UnreadRune()
+			fallthrough
+		case '(', '"':
+			return NewSymbol(buf.String()), err
+		}
+		if unicode.In(ch, unicode.Space, unicode.C) {
 			return NewSymbol(buf.String()), nil
 		}
-		buf.WriteRune(inp.Ch)
+		buf.WriteRune(ch)
 	}
 }
 
-func parseString(inp *input.Input) (Value, error) {
+func parseString(r Reader) (Value, error) {
 	var buf bytes.Buffer
 	for {
-		inp.Next()
-		switch inp.Ch {
-		case input.EOS:
-			return nil, ErrEOF
+		ch, _, err := r.ReadRune()
+		if err != nil {
+			return nil, err
+		}
+		switch ch {
 		case '"':
-			inp.Next() // skip '"'
 			return NewString(buf.String()), nil
 		case '\\':
-			inp.Next()
-			switch inp.Ch {
+			ch, _, err = r.ReadRune()
+			if err != nil {
+				return nil, err
+			}
+			switch ch {
 			case 't':
-				buf.WriteByte('\t')
+				err = buf.WriteByte('\t')
 			case 'r':
-				buf.WriteByte('\r')
+				err = buf.WriteByte('\r')
 			case 'n':
-				buf.WriteByte('\n')
+				err = buf.WriteByte('\n')
 			case 'x':
-				parseRune(inp, &buf, 2)
+				err = parseRune(r, &buf, ch, 2)
 			case 'u':
-				parseRune(inp, &buf, 4)
+				err = parseRune(r, &buf, ch, 4)
 			case 'U':
-				parseRune(inp, &buf, 6)
+				err = parseRune(r, &buf, ch, 6)
 			default:
-				buf.WriteRune(inp.Ch)
+				_, err = buf.WriteRune(ch)
+			}
+			if err != nil {
+				return nil, err
 			}
 		default:
-			buf.WriteRune(inp.Ch)
+			buf.WriteRune(ch)
 		}
 	}
 }
-func parseRune(inp *input.Input, buf *bytes.Buffer, numDigits int) {
-	endPos := inp.Pos + numDigits
-	if len(inp.Src) <= endPos {
-		buf.WriteRune(inp.Ch)
-		return
-	}
-	n, err := strconv.ParseInt(string(inp.Src[inp.Pos+1:endPos+1]), 16, 4*numDigits)
-	if err != nil {
-		buf.WriteRune(inp.Ch)
-		return
-	}
-	buf.WriteRune(rune(n))
 
-	switch numDigits {
-	case 6:
-		inp.Next()
-		inp.Next()
-		fallthrough
-	case 4:
-		inp.Next()
-		inp.Next()
-		fallthrough
-	case 2:
-		inp.Next()
-		inp.Next()
-	default:
-		panic(numDigits)
-	}
+var hexMap = map[rune]int{
+	'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+	'a': 10, 'b': 11, 'c': 12, 'd': 13, 'e': 14, 'f': 15,
+	'A': 10, 'B': 11, 'C': 12, 'D': 13, 'E': 14, 'F': 15,
 }
 
-func parseList(inp *input.Input) (Value, error) {
-	inp.Next() // Skip '('
+func parseRune(r Reader, buf *bytes.Buffer, curCh rune, numDigits int) error {
+	var arr [8]rune
+	arr[0] = curCh
+	result := rune(0)
+	for i := 0; i < numDigits; i++ {
+		ch, _, err := r.ReadRune()
+		if err != nil {
+			return err
+		}
+		if ch == '"' {
+			for j := 0; j <= i; j++ {
+				_, err = buf.WriteRune(arr[j])
+				if err != nil {
+					return err
+				}
+			}
+			return r.UnreadRune()
+		}
+		arr[i+1] = ch
+		if hexVal, found := hexMap[ch]; found {
+			result = (result << 4) + rune(hexVal)
+			continue
+		}
+		for j := 0; j <= i+1; j++ {
+			_, err = buf.WriteRune(arr[j])
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	_, err := buf.WriteRune(result)
+	return err
+}
+
+func parseList(r Reader) (Value, error) {
 	elems := []Value{}
 	for {
-		skipSpace(inp)
-		switch inp.Ch {
-		case input.EOS:
-			return nil, ErrEOF
-		case ')':
-			inp.Next() // Skip ')'
+		ch, err := skipSpace(r)
+		if err != nil {
+			return nil, err
+		}
+		if err != nil {
+			return nil, err
+		}
+		if ch == ')' {
 			return NewList(elems...), nil
 		}
-		val, err := parseValue(inp)
+		val, err := parseValue(r, ch)
 		if err != nil {
 			return nil, err
 		}
