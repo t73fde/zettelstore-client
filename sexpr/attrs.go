@@ -10,14 +10,17 @@
 
 package sexpr
 
-import "zettelstore.de/c/attrs"
+import (
+	"github.com/t73fde/sxpf"
+	"zettelstore.de/c/attrs"
+)
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.
-func GetAttributes(lst *List) attrs.Attributes {
+func GetAttributes(lst *sxpf.List) attrs.Attributes {
 	pairs := lst.GetValue()
 	a := make(attrs.Attributes, len(pairs))
 	for _, elem := range pairs {
-		l, ok := elem.(*List)
+		l, ok := elem.(*sxpf.List)
 		if !ok {
 			continue
 		}
@@ -25,11 +28,11 @@ func GetAttributes(lst *List) attrs.Attributes {
 		if len(pair) < 2 {
 			continue
 		}
-		key, err := GetString(pair, 0)
+		key, err := sxpf.GetString(pair, 0)
 		if err != nil {
 			continue
 		}
-		val, err := GetString(pair, 1)
+		val, err := sxpf.GetString(pair, 1)
 		if err != nil {
 			continue
 		}
