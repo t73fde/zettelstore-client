@@ -21,14 +21,14 @@ import (
 
 // SEncodeBlock writes the text of the given block list to the given writer.
 func SEncodeBlock(w io.Writer, lst *sxpf.List) {
-	env := textEnvironment{w: w}
+	env := newTextEnvironment(w)
 	env.EvaluateList(lst)
 }
 
 // SEncodeInlineString returns the text content of the given inline list as a string.
 func SEncodeInlineString(vals []sxpf.Value) string {
 	var buf bytes.Buffer
-	env := textEnvironment{w: &buf}
+	env := newTextEnvironment(&buf)
 	sxpf.EvaluateSlice(&env, vals)
 	return buf.String()
 }
@@ -36,6 +36,28 @@ func SEncodeInlineString(vals []sxpf.Value) string {
 type textEnvironment struct {
 	err error
 	w   io.Writer
+	sm  *sxpf.SymbolMap
+}
+
+func newTextEnvironment(w io.Writer) textEnvironment {
+	sm := sxpf.NewSymbolMap(nil)
+	for _, bFn := range builtins {
+		sym := bFn.sym
+		fn := bFn.fn
+		sm.Add(sym, sxpf.NewPrimForm(
+			sym.GetValue(),
+			true,
+			func(env sxpf.Environment, args []sxpf.Value) (sxpf.Value, error) {
+				fn(env.(*textEnvironment), args)
+				return sxpf.Nil(), nil
+			},
+		))
+	}
+
+	return textEnvironment{
+		w:  w,
+		sm: sm,
+	}
 }
 
 func (env *textEnvironment) GetString(args []sxpf.Value, idx int) (res string) {
@@ -53,10 +75,7 @@ func (env *textEnvironment) WriteString(s string) {
 
 // LookupForm returns the form associated with the given symbol.
 func (env *textEnvironment) LookupForm(sym *sxpf.Symbol) (*sxpf.Form, error) {
-	if form, found := formMap[sym]; found {
-		return form, nil
-	}
-	return nil, sxpf.ErrNotFormBound(sym)
+	return env.sm.LookupForm(sym)
 }
 
 // Evaluate the string. In many cases, strings evaluate to itself.
@@ -95,21 +114,4 @@ var builtins = []struct {
 	{sexpr.SymSpace, func(env *textEnvironment, args []sxpf.Value) { env.WriteString(" ") }},
 	{sexpr.SymSoft, func(env *textEnvironment, args []sxpf.Value) { env.WriteString(" ") }},
 	{sexpr.SymHard, func(env *textEnvironment, args []sxpf.Value) { env.WriteString("\n") }},
-}
-
-var formMap = map[*sxpf.Symbol]*sxpf.Form{}
-
-func init() {
-	for _, bFn := range builtins {
-		sym := bFn.sym
-		fn := bFn.fn
-		formMap[sym] = sxpf.NewPrimForm(
-			sym.GetValue(),
-			true,
-			func(env sxpf.Environment, args []sxpf.Value) (sxpf.Value, error) {
-				fn(env.(*textEnvironment), args)
-				return sxpf.Nil(), nil
-			},
-		)
-	}
 }
