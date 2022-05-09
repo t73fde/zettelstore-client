@@ -44,7 +44,7 @@ func newTextEnvironment(w io.Writer) textEnvironment {
 	for _, bFn := range builtins {
 		sym := bFn.sym
 		fn := bFn.fn
-		sm.Add(sym, sxpf.NewPrimForm(
+		sm.Set(sym, sxpf.NewPrimForm(
 			sym.GetValue(),
 			true,
 			func(env sxpf.Environment, args []sxpf.Value) (sxpf.Value, error) {
@@ -74,7 +74,7 @@ func (env *textEnvironment) WriteString(s string) {
 }
 
 // LookupForm returns the form associated with the given symbol.
-func (env *textEnvironment) LookupForm(sym *sxpf.Symbol) (*sxpf.Form, error) {
+func (env *textEnvironment) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
 	return env.sm.LookupForm(sym)
 }
 

@@ -49,7 +49,7 @@ func NewEncEnvironment(w io.Writer, headingOffset int) *EncEnvironment {
 	builtins := sxpf.NewSymbolMap(nil)
 	for sym, fn := range defaultEncodingFunctions {
 		primFunc := fn
-		builtins.Add(sym, sxpf.NewPrimForm(
+		builtins.Set(sym, sxpf.NewPrimForm(
 			sym.GetValue(),
 			true,
 			func(env sxpf.Environment, args []sxpf.Value) (sxpf.Value, error) {
@@ -214,7 +214,7 @@ func (env *EncEnvironment) WriteImage(args []sxpf.Value) {
 	env.WriteStartTag("img", a)
 }
 
-func (env *EncEnvironment) LookupForm(sym *sxpf.Symbol) (*sxpf.Form, error) {
+func (env *EncEnvironment) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
 	return env.Builtins.LookupForm(sym)
 }
 
