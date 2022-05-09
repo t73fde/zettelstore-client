@@ -43,10 +43,11 @@ func newTextEnvironment(w io.Writer) textEnvironment {
 	sm := sxpf.NewSymbolMap(nil)
 	for _, bFn := range builtins {
 		sym := bFn.sym
+		minArgs := bFn.minArgs
 		fn := bFn.fn
-		sm.Set(sym, sxpf.NewPrimForm(
+		sm.Set(sym, sxpf.NewBuiltin(
 			sym.GetValue(),
-			true,
+			true, minArgs, -1,
 			func(env sxpf.Environment, args []sxpf.Value) (sxpf.Value, error) {
 				fn(env.(*textEnvironment), args)
 				return sxpf.Nil(), nil
@@ -106,12 +107,13 @@ func (env *textEnvironment) EvaluateList(lst *sxpf.List) (sxpf.Value, error) {
 }
 
 var builtins = []struct {
-	sym *sxpf.Symbol
-	fn  func(env *textEnvironment, args []sxpf.Value)
+	sym     *sxpf.Symbol
+	minArgs int
+	fn      func(env *textEnvironment, args []sxpf.Value)
 }{
-	{sexpr.SymText, func(env *textEnvironment, args []sxpf.Value) { env.WriteString(env.GetString(args, 0)) }},
-	{sexpr.SymTag, func(env *textEnvironment, args []sxpf.Value) { env.WriteString(env.GetString(args, 0)) }},
-	{sexpr.SymSpace, func(env *textEnvironment, args []sxpf.Value) { env.WriteString(" ") }},
-	{sexpr.SymSoft, func(env *textEnvironment, args []sxpf.Value) { env.WriteString(" ") }},
-	{sexpr.SymHard, func(env *textEnvironment, args []sxpf.Value) { env.WriteString("\n") }},
+	{sexpr.SymText, 1, func(env *textEnvironment, args []sxpf.Value) { env.WriteString(env.GetString(args, 0)) }},
+	{sexpr.SymTag, 1, func(env *textEnvironment, args []sxpf.Value) { env.WriteString(env.GetString(args, 0)) }},
+	{sexpr.SymSpace, 0, func(env *textEnvironment, args []sxpf.Value) { env.WriteString(" ") }},
+	{sexpr.SymSoft, 0, func(env *textEnvironment, args []sxpf.Value) { env.WriteString(" ") }},
+	{sexpr.SymHard, 0, func(env *textEnvironment, args []sxpf.Value) { env.WriteString("\n") }},
 }
