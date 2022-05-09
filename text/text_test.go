@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/t73fde/sxpf"
+	"zettelstore.de/c/sexpr"
 	"zettelstore.de/c/text"
 )
 
@@ -28,7 +29,7 @@ func TestSexprText(t *testing.T) {
 		{`(SPACE "a")`, " "},
 	}
 	for i, tc := range testcases {
-		sval, err := sxpf.ReadString(tc.src)
+		sval, err := sxpf.ReadString(sexpr.Env, tc.src)
 		if err != nil {
 			t.Error(err)
 			continue

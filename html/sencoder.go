@@ -215,6 +215,7 @@ func (env *EncEnvironment) WriteImage(args []sxpf.Value) {
 	env.WriteStartTag("img", a)
 }
 
+func (env *EncEnvironment) MakeSymbol(s string) *sxpf.Symbol { return sexpr.Env.MakeSymbol(s) }
 func (env *EncEnvironment) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
 	return env.Builtins.LookupForm(sym)
 }
