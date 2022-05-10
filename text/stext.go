@@ -74,7 +74,7 @@ func (env *textEnvironment) WriteString(s string) {
 	}
 }
 
-func (env *textEnvironment) MakeSymbol(s string) *sxpf.Symbol { return sexpr.Env.MakeSymbol(s) }
+func (env *textEnvironment) MakeSymbol(s string) *sxpf.Symbol { return sexpr.Smk.MakeSymbol(s) }
 
 // LookupForm returns the form associated with the given symbol.
 func (env *textEnvironment) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
