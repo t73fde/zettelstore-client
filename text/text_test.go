@@ -24,9 +24,9 @@ func TestSexprText(t *testing.T) {
 		src string
 		exp string
 	}{
-		{"()", ""},
-		{`(TEXT "a")`, "a"},
-		{`(SPACE "a")`, " "},
+		{"[]", ""},
+		{`[TEXT "a"]`, "a"},
+		{`[SPACE "a"]`, " "},
 	}
 	for i, tc := range testcases {
 		sval, err := sxpf.ReadString(sexpr.Smk, tc.src)
@@ -34,7 +34,7 @@ func TestSexprText(t *testing.T) {
 			t.Error(err)
 			continue
 		}
-		lst, ok := sval.(*sxpf.List)
+		lst, ok := sval.(*sxpf.Array)
 		if !ok {
 			t.Errorf("%d: not a list: %v", i, sval)
 		}

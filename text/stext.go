@@ -20,9 +20,9 @@ import (
 )
 
 // SEncodeBlock writes the text of the given block list to the given writer.
-func SEncodeBlock(w io.Writer, lst *sxpf.List) {
+func SEncodeBlock(w io.Writer, lst *sxpf.Array) {
 	env := newTextEnvironment(w)
-	env.EvaluateList(lst)
+	env.EvaluateArray(lst)
 }
 
 // SEncodeInlineString returns the text content of the given inline list as a string.
@@ -96,7 +96,7 @@ func (env *textEnvironment) EvaluateSymbol(*sxpf.Symbol) (sxpf.Value, error) {
 // Evaluate the given list. In many cases this means to evaluate the first
 // element to a form and then call the form with the remaning elements
 // (possibly evaluated) as parameters.
-func (env *textEnvironment) EvaluateList(lst *sxpf.List) (sxpf.Value, error) {
+func (env *textEnvironment) EvaluateArray(lst *sxpf.Array) (sxpf.Value, error) {
 	args := lst.GetValue()
 	if sym, err := sxpf.GetSymbol(args, 0); err == nil {
 		if form, err := env.LookupForm(sym); err == nil {

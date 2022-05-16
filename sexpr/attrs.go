@@ -16,11 +16,11 @@ import (
 )
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.
-func GetAttributes(lst *sxpf.List) attrs.Attributes {
+func GetAttributes(lst *sxpf.Array) attrs.Attributes {
 	pairs := lst.GetValue()
 	a := make(attrs.Attributes, len(pairs))
 	for _, elem := range pairs {
-		l, ok := elem.(*sxpf.List)
+		l, ok := elem.(*sxpf.Array)
 		if !ok {
 			continue
 		}

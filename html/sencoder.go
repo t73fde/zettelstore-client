@@ -152,11 +152,11 @@ func (env *EncEnvironment) GetString(args []sxpf.Value, idx int) (res string) {
 	res, env.err = sxpf.GetString(args, idx)
 	return res
 }
-func (env *EncEnvironment) GetList(args []sxpf.Value, idx int) (res *sxpf.List) {
+func (env *EncEnvironment) GetList(args []sxpf.Value, idx int) (res *sxpf.Array) {
 	if env.err != nil {
 		return nil
 	}
-	res, env.err = sxpf.GetList(args, idx)
+	res, env.err = sxpf.GetArray(args, idx)
 	return res
 }
 func (env *EncEnvironment) GetAttributes(args []sxpf.Value, idx int) attrs.Attributes {
@@ -230,7 +230,7 @@ func (env *EncEnvironment) EvaluateSymbol(val *sxpf.Symbol) (sxpf.Value, error) 
 	return sxpf.Nil(), nil
 }
 
-func (env *EncEnvironment) EvaluateList(lst *sxpf.List) (sxpf.Value, error) {
+func (env *EncEnvironment) EvaluateArray(lst *sxpf.Array) (sxpf.Value, error) {
 	vals := lst.GetValue()
 	res, err, done := sxpf.EvaluateCall(env, vals)
 	if done {
@@ -240,7 +240,7 @@ func (env *EncEnvironment) EvaluateList(lst *sxpf.List) (sxpf.Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	return sxpf.NewList(result...), nil
+	return sxpf.NewArray(result...), nil
 }
 
 func (env *EncEnvironment) WriteEndnotes() {
@@ -338,7 +338,7 @@ var defaultEncodingFunctions = []struct {
 			if len(args) <= i1 {
 				continue
 			}
-			ddlist, ok := args[i1].(*sxpf.List)
+			ddlist, ok := args[i1].(*sxpf.Array)
 			if !ok {
 				continue
 			}
@@ -461,7 +461,7 @@ var defaultEncodingFunctions = []struct {
 	}},
 	{sexpr.SymLink, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if env.noLinks {
-			spanList := sxpf.NewList(sexpr.SymFormatSpan)
+			spanList := sxpf.NewArray(sexpr.SymFormatSpan)
 			spanList.Append(args...)
 			sxpf.Evaluate(env, spanList)
 			return
@@ -488,7 +488,7 @@ var defaultEncodingFunctions = []struct {
 		case sexpr.SymRefStateBroken.Equal(refKind):
 			a = a.AddClass("broken")
 		default:
-			log.Println("LINK", sxpf.NewList(args...))
+			log.Println("LINK", sxpf.NewArray(args...))
 		}
 		env.WriteString("<a")
 		env.WriteAttributes(a)
@@ -529,7 +529,7 @@ var defaultEncodingFunctions = []struct {
 	}},
 	{sexpr.SymMark, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if env.noLinks {
-			spanList := sxpf.NewList(sexpr.SymFormatSpan)
+			spanList := sxpf.NewArray(sexpr.SymFormatSpan)
 			spanList.Append(args...)
 			sxpf.Evaluate(env, spanList)
 			return
