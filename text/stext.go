@@ -74,7 +74,7 @@ func (env *textEnvironment) WriteString(s string) {
 	}
 }
 
-func (env *textEnvironment) MakeSymbol(s string) *sxpf.Symbol { return sexpr.Smk.MakeSymbol(s) }
+func (*textEnvironment) MakeSymbol(s string) *sxpf.Symbol { return sexpr.Smk.MakeSymbol(s) }
 
 // LookupForm returns the form associated with the given symbol.
 func (env *textEnvironment) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
@@ -89,15 +89,25 @@ func (env *textEnvironment) EvaluateString(str *sxpf.String) (sxpf.Value, error)
 
 // Evaluate the symbol. In many cases this result in returning a value
 // found in some internal lookup tables.
-func (env *textEnvironment) EvaluateSymbol(*sxpf.Symbol) (sxpf.Value, error) {
+func (*textEnvironment) EvaluateSymbol(*sxpf.Symbol) (sxpf.Value, error) {
 	return sxpf.Nil(), nil
 }
 
 // Evaluate the given list. In many cases this means to evaluate the first
 // element to a form and then call the form with the remaning elements
 // (possibly evaluated) as parameters.
+func (env *textEnvironment) EvaluateList(p *sxpf.Pair) (sxpf.Value, error) {
+	return env.evalCall(p.GetSlice())
+}
+
+// Evaluate the given array. In many cases this means to evaluate the first
+// element to a form and then call the form with the remaning elements
+// (possibly evaluated) as parameters.
 func (env *textEnvironment) EvaluateArray(lst *sxpf.Array) (sxpf.Value, error) {
-	args := lst.GetValue()
+	return env.evalCall(lst.GetValue())
+}
+
+func (env *textEnvironment) evalCall(args []sxpf.Value) (sxpf.Value, error) {
 	if sym, err := sxpf.GetSymbol(args, 0); err == nil {
 		if form, err := env.LookupForm(sym); err == nil {
 			form.Call(env, args[1:])

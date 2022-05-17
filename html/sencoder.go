@@ -215,7 +215,7 @@ func (env *EncEnvironment) WriteImage(args []sxpf.Value) {
 	env.WriteStartTag("img", a)
 }
 
-func (env *EncEnvironment) MakeSymbol(s string) *sxpf.Symbol { return sexpr.Smk.MakeSymbol(s) }
+func (*EncEnvironment) MakeSymbol(s string) *sxpf.Symbol { return sexpr.Smk.MakeSymbol(s) }
 func (env *EncEnvironment) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
 	return env.Builtins.LookupForm(sym)
 }
@@ -230,8 +230,14 @@ func (env *EncEnvironment) EvaluateSymbol(val *sxpf.Symbol) (sxpf.Value, error) 
 	return sxpf.Nil(), nil
 }
 
+func (env *EncEnvironment) EvaluateList(p *sxpf.Pair) (sxpf.Value, error) {
+	return env.evalCall(p.GetSlice())
+}
 func (env *EncEnvironment) EvaluateArray(lst *sxpf.Array) (sxpf.Value, error) {
-	vals := lst.GetValue()
+	return env.evalCall(lst.GetValue())
+}
+
+func (env *EncEnvironment) evalCall(vals []sxpf.Value) (sxpf.Value, error) {
 	res, err, done := sxpf.EvaluateCall(env, vals)
 	if done {
 		return res, err
