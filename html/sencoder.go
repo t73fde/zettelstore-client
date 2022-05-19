@@ -273,9 +273,8 @@ func (env *EncEnvironment) WriteEndnotes() {
 		return
 	}
 	env.WriteString("<ol class=\"zs-endnotes\">")
-	for i := 0; len(env.footnotes) > 0; i++ {
-		fni := env.footnotes[0]
-		env.footnotes = env.footnotes[1:]
+	for i := 0; i < len(env.footnotes); i++ {
+		fni := env.footnotes[i]
 		n := strconv.Itoa(i + 1)
 		un := env.unique + n
 		a := fni.attrs.Clone().AddClass("zs-endnote").Set("value", n)
@@ -286,7 +285,7 @@ func (env *EncEnvironment) WriteEndnotes() {
 			a = a.Set("role", "doc-endnote")
 		}
 		env.WriteStartTag("li", a)
-		sxpf.EvaluateSlice(env, fni.note)
+		sxpf.EvaluateSlice(env, fni.note) // may add more footnotes
 		env.WriteStrings(
 			` <a class="zs-endnote-backref" href="#fnref:`,
 			un,

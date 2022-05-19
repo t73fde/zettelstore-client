@@ -227,9 +227,8 @@ func (enc *Encoder) WriteEndnotes() {
 		return
 	}
 	enc.WriteString("\n<ol class=\"zs-endnotes\">\n")
-	for i := 0; len(enc.footnotes) > 0; i++ {
-		fni := enc.footnotes[0]
-		enc.footnotes = enc.footnotes[1:]
+	for i := 0; i < len(enc.footnotes); i++ {
+		fni := enc.footnotes[i]
 		n := strconv.Itoa(i + 1)
 		un := enc.unique + n
 		a := fni.attrs.Clone().AddClass("zs-endnote").Set("value", n)
