@@ -131,13 +131,6 @@ func (env *EncEnvironment) WriteEscapedLiteral(s string) {
 	}
 }
 
-func (env *EncEnvironment) MissingArgs(args []sxpf.Value, minArgs int) bool {
-	if len(args) < minArgs {
-		env.SetError(fmt.Errorf("required args: %d, but got only: %d", minArgs, len(args)))
-		return true
-	}
-	return false
-}
 func (env *EncEnvironment) GetSymbol(args []sxpf.Value, idx int) (res *sxpf.Symbol) {
 	if env.err != nil {
 		return nil
@@ -290,10 +283,7 @@ var defaultEncodingFunctions = []struct {
 		sxpf.EvaluateSlice(env, args)
 		env.WriteString("</p>")
 	}},
-	{sexpr.SymHeading, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
-		if env.MissingArgs(args, 5) {
-			return
-		}
+	{sexpr.SymHeading, 5, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		nLevel, err := strconv.Atoi(env.GetString(args, 0))
 		if err != nil {
 			env.SetError(err)
@@ -356,7 +346,7 @@ var defaultEncodingFunctions = []struct {
 		}
 		env.WriteString("</dl>")
 	}},
-	{sexpr.SymTable, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymTable, 1, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		env.WriteString("<table>")
 		if header := env.GetList(args, 0).GetValue(); len(header) > 0 {
 			env.WriteString("<thead>")
@@ -376,20 +366,20 @@ var defaultEncodingFunctions = []struct {
 	{sexpr.SymCellCenter, 0, -1, makeCellFn("center")},
 	{sexpr.SymCellLeft, 0, -1, makeCellFn("left")},
 	{sexpr.SymCellRight, 0, -1, makeCellFn("right")},
-	{sexpr.SymRegionBlock, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymRegionBlock, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		a := env.GetAttributes(args, 0)
 		if val, found := a.Get(""); found {
 			a = a.Remove("").AddClass(val)
 		}
 		env.writeRegion(args, a, "div")
 	}},
-	{sexpr.SymRegionQuote, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymRegionQuote, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		env.writeRegion(args, nil, "blockquote")
 	}},
-	{sexpr.SymRegionVerse, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymRegionVerse, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		env.writeRegion(args, nil, "div")
 	}},
-	{sexpr.SymVerbatimComment, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymVerbatimComment, 1, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if env.GetAttributes(args, 0).HasDefault() {
 			if s := env.GetString(args, 1); s != "" {
 				env.WriteString("<!--\n")
@@ -398,16 +388,16 @@ var defaultEncodingFunctions = []struct {
 			}
 		}
 	}},
-	{sexpr.SymVerbatimEval, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymVerbatimEval, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		a := env.GetAttributes(args, 0).AddClass("zs-eval")
 		env.writeVerbatim(args, a)
 	}},
-	{sexpr.SymVerbatimHTML, 0, -1, execHTML},
-	{sexpr.SymVerbatimMath, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymVerbatimHTML, 2, -1, execHTML},
+	{sexpr.SymVerbatimMath, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		a := env.GetAttributes(args, 0).AddClass("zs-math")
 		env.writeVerbatim(args, a)
 	}},
-	{sexpr.SymVerbatimProg, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymVerbatimProg, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		a := setProgLang(env.GetAttributes(args, 0))
 		oldVisible := env.visibleSpace
 		if a.HasDefault() {
@@ -418,10 +408,10 @@ var defaultEncodingFunctions = []struct {
 		env.visibleSpace = oldVisible
 	}},
 	{sexpr.SymVerbatimZettel, 0, -1, DoNothingFn},
-	{sexpr.SymBLOB, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymBLOB, 3, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		env.writeBLOB(env.GetString(args, 0), env.GetString(args, 1), env.GetString(args, 2))
 	}},
-	{sexpr.SymTransclude, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymTransclude, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		ref := env.GetList(args, 0)
 		refPair := ref.GetValue()
 		refKind := env.GetSymbol(refPair, 0)
@@ -465,14 +455,11 @@ var defaultEncodingFunctions = []struct {
 			env.WriteEscaped(env.GetString(args, 0))
 		}
 	}},
-	{sexpr.SymLink, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymLink, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if env.noLinks {
 			spanList := sxpf.NewArray(sexpr.SymFormatSpan)
 			spanList.Append(args...)
 			sxpf.Evaluate(env, spanList)
-			return
-		}
-		if env.MissingArgs(args, 2) {
 			return
 		}
 		a := env.GetAttributes(args, 0)
@@ -507,7 +494,7 @@ var defaultEncodingFunctions = []struct {
 		}
 		env.WriteString("</a>")
 	}},
-	{sexpr.SymEmbed, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymEmbed, 3, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if syntax := env.GetString(args, 2); syntax == api.ValueSyntaxSVG {
 			ref := env.GetList(args, 1)
 			refPair := ref.GetValue()
@@ -517,12 +504,12 @@ var defaultEncodingFunctions = []struct {
 			env.WriteImage(args)
 		}
 	}},
-	{sexpr.SymEmbedBLOB, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymEmbedBLOB, 3, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		a, syntax, data := env.GetAttributes(args, 0), env.GetString(args, 1), env.GetString(args, 2)
 		title, _ := a.Get("title")
 		env.writeBLOB(title, syntax, data)
 	}},
-	{sexpr.SymCite, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymCite, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		env.WriteStartTag("span", env.GetAttributes(args, 0))
 		if key := env.GetString(args, 1); key != "" {
 			env.WriteEscaped(key)
@@ -533,7 +520,7 @@ var defaultEncodingFunctions = []struct {
 		}
 		env.WriteString("</span>")
 	}},
-	{sexpr.SymMark, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymMark, 3, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if env.noLinks {
 			spanList := sxpf.NewArray(sexpr.SymFormatSpan)
 			spanList.Append(args...)
@@ -551,7 +538,7 @@ var defaultEncodingFunctions = []struct {
 			sxpf.EvaluateSlice(env, args[3:])
 		}
 	}},
-	{sexpr.SymFootnote, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymFootnote, 1, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if env.writeFootnote {
 			a := env.GetAttributes(args, 0)
 			env.footnotes = append(env.footnotes, sfootnodeInfo{args[1:], a})
@@ -562,15 +549,15 @@ var defaultEncodingFunctions = []struct {
 				`" role="doc-noteref">`, n, `</a></sup>`)
 		}
 	}},
-	{sexpr.SymFormatDelete, 0, -1, makeFormatFn("del")},
-	{sexpr.SymFormatEmph, 0, -1, makeFormatFn("em")},
-	{sexpr.SymFormatInsert, 0, -1, makeFormatFn("ins")},
-	{sexpr.SymFormatQuote, 0, -1, makeFormatFn("q")},
-	{sexpr.SymFormatSpan, 0, -1, makeFormatFn("span")},
-	{sexpr.SymFormatStrong, 0, -1, makeFormatFn("strong")},
-	{sexpr.SymFormatSub, 0, -1, makeFormatFn("sub")},
-	{sexpr.SymFormatSuper, 0, -1, makeFormatFn("sup")},
-	{sexpr.SymLiteralComment, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymFormatDelete, 1, -1, makeFormatFn("del")},
+	{sexpr.SymFormatEmph, 1, -1, makeFormatFn("em")},
+	{sexpr.SymFormatInsert, 1, -1, makeFormatFn("ins")},
+	{sexpr.SymFormatQuote, 1, -1, makeFormatFn("q")},
+	{sexpr.SymFormatSpan, 1, -1, makeFormatFn("span")},
+	{sexpr.SymFormatStrong, 1, -1, makeFormatFn("strong")},
+	{sexpr.SymFormatSub, 1, -1, makeFormatFn("sub")},
+	{sexpr.SymFormatSuper, 1, -1, makeFormatFn("sup")},
+	{sexpr.SymLiteralComment, 1, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if env.GetAttributes(args, 0).HasDefault() {
 			if s := env.GetString(args, 1); s != "" {
 				env.WriteString("<!-- ")
@@ -579,18 +566,18 @@ var defaultEncodingFunctions = []struct {
 			}
 		}
 	}},
-	{sexpr.SymLiteralHTML, 0, -1, execHTML},
-	{sexpr.SymLiteralInput, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymLiteralHTML, 2, -1, execHTML},
+	{sexpr.SymLiteralInput, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		env.writeLiteral(args, nil, "kbd")
 	}},
-	{sexpr.SymLiteralMath, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymLiteralMath, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		a := env.GetAttributes(args, 0).AddClass("zs-math")
 		env.writeLiteral(args, a, "code")
 	}},
-	{sexpr.SymLiteralOutput, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymLiteralOutput, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		env.writeLiteral(args, nil, "samp")
 	}},
-	{sexpr.SymLiteralProg, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
+	{sexpr.SymLiteralProg, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		a := setProgLang(env.GetAttributes(args, 0))
 		env.writeLiteral(args, a, "code")
 	}},
@@ -681,9 +668,6 @@ func (env *EncEnvironment) writeBLOB(title, syntax, data string) {
 
 func makeFormatFn(tag string) encodingFunc {
 	return func(env *EncEnvironment, args []sxpf.Value) {
-		if env.MissingArgs(args, 1) {
-			return
-		}
 		a := env.GetAttributes(args, 0)
 		if val, found := a.Get(""); found {
 			a = a.Remove("").AddClass(val)
@@ -695,10 +679,6 @@ func makeFormatFn(tag string) encodingFunc {
 }
 
 func (env *EncEnvironment) writeLiteral(args []sxpf.Value, a attrs.Attributes, tag string) {
-	if env.MissingArgs(args, 2) {
-		return
-	}
-
 	if a == nil {
 		a = env.GetAttributes(args, 0)
 	}
