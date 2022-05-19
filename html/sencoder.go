@@ -11,6 +11,7 @@
 package html
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -30,15 +31,15 @@ import (
 // functionality. Builtins should not be updated, but can be used as a parent
 // map when creating a new one.
 type EncEnvironment struct {
-	err           error
-	Builtins      *sxpf.SymbolMap
-	w             io.Writer
-	headingOffset int
-	unique        string
-	footnotes     []sfootnodeInfo
-	writeFootnote bool // true iff output should include footnotes and marks
-	noLinks       bool // true iff output must not include links
-	visibleSpace  bool // true iff space should be "visible" by using EscapeVisible
+	err            error
+	Builtins       *sxpf.SymbolMap
+	w              io.Writer
+	headingOffset  int
+	unique         string
+	footnotes      []sfootnodeInfo
+	writeFootnotes bool // true iff output should include footnotes and marks
+	noLinks        bool // true iff output must not include links
+	visibleSpace   bool // true iff space should be "visible" by using EscapeVisible
 }
 type sfootnodeInfo struct {
 	note  []sxpf.Value
@@ -46,6 +47,16 @@ type sfootnodeInfo struct {
 }
 
 func NewEncEnvironment(w io.Writer, headingOffset int) *EncEnvironment {
+	return &EncEnvironment{
+		Builtins:       buildBuiltins(),
+		w:              w,
+		headingOffset:  headingOffset,
+		footnotes:      nil,
+		writeFootnotes: true,
+	}
+}
+
+func buildBuiltins() *sxpf.SymbolMap {
 	builtins := sxpf.NewSymbolMap(nil)
 	for _, b := range defaultEncodingFunctions {
 		name := b.sym.GetValue()
@@ -59,13 +70,7 @@ func NewEncEnvironment(w io.Writer, headingOffset int) *EncEnvironment {
 			},
 		))
 	}
-	return &EncEnvironment{
-		Builtins:      builtins,
-		w:             w,
-		headingOffset: headingOffset,
-		footnotes:     nil,
-		writeFootnote: true,
-	}
+	return builtins
 }
 
 // SetError marks the environment with an error, if there is not already a marked error.
@@ -198,10 +203,14 @@ func (env *EncEnvironment) WriteEndTag(tag string) {
 }
 
 func (env *EncEnvironment) WriteImage(args []sxpf.Value) {
-	a := sexpr.GetAttributes(env.GetList(args, 0))
 	ref := env.GetList(args, 1)
 	refPair := ref.GetValue()
-	a = a.Set("src", env.GetString(refPair, 1))
+	env.WriteImageWithSource(args, env.GetString(refPair, 1))
+}
+
+func (env *EncEnvironment) WriteImageWithSource(args []sxpf.Value, src string) {
+	a := sexpr.GetAttributes(env.GetList(args, 0))
+	a = a.Set("src", src)
 	if title := args[3:]; len(title) > 0 {
 		a = a.Set("title", text.SEncodeInlineString(title))
 	}
@@ -240,6 +249,23 @@ func (env *EncEnvironment) evalCall(vals []sxpf.Value) (sxpf.Value, error) {
 		return nil, err
 	}
 	return sxpf.NewArray(result...), nil
+}
+
+func EnvaluateInline(baseEnv *EncEnvironment, value sxpf.Value, withFootnotes, noLinks bool) string {
+	var buf bytes.Buffer
+	env := EncEnvironment{w: &buf, noLinks: noLinks}
+	if baseEnv != nil {
+		env.Builtins = baseEnv.Builtins
+		env.writeFootnotes = withFootnotes && baseEnv.writeFootnotes
+		env.footnotes = baseEnv.footnotes
+	} else {
+		env.Builtins = buildBuiltins()
+	}
+	sxpf.Evaluate(&env, value)
+	if baseEnv != nil {
+		baseEnv.footnotes = env.footnotes
+	}
+	return buf.String()
 }
 
 func (env *EncEnvironment) WriteEndnotes() {
@@ -539,7 +565,7 @@ var defaultEncodingFunctions = []struct {
 		}
 	}},
 	{sexpr.SymFootnote, 1, -1, func(env *EncEnvironment, args []sxpf.Value) {
-		if env.writeFootnote {
+		if env.writeFootnotes {
 			a := env.GetAttributes(args, 0)
 			env.footnotes = append(env.footnotes, sfootnodeInfo{args[1:], a})
 			n := strconv.Itoa(len(env.footnotes))
