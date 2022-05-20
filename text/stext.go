@@ -20,9 +20,9 @@ import (
 )
 
 // SEncodeBlock writes the text of the given block list to the given writer.
-func SEncodeBlock(w io.Writer, lst *sxpf.Array) {
+func SEncodeBlock(w io.Writer, seq sxpf.Sequence) {
 	env := newTextEnvironment(w)
-	env.EvaluateArray(lst)
+	env.evalCall(seq.GetSlice())
 }
 
 // SEncodeInlineString returns the text content of the given inline list as a string.
@@ -104,7 +104,7 @@ func (env *textEnvironment) EvaluateList(p *sxpf.Pair) (sxpf.Value, error) {
 // element to a form and then call the form with the remaning elements
 // (possibly evaluated) as parameters.
 func (env *textEnvironment) EvaluateArray(lst *sxpf.Array) (sxpf.Value, error) {
-	return env.evalCall(lst.GetValue())
+	return env.evalCall(lst.GetSlice())
 }
 
 func (env *textEnvironment) evalCall(args []sxpf.Value) (sxpf.Value, error) {

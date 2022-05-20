@@ -34,12 +34,12 @@ func TestSexprText(t *testing.T) {
 			t.Error(err)
 			continue
 		}
-		lst, ok := sval.(*sxpf.Array)
+		seq, ok := sval.(sxpf.Sequence)
 		if !ok {
 			t.Errorf("%d: not a list: %v", i, sval)
 		}
 		var buf bytes.Buffer
-		text.SEncodeBlock(&buf, lst)
+		text.SEncodeBlock(&buf, seq)
 		got := buf.String()
 		if got != tc.exp {
 			t.Errorf("%d: EncodeBlock(%q) == %q, but got %q", i, tc.src, tc.exp, got)

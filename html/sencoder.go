@@ -150,18 +150,18 @@ func (env *EncEnvironment) GetString(args []sxpf.Value, idx int) (res string) {
 	res, env.err = sxpf.GetString(args, idx)
 	return res
 }
-func (env *EncEnvironment) GetList(args []sxpf.Value, idx int) (res *sxpf.Array) {
+func (env *EncEnvironment) GetSequence(args []sxpf.Value, idx int) (res sxpf.Sequence) {
 	if env.err != nil {
 		return nil
 	}
-	res, env.err = sxpf.GetArray(args, idx)
+	res, env.err = sxpf.GetSequence(args, idx)
 	return res
 }
 func (env *EncEnvironment) GetAttributes(args []sxpf.Value, idx int) attrs.Attributes {
 	if env.err != nil {
 		return nil
 	}
-	return sexpr.GetAttributes(env.GetList(args, idx))
+	return nil //sexpr.GetAttributes(env.GetList(args, idx))
 }
 
 func (env *EncEnvironment) WriteAttributes(a attrs.Attributes) {
@@ -203,13 +203,13 @@ func (env *EncEnvironment) WriteEndTag(tag string) {
 }
 
 func (env *EncEnvironment) WriteImage(args []sxpf.Value) {
-	ref := env.GetList(args, 1)
-	refPair := ref.GetValue()
+	ref := env.GetSequence(args, 1)
+	refPair := ref.GetSlice()
 	env.WriteImageWithSource(args, env.GetString(refPair, 1))
 }
 
 func (env *EncEnvironment) WriteImageWithSource(args []sxpf.Value, src string) {
-	a := sexpr.GetAttributes(env.GetList(args, 0))
+	a := sexpr.GetAttributes(env.GetSequence(args, 0))
 	a = a.Set("src", src)
 	if title := args[3:]; len(title) > 0 {
 		a = a.Set("title", text.SEncodeInlineString(title))
@@ -236,7 +236,7 @@ func (env *EncEnvironment) EvaluateList(p *sxpf.Pair) (sxpf.Value, error) {
 	return env.evalCall(p.GetSlice())
 }
 func (env *EncEnvironment) EvaluateArray(lst *sxpf.Array) (sxpf.Value, error) {
-	return env.evalCall(lst.GetValue())
+	return env.evalCall(lst.GetSlice())
 }
 
 func (env *EncEnvironment) evalCall(vals []sxpf.Value) (sxpf.Value, error) {
@@ -339,11 +339,11 @@ var defaultEncodingFunctions = []struct {
 	{sexpr.SymListQuote, 0, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		env.WriteString("<blockquote>")
 		if len(args) == 1 {
-			sxpf.Evaluate(env, env.GetList(args, 0))
+			sxpf.Evaluate(env, env.GetSequence(args, 0))
 		} else {
 			for i := 0; i < len(args); i++ {
 				env.WriteString("<p>")
-				sxpf.Evaluate(env, env.GetList(args, i))
+				sxpf.Evaluate(env, env.GetSequence(args, i))
 				env.WriteString("</p>")
 			}
 		}
@@ -359,11 +359,11 @@ var defaultEncodingFunctions = []struct {
 			if len(args) <= i1 {
 				continue
 			}
-			ddlist, ok := args[i1].(*sxpf.Array)
+			ddlist, ok := args[i1].(sxpf.Sequence)
 			if !ok {
 				continue
 			}
-			for _, dditem := range ddlist.GetValue() {
+			for _, dditem := range ddlist.GetSlice() {
 				env.WriteString("<dd>")
 				sxpf.Evaluate(env, dditem)
 				env.WriteString("</dd>")
@@ -373,7 +373,7 @@ var defaultEncodingFunctions = []struct {
 	}},
 	{sexpr.SymTable, 1, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		env.WriteString("<table>")
-		if header := env.GetList(args, 0).GetValue(); len(header) > 0 {
+		if header := env.GetSequence(args, 0).GetSlice(); len(header) > 0 {
 			env.WriteString("<thead>")
 			env.writeTableRow(header)
 			env.WriteString("</thead>")
@@ -381,7 +381,7 @@ var defaultEncodingFunctions = []struct {
 		if len(args) > 1 {
 			env.WriteString("<tbody>")
 			for i := 1; i < len(args); i++ {
-				env.writeTableRow(env.GetList(args, i).GetValue())
+				env.writeTableRow(env.GetSequence(args, i).GetSlice())
 			}
 			env.WriteString("</tbody>")
 		}
@@ -437,8 +437,8 @@ var defaultEncodingFunctions = []struct {
 		env.writeBLOB(env.GetString(args, 0), env.GetString(args, 1), env.GetString(args, 2))
 	}},
 	{sexpr.SymTransclude, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
-		ref := env.GetList(args, 0)
-		refPair := ref.GetValue()
+		ref := env.GetSequence(args, 0)
+		refPair := ref.GetSlice()
 		refKind := env.GetSymbol(refPair, 0)
 		if refKind == nil {
 			return
@@ -488,11 +488,11 @@ var defaultEncodingFunctions = []struct {
 			return
 		}
 		a := env.GetAttributes(args, 0)
-		ref := env.GetList(args, 1)
+		ref := env.GetSequence(args, 1)
 		if ref == nil {
 			return
 		}
-		refPair := ref.GetValue()
+		refPair := ref.GetSlice()
 		refKind := env.GetSymbol(refPair, 0)
 		if refKind == nil {
 			return
@@ -521,8 +521,8 @@ var defaultEncodingFunctions = []struct {
 	}},
 	{sexpr.SymEmbed, 3, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if syntax := env.GetString(args, 2); syntax == api.ValueSyntaxSVG {
-			ref := env.GetList(args, 1)
-			refPair := ref.GetValue()
+			ref := env.GetSequence(args, 1)
+			refPair := ref.GetSlice()
 			env.WriteStrings(
 				`<figure><embed type="image/svg+xml" src="`, "/", env.GetString(refPair, 1), ".svg", "\" /></figure>")
 		} else {
@@ -650,8 +650,8 @@ func (env *EncEnvironment) writeRegion(args []sxpf.Value, a attrs.Attributes, ta
 		a = env.GetAttributes(args, 0)
 	}
 	env.WriteStartTag(tag, a)
-	sxpf.Evaluate(env, env.GetList(args, 1))
-	if cite := env.GetList(args, 2).GetValue(); len(cite) > 0 {
+	sxpf.Evaluate(env, env.GetSequence(args, 1))
+	if cite := env.GetSequence(args, 2).GetSlice(); len(cite) > 0 {
 		env.WriteString("<cite>")
 		sxpf.EvaluateSlice(env, cite)
 		env.WriteString("</cite>")
