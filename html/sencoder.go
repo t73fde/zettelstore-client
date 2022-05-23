@@ -480,44 +480,21 @@ var defaultEncodingFunctions = []struct {
 			env.WriteEscaped(env.GetString(args, 0))
 		}
 	}},
-	{sexpr.SymLink, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
-		if env.noLinks {
-			spanList := sxpf.NewArray(sexpr.SymFormatSpan)
-			spanList.Append(args...)
-			sxpf.Evaluate(env, spanList)
-			return
+	{sexpr.SymLinkInvalid, 2, -1, func(env *EncEnvironment, args []sxpf.Value) { WriteAsSpan(env, args) }},
+	{sexpr.SymLinkZettel, 2, -1, func(env *EncEnvironment, args []sxpf.Value) { WriteHRefLink(env, args) }},
+	{sexpr.SymLinkSelf, 2, -1, func(env *EncEnvironment, args []sxpf.Value) { WriteHRefLink(env, args) }},
+	{sexpr.SymLinkFound, 2, -1, func(env *EncEnvironment, args []sxpf.Value) { WriteHRefLink(env, args) }},
+	{sexpr.SymLinkBroken, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
+		if a, refValue, ok := PrepareLink(env, args); ok {
+			WriteLink(env, args, a.AddClass("broken"), refValue, "")
 		}
-		a := env.GetAttributes(args, 0)
-		ref := env.GetSequence(args, 1)
-		if ref == nil {
-			return
+	}},
+	{sexpr.SymLinkHosted, 2, -1, func(env *EncEnvironment, args []sxpf.Value) { WriteHRefLink(env, args) }},
+	{sexpr.SymLinkBased, 2, -1, func(env *EncEnvironment, args []sxpf.Value) { WriteHRefLink(env, args) }},
+	{sexpr.SymLinkExternal, 2, -1, func(env *EncEnvironment, args []sxpf.Value) {
+		if a, refValue, ok := PrepareLink(env, args); ok {
+			WriteLink(env, args, a.Set("href", refValue).AddClass("external"), refValue, "")
 		}
-		refPair := ref.GetSlice()
-		refKind := env.GetSymbol(refPair, 0)
-		if refKind == nil {
-			return
-		}
-		refValue := env.GetString(refPair, 1)
-		switch {
-		case sexpr.SymRefStateExternal.Equal(refKind):
-			a = a.Set("href", refValue).AddClass("external")
-		case sexpr.SymRefStateZettel.Equal(refKind), sexpr.SymRefStateBased.Equal(refKind), sexpr.SymRefStateHosted.Equal(refKind), sexpr.SymRefStateSelf.Equal(refKind):
-			a = a.Set("href", refValue)
-		case sexpr.SymRefStateBroken.Equal(refKind):
-			a = a.AddClass("broken")
-		default:
-			log.Println("LINK", sxpf.NewArray(args...))
-		}
-		env.WriteString("<a")
-		env.WriteAttributes(a)
-		env.WriteString(">")
-
-		if in := args[2:]; len(in) == 0 {
-			env.WriteString(refValue)
-		} else {
-			sxpf.EvaluateSlice(env, in)
-		}
-		env.WriteString("</a>")
 	}},
 	{sexpr.SymEmbed, 3, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if syntax := env.GetString(args, 2); syntax == api.ValueSyntaxSVG {
@@ -688,6 +665,42 @@ func (env *EncEnvironment) writeBLOB(title, syntax, data string) {
 			env.WriteOneAttribute("title", title)
 		}
 		env.WriteString(`"></p>`)
+	}
+}
+
+func PrepareLink(env *EncEnvironment, args []sxpf.Value) (attrs.Attributes, string, bool) {
+	if env.noLinks {
+		WriteAsSpan(env, args)
+		return nil, "", false
+	}
+	return env.GetAttributes(args, 0), env.GetString(args, 1), true
+}
+
+func WriteAsSpan(env *EncEnvironment, args []sxpf.Value) {
+	if len(args) > 2 {
+		spanList := sxpf.NewArray(sexpr.SymFormatSpan)
+		spanList.Append(args[0])
+		spanList.Append(args[2:]...)
+		sxpf.Evaluate(env, spanList)
+	}
+}
+
+func WriteLink(env *EncEnvironment, args []sxpf.Value, a attrs.Attributes, refValue, suffix string) {
+	env.WriteString("<a")
+	env.WriteAttributes(a)
+	env.WriteString(">")
+
+	if len(args) > 2 {
+		sxpf.EvaluateSlice(env, args[2:])
+	} else {
+		env.WriteString(refValue)
+	}
+	env.WriteStrings("</a>", suffix)
+}
+
+func WriteHRefLink(env *EncEnvironment, args []sxpf.Value) {
+	if a, refValue, ok := PrepareLink(env, args); ok {
+		WriteLink(env, args, a.Set("href", refValue), refValue, "")
 	}
 }
 
