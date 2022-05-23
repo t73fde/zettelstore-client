@@ -161,7 +161,7 @@ func (env *EncEnvironment) GetAttributes(args []sxpf.Value, idx int) attrs.Attri
 	if env.err != nil {
 		return nil
 	}
-	return nil //sexpr.GetAttributes(env.GetList(args, idx))
+	return sexpr.GetAttributes(env.GetSequence(args, idx))
 }
 
 func (env *EncEnvironment) WriteAttributes(a attrs.Attributes) {
@@ -564,7 +564,7 @@ var defaultEncodingFunctions = []struct {
 			if s := env.GetString(args, 1); s != "" {
 				env.WriteString("<!-- ")
 				env.WriteEscaped(s)
-				env.WriteString("-->")
+				env.WriteString(" -->")
 			}
 		}
 	}},
@@ -663,8 +663,10 @@ func (env *EncEnvironment) writeBLOB(title, syntax, data string) {
 		if title != "" {
 			env.WriteString(`" `)
 			env.WriteOneAttribute("title", title)
+			env.WriteString(`></p>`)
+		} else {
+			env.WriteString(`"></p>`)
 		}
-		env.WriteString(`"></p>`)
 	}
 }
 
