@@ -100,10 +100,10 @@ func (env *textEnvironment) EvaluateList(p *sxpf.Pair) (sxpf.Value, error) {
 	return env.evalCall(p.GetSlice())
 }
 
-// Evaluate the given array. In many cases this means to evaluate the first
+// Evaluate the given vector. In many cases this means to evaluate the first
 // element to a form and then call the form with the remaning elements
 // (possibly evaluated) as parameters.
-func (env *textEnvironment) EvaluateArray(lst *sxpf.Array) (sxpf.Value, error) {
+func (env *textEnvironment) EvaluateVector(lst *sxpf.Vector) (sxpf.Value, error) {
 	return env.evalCall(lst.GetSlice())
 }
 

@@ -235,7 +235,7 @@ func (env *EncEnvironment) EvaluateSymbol(val *sxpf.Symbol) (sxpf.Value, error) 
 func (env *EncEnvironment) EvaluateList(p *sxpf.Pair) (sxpf.Value, error) {
 	return env.evalCall(p.GetSlice())
 }
-func (env *EncEnvironment) EvaluateArray(lst *sxpf.Array) (sxpf.Value, error) {
+func (env *EncEnvironment) EvaluateVector(lst *sxpf.Vector) (sxpf.Value, error) {
 	return env.evalCall(lst.GetSlice())
 }
 
@@ -248,7 +248,7 @@ func (env *EncEnvironment) evalCall(vals []sxpf.Value) (sxpf.Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	return sxpf.NewArray(result...), nil
+	return sxpf.NewVector(result...), nil
 }
 
 func EnvaluateInline(baseEnv *EncEnvironment, value sxpf.Value, withFootnotes, noLinks bool) string {
@@ -524,7 +524,7 @@ var defaultEncodingFunctions = []struct {
 	}},
 	{sexpr.SymMark, 3, -1, func(env *EncEnvironment, args []sxpf.Value) {
 		if env.noLinks {
-			spanList := sxpf.NewArray(sexpr.SymFormatSpan)
+			spanList := sxpf.NewVector(sexpr.SymFormatSpan)
 			spanList.Append(args...)
 			sxpf.Evaluate(env, spanList)
 			return
@@ -680,7 +680,7 @@ func PrepareLink(env *EncEnvironment, args []sxpf.Value) (attrs.Attributes, stri
 
 func WriteAsSpan(env *EncEnvironment, args []sxpf.Value) {
 	if len(args) > 2 {
-		spanList := sxpf.NewArray(sexpr.SymFormatSpan)
+		spanList := sxpf.NewVector(sexpr.SymFormatSpan)
 		spanList.Append(args[0])
 		spanList.Append(args[2:]...)
 		sxpf.Evaluate(env, spanList)

@@ -29,7 +29,7 @@ func TestSexprText(t *testing.T) {
 		{`[SPACE "a"]`, " "},
 	}
 	for i, tc := range testcases {
-		sval, err := sxpf.ReadString(sexpr.Smk, tc.src)
+		sval, err := sxpf.ParseString(sexpr.Smk, tc.src)
 		if err != nil {
 			t.Error(err)
 			continue
