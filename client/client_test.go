@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/t73fde/sxpf"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/client"
 	"zettelstore.de/c/zjson"
@@ -83,6 +84,48 @@ func (*vis) InlineObject(t string, obj zjson.Object, pos int) (bool, zjson.Close
 	return true, nil
 }
 func (*vis) Unexpected(val zjson.Value, pos int, exp string) { log.Println("Expect", pos, exp, val) }
+
+func TestGetSexprZettel(t *testing.T) {
+	c := getClient()
+	smk := sxpf.NewTrivialSymbolMaker()
+	value, err := c.GetEvaluatedSexpr(context.Background(), smk, api.ZidDefaultHome, api.PartContent)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if value == nil {
+		t.Error("No data")
+	}
+	var env testEnv
+	env.t = t
+	sxpf.Evaluate(&env, value)
+	// t.Error("Argh")
+}
+
+type testEnv struct{ t *testing.T }
+
+func noneFn(sxpf.Environment, []sxpf.Value) (sxpf.Value, error) { return sxpf.Nil(), nil }
+func (te *testEnv) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
+	return sxpf.NewBuiltin("none", false, 0, -1, noneFn), nil
+}
+func (*testEnv) EvaluateSymbol(sym *sxpf.Symbol) (sxpf.Value, error) { return sym, nil }
+func (*testEnv) EvaluateString(str *sxpf.String) (sxpf.Value, error) { return str, nil }
+func (te *testEnv) EvaluateList(p *sxpf.Pair) (sxpf.Value, error)    { return te.evalAsCall(p.GetSlice()) }
+func (te *testEnv) EvaluateVector(lst *sxpf.Vector) (sxpf.Value, error) {
+	return te.evalAsCall(lst.GetSlice())
+}
+
+func (te *testEnv) evalAsCall(vals []sxpf.Value) (sxpf.Value, error) {
+	res, err, done := sxpf.EvaluateCall(te, vals)
+	if done {
+		return res, err
+	}
+	result, err := sxpf.EvaluateSlice(te, vals)
+	if err != nil {
+		return nil, err
+	}
+	return sxpf.NewVector(result...), nil
+}
 
 var baseURL string
 

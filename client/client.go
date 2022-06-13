@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/t73fde/sxpf"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/zjson"
 )
@@ -364,6 +365,42 @@ func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID
 		return nil, statusToError(resp)
 	}
 	return io.ReadAll(resp.Body)
+}
+
+// GetParsedZettelZJSON returns an parsed zettel as a JSON-decoded data structure.
+func (c *Client) GetParsedSexpr(ctx context.Context, smk sxpf.SymbolMaker, zid api.ZettelID, part string) (sxpf.Value, error) {
+	return c.getSexpr(ctx, smk, 'p', zid, part)
+}
+
+// GetEvaluatedZettelZJSON returns an evaluated zettel as a JSON-decoded data structure.
+func (c *Client) GetEvaluatedSexpr(ctx context.Context, smk sxpf.SymbolMaker, zid api.ZettelID, part string) (sxpf.Value, error) {
+	return c.getSexpr(ctx, smk, 'v', zid, part)
+}
+
+func (c *Client) getSexpr(ctx context.Context, smk sxpf.SymbolMaker, key byte, zid api.ZettelID, part string) (sxpf.Value, error) {
+	ub := c.newURLBuilder(key).SetZid(zid)
+	ub.AppendQuery(api.QueryKeyEncoding, api.EncodingSexpr)
+	if part != "" {
+		ub.AppendQuery(api.QueryKeyPart, part)
+	}
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, statusToError(resp)
+	}
+
+	// TODO: Wrap a UnreadRune around resp.Body
+	// return sxpf.ParseValue(nil, resp.Body)
+
+	// Intermediate solution, until above TODO is done.
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return sxpf.ParseBytes(smk, content)
 }
 
 // GetParsedZettelZJSON returns an parsed zettel as a JSON-decoded data structure.
