@@ -107,7 +107,7 @@ func TestGetSexprZettel(t *testing.T) {
 type testEnv struct{ t *testing.T }
 
 func noneFn(sxpf.Environment, []sxpf.Value) (sxpf.Value, error) { return sxpf.Nil(), nil }
-func (te *testEnv) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
+func (*testEnv) LookupForm(*sxpf.Symbol) (sxpf.Form, error) {
 	return sxpf.NewBuiltin("none", false, 0, -1, noneFn), nil
 }
 func (*testEnv) EvaluateSymbol(sym *sxpf.Symbol) (sxpf.Value, error) { return sym, nil }
