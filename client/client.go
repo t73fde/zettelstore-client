@@ -12,6 +12,7 @@
 package client
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -392,15 +393,7 @@ func (c *Client) getSexpr(ctx context.Context, smk sxpf.SymbolMaker, key byte, z
 		return nil, statusToError(resp)
 	}
 
-	// TODO: Wrap a UnreadRune around resp.Body
-	// return sxpf.ParseValue(nil, resp.Body)
-
-	// Intermediate solution, until above TODO is done.
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return sxpf.ParseBytes(smk, content)
+	return sxpf.ParseValue(smk, bufio.NewReaderSize(resp.Body, 8))
 }
 
 // GetParsedZettelZJSON returns an parsed zettel as a JSON-decoded data structure.

@@ -98,8 +98,10 @@ func TestGetSexprZettel(t *testing.T) {
 	}
 	var env testEnv
 	env.t = t
-	sxpf.Evaluate(&env, value)
-	// t.Error("Argh")
+	res, err := sxpf.Evaluate(&env, value)
+	if err != nil {
+		t.Error(res, err)
+	}
 }
 
 type testEnv struct{ t *testing.T }
