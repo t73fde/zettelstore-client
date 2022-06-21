@@ -12,8 +12,9 @@
 package attrs
 
 import (
-	"sort"
 	"strings"
+
+	"zettelstore.de/c/maps"
 )
 
 // Attributes store additional information about some node types.
@@ -43,17 +44,7 @@ func (a Attributes) RemoveDefault() Attributes {
 }
 
 // Keys returns the sorted list of keys.
-func (a Attributes) Keys() []string {
-	if len(a) == 0 {
-		return nil
-	}
-	result := make([]string, 0, len(a))
-	for k := range a {
-		result = append(result, k)
-	}
-	sort.Strings(result)
-	return result
-}
+func (a Attributes) Keys() []string { return maps.Keys(a) }
 
 // Get returns the attribute value of the given key and a succes value.
 func (a Attributes) Get(key string) (string, bool) {
