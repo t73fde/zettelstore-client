@@ -622,13 +622,14 @@ func (c *Client) newQueryURLBuilder(key byte, query url.Values) *api.URLBuilder 
 	return ub
 }
 
-// ListTags returns a map of all tags, together with the associated zettel containing this tag.
-func (c *Client) ListTags(ctx context.Context) (api.MapMeta, error) {
+// ListMapMeta returns a map of all metadata values with the given key to the
+// list of zettel IDs containing this value.
+func (c *Client) ListMapMeta(ctx context.Context, key string) (api.MapMeta, error) {
 	err := c.updateToken(ctx)
 	if err != nil {
 		return nil, err
 	}
-	req, err := c.newRequest(ctx, http.MethodGet, c.newURLBuilder('t'), nil)
+	req, err := c.newRequest(ctx, http.MethodGet, c.newURLBuilder('m').AppendQuery(api.QueryKeyKey, key), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -641,39 +642,12 @@ func (c *Client) ListTags(ctx context.Context) (api.MapMeta, error) {
 		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
-	var tl api.MapListJSON
-	err = dec.Decode(&tl)
+	var mlj api.MapListJSON
+	err = dec.Decode(&mlj)
 	if err != nil {
 		return nil, err
 	}
-	return tl.Map, nil
-}
-
-// ListRoles returns a map of role names to the list of metadata with that role.
-func (c *Client) ListRoles(ctx context.Context) (api.MapMeta, error) {
-	err := c.updateToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-	req, err := c.newRequest(ctx, http.MethodGet, c.newURLBuilder('r'), nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.executeRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, statusToError(resp)
-	}
-	dec := json.NewDecoder(resp.Body)
-	var rl api.MapListJSON
-	err = dec.Decode(&rl)
-	if err != nil {
-		return nil, err
-	}
-	return rl.Map, nil
+	return mlj.Map, nil
 }
 
 // GetVersionJSON returns version information..
