@@ -102,14 +102,12 @@ type ZettelListJSON struct {
 	List  []ZidMetaJSON `json:"list"`
 }
 
-// TagListJSON specifies the list/map of tags
-type TagListJSON struct {
-	Tags map[string][]ZettelID `json:"tags"`
-}
+// MapMeta maps metadata keys to list of metadata.
+type MapMeta map[string][]ZettelID
 
-// RoleListJSON specifies the list of roles.
-type RoleListJSON struct {
-	Roles []string `json:"role-list"`
+// MapListJSON specifies the map of metadata key to list of metadata that contains the key.
+type MapListJSON struct {
+	Map MapMeta `json:"map"`
 }
 
 // VersionJSON contains version information.

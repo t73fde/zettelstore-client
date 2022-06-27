@@ -623,7 +623,7 @@ func (c *Client) newQueryURLBuilder(key byte, query url.Values) *api.URLBuilder 
 }
 
 // ListTags returns a map of all tags, together with the associated zettel containing this tag.
-func (c *Client) ListTags(ctx context.Context) (map[string][]api.ZettelID, error) {
+func (c *Client) ListTags(ctx context.Context) (api.MapMeta, error) {
 	err := c.updateToken(ctx)
 	if err != nil {
 		return nil, err
@@ -641,16 +641,16 @@ func (c *Client) ListTags(ctx context.Context) (map[string][]api.ZettelID, error
 		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
-	var tl api.TagListJSON
+	var tl api.MapListJSON
 	err = dec.Decode(&tl)
 	if err != nil {
 		return nil, err
 	}
-	return tl.Tags, nil
+	return tl.Map, nil
 }
 
-// ListRoles returns a list of all roles.
-func (c *Client) ListRoles(ctx context.Context) ([]string, error) {
+// ListRoles returns a map of role names to the list of metadata with that role.
+func (c *Client) ListRoles(ctx context.Context) (api.MapMeta, error) {
 	err := c.updateToken(ctx)
 	if err != nil {
 		return nil, err
@@ -668,12 +668,12 @@ func (c *Client) ListRoles(ctx context.Context) ([]string, error) {
 		return nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
-	var rl api.RoleListJSON
+	var rl api.MapListJSON
 	err = dec.Decode(&rl)
 	if err != nil {
 		return nil, err
 	}
-	return rl.Roles, nil
+	return rl.Map, nil
 }
 
 // GetVersionJSON returns version information..
