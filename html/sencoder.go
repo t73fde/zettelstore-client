@@ -729,7 +729,7 @@ func (env *EncEnvironment) writeLiteral(args []sxpf.Value, a attrs.Attributes, t
 	}
 	env.WriteStartTag(tag, a)
 	env.visibleSpace = oldVisible
-	env.WriteString(env.GetString(args, 1))
+	env.WriteEscapedLiteral(env.GetString(args, 1))
 	env.WriteEndTag(tag)
 }
 
