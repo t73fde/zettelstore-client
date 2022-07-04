@@ -10,7 +10,7 @@
 
 package sexpr
 
-import "github.com/t73fde/sxpf"
+import "codeberg.org/t73fde/sxpf"
 
 // Various constants for Zettel data. Some of them are technically variables.
 

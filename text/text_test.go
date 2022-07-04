@@ -14,7 +14,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/t73fde/sxpf"
+	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/sexpr"
 	"zettelstore.de/c/text"
 )

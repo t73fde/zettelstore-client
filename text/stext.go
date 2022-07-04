@@ -15,7 +15,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/t73fde/sxpf"
+	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/sexpr"
 )
 
