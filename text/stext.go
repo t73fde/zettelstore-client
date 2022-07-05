@@ -25,11 +25,11 @@ func SEncodeBlock(w io.Writer, seq sxpf.Sequence) {
 	env.evalCall(seq.GetSlice())
 }
 
-// SEncodeInlineString returns the text content of the given inline list as a string.
-func SEncodeInlineString(vals []sxpf.Value) string {
+// EvaluateInlineString returns the text content of the given inline list as a string.
+func EvaluateInlineString(seq sxpf.Sequence) string {
 	var buf bytes.Buffer
 	env := newTextEnvironment(&buf)
-	sxpf.EvaluateSlice(&env, vals)
+	env.evalCall(seq.GetSlice())
 	return buf.String()
 }
 
@@ -40,7 +40,7 @@ type textEnvironment struct {
 }
 
 func newTextEnvironment(w io.Writer) textEnvironment {
-	sm := sxpf.NewSymbolMap(nil)
+	sm := sxpf.NewSymbolMap(sexpr.Smk, nil)
 	for _, bFn := range builtins {
 		sym := bFn.sym
 		minArgs := bFn.minArgs

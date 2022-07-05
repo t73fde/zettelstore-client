@@ -57,7 +57,7 @@ func NewEncEnvironment(w io.Writer, headingOffset int) *EncEnvironment {
 }
 
 func buildBuiltins() *sxpf.SymbolMap {
-	builtins := sxpf.NewSymbolMap(nil)
+	builtins := sxpf.NewSymbolMap(sexpr.Smk, nil)
 	for _, b := range defaultEncodingFunctions {
 		name := b.sym.GetValue()
 		primFunc := b.fn
@@ -212,7 +212,7 @@ func (env *EncEnvironment) WriteImageWithSource(args []sxpf.Value, src string) {
 	a := sexpr.GetAttributes(env.GetSequence(args, 0))
 	a = a.Set("src", src)
 	if title := args[3:]; len(title) > 0 {
-		a = a.Set("title", text.SEncodeInlineString(title))
+		a = a.Set("title", text.EvaluateInlineString(sxpf.NewPairFromSlice(title)))
 	}
 	env.WriteStartTag("img", a)
 }
@@ -251,7 +251,7 @@ func (env *EncEnvironment) evalCall(vals []sxpf.Value) (sxpf.Value, error) {
 	return sxpf.NewVector(result...), nil
 }
 
-func EnvaluateInline(baseEnv *EncEnvironment, value sxpf.Value, withFootnotes, noLinks bool) string {
+func EvaluateInline(baseEnv *EncEnvironment, value sxpf.Value, withFootnotes, noLinks bool) string {
 	var buf bytes.Buffer
 	env := EncEnvironment{w: &buf, noLinks: noLinks}
 	if baseEnv != nil {
