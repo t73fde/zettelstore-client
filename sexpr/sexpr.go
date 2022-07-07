@@ -76,7 +76,7 @@ func makeMetaValue(pair *sxpf.Pair) (MetaValue, bool) {
 	if !ok {
 		return result, false
 	}
-	keySym, ok := keyPair.GetFirst().(*sxpf.Symbol)
+	keyStr, ok := keyPair.GetFirst().(*sxpf.String)
 	if !ok {
 		return result, false
 	}
@@ -84,23 +84,21 @@ func makeMetaValue(pair *sxpf.Pair) (MetaValue, bool) {
 	if !ok {
 		return result, false
 	}
-	result.Type = typeVal.String()
-	result.Key = keySym.String()
+	result.Type = typeVal.GetValue()
+	result.Key = keyStr.GetValue()
 	result.Value = valPair.GetFirst()
 	return result, true
 }
 
 func (m Meta) GetString(key string) string {
-	keySym := Smk.MakeSymbol(key)
-	if v, found := m[keySym.GetValue()]; found {
+	if v, found := m[key]; found {
 		return MakeString(v.Value)
 	}
 	return ""
 }
 
 func (m Meta) GetSequence(key string) sxpf.Sequence {
-	keySym := Smk.MakeSymbol(key)
-	if mv, found := m[keySym.GetValue()]; found {
+	if mv, found := m[key]; found {
 		if seq, ok := mv.Value.(sxpf.Sequence); ok && !seq.IsEmpty() {
 			return seq
 		}
