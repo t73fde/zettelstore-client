@@ -41,12 +41,12 @@ type MetaValue struct {
 }
 
 func MakeMeta(val sxpf.Value) Meta {
-	if result := makeMeta(val); len(result) > 0 {
+	if result := doMakeMeta(val); len(result) > 0 {
 		return result
 	}
 	return nil
 }
-func makeMeta(val sxpf.Value) Meta {
+func doMakeMeta(val sxpf.Value) Meta {
 	result := make(map[string]MetaValue)
 	for {
 		if val == nil {
@@ -92,7 +92,7 @@ func makeMetaValue(pair *sxpf.Pair) (MetaValue, bool) {
 
 func (m Meta) GetString(key string) string {
 	keySym := Smk.MakeSymbol(key)
-	if v, found := m[keySym.String()]; found {
+	if v, found := m[keySym.GetValue()]; found {
 		return MakeString(v.Value)
 	}
 	return ""
@@ -100,7 +100,7 @@ func (m Meta) GetString(key string) string {
 
 func (m Meta) GetSequence(key string) sxpf.Sequence {
 	keySym := Smk.MakeSymbol(key)
-	if mv, found := m[keySym.String()]; found {
+	if mv, found := m[keySym.GetValue()]; found {
 		if seq, ok := mv.Value.(sxpf.Sequence); ok && !seq.IsEmpty() {
 			return seq
 		}

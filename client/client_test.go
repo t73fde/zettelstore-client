@@ -87,8 +87,7 @@ func (*vis) Unexpected(val zjson.Value, pos int, exp string) { log.Println("Expe
 
 func TestGetSexprZettel(t *testing.T) {
 	c := getClient()
-	smk := sxpf.NewTrivialSymbolMaker()
-	value, err := c.GetEvaluatedSexpr(context.Background(), smk, api.ZidDefaultHome, api.PartContent)
+	value, err := c.GetEvaluatedSexpr(context.Background(), api.ZidDefaultHome, api.PartContent)
 	if err != nil {
 		t.Error(err)
 		return
