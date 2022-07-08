@@ -112,9 +112,6 @@ func (*testEnv) LookupForm(*sxpf.Symbol) (sxpf.Form, error) {
 func (*testEnv) EvaluateSymbol(sym *sxpf.Symbol) (sxpf.Value, error) { return sym, nil }
 func (*testEnv) EvaluateString(str *sxpf.String) (sxpf.Value, error) { return str, nil }
 func (te *testEnv) EvaluateList(p *sxpf.Pair) (sxpf.Value, error)    { return te.evalAsCall(p.GetSlice()) }
-func (te *testEnv) EvaluateVector(lst *sxpf.Vector) (sxpf.Value, error) {
-	return te.evalAsCall(lst.GetSlice())
-}
 
 func (te *testEnv) evalAsCall(vals []sxpf.Value) (sxpf.Value, error) {
 	res, err, done := sxpf.EvaluateCall(te, vals)
@@ -125,7 +122,7 @@ func (te *testEnv) evalAsCall(vals []sxpf.Value) (sxpf.Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	return sxpf.NewVector(result...), nil
+	return sxpf.NewPairFromSlice(result), nil
 }
 
 var baseURL string

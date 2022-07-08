@@ -97,9 +97,9 @@ func (m Meta) GetString(key string) string {
 	return ""
 }
 
-func (m Meta) GetSequence(key string) sxpf.Sequence {
+func (m Meta) GetPair(key string) *sxpf.Pair {
 	if mv, found := m[key]; found {
-		if seq, ok := mv.Value.(sxpf.Sequence); ok && !seq.IsEmpty() {
+		if seq, ok := mv.Value.(*sxpf.Pair); ok && !seq.IsEmpty() {
 			return seq
 		}
 	}

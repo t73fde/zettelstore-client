@@ -19,14 +19,14 @@ import (
 	"zettelstore.de/c/sexpr"
 )
 
-// SEncodeBlock writes the text of the given block list to the given writer.
-func SEncodeBlock(w io.Writer, seq sxpf.Sequence) {
+// EvaluateBlock writes the text of the given block list to the given writer.
+func EvaluateBlock(w io.Writer, seq *sxpf.Pair) {
 	env := newTextEnvironment(w)
 	env.evalCall(seq.GetSlice())
 }
 
 // EvaluateInlineString returns the text content of the given inline list as a string.
-func EvaluateInlineString(seq sxpf.Sequence) string {
+func EvaluateInlineString(seq *sxpf.Pair) string {
 	var buf bytes.Buffer
 	env := newTextEnvironment(&buf)
 	env.evalCall(seq.GetSlice())
@@ -98,13 +98,6 @@ func (*textEnvironment) EvaluateSymbol(*sxpf.Symbol) (sxpf.Value, error) {
 // (possibly evaluated) as parameters.
 func (env *textEnvironment) EvaluateList(p *sxpf.Pair) (sxpf.Value, error) {
 	return env.evalCall(p.GetSlice())
-}
-
-// Evaluate the given vector. In many cases this means to evaluate the first
-// element to a form and then call the form with the remaning elements
-// (possibly evaluated) as parameters.
-func (env *textEnvironment) EvaluateVector(lst *sxpf.Vector) (sxpf.Value, error) {
-	return env.evalCall(lst.GetSlice())
 }
 
 func (env *textEnvironment) evalCall(args []sxpf.Value) (sxpf.Value, error) {

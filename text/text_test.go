@@ -24,9 +24,9 @@ func TestSexprText(t *testing.T) {
 		src string
 		exp string
 	}{
-		{"[]", ""},
-		{`[TEXT "a"]`, "a"},
-		{`[SPACE "a"]`, " "},
+		{"()", ""},
+		{`(TEXT "a")`, "a"},
+		{`(SPACE "a")`, " "},
 	}
 	for i, tc := range testcases {
 		sval, err := sxpf.ParseString(sexpr.Smk, tc.src)
@@ -34,12 +34,12 @@ func TestSexprText(t *testing.T) {
 			t.Error(err)
 			continue
 		}
-		seq, ok := sval.(sxpf.Sequence)
+		seq, ok := sval.(*sxpf.Pair)
 		if !ok {
 			t.Errorf("%d: not a list: %v", i, sval)
 		}
 		var buf bytes.Buffer
-		text.SEncodeBlock(&buf, seq)
+		text.EvaluateBlock(&buf, seq)
 		got := buf.String()
 		if got != tc.exp {
 			t.Errorf("%d: EncodeBlock(%q) == %q, but got %q", i, tc.src, tc.exp, got)
