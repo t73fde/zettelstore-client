@@ -110,20 +110,10 @@ func (*testEnv) LookupForm(*sxpf.Symbol) (sxpf.Form, error) {
 	return sxpf.NewBuiltin("none", false, 0, -1, noneFn), nil
 }
 func (*testEnv) EvaluateSymbol(sym *sxpf.Symbol) (sxpf.Value, error) { return sym, nil }
-func (*testEnv) EvaluateString(str *sxpf.String) (sxpf.Value, error) { return str, nil }
-func (te *testEnv) EvaluateList(p *sxpf.Pair) (sxpf.Value, error)    { return te.evalAsCall(p.GetSlice()) }
-
-func (te *testEnv) evalAsCall(vals []sxpf.Value) (sxpf.Value, error) {
-	res, err, done := sxpf.EvaluateCall(te, vals)
-	if done {
-		return res, err
-	}
-	result, err := sxpf.EvaluateSlice(te, vals)
-	if err != nil {
-		return nil, err
-	}
-	return sxpf.NewPairFromSlice(result), nil
+func (te *testEnv) EvaluatePair(p *sxpf.Pair) (sxpf.Value, error) {
+	return sxpf.EvaluateCallOrList(te, p)
 }
+func (*testEnv) EvaluateOther(val sxpf.Value) (sxpf.Value, error) { return val, nil }
 
 var baseURL string
 

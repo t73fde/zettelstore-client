@@ -222,9 +222,12 @@ func (env *EncEnvironment) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
 	return env.Builtins.LookupForm(sym)
 }
 
-func (env *EncEnvironment) EvaluateString(val *sxpf.String) (sxpf.Value, error) {
-	env.WriteEscaped(val.GetValue())
-	return sxpf.Nil(), nil
+func (env *EncEnvironment) EvaluateOther(val sxpf.Value) (sxpf.Value, error) {
+	if strVal, ok := val.(*sxpf.String); ok {
+		env.WriteEscaped(strVal.GetValue())
+		return sxpf.Nil(), nil
+	}
+	return val, nil
 }
 
 func (env *EncEnvironment) EvaluateSymbol(val *sxpf.Symbol) (sxpf.Value, error) {
@@ -232,20 +235,8 @@ func (env *EncEnvironment) EvaluateSymbol(val *sxpf.Symbol) (sxpf.Value, error) 
 	return sxpf.Nil(), nil
 }
 
-func (env *EncEnvironment) EvaluateList(p *sxpf.Pair) (sxpf.Value, error) {
-	return env.evalCall(p.GetSlice())
-}
-
-func (env *EncEnvironment) evalCall(vals []sxpf.Value) (sxpf.Value, error) {
-	res, err, done := sxpf.EvaluateCall(env, vals)
-	if done {
-		return res, err
-	}
-	result, err := sxpf.EvaluateSlice(env, vals)
-	if err != nil {
-		return nil, err
-	}
-	return sxpf.NewPairFromSlice(result), nil
+func (env *EncEnvironment) EvaluatePair(p *sxpf.Pair) (sxpf.Value, error) {
+	return sxpf.EvaluateCallOrList(env, p)
 }
 
 func EvaluateInline(baseEnv *EncEnvironment, value sxpf.Value, withFootnotes, noLinks bool) string {

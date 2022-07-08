@@ -20,16 +20,16 @@ import (
 )
 
 // EvaluateBlock writes the text of the given block list to the given writer.
-func EvaluateBlock(w io.Writer, seq *sxpf.Pair) {
+func EvaluateBlock(w io.Writer, pl *sxpf.Pair) {
 	env := newTextEnvironment(w)
-	env.evalCall(seq.GetSlice())
+	env.EvaluatePair(pl)
 }
 
 // EvaluateInlineString returns the text content of the given inline list as a string.
-func EvaluateInlineString(seq *sxpf.Pair) string {
+func EvaluateInlineString(pl *sxpf.Pair) string {
 	var buf bytes.Buffer
 	env := newTextEnvironment(&buf)
-	env.evalCall(seq.GetSlice())
+	env.EvaluatePair(pl)
 	return buf.String()
 }
 
@@ -76,39 +76,32 @@ func (env *textEnvironment) WriteString(s string) {
 
 func (*textEnvironment) MakeSymbol(s string) *sxpf.Symbol { return sexpr.Smk.MakeSymbol(s) }
 
-// LookupForm returns the form associated with the given symbol.
 func (env *textEnvironment) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
 	return env.sm.LookupForm(sym)
 }
 
-// Evaluate the string. In many cases, strings evaluate to itself.
-func (env *textEnvironment) EvaluateString(str *sxpf.String) (sxpf.Value, error) {
-	env.WriteString(str.GetValue())
-	return sxpf.Nil(), nil
-}
+func (*textEnvironment) EvaluateSymbol(*sxpf.Symbol) (sxpf.Value, error) { return sxpf.Nil(), nil }
 
-// Evaluate the symbol. In many cases this result in returning a value
-// found in some internal lookup tables.
-func (*textEnvironment) EvaluateSymbol(*sxpf.Symbol) (sxpf.Value, error) {
-	return sxpf.Nil(), nil
-}
-
-// Evaluate the given list. In many cases this means to evaluate the first
-// element to a form and then call the form with the remaning elements
-// (possibly evaluated) as parameters.
-func (env *textEnvironment) EvaluateList(p *sxpf.Pair) (sxpf.Value, error) {
-	return env.evalCall(p.GetSlice())
-}
-
-func (env *textEnvironment) evalCall(args []sxpf.Value) (sxpf.Value, error) {
-	if sym, err := sxpf.GetSymbol(args, 0); err == nil {
+func (env *textEnvironment) EvaluatePair(p *sxpf.Pair) (sxpf.Value, error) {
+	if p.IsEmpty() {
+		return p, nil
+	}
+	if sym, ok := p.GetFirst().(*sxpf.Symbol); ok {
 		if form, err := env.LookupForm(sym); err == nil {
-			form.Call(env, args[1:])
+			form.Call(env, p.GetSlice()[1:])
 			return nil, nil
 		}
 	}
-	sxpf.EvaluateSlice(env, args)
+	sxpf.EvaluateList(env, p)
 	return sxpf.Nil(), nil
+}
+
+func (env *textEnvironment) EvaluateOther(val sxpf.Value) (sxpf.Value, error) {
+	if strVal, ok := val.(*sxpf.String); ok {
+		env.WriteString(strVal.GetValue())
+		return sxpf.Nil(), nil
+	}
+	return val, nil
 }
 
 var builtins = []struct {
