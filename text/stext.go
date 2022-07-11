@@ -19,12 +19,6 @@ import (
 	"zettelstore.de/c/sexpr"
 )
 
-// EvaluateBlock writes the text of the given block list to the given writer.
-func EvaluateBlock(w io.Writer, pl *sxpf.Pair) {
-	env := newTextEnvironment(w)
-	env.EvaluatePair(pl)
-}
-
 // EvaluateInlineString returns the text content of the given inline list as a string.
 func EvaluateInlineString(pl *sxpf.Pair) string {
 	var buf bytes.Buffer
@@ -88,8 +82,10 @@ func (env *textEnvironment) EvaluatePair(p *sxpf.Pair) (sxpf.Value, error) {
 	}
 	if sym, ok := p.GetFirst().(*sxpf.Symbol); ok {
 		if form, err := env.LookupForm(sym); err == nil {
-			form.Call(env, p.GetSlice()[1:])
-			return nil, nil
+			if rest, ok := p.GetSecond().(*sxpf.Pair); ok {
+				form.Call(env, rest)
+				return nil, nil
+			}
 		}
 	}
 	sxpf.EvaluateList(env, p)

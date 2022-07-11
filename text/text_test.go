@@ -11,7 +11,6 @@
 package text_test
 
 import (
-	"bytes"
 	"testing"
 
 	"codeberg.org/t73fde/sxpf"
@@ -38,9 +37,7 @@ func TestSexprText(t *testing.T) {
 		if !ok {
 			t.Errorf("%d: not a list: %v", i, sval)
 		}
-		var buf bytes.Buffer
-		text.EvaluateBlock(&buf, seq)
-		got := buf.String()
+		got := text.EvaluateInlineString(seq)
 		if got != tc.exp {
 			t.Errorf("%d: EncodeBlock(%q) == %q, but got %q", i, tc.src, tc.exp, got)
 		}

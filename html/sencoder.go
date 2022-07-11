@@ -150,6 +150,13 @@ func (env *EncEnvironment) GetString(args []sxpf.Value, idx int) (res string) {
 	res, env.err = sxpf.GetString(args, idx)
 	return res
 }
+func (env *EncEnvironment) GetInteger(args []sxpf.Value, idx int) (res int64) {
+	if env.err != nil {
+		return 0
+	}
+	res, env.err = sxpf.GetInteger(args, idx)
+	return res
+}
 func (env *EncEnvironment) GetPair(args []sxpf.Value, idx int) (res *sxpf.Pair) {
 	if env.err != nil {
 		return nil
@@ -297,12 +304,11 @@ var defaultEncodingFunctions = []struct {
 		env.WriteString("</p>")
 	}},
 	{sexpr.SymHeading, 5, -1, func(env *EncEnvironment, args []sxpf.Value) {
-		nLevel, err := strconv.Atoi(env.GetString(args, 0))
-		if err != nil {
-			env.SetError(err)
+		nLevel := env.GetInteger(args, 0)
+		if nLevel <= 0 {
 			return
 		}
-		level := strconv.Itoa(nLevel + env.headingOffset)
+		level := strconv.FormatInt(nLevel+int64(env.headingOffset), 10)
 
 		a := env.GetAttributes(args, 1)
 		if fragment := env.GetString(args, 3); fragment != "" {
