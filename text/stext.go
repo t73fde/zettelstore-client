@@ -23,7 +23,7 @@ import (
 func EvaluateInlineString(pl *sxpf.Pair) string {
 	var buf bytes.Buffer
 	env := newTextEnvironment(&buf)
-	env.EvaluatePair(pl)
+	env.EvalPair(pl)
 	return buf.String()
 }
 
@@ -68,34 +68,18 @@ func (env *textEnvironment) WriteString(s string) {
 	}
 }
 
-func (*textEnvironment) MakeSymbol(s string) *sxpf.Symbol { return sexpr.Smk.MakeSymbol(s) }
-
 func (env *textEnvironment) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
 	return env.sm.LookupForm(sym)
 }
 
-func (*textEnvironment) EvaluateSymbol(*sxpf.Symbol) (sxpf.Value, error) { return sxpf.Nil(), nil }
-
-func (env *textEnvironment) EvaluatePair(p *sxpf.Pair) (sxpf.Value, error) {
-	if p.IsEmpty() {
-		return p, nil
-	}
-	if sym, ok := p.GetFirst().(*sxpf.Symbol); ok {
-		if form, err := env.LookupForm(sym); err == nil {
-			if rest, ok := p.GetSecond().(*sxpf.Pair); ok {
-				form.Call(env, rest)
-				return nil, nil
-			}
-		}
-	}
-	sxpf.EvaluateList(env, p)
-	return sxpf.Nil(), nil
+func (*textEnvironment) EvalSymbol(*sxpf.Symbol) (sxpf.Value, error) { return nil, nil }
+func (env *textEnvironment) EvalPair(p *sxpf.Pair) (sxpf.Value, error) {
+	return nil, sxpf.ExecCallOrList(env, p)
 }
-
-func (env *textEnvironment) EvaluateOther(val sxpf.Value) (sxpf.Value, error) {
+func (env *textEnvironment) EvalOther(val sxpf.Value) (sxpf.Value, error) {
 	if strVal, ok := val.(*sxpf.String); ok {
 		env.WriteString(strVal.GetValue())
-		return sxpf.Nil(), nil
+		return nil, nil
 	}
 	return val, nil
 }

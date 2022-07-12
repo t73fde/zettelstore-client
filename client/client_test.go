@@ -97,7 +97,7 @@ func TestGetSexprZettel(t *testing.T) {
 	}
 	var env testEnv
 	env.t = t
-	res, err := sxpf.Evaluate(&env, value)
+	res, err := sxpf.Eval(&env, value)
 	if err != nil {
 		t.Error(res, err)
 	}
@@ -109,11 +109,11 @@ func noneFn(sxpf.Environment, []sxpf.Value) (sxpf.Value, error) { return sxpf.Ni
 func (*testEnv) LookupForm(*sxpf.Symbol) (sxpf.Form, error) {
 	return sxpf.NewBuiltin("none", false, 0, -1, noneFn), nil
 }
-func (*testEnv) EvaluateSymbol(sym *sxpf.Symbol) (sxpf.Value, error) { return sym, nil }
-func (te *testEnv) EvaluatePair(p *sxpf.Pair) (sxpf.Value, error) {
-	return sxpf.EvaluateCallOrList(te, p)
+func (*testEnv) EvalSymbol(sym *sxpf.Symbol) (sxpf.Value, error) { return sym, nil }
+func (*testEnv) EvalOther(val sxpf.Value) (sxpf.Value, error)    { return val, nil }
+func (te *testEnv) EvalPair(p *sxpf.Pair) (sxpf.Value, error) {
+	return nil, sxpf.ExecCallOrList(te, p)
 }
-func (*testEnv) EvaluateOther(val sxpf.Value) (sxpf.Value, error) { return val, nil }
 
 var baseURL string
 
