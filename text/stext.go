@@ -55,13 +55,14 @@ func newTextEnvironment(w io.Writer) textEnvironment {
 	}
 }
 
-func (env *textEnvironment) GetString(args []sxpf.Value, idx int) (res string) {
+func (env *textEnvironment) GetString(p *sxpf.Pair) (res string) {
 	if env.err == nil {
-		res, env.err = sxpf.GetString(args, idx)
+		res, env.err = p.GetString()
 		return res
 	}
 	return ""
 }
+
 func (env *textEnvironment) WriteString(s string) {
 	if env.err == nil {
 		_, env.err = io.WriteString(env.w, s)
@@ -89,8 +90,8 @@ var builtins = []struct {
 	minArgs int
 	fn      func(env *textEnvironment, args *sxpf.Pair)
 }{
-	{sexpr.SymText, 1, func(env *textEnvironment, args *sxpf.Pair) { env.WriteString(env.GetString(args.GetSlice(), 0)) }},
-	{sexpr.SymTag, 1, func(env *textEnvironment, args *sxpf.Pair) { env.WriteString(env.GetString(args.GetSlice(), 0)) }},
+	{sexpr.SymText, 1, func(env *textEnvironment, args *sxpf.Pair) { env.WriteString(env.GetString(args)) }},
+	{sexpr.SymTag, 1, func(env *textEnvironment, args *sxpf.Pair) { env.WriteString(env.GetString(args)) }},
 	{sexpr.SymSpace, 0, func(env *textEnvironment, _ *sxpf.Pair) { env.WriteString(" ") }},
 	{sexpr.SymSoft, 0, func(env *textEnvironment, _ *sxpf.Pair) { env.WriteString(" ") }},
 	{sexpr.SymHard, 0, func(env *textEnvironment, _ *sxpf.Pair) { env.WriteString("\n") }},
