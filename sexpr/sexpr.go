@@ -20,12 +20,14 @@ func MakeString(val sxpf.Value) string {
 }
 
 // GetMetaContent returns the metadata and the content of a sexpr encoded zettel.
-func GetMetaContent(zettel sxpf.Value) (Meta, sxpf.Value) {
+func GetMetaContent(zettel sxpf.Value) (Meta, *sxpf.Pair) {
 	if pair, ok := zettel.(*sxpf.Pair); ok {
 		m := pair.GetFirst()
 		if s := pair.GetSecond(); s != nil {
 			if p, ok := s.(*sxpf.Pair); ok {
-				return MakeMeta(m), p.GetFirst()
+				if content, err := p.GetPair(); err == nil {
+					return MakeMeta(m), content
+				}
 			}
 		}
 		return MakeMeta(m), nil
