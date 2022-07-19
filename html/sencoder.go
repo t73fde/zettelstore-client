@@ -101,10 +101,19 @@ func (env *EncEnvironment) SetUnique(s string) {
 func (env *EncEnvironment) IgnoreLinks() bool { return env.noLinks }
 
 // WriteString encodes a string literally.
-func (env *EncEnvironment) WriteString(s string) {
+func (env *EncEnvironment) Write(b []byte) (l int, err error) {
 	if env.err == nil {
-		_, env.err = io.WriteString(env.w, s)
+		l, env.err = env.w.Write(b)
 	}
+	return l, env.err
+}
+
+// WriteString encodes a string literally.
+func (env *EncEnvironment) WriteString(s string) (l int, err error) {
+	if env.err == nil {
+		l, env.err = io.WriteString(env.w, s)
+	}
+	return l, env.err
 }
 
 // WriteStrings encodes many string literally.
