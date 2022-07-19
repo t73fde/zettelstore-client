@@ -75,7 +75,7 @@ func (env *textEnvironment) LookupForm(sym *sxpf.Symbol) (sxpf.Form, error) {
 
 func (*textEnvironment) EvalSymbol(*sxpf.Symbol) (sxpf.Value, error) { return nil, nil }
 func (env *textEnvironment) EvalPair(p *sxpf.Pair) (sxpf.Value, error) {
-	return nil, sxpf.ExecCallOrList(env, p)
+	return sxpf.EvalCallOrSeq(env, p)
 }
 func (env *textEnvironment) EvalOther(val sxpf.Value) (sxpf.Value, error) {
 	if strVal, ok := val.(*sxpf.String); ok {

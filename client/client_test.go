@@ -111,9 +111,7 @@ func (*testEnv) LookupForm(*sxpf.Symbol) (sxpf.Form, error) {
 }
 func (*testEnv) EvalSymbol(sym *sxpf.Symbol) (sxpf.Value, error) { return sym, nil }
 func (*testEnv) EvalOther(val sxpf.Value) (sxpf.Value, error)    { return val, nil }
-func (te *testEnv) EvalPair(p *sxpf.Pair) (sxpf.Value, error) {
-	return nil, sxpf.ExecCallOrList(te, p)
-}
+func (te *testEnv) EvalPair(p *sxpf.Pair) (sxpf.Value, error)    { return sxpf.EvalCallOrSeq(te, p) }
 
 var baseURL string
 

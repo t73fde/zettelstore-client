@@ -245,7 +245,7 @@ func (env *EncEnvironment) EvalSymbol(val *sxpf.Symbol) (sxpf.Value, error) {
 }
 
 func (env *EncEnvironment) EvalPair(p *sxpf.Pair) (sxpf.Value, error) {
-	return nil, sxpf.ExecCallOrList(env, p)
+	return sxpf.EvalCallOrSeq(env, p)
 }
 
 func EvaluateInline(baseEnv *EncEnvironment, value sxpf.Value, withFootnotes, noLinks bool) string {
@@ -285,7 +285,7 @@ func (env *EncEnvironment) WriteEndnotes() {
 			a = a.Set("role", "doc-endnote")
 		}
 		env.WriteStartTag("li", a)
-		sxpf.ExecList(env, fni.note) // may add more footnotes
+		sxpf.EvalSequence(env, fni.note) // may add more footnotes
 		env.WriteStrings(
 			` <a class="zs-endnote-backref" href="#fnref:`,
 			un,
@@ -304,7 +304,7 @@ var defaultEncodingFunctions = []struct {
 }{
 	{sexpr.SymPara, 0, func(env *EncEnvironment, args *sxpf.Pair) {
 		env.WriteString("<p>")
-		sxpf.ExecList(env, args)
+		sxpf.EvalSequence(env, args)
 		env.WriteString("</p>")
 	}},
 	{sexpr.SymHeading, 5, func(env *EncEnvironment, args *sxpf.Pair) {
@@ -324,7 +324,7 @@ var defaultEncodingFunctions = []struct {
 		env.WriteStrings("<h", level)
 		env.WriteAttributes(a)
 		env.WriteString(">")
-		sxpf.ExecList(env, argFragment.GetTail())
+		sxpf.EvalSequence(env, argFragment.GetTail())
 		env.WriteStrings("</h", level, ">")
 	}},
 	{sexpr.SymThematic, 0, func(env *EncEnvironment, args *sxpf.Pair) {
@@ -519,7 +519,7 @@ var defaultEncodingFunctions = []struct {
 			env.WriteEscaped(key)
 			if text := argKey.GetTail(); !text.IsNil() {
 				env.WriteString(", ")
-				sxpf.ExecList(env, text)
+				sxpf.EvalSequence(env, text)
 			}
 		}
 		env.WriteString("</span>")
@@ -535,10 +535,10 @@ var defaultEncodingFunctions = []struct {
 			env.WriteString(env.unique)
 			env.WriteString(fragment)
 			env.WriteString(`">`)
-			sxpf.ExecList(env, argFragment.GetTail())
+			sxpf.EvalSequence(env, argFragment.GetTail())
 			env.WriteString("</a>")
 		} else {
-			sxpf.ExecList(env, argFragment.GetTail())
+			sxpf.EvalSequence(env, argFragment.GetTail())
 		}
 	}},
 	{sexpr.SymFootnote, 1, func(env *EncEnvironment, args *sxpf.Pair) {
@@ -618,7 +618,7 @@ func makeCellFn(align string) encodingFunc {
 		} else {
 			env.WriteStrings(`<td class="`, align, `">`)
 		}
-		sxpf.ExecList(env, args)
+		sxpf.EvalSequence(env, args)
 		env.WriteString("</td>")
 	}
 }
@@ -631,7 +631,7 @@ func (env *EncEnvironment) writeRegion(args *sxpf.Pair, a attrs.Attributes, tag 
 	sxpf.Eval(env, env.GetPair(args.GetTail()))
 	if cite := env.GetPair(args.GetTail().GetTail()); !cite.IsNil() {
 		env.WriteString("<cite>")
-		sxpf.ExecList(env, cite)
+		sxpf.EvalSequence(env, cite)
 		env.WriteString("</cite>")
 	}
 	env.WriteEndTag(tag)
@@ -691,7 +691,7 @@ func WriteLink(env *EncEnvironment, args *sxpf.Pair, a attrs.Attributes, refValu
 	env.WriteString(">")
 
 	if args.Length() > 2 {
-		sxpf.ExecList(env, args.GetTail().GetTail())
+		sxpf.EvalSequence(env, args.GetTail().GetTail())
 	} else {
 		env.WriteString(refValue)
 	}
@@ -711,7 +711,7 @@ func makeFormatFn(tag string) encodingFunc {
 			a = a.Remove("").AddClass(val)
 		}
 		env.WriteStartTag(tag, a)
-		sxpf.ExecList(env, args.GetTail())
+		sxpf.EvalSequence(env, args.GetTail())
 		env.WriteEndTag(tag)
 	}
 }
