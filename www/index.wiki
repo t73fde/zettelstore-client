@@ -1,4 +1,12 @@
 <title>Home</title>
 
-This repository contains client software for various programming languages to
+This repository contains Go client software to
 access [https://zettelstore.de|Zettelstore] via its API.
+
+<h3>Latest Release: 0.5 (2022-07-29)</h3>
+  *  [./changes.wiki#0_5|Change summary]
+  *  [/timeline?p=v0.5&bt=v0.4&y=ci|Check-ins for version 0.5],
+     [/vdiff?to=v0.5&from=v0.4|content diff]
+  *  [/timeline?df=v0.5&y=ci|Check-ins derived from the 0.5 release],
+     [/vdiff?from=v0.5&to=trunk|content diff]
+  *  [/timeline?t=release|Timeline of all past releases]
