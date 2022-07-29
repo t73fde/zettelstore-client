@@ -1,0 +1,5 @@
+<title>Change Log</title>
+
+<a name="0_5"></a>
+<h2>Changes for Version 0.5 (2022-07-29)</h2>
+  *  Initial public release.
