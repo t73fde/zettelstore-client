@@ -150,7 +150,6 @@ const (
 	QueryKeyDepth    = "_depth"
 	QueryKeyDir      = "_dir"
 	QueryKeyEncoding = "_enc"
-	QueryKeyExpr     = "_expr"
 	QueryKeyKey      = "_key"
 	QueryKeyLimit    = "_limit"
 	QueryKeyMin      = "_min"
