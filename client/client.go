@@ -288,23 +288,23 @@ func (c *Client) ListZettel(ctx context.Context, query url.Values) ([][]byte, er
 }
 
 // ListZettelJSON returns a list of zettel.
-func (c *Client) ListZettelJSON(ctx context.Context, query url.Values) (string, []api.ZidMetaJSON, error) {
+func (c *Client) ListZettelJSON(ctx context.Context, query url.Values) (string, string, []api.ZidMetaJSON, error) {
 	ub := c.newQueryURLBuilder('j', query)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", nil, statusToError(resp)
+		return "", "", nil, statusToError(resp)
 	}
 	dec := json.NewDecoder(resp.Body)
 	var zl api.ZettelListJSON
 	err = dec.Decode(&zl)
 	if err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
-	return zl.Query, zl.List, nil
+	return zl.Query, zl.Human, zl.List, nil
 }
 
 // GetZettel returns a zettel as a string.
