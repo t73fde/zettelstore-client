@@ -89,6 +89,13 @@ func (ub *URLBuilder) AppendQuery(key, value string) *URLBuilder {
 	return ub
 }
 
+// AppendSearch adds a new search
+func (ub *URLBuilder) AppendSearch(value string) *URLBuilder {
+	ub.rawLocal = ""
+	ub.query = append(ub.query, urlQuery{QueryKeySearch, value})
+	return ub
+}
+
 // ClearQuery removes all query parameters.
 func (ub *URLBuilder) ClearQuery() *URLBuilder {
 	ub.rawLocal = ""
