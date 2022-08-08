@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"strconv"
 
 	"codeberg.org/t73fde/sxpf"
@@ -500,6 +501,12 @@ var defaultEncodingFunctions = []struct {
 	}},
 	{sexpr.SymLinkHosted, 2, func(env *EncEnvironment, args *sxpf.Pair) { WriteHRefLink(env, args) }},
 	{sexpr.SymLinkBased, 2, func(env *EncEnvironment, args *sxpf.Pair) { WriteHRefLink(env, args) }},
+	{sexpr.SymLinkSearch, 2, func(env *EncEnvironment, args *sxpf.Pair) {
+		if a, refValue, ok := PrepareLink(env, args); ok {
+			query := "?" + api.QueryKeySearch + "=" + url.QueryEscape(refValue)
+			WriteLink(env, args, a.Set("href", query), refValue, "")
+		}
+	}},
 	{sexpr.SymLinkExternal, 2, func(env *EncEnvironment, args *sxpf.Pair) {
 		if a, refValue, ok := PrepareLink(env, args); ok {
 			WriteLink(env, args, a.Set("href", refValue).AddClass("external"), refValue, "")

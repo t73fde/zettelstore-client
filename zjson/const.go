@@ -86,6 +86,7 @@ const (
 	RefStateFound    = "found"
 	RefStateHosted   = "local"
 	RefStateInvalid  = "invalid"
+	RefStateSearch   = "search"
 	RefStateSelf     = "self"
 	RefStateZettel   = "zettel"
 )
