@@ -36,26 +36,6 @@ func TestEscape(t *testing.T) {
 	}
 }
 
-func TestEscapeLiteral(t *testing.T) {
-	testcases := []struct {
-		in, exp string
-	}{
-		{"", ""},
-		{"<", "&lt;"},
-		{" a  b ", "\u00a0a\u00a0\u00a0b\u00a0"},
-	}
-	for _, tc := range testcases {
-		var buf bytes.Buffer
-		_, err := html.EscapeLiteral(&buf, tc.in)
-		if err != nil {
-			t.Errorf("Escape(%q) got error: %v", tc.in, err)
-		}
-		if got := buf.String(); tc.exp != got {
-			t.Errorf("Escape(%q) == %q, but got %q", tc.in, tc.exp, got)
-		}
-	}
-}
-
 func TestEscapeVisible(t *testing.T) {
 	testcases := []struct {
 		in, exp string

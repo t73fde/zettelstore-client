@@ -136,12 +136,12 @@ func (env *EncEnvironment) WriteEscaped(s string) {
 	}
 }
 
-func (env *EncEnvironment) WriteEscapedLiteral(s string) {
+func (env *EncEnvironment) WriteEscapedOrVisible(s string) {
 	if env.err == nil {
 		if env.visibleSpace {
 			_, env.err = EscapeVisible(env.w, s)
 		} else {
-			_, env.err = EscapeLiteral(env.w, s)
+			_, env.err = Escape(env.w, s)
 		}
 	}
 }
@@ -656,7 +656,7 @@ func (env *EncEnvironment) writeRegion(args *sxpf.Pair, a attrs.Attributes, tag 
 func (env *EncEnvironment) writeVerbatim(args *sxpf.Pair, a attrs.Attributes) {
 	env.WriteString("<pre>")
 	env.WriteStartTag("code", a)
-	env.WriteEscapedLiteral(env.GetString(args.GetTail()))
+	env.WriteEscapedOrVisible(env.GetString(args.GetTail()))
 	env.WriteString("</code></pre>")
 }
 
@@ -742,7 +742,7 @@ func (env *EncEnvironment) writeLiteral(args *sxpf.Pair, a attrs.Attributes, tag
 		a = a.RemoveDefault()
 	}
 	env.WriteStartTag(tag, a)
-	env.WriteEscapedLiteral(env.GetString(args.GetTail()))
+	env.WriteEscapedOrVisible(env.GetString(args.GetTail()))
 	env.visibleSpace = oldVisible
 	env.WriteEndTag(tag)
 }

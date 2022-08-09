@@ -33,11 +33,8 @@ var (
 		`"`, htmlQuot,
 		"\000", htmlNull,
 	}
-	htmlEscaper    = strings.NewReplacer(htmlEscapes...)
-	htmlLitEscapes = append(append([]string{}, htmlEscapes...),
-		" ", htmlLitSpace,
-	)
-	htmlLitEscaper = strings.NewReplacer(htmlLitEscapes...)
+	htmlEscaper = strings.NewReplacer(htmlEscapes...)
+
 	htmlVisEscapes = append(append([]string{}, htmlEscapes...),
 		" ", htmlVisSpace,
 		htmlLitSpace, htmlVisSpace,
@@ -47,10 +44,6 @@ var (
 
 // Escape writes to w the escaped HTML equivalent of the given string.
 func Escape(w io.Writer, s string) (int, error) { return htmlEscaper.WriteString(w, s) }
-
-// EscapeLiteral writes the escaped HTML equivaltent of the given string.
-// Each space character is written as U+00A0.
-func EscapeLiteral(w io.Writer, s string) (int, error) { return htmlLitEscaper.WriteString(w, s) }
 
 // EscapeVisible writes to w the escaped HTML equivalent of the given string.
 // Each space is written as U-2423.
