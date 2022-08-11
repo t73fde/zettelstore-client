@@ -571,7 +571,7 @@ var defaultEncodingFunctions = []struct {
 	{sexpr.SymFormatDelete, 1, makeFormatFn("del")},
 	{sexpr.SymFormatEmph, 1, makeFormatFn("em")},
 	{sexpr.SymFormatInsert, 1, makeFormatFn("ins")},
-	{sexpr.SymFormatQuote, 1, makeFormatFn("q")},
+	{sexpr.SymFormatQuote, 1, writeQuote},
 	{sexpr.SymFormatSpan, 1, makeFormatFn("span")},
 	{sexpr.SymFormatStrong, 1, makeFormatFn("strong")},
 	{sexpr.SymFormatSub, 1, makeFormatFn("sub")},
@@ -729,6 +729,22 @@ func makeFormatFn(tag string) encodingFunc {
 		env.WriteStartTag(tag, a)
 		sxpf.EvalSequence(env, args.GetTail())
 		env.WriteEndTag(tag)
+	}
+}
+
+func writeQuote(env *EncEnvironment, args *sxpf.Pair) {
+	const langAttr = "lang"
+	a := env.GetAttributes(args)
+	lang, hasLang := a.Get(langAttr)
+	if hasLang {
+		a = a.Remove(langAttr)
+		env.WriteStartTag("span", attrs.Attributes{}.Set(langAttr, lang))
+	}
+	env.WriteStartTag("q", a)
+	sxpf.EvalSequence(env, args.GetTail())
+	env.WriteEndTag("q")
+	if hasLang {
+		env.WriteEndTag(langAttr)
 	}
 }
 
