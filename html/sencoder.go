@@ -744,7 +744,7 @@ func writeQuote(env *EncEnvironment, args *sxpf.Pair) {
 	sxpf.EvalSequence(env, args.GetTail())
 	env.WriteEndTag("q")
 	if hasLang {
-		env.WriteEndTag(langAttr)
+		env.WriteEndTag("span")
 	}
 }
 
