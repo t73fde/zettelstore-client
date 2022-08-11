@@ -1,8 +1,15 @@
 <title>Change Log</title>
 
+<a name="0_6"></a>
+<h2>Changes for Version 0.6.0 (2022-08-11)</h2>
+  *  Add support to build URLs with search expressions
+  *  Use Go 1.19
+  *  Fix some bugs
+
 <a name="0_5"></a>
 <h2>Changes for Version 0.5.1 (2022-08-08)</h2>
   *  Support for search references
      (minor: api, zjson, sexpr, html)
+
 <h2>Changes for Version 0.5 (2022-07-29)</h2>
   *  Initial public release.
