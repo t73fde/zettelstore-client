@@ -266,8 +266,8 @@ func encodeZettelData(buf *bytes.Buffer, data *api.ZettelDataJSON) error {
 var bsLF = []byte{'\n'}
 
 // ListZettel returns a list of all Zettel.
-func (c *Client) ListZettel(ctx context.Context, query url.Values) ([][]byte, error) {
-	ub := c.newQueryURLBuilder('z', query)
+func (c *Client) ListZettel(ctx context.Context, search string) ([][]byte, error) {
+	ub := c.newURLBuilder('z').AppendSearch(search)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return nil, err
@@ -288,8 +288,8 @@ func (c *Client) ListZettel(ctx context.Context, query url.Values) ([][]byte, er
 }
 
 // ListZettelJSON returns a list of zettel.
-func (c *Client) ListZettelJSON(ctx context.Context, query url.Values) (string, string, []api.ZidMetaJSON, error) {
-	ub := c.newQueryURLBuilder('j', query)
+func (c *Client) ListZettelJSON(ctx context.Context, search string) (string, string, []api.ZidMetaJSON, error) {
+	ub := c.newURLBuilder('j').AppendSearch(search)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return "", "", nil, err

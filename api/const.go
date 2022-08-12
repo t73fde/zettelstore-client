@@ -153,13 +153,9 @@ const (
 	QueryKeyKey      = "_key"
 	QueryKeyLimit    = "_limit"
 	QueryKeyMin      = "_min"
-	QueryKeyNegate   = "_negate"
-	QueryKeyOffset   = "_offset"
-	QueryKeyOrder    = "_order"
 	QueryKeyPart     = "_part"
 	QueryKeyPhrase   = "_phrase"
 	QueryKeySearch   = "_s"
-	QueryKeySort     = "_sort"
 )
 
 // Supported dir values.
