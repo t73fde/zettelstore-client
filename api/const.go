@@ -92,6 +92,7 @@ const (
 	KeyBoxNumber    = "box-number"
 	KeyContentTags  = "content-" + KeyTags
 	KeyCopyright    = "copyright"
+	KeyCreated      = "created"
 	KeyCredential   = "credential"
 	KeyDead         = "dead"
 	KeyFolge        = "folge"
