@@ -233,3 +233,18 @@ const (
 	CommandAuthenticated = Command("authenticated")
 	CommandRefresh       = Command("refresh")
 )
+
+// Supported search operator representations
+const (
+	ExistOperator          = "?"
+	ExistNotOperator       = "!?"
+	SearchOperatorNot      = "!"
+	SearchOperatorHas      = ":"
+	SearchOperatorHasNot   = "!:"
+	SearchOperatorPrefix   = ">"
+	SearchOperatorNoPrefix = "!>"
+	SearchOperatorSuffix   = "<"
+	SearchOperatorNoSuffix = "!<"
+	SearchOperatorMatch    = "~"
+	SearchOperatorNoMatch  = "!~"
+)
