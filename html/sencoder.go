@@ -448,14 +448,15 @@ var defaultEncodingFunctions = []struct {
 		env.writeBLOB(env.GetString(args), env.GetString(argSyntax), env.GetString(argSyntax.GetTail()))
 	}},
 	{sexpr.SymTransclude, 2, func(env *EncEnvironment, args *sxpf.Pair) {
-		ref := env.GetPair(args)
+		a := sexpr.GetAttributes(env.GetPair(args))
+		ref := env.GetPair(args.GetTail())
 		refKind := env.GetSymbol(ref)
 		if refKind == nil {
 			return
 		}
 		if refValue := env.GetString(ref.GetTail()); refValue != "" {
 			if sexpr.SymRefStateExternal.Equal(refKind) {
-				a := attrs.Attributes{}.Set("src", refValue).AddClass("external")
+				a = a.Set("src", refValue).AddClass("external")
 				env.WriteString("<p><img")
 				env.WriteAttributes(a)
 				env.WriteString("></p>")
