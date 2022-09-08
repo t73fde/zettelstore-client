@@ -38,7 +38,6 @@ const (
 	ZidRenameTemplate  = ZettelID("00000000010404")
 	ZidDeleteTemplate  = ZettelID("00000000010405")
 	ZidContextTemplate = ZettelID("00000000010406")
-	ZidRolesTemplate   = ZettelID("00000000010500")
 	ZidTagsTemplate    = ZettelID("00000000010600")
 	ZidErrorTemplate   = ZettelID("00000000010700")
 
