@@ -147,16 +147,16 @@ const (
 
 // Values for HTTP query parameter.
 const (
-	QueryKeyCommand  = "_cmd"
-	QueryKeyDepth    = "_depth"
-	QueryKeyDir      = "_dir"
-	QueryKeyEncoding = "_enc"
-	QueryKeyKey      = "_key"
-	QueryKeyLimit    = "_limit"
-	QueryKeyMin      = "_min"
-	QueryKeyPart     = "_part"
-	QueryKeyPhrase   = "_phrase"
-	QueryKeySearch   = "_s"
+	QueryKeyCommand  = "cmd"
+	QueryKeyDepth    = "depth"
+	QueryKeyDir      = "dir"
+	QueryKeyEncoding = "enc"
+	QueryKeyKey      = "key"
+	QueryKeyLimit    = "limit"
+	QueryKeyMin      = "min"
+	QueryKeyPart     = "part"
+	QueryKeyPhrase   = "phrase"
+	QueryKeySearch   = "s"
 )
 
 // Supported dir values.
