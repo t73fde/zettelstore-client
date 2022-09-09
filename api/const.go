@@ -38,7 +38,6 @@ const (
 	ZidRenameTemplate  = ZettelID("00000000010404")
 	ZidDeleteTemplate  = ZettelID("00000000010405")
 	ZidContextTemplate = ZettelID("00000000010406")
-	ZidTagsTemplate    = ZettelID("00000000010600")
 	ZidErrorTemplate   = ZettelID("00000000010700")
 
 	// CSS-related zettel are in the range 20000..29999
