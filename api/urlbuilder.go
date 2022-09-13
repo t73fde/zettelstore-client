@@ -82,17 +82,17 @@ func (ub *URLBuilder) AppendPath(p string) *URLBuilder {
 	return ub
 }
 
-// AppendQuery adds a new query parameter
-func (ub *URLBuilder) AppendQuery(key, value string) *URLBuilder {
+// AppendKVQuery adds a new key/value query parameter
+func (ub *URLBuilder) AppendKVQuery(key, value string) *URLBuilder {
 	ub.rawLocal = ""
 	ub.query = append(ub.query, urlQuery{key, value})
 	return ub
 }
 
-// AppendSearch adds a new search
-func (ub *URLBuilder) AppendSearch(value string) *URLBuilder {
+// AppendQuery adds a new query
+func (ub *URLBuilder) AppendQuery(value string) *URLBuilder {
 	ub.rawLocal = ""
-	ub.query = append(ub.query, urlQuery{QueryKeySearch, value})
+	ub.query = append(ub.query, urlQuery{QueryKeyQuery, value})
 	return ub
 }
 

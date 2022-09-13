@@ -154,7 +154,7 @@ const (
 	QueryKeyMin      = "min"
 	QueryKeyPart     = "part"
 	QueryKeyPhrase   = "phrase"
-	QueryKeySearch   = "s"
+	QueryKeyQuery    = "q"
 )
 
 // Supported dir values.

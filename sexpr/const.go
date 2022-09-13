@@ -44,7 +44,7 @@ var (
 	SymLinkBroken      = Smk.MakeSymbol("LINK-BROKEN")
 	SymLinkHosted      = Smk.MakeSymbol("LINK-HOSTED")
 	SymLinkBased       = Smk.MakeSymbol("LINK-BASED")
-	SymLinkSearch      = Smk.MakeSymbol("LINK-SEARCH")
+	SymLinkQuery       = Smk.MakeSymbol("LINK-QUERY")
 	SymLinkExternal    = Smk.MakeSymbol("LINK-EXTERNAL")
 	SymListOrdered     = Smk.MakeSymbol("ORDERED")
 	SymListUnordered   = Smk.MakeSymbol("UNORDERED")
@@ -86,7 +86,7 @@ var (
 	SymRefStateBroken   = Smk.MakeSymbol("BROKEN")
 	SymRefStateHosted   = Smk.MakeSymbol("HOSTED")
 	SymRefStateBased    = Smk.MakeSymbol("BASED")
-	SymRefStateSearch   = Smk.MakeSymbol("SEARCH")
+	SymRefStateQuery    = Smk.MakeSymbol("QUERY")
 	SymRefStateExternal = Smk.MakeSymbol("EXTERNAL")
 )
 

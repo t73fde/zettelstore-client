@@ -502,9 +502,9 @@ var defaultEncodingFunctions = []struct {
 	}},
 	{sexpr.SymLinkHosted, 2, func(env *EncEnvironment, args *sxpf.Pair) { WriteHRefLink(env, args) }},
 	{sexpr.SymLinkBased, 2, func(env *EncEnvironment, args *sxpf.Pair) { WriteHRefLink(env, args) }},
-	{sexpr.SymLinkSearch, 2, func(env *EncEnvironment, args *sxpf.Pair) {
+	{sexpr.SymLinkQuery, 2, func(env *EncEnvironment, args *sxpf.Pair) {
 		if a, refValue, ok := PrepareLink(env, args); ok {
-			query := "?" + api.QueryKeySearch + "=" + url.QueryEscape(refValue)
+			query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(refValue)
 			WriteLink(env, args, a.Set("href", query), refValue, "")
 		}
 	}},
