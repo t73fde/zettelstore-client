@@ -234,6 +234,7 @@ const (
 
 // Supported search operator representations
 const (
+	ActionSeparator        = "|"
 	ExistOperator          = "?"
 	ExistNotOperator       = "!?"
 	SearchOperatorNot      = "!"

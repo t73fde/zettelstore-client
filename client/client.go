@@ -623,14 +623,14 @@ func (c *Client) newQueryURLBuilder(key byte, query url.Values) *api.URLBuilder 
 	return ub
 }
 
-// ListMapMeta returns a map of all metadata values with the given key to the
+// QueryMapMeta returns a map of all metadata values with the given query action to the
 // list of zettel IDs containing this value.
-func (c *Client) ListMapMeta(ctx context.Context, key string) (api.MapMeta, error) {
+func (c *Client) QueryMapMeta(ctx context.Context, query string) (api.MapMeta, error) {
 	err := c.updateToken(ctx)
 	if err != nil {
 		return nil, err
 	}
-	req, err := c.newRequest(ctx, http.MethodGet, c.newURLBuilder('m').AppendQuery(api.QueryKeyKey, key), nil)
+	req, err := c.newRequest(ctx, http.MethodGet, c.newURLBuilder('q').AppendSearch(query), nil)
 	if err != nil {
 		return nil, err
 	}
