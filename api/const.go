@@ -85,6 +85,7 @@ const (
 	KeyTags         = "tags"
 	KeySyntax       = "syntax"
 	KeyAllTags      = "all-" + KeyTags
+	KeyAuthor       = "author"
 	KeyBack         = "back"
 	KeyBackward     = "backward"
 	KeyBoxNumber    = "box-number"
