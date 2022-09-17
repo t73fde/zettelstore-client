@@ -67,7 +67,6 @@ const (
 	TypePoem            = "Poem"
 	TypeSpace           = "Space"
 	TypeTable           = "Table"
-	TypeTag             = "Tag"
 	TypeText            = "Text"
 	TypeTransclude      = "Transclude"
 	TypeVerbatimCode    = "CodeBlock"

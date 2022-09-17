@@ -486,11 +486,6 @@ var defaultEncodingFunctions = []struct {
 	}},
 	{sexpr.SymSoft, 0, func(env *EncEnvironment, _ *sxpf.Pair) { env.WriteString(" ") }},
 	{sexpr.SymHard, 0, func(env *EncEnvironment, _ *sxpf.Pair) { env.WriteString("<br>") }},
-	{sexpr.SymTag, 0, func(env *EncEnvironment, args *sxpf.Pair) {
-		if !sxpf.IsNil(args) {
-			env.WriteEscaped(env.GetString(args))
-		}
-	}},
 	{sexpr.SymLinkInvalid, 2, func(env *EncEnvironment, args *sxpf.Pair) { WriteAsSpan(env, args) }},
 	{sexpr.SymLinkZettel, 2, func(env *EncEnvironment, args *sxpf.Pair) { WriteHRefLink(env, args) }},
 	{sexpr.SymLinkSelf, 2, func(env *EncEnvironment, args *sxpf.Pair) { WriteHRefLink(env, args) }},

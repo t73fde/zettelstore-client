@@ -64,7 +64,6 @@ var (
 	SymSoft            = Smk.MakeSymbol("SOFT")
 	SymSpace           = Smk.MakeSymbol("SPACE")
 	SymTable           = Smk.MakeSymbol("TABLE")
-	SymTag             = Smk.MakeSymbol("TAG")
 	SymText            = Smk.MakeSymbol("TEXT")
 	SymThematic        = Smk.MakeSymbol("THEMATIC")
 	SymTransclude      = Smk.MakeSymbol("TRANSCLUDE")

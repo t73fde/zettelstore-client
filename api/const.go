@@ -84,12 +84,10 @@ const (
 	KeyRole         = "role"
 	KeyTags         = "tags"
 	KeySyntax       = "syntax"
-	KeyAllTags      = "all-" + KeyTags
 	KeyAuthor       = "author"
 	KeyBack         = "back"
 	KeyBackward     = "backward"
 	KeyBoxNumber    = "box-number"
-	KeyContentTags  = "content-" + KeyTags
 	KeyCopyright    = "copyright"
 	KeyCreated      = "created"
 	KeyCredential   = "credential"

@@ -91,7 +91,6 @@ var builtins = []struct {
 	fn      func(env *textEnvironment, args *sxpf.Pair)
 }{
 	{sexpr.SymText, 1, func(env *textEnvironment, args *sxpf.Pair) { env.WriteString(env.GetString(args)) }},
-	{sexpr.SymTag, 1, func(env *textEnvironment, args *sxpf.Pair) { env.WriteString(env.GetString(args)) }},
 	{sexpr.SymSpace, 0, func(env *textEnvironment, _ *sxpf.Pair) { env.WriteString(" ") }},
 	{sexpr.SymSoft, 0, func(env *textEnvironment, _ *sxpf.Pair) { env.WriteString(" ") }},
 	{sexpr.SymHard, 0, func(env *textEnvironment, _ *sxpf.Pair) { env.WriteString("\n") }},
