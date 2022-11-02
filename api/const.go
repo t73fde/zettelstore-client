@@ -125,7 +125,6 @@ const (
 	ValueSyntaxMD          = "md"
 	ValueSyntaxMustache    = "mustache"
 	ValueSyntaxNone        = "none"
-	ValueSyntaxPikchr      = "pikchr"
 	ValueSyntaxSVG         = "svg"
 	ValueSyntaxText        = "text"
 	ValueSyntaxZmk         = "zmk"
