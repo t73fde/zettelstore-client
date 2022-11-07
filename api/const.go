@@ -169,19 +169,21 @@ const (
 
 // Supported encoding values.
 const (
-	EncodingHTML  = "html"
-	EncodingSexpr = "sexpr"
-	EncodingText  = "text"
-	EncodingZJSON = "zjson"
-	EncodingZMK   = "zmk"
+	EncodingHTML     = "html"
+	EncodingMarkdown = "markdown"
+	EncodingSexpr    = "sexpr"
+	EncodingText     = "text"
+	EncodingZJSON    = "zjson"
+	EncodingZMK      = "zmk"
 )
 
 var mapEncodingEnum = map[string]EncodingEnum{
-	EncodingHTML:  EncoderHTML,
-	EncodingSexpr: EncoderSexpr,
-	EncodingText:  EncoderText,
-	EncodingZJSON: EncoderZJSON,
-	EncodingZMK:   EncoderZmk,
+	EncodingHTML:     EncoderHTML,
+	EncodingMarkdown: EncoderMarkdown,
+	EncodingSexpr:    EncoderSexpr,
+	EncodingText:     EncoderText,
+	EncodingZJSON:    EncoderZJSON,
+	EncodingZMK:      EncoderZmk,
 }
 var mapEnumEncoding = map[EncodingEnum]string{}
 
@@ -206,6 +208,7 @@ type EncodingEnum uint8
 const (
 	EncoderUnknown EncodingEnum = iota
 	EncoderHTML
+	EncoderMarkdown
 	EncoderSexpr
 	EncoderText
 	EncoderZJSON
