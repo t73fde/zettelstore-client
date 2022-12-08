@@ -152,7 +152,7 @@ const (
 // Values for HTTP query parameter.
 const (
 	QueryKeyCommand  = "cmd"
-	QueryKeyDepth    = "depth"
+	QueryKeyCost     = "cost"
 	QueryKeyDir      = "dir"
 	QueryKeyEncoding = "enc"
 	QueryKeyLimit    = "limit"

@@ -479,7 +479,7 @@ const (
 // GetZettelContext returns metadata of the given zettel and, more important,
 // metadata of zettel that for the context of the first zettel.
 func (c *Client) GetZettelContext(
-	ctx context.Context, zid api.ZettelID, dir ContextDirection, depth, limit int) (
+	ctx context.Context, zid api.ZettelID, dir ContextDirection, cost, limit int) (
 	*api.ZidMetaRelatedList, error,
 ) {
 	ub := c.newURLBuilder('x').SetZid(zid)
@@ -489,8 +489,8 @@ func (c *Client) GetZettelContext(
 	case DirForward:
 		ub.AppendKVQuery(api.QueryKeyDir, api.DirForward)
 	}
-	if depth > 0 {
-		ub.AppendKVQuery(api.QueryKeyDepth, strconv.Itoa(depth))
+	if cost > 0 {
+		ub.AppendKVQuery(api.QueryKeyCost, strconv.Itoa(cost))
 	}
 	if limit > 0 {
 		ub.AppendKVQuery(api.QueryKeyLimit, strconv.Itoa(limit))
