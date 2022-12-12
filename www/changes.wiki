@@ -1,8 +1,9 @@
 <title>Change Log</title>
 
 <a name="0_9"></a>
-<h2>Changes for Version 0.9.0 (pending)</h2>
+<h2>Changes for Version 0.9.0 (2022-12-12)</h2>
   *  Rename <tt>api.QueryKeyDepth</tt> to <tt>api.QueryKeyCost</tt>
+  *  Update encode / syntax names
 
 <a name="0_6"></a>
 <h2>Changes for Version 0.6.0 (2022-08-11)</h2>
