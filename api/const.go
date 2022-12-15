@@ -155,6 +155,7 @@ const (
 	QueryKeyCost     = "cost"
 	QueryKeyDir      = "dir"
 	QueryKeyEncoding = "enc"
+	QueryKeyEval     = "eval"
 	QueryKeyLimit    = "limit"
 	QueryKeyPart     = "part"
 	QueryKeyPhrase   = "phrase"
@@ -175,6 +176,9 @@ const (
 	EncodingText  = "text"
 	EncodingZJSON = "zjson"
 	EncodingZMK   = "zmk"
+
+	EncodingPlain = "plain"
+	EncodingJson  = "json"
 )
 
 var mapEncodingEnum = map[string]EncodingEnum{
@@ -184,6 +188,9 @@ var mapEncodingEnum = map[string]EncodingEnum{
 	EncodingText:  EncoderText,
 	EncodingZJSON: EncoderZJSON,
 	EncodingZMK:   EncoderZmk,
+
+	EncodingPlain: EncoderPlain,
+	EncodingJson:  EncoderJson,
 }
 var mapEnumEncoding = map[EncodingEnum]string{}
 
@@ -213,6 +220,9 @@ const (
 	EncoderText
 	EncoderZJSON
 	EncoderZmk
+
+	EncoderPlain
+	EncoderJson
 )
 
 // String representation of an encoder key.
