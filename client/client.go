@@ -326,7 +326,9 @@ func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) (
 
 // GetZettelJSON returns a zettel as a JSON struct.
 func (c *Client) GetZettelJSON(ctx context.Context, zid api.ZettelID) (*api.ZettelDataJSON, error) {
-	ub := c.newURLBuilder('j').SetZid(zid)
+	ub := c.newURLBuilder('z').SetZid(zid)
+	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson)
+	ub.AppendKVQuery(api.QueryKeyPart, api.PartZettel)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return nil, err
@@ -346,18 +348,21 @@ func (c *Client) GetZettelJSON(ctx context.Context, zid api.ZettelID) (*api.Zett
 
 // GetParsedZettel return a parsed zettel in a defined encoding.
 func (c *Client) GetParsedZettel(ctx context.Context, zid api.ZettelID, enc api.EncodingEnum) ([]byte, error) {
-	return c.getZettelString(ctx, 'p', zid, enc)
+	return c.getZettelString(ctx, zid, enc, false)
 }
 
 // GetEvaluatedZettel return an evaluated zettel in a defined encoding.
 func (c *Client) GetEvaluatedZettel(ctx context.Context, zid api.ZettelID, enc api.EncodingEnum) ([]byte, error) {
-	return c.getZettelString(ctx, 'v', zid, enc)
+	return c.getZettelString(ctx, zid, enc, true)
 }
 
-func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID, enc api.EncodingEnum) ([]byte, error) {
-	ub := c.newURLBuilder(key).SetZid(zid)
+func (c *Client) getZettelString(ctx context.Context, zid api.ZettelID, enc api.EncodingEnum, eval bool) ([]byte, error) {
+	ub := c.newURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, enc.String())
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartContent)
+	if eval {
+		ub.AppendKVQuery(api.QueryKeyEval, "")
+	}
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return nil, err
@@ -369,21 +374,24 @@ func (c *Client) getZettelString(ctx context.Context, key byte, zid api.ZettelID
 	return io.ReadAll(resp.Body)
 }
 
-// GetParsedZettelZJSON returns an parsed zettel as a JSON-decoded data structure.
+// GetParsedSexpr returns an parsed zettel as a Sexpr-decoded data structure.
 func (c *Client) GetParsedSexpr(ctx context.Context, zid api.ZettelID, part string) (sxpf.Value, error) {
-	return c.getSexpr(ctx, 'p', zid, part)
+	return c.getSexpr(ctx, zid, part, false)
 }
 
-// GetEvaluatedZettelZJSON returns an evaluated zettel as a JSON-decoded data structure.
+// GetEvaluatedSexpr returns an evaluated zettel as a Sexpr-decoded data structure.
 func (c *Client) GetEvaluatedSexpr(ctx context.Context, zid api.ZettelID, part string) (sxpf.Value, error) {
-	return c.getSexpr(ctx, 'v', zid, part)
+	return c.getSexpr(ctx, zid, part, true)
 }
 
-func (c *Client) getSexpr(ctx context.Context, key byte, zid api.ZettelID, part string) (sxpf.Value, error) {
-	ub := c.newURLBuilder(key).SetZid(zid)
+func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, eval bool) (sxpf.Value, error) {
+	ub := c.newURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingSexpr)
 	if part != "" {
 		ub.AppendKVQuery(api.QueryKeyPart, part)
+	}
+	if eval {
+		ub.AppendKVQuery(api.QueryKeyEval, "")
 	}
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
@@ -399,19 +407,22 @@ func (c *Client) getSexpr(ctx context.Context, key byte, zid api.ZettelID, part 
 
 // GetParsedZettelZJSON returns an parsed zettel as a JSON-decoded data structure.
 func (c *Client) GetParsedZJSON(ctx context.Context, zid api.ZettelID, part string) (zjson.Value, error) {
-	return c.getZJSON(ctx, 'p', zid, part)
+	return c.getZJSON(ctx, zid, part, false)
 }
 
 // GetEvaluatedZettelZJSON returns an evaluated zettel as a JSON-decoded data structure.
 func (c *Client) GetEvaluatedZJSON(ctx context.Context, zid api.ZettelID, part string) (zjson.Value, error) {
-	return c.getZJSON(ctx, 'v', zid, part)
+	return c.getZJSON(ctx, zid, part, true)
 }
 
-func (c *Client) getZJSON(ctx context.Context, key byte, zid api.ZettelID, part string) (zjson.Value, error) {
-	ub := c.newURLBuilder(key).SetZid(zid)
+func (c *Client) getZJSON(ctx context.Context, zid api.ZettelID, part string, eval bool) (zjson.Value, error) {
+	ub := c.newURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingZJSON)
 	if part != "" {
 		ub.AppendKVQuery(api.QueryKeyPart, part)
+	}
+	if eval {
+		ub.AppendKVQuery(api.QueryKeyEval, "")
 	}
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
@@ -426,7 +437,9 @@ func (c *Client) getZJSON(ctx context.Context, key byte, zid api.ZettelID, part 
 
 // GetMeta returns the metadata of a zettel.
 func (c *Client) GetMeta(ctx context.Context, zid api.ZettelID) (api.ZettelMeta, error) {
-	ub := c.newURLBuilder('m').SetZid(zid)
+	ub := c.newURLBuilder('z').SetZid(zid)
+	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson)
+	ub.AppendKVQuery(api.QueryKeyPart, api.PartMeta)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return nil, err
