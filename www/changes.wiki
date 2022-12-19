@@ -2,8 +2,12 @@
 
 <a name="0_10"></a>
 <h2>Changes for Version 0.10.0 (pending)</h2>
-  *  Add query key <tt>eval</tt> and two encoding names (plain, json) to allow
-     to merge various API endpoints into <tt>/z</tt>
+  *  Add query key <tt>parseonly</tt> and two encoding names (plain, json) to
+     allow to merge various API endpoints into <tt>/z</tt>
+  *  Client method do not use endpoints <tt>/j, /m, /q, /p, /v</tt> any more.
+     They are merged into endpoint <tt>/z</tt>. Use this client only with
+     Zettelstore v0.10.0 or better.
+     (breaking)
 
 <a name="0_9"></a>
 <h2>Changes for Version 0.9.0 (2022-12-12)</h2>

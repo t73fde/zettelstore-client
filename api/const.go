@@ -151,15 +151,15 @@ const (
 
 // Values for HTTP query parameter.
 const (
-	QueryKeyCommand  = "cmd"
-	QueryKeyCost     = "cost"
-	QueryKeyDir      = "dir"
-	QueryKeyEncoding = "enc"
-	QueryKeyEval     = "eval"
-	QueryKeyLimit    = "limit"
-	QueryKeyPart     = "part"
-	QueryKeyPhrase   = "phrase"
-	QueryKeyQuery    = "q"
+	QueryKeyCommand   = "cmd"
+	QueryKeyCost      = "cost"
+	QueryKeyDir       = "dir"
+	QueryKeyEncoding  = "enc"
+	QueryKeyParseOnly = "parseonly"
+	QueryKeyLimit     = "limit"
+	QueryKeyPart      = "part"
+	QueryKeyPhrase    = "phrase"
+	QueryKeyQuery     = "q"
 )
 
 // Supported dir values.
