@@ -96,6 +96,12 @@ type ZettelJSON struct {
 	Rights   ZettelRights `json:"rights"`
 }
 
+// ZettelContentJSON contains all elements to transfer the content of a zettel.
+type ZettelContentJSON struct {
+	Encoding string `json:"encoding"`
+	Content  string `json:"content"`
+}
+
 // ZettelListJSON contains data for a zettel list.
 type ZettelListJSON struct {
 	Query string        `json:"query"`
