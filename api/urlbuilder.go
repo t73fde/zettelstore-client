@@ -113,6 +113,15 @@ func (ub *URLBuilder) SetFragment(s string) *URLBuilder {
 
 // String produces a string value.
 func (ub *URLBuilder) String() string {
+	return ub.asString("&")
+}
+
+// AttrString returns the string value of the URL suitable to be placed in a HTML attribute.
+func (ub *URLBuilder) AttrString() string {
+	return ub.asString("&amp;")
+}
+
+func (ub *URLBuilder) asString(qsep string) string {
 	var sb strings.Builder
 
 	sb.WriteString(ub.prefix)
@@ -137,7 +146,7 @@ func (ub *URLBuilder) String() string {
 		if i == 0 {
 			sb.WriteByte('?')
 		} else {
-			sb.WriteByte('&')
+			sb.WriteString(qsep)
 		}
 		sb.WriteString(q.key)
 		if val := q.val; val != "" {
