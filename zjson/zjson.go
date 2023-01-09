@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2022 Detlef Stern
+// Copyright (c) 2022-2023 Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -10,6 +10,8 @@
 
 // Package zjson provides types, constants and function to work with the ZJSON
 // encoding of zettel.
+//
+// Deprecated in v0.11
 package zjson
 
 import (

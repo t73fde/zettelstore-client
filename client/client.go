@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2021-2022 Detlef Stern
+// Copyright (c) 2021-2023 Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -406,11 +406,15 @@ func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, pa
 }
 
 // GetParsedZettelZJSON returns an parsed zettel as a JSON-decoded data structure.
+//
+// Deprecated in v0.11
 func (c *Client) GetParsedZJSON(ctx context.Context, zid api.ZettelID, part string) (zjson.Value, error) {
 	return c.getZJSON(ctx, zid, part, true)
 }
 
 // GetEvaluatedZettelZJSON returns an evaluated zettel as a JSON-decoded data structure.
+//
+// Deprecated in v0.11
 func (c *Client) GetEvaluatedZJSON(ctx context.Context, zid api.ZettelID, part string) (zjson.Value, error) {
 	return c.getZJSON(ctx, zid, part, false)
 }

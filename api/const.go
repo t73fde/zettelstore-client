@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2021-2022 Detlef Stern
+// Copyright (c) 2021-2023 Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -174,7 +174,7 @@ const (
 	EncodingMD    = "md"
 	EncodingSexpr = "sexpr"
 	EncodingText  = "text"
-	EncodingZJSON = "zjson"
+	EncodingZJSON = "zjson" // Deprecated in v0.11
 	EncodingZMK   = "zmk"
 
 	EncodingPlain = "plain"
@@ -186,7 +186,7 @@ var mapEncodingEnum = map[string]EncodingEnum{
 	EncodingMD:    EncoderMD,
 	EncodingSexpr: EncoderSexpr,
 	EncodingText:  EncoderText,
-	EncodingZJSON: EncoderZJSON,
+	EncodingZJSON: EncoderZJSON, // Deprecated in v0.11
 	EncodingZMK:   EncoderZmk,
 
 	EncodingPlain: EncoderPlain,
@@ -218,7 +218,7 @@ const (
 	EncoderMD
 	EncoderSexpr
 	EncoderText
-	EncoderZJSON
+	EncoderZJSON // Deprecated in v0.11
 	EncoderZmk
 
 	EncoderPlain
