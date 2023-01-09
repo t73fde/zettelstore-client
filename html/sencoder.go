@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2022 Detlef Stern
+// Copyright (c) 2022-2023 Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"net/url"
 	"strconv"
 
@@ -313,9 +312,11 @@ var defaultEncodingFunctions = []struct {
 	fn      encodingFunc
 }{
 	{sexpr.SymPara, 0, func(env *EncEnvironment, args *sxpf.Pair) {
-		env.WriteString("<p>")
-		sxpf.EvalSequence(env, args)
-		env.WriteString("</p>")
+		if !env.isCommentList(args) {
+			env.WriteString("<p>")
+			sxpf.EvalSequence(env, args)
+			env.WriteString("</p>")
+		}
 	}},
 	{sexpr.SymHeading, 5, func(env *EncEnvironment, args *sxpf.Pair) {
 		nLevel := env.GetInteger(args)
@@ -470,7 +471,6 @@ var defaultEncodingFunctions = []struct {
 		if env.err == nil {
 			_, env.err = fmt.Fprintf(env.w, "%v\n", args)
 		}
-		log.Println("TRAN", args)
 	}},
 	{sexpr.SymText, 0, func(env *EncEnvironment, args *sxpf.Pair) {
 		if !sxpf.IsNil(args) {
@@ -601,6 +601,41 @@ var defaultEncodingFunctions = []struct {
 
 // DoNothingFn is a function that does nothing.
 func DoNothingFn(*EncEnvironment, *sxpf.Pair) { /* Should really do nothing */ }
+
+func (env *EncEnvironment) isCommentList(seq *sxpf.Pair) bool {
+	if seq.IsEmpty() {
+		return false
+	}
+	elem := seq
+	for {
+		item, err := elem.GetPair()
+		if err != nil {
+			return false
+		}
+		if sym := item.GetFirst(); sym == sexpr.SymLiteralComment {
+			args := item.GetTail()
+			if args == nil {
+				return true
+			}
+			attr := env.GetAttributes(args)
+			if _, found := attr[attrs.DefaultAttribute]; found {
+				return false
+			}
+		} else if sym != sexpr.SymSoft {
+			return false
+		}
+
+		nVal := elem.GetSecond()
+		if sxpf.IsNil(nVal) {
+			return true
+		}
+		next, ok := nVal.(*sxpf.Pair)
+		if !ok {
+			return false
+		}
+		elem = next
+	}
+}
 
 func makeListFn(tag string) encodingFunc {
 	return func(env *EncEnvironment, args *sxpf.Pair) {
