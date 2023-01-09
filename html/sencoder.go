@@ -230,8 +230,10 @@ func (env *EncEnvironment) WriteImage(args *sxpf.Pair) {
 func (env *EncEnvironment) WriteImageWithSource(args *sxpf.Pair, src string) {
 	a := env.GetAttributes(args)
 	a = a.Set("src", src)
-	if title := args.GetTail().GetTail().GetTail(); !title.IsNil() {
-		a = a.Set("title", text.EvaluateInlineString(title))
+	if description := args.GetTail().GetTail().GetTail(); !description.IsNil() {
+		a = a.Set("alt", text.EvaluateInlineString(description))
+	} else {
+		a = a.Set("alt", "alternate description missing")
 	}
 	env.WriteStartTag("img", a)
 }
@@ -446,7 +448,7 @@ var defaultEncodingFunctions = []struct {
 	{sexpr.SymVerbatimZettel, 0, DoNothingFn},
 	{sexpr.SymBLOB, 3, func(env *EncEnvironment, args *sxpf.Pair) {
 		argSyntax := args.GetTail()
-		env.writeBLOB(env.GetString(args), env.GetString(argSyntax), env.GetString(argSyntax.GetTail()))
+		env.writeBLOB(env.GetPair(args), env.GetString(argSyntax), env.GetString(argSyntax.GetTail()))
 	}},
 	{sexpr.SymTransclude, 2, func(env *EncEnvironment, args *sxpf.Pair) {
 		a := sexpr.GetAttributes(env.GetPair(args))
@@ -521,8 +523,8 @@ var defaultEncodingFunctions = []struct {
 	{sexpr.SymEmbedBLOB, 3, func(env *EncEnvironment, args *sxpf.Pair) {
 		argSyntax := args.GetTail()
 		a, syntax, data := env.GetAttributes(args), env.GetString(argSyntax), env.GetString(argSyntax.GetTail())
-		title, _ := a.Get("title")
-		env.writeBLOB(title, syntax, data)
+		summary, _ := a.Get(api.KeySummary)
+		env.writeBLOB(sxpf.NewPair(sxpf.NewString(summary), sxpf.Nil()), syntax, data)
 	}},
 	{sexpr.SymCite, 2, func(env *EncEnvironment, args *sxpf.Pair) {
 		env.WriteStartTag("span", env.GetAttributes(args))
@@ -697,24 +699,23 @@ func execHTML(env *EncEnvironment, args *sxpf.Pair) {
 	}
 }
 
-func (env *EncEnvironment) writeBLOB(title, syntax, data string) {
+func (env *EncEnvironment) writeBLOB(description *sxpf.Pair, syntax, data string) {
 	if data == "" {
 		return
 	}
 	switch syntax {
 	case "":
 	case api.ValueSyntaxSVG:
-		// TODO: add  title as description
+		// TODO: add description
 		env.WriteStrings("<p>", data, "</p>")
 	default:
-		env.WriteStrings(`<p><img src="data:image/`, syntax, ";base64,", data)
-		if title != "" {
-			env.WriteString(`" `)
-			env.WriteOneAttribute("title", title)
-			env.WriteString(`></p>`)
+		env.WriteStrings(`<p><img src="data:image/`, syntax, ";base64,", data, `" `)
+		if description.IsEmpty() {
+			env.WriteOneAttribute("alt", "alternate description missing")
 		} else {
-			env.WriteString(`"></p>`)
+			env.WriteOneAttribute("alt", text.EvaluateInlineString(description))
 		}
+		env.WriteString(`></p>`)
 	}
 }
 
