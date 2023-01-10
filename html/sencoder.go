@@ -709,13 +709,13 @@ func (env *EncEnvironment) writeBLOB(description *sxpf.Pair, syntax, data string
 		// TODO: add description
 		env.WriteStrings("<p>", data, "</p>")
 	default:
-		env.WriteStrings(`<p><img src="data:image/`, syntax, ";base64,", data, `" `)
+		env.WriteString(`<p><img `)
 		if description.IsEmpty() {
 			env.WriteOneAttribute("alt", "alternate description missing")
 		} else {
 			env.WriteOneAttribute("alt", text.EvaluateInlineString(description))
 		}
-		env.WriteString(`></p>`)
+		env.WriteStrings(` src="data:image/`, syntax, ";base64,", data, `"></p>`)
 	}
 }
 
