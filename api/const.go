@@ -100,6 +100,7 @@ const (
 	KeyPrecursor    = "precursor"
 	KeyPredecessor  = "predecessor"
 	KeyPublished    = "published"
+	KeyQuery        = "query"
 	KeyReadOnly     = "read-only"
 	KeySuccessors   = "successors"
 	KeySummary      = "summary"
@@ -160,6 +161,7 @@ const (
 	QueryKeyPart      = "part"
 	QueryKeyPhrase    = "phrase"
 	QueryKeyQuery     = "q"
+	QueryKeySeed      = "_seed"
 )
 
 // Supported dir values.
