@@ -1,7 +1,10 @@
 <title>Change Log</title>
 
+<a name="0_11"></a>
+<h2>Changes for Version 0.11.0 (pending)</h2>
+
 <a name="0_10"></a>
-<h2>Changes for Version 0.10.0 (pending)</h2>
+<h2>Changes for Version 0.10.0 (2023-01-24)</h2>
   *  Add query key <tt>parseonly</tt> and two encoding names (plain, json) to
      allow to merge various API endpoints into <tt>/z</tt>
   *  Client method do not use endpoints <tt>/j, /m, /q, /p, /v</tt> any more.
