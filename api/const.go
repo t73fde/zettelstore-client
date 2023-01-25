@@ -176,7 +176,6 @@ const (
 	EncodingMD    = "md"
 	EncodingSexpr = "sexpr"
 	EncodingText  = "text"
-	EncodingZJSON = "zjson" // Deprecated in v0.11
 	EncodingZMK   = "zmk"
 
 	EncodingPlain = "plain"
@@ -188,7 +187,6 @@ var mapEncodingEnum = map[string]EncodingEnum{
 	EncodingMD:    EncoderMD,
 	EncodingSexpr: EncoderSexpr,
 	EncodingText:  EncoderText,
-	EncodingZJSON: EncoderZJSON, // Deprecated in v0.11
 	EncodingZMK:   EncoderZmk,
 
 	EncodingPlain: EncoderPlain,
@@ -220,7 +218,6 @@ const (
 	EncoderMD
 	EncoderSexpr
 	EncoderText
-	EncoderZJSON // Deprecated in v0.11
 	EncoderZmk
 
 	EncoderPlain

@@ -27,7 +27,6 @@ import (
 	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/sexpr"
-	"zettelstore.de/c/zjson"
 )
 
 // Client contains all data to execute requests.
@@ -403,40 +402,6 @@ func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, pa
 	}
 
 	return sxpf.ParseValue(sexpr.Smk, bufio.NewReaderSize(resp.Body, 8))
-}
-
-// GetParsedZettelZJSON returns an parsed zettel as a JSON-decoded data structure.
-//
-// Deprecated in v0.11
-func (c *Client) GetParsedZJSON(ctx context.Context, zid api.ZettelID, part string) (zjson.Value, error) {
-	return c.getZJSON(ctx, zid, part, true)
-}
-
-// GetEvaluatedZettelZJSON returns an evaluated zettel as a JSON-decoded data structure.
-//
-// Deprecated in v0.11
-func (c *Client) GetEvaluatedZJSON(ctx context.Context, zid api.ZettelID, part string) (zjson.Value, error) {
-	return c.getZJSON(ctx, zid, part, false)
-}
-
-func (c *Client) getZJSON(ctx context.Context, zid api.ZettelID, part string, parseOnly bool) (zjson.Value, error) {
-	ub := c.newURLBuilder('z').SetZid(zid)
-	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingZJSON)
-	if part != "" {
-		ub.AppendKVQuery(api.QueryKeyPart, part)
-	}
-	if parseOnly {
-		ub.AppendKVQuery(api.QueryKeyParseOnly, "")
-	}
-	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, statusToError(resp)
-	}
-	return zjson.Decode(resp.Body)
 }
 
 // GetMeta returns the metadata of a zettel.

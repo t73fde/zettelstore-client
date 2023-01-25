@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2022 Detlef Stern
+// Copyright (c) 2022-2023 Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -13,7 +13,6 @@ package client_test
 import (
 	"context"
 	"flag"
-	"log"
 	"net/http"
 	"net/url"
 	"testing"
@@ -21,7 +20,6 @@ import (
 	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/client"
-	"zettelstore.de/c/zjson"
 )
 
 func TestZettelList(t *testing.T) {
@@ -45,45 +43,6 @@ func TestGetProtectedZettel(t *testing.T) {
 		return
 	}
 }
-
-func TestGetZJSONZettel(t *testing.T) {
-	c := getClient()
-	data, err := c.GetEvaluatedZJSON(context.Background(), api.ZidDefaultHome, api.PartContent)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if data == nil {
-		t.Error("No data")
-	}
-	var v vis
-	zjson.WalkBlock(&v, data.(zjson.Array), -1)
-	// t.Error("Argh")
-}
-
-type vis struct{}
-
-func (*vis) BlockArray(a zjson.Array, pos int) zjson.CloseFunc {
-	log.Println("SBLO", pos, a)
-	return nil
-}
-func (*vis) InlineArray(a zjson.Array, pos int) zjson.CloseFunc {
-	log.Println("SINL", pos, a)
-	return nil
-}
-func (*vis) ItemArray(a zjson.Array, pos int) zjson.CloseFunc {
-	log.Println("SITE", pos, a)
-	return nil
-}
-func (*vis) BlockObject(t string, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
-	log.Println("BOBJ", pos, t, obj)
-	return true, nil
-}
-func (*vis) InlineObject(t string, obj zjson.Object, pos int) (bool, zjson.CloseFunc) {
-	log.Println("IOBJ", pos, t, obj)
-	return true, nil
-}
-func (*vis) Unexpected(val zjson.Value, pos int, exp string) { log.Println("Expect", pos, exp, val) }
 
 func TestGetSexprZettel(t *testing.T) {
 	c := getClient()
