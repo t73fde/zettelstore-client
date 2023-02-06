@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2022 Detlef Stern
+// Copyright (c) 2022-present Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -24,7 +24,7 @@ func GetMetaContent(zettel sxpf.Value) (Meta, *sxpf.Pair) {
 	if pair, ok := zettel.(*sxpf.Pair); ok {
 		m := pair.GetFirst()
 		if s := pair.GetSecond(); s != nil {
-			if p, ok := s.(*sxpf.Pair); ok {
+			if p, ok2 := s.(*sxpf.Pair); ok2 {
 				if content, err := p.GetPair(); err == nil {
 					return MakeMeta(m), content
 				}
@@ -58,7 +58,7 @@ func doMakeMeta(val sxpf.Value) Meta {
 		if !ok {
 			return result
 		}
-		if mv, ok := makeMetaValue(pair); ok {
+		if mv, ok2 := makeMetaValue(pair); ok2 {
 			result[mv.Key] = mv
 		}
 		val = pair.GetSecond()

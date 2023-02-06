@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2022 Detlef Stern
+// Copyright (c) 2022-present Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -12,8 +12,8 @@
 package text
 
 import (
-	"bytes"
 	"io"
+	"strings"
 
 	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/sexpr"
@@ -21,10 +21,10 @@ import (
 
 // EvaluateInlineString returns the text content of the given inline list as a string.
 func EvaluateInlineString(pl *sxpf.Pair) string {
-	var buf bytes.Buffer
-	env := newTextEnvironment(&buf)
+	var sb strings.Builder
+	env := newTextEnvironment(&sb)
 	env.EvalPair(pl)
-	return buf.String()
+	return sb.String()
 }
 
 type textEnvironment struct {

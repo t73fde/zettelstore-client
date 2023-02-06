@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2022-2023 Detlef Stern
+// Copyright (c) 2022-present Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -11,11 +11,11 @@
 package html
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/api"
@@ -260,8 +260,8 @@ func (env *EncEnvironment) EvalPair(p *sxpf.Pair) (sxpf.Value, error) {
 }
 
 func EvaluateInline(baseEnv *EncEnvironment, value sxpf.Value, withFootnotes, noLinks bool) string {
-	var buf bytes.Buffer
-	env := EncEnvironment{w: &buf, noLinks: noLinks}
+	var sb strings.Builder
+	env := EncEnvironment{w: &sb, noLinks: noLinks}
 	if baseEnv != nil {
 		env.Builtins = baseEnv.Builtins
 		env.writeFootnotes = withFootnotes && baseEnv.writeFootnotes
@@ -276,7 +276,7 @@ func EvaluateInline(baseEnv *EncEnvironment, value sxpf.Value, withFootnotes, no
 	if baseEnv != nil {
 		baseEnv.footnotes = env.footnotes
 	}
-	return buf.String()
+	return sb.String()
 }
 
 func (env *EncEnvironment) WriteEndnotes() {

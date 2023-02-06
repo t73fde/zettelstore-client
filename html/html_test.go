@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright (c) 2022 Detlef Stern
+// Copyright (c) 2022-present Detlef Stern
 //
 // This file is part of zettelstore-client.
 //
@@ -11,7 +11,7 @@
 package html_test
 
 import (
-	"bytes"
+	"strings"
 	"testing"
 
 	"zettelstore.de/c/html"
@@ -25,12 +25,12 @@ func TestEscape(t *testing.T) {
 		{"<", "&lt;"},
 	}
 	for _, tc := range testcases {
-		var buf bytes.Buffer
-		_, err := html.Escape(&buf, tc.in)
+		var sb strings.Builder
+		_, err := html.Escape(&sb, tc.in)
 		if err != nil {
 			t.Errorf("Escape(%q) got error: %v", tc.in, err)
 		}
-		if got := buf.String(); tc.exp != got {
+		if got := sb.String(); tc.exp != got {
 			t.Errorf("Escape(%q) == %q, but got %q", tc.in, tc.exp, got)
 		}
 	}
@@ -45,12 +45,12 @@ func TestEscapeVisible(t *testing.T) {
 		{" a  b ", "␣a␣␣b␣"},
 	}
 	for _, tc := range testcases {
-		var buf bytes.Buffer
-		_, err := html.EscapeVisible(&buf, tc.in)
+		var sb strings.Builder
+		_, err := html.EscapeVisible(&sb, tc.in)
 		if err != nil {
 			t.Errorf("Escape(%q) got error: %v", tc.in, err)
 		}
-		if got := buf.String(); tc.exp != got {
+		if got := sb.String(); tc.exp != got {
 			t.Errorf("Escape(%q) == %q, but got %q", tc.in, tc.exp, got)
 		}
 	}
