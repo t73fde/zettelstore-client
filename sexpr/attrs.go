@@ -16,21 +16,26 @@ import (
 )
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.
-func GetAttributes(seq *sxpf.Pair) (result attrs.Attributes) {
-	for elem := seq; !elem.IsNil(); elem = elem.GetTail() {
-		attr, err := elem.GetPair()
-		if err != nil {
+func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
+	for elem := seq; elem != nil; elem = elem.Tail() {
+		p, ok := elem.Head().(*sxpf.Pair)
+		if !ok {
 			continue
 		}
-		key, err := attr.GetString()
-		if err != nil {
+		key, ok := p.Car().(*sxpf.Symbol)
+		if !ok {
 			continue
 		}
-		val, err := attr.GetTail().GetString()
-		if err != nil {
+		val := p.Cdr()
+		switch val.(type) {
+		case *sxpf.Symbol:
+		case sxpf.String:
+		case sxpf.Keyword:
+		case *sxpf.Number:
+		default:
 			continue
 		}
-		result = result.Set(key, val)
+		result = result.Set(key.String(), val.String())
 	}
 	return result
 }

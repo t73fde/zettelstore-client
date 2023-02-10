@@ -25,8 +25,8 @@ import (
 	"time"
 
 	"codeberg.org/t73fde/sxpf"
+	"codeberg.org/t73fde/sxpf/reader"
 	"zettelstore.de/c/api"
-	"zettelstore.de/c/sexpr"
 )
 
 // Client contains all data to execute requests.
@@ -374,16 +374,16 @@ func (c *Client) getZettelString(ctx context.Context, zid api.ZettelID, enc api.
 }
 
 // GetParsedSexpr returns an parsed zettel as a Sexpr-decoded data structure.
-func (c *Client) GetParsedSexpr(ctx context.Context, zid api.ZettelID, part string) (sxpf.Value, error) {
-	return c.getSexpr(ctx, zid, part, true)
+func (c *Client) GetParsedSexpr(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Value, error) {
+	return c.getSexpr(ctx, zid, part, true, sf)
 }
 
 // GetEvaluatedSexpr returns an evaluated zettel as a Sexpr-decoded data structure.
-func (c *Client) GetEvaluatedSexpr(ctx context.Context, zid api.ZettelID, part string) (sxpf.Value, error) {
-	return c.getSexpr(ctx, zid, part, false)
+func (c *Client) GetEvaluatedSexpr(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Value, error) {
+	return c.getSexpr(ctx, zid, part, false, sf)
 }
 
-func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, parseOnly bool) (sxpf.Value, error) {
+func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, parseOnly bool, sf sxpf.SymbolFactory) (sxpf.Value, error) {
 	ub := c.newURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingSexpr)
 	if part != "" {
@@ -401,7 +401,7 @@ func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, pa
 		return nil, statusToError(resp)
 	}
 
-	return sxpf.ParseValue(sexpr.Smk, bufio.NewReaderSize(resp.Body, 8))
+	return reader.MakeReader(bufio.NewReaderSize(resp.Body, 8), sxpf.MakeMappedFactory()).Read()
 }
 
 // GetMeta returns the metadata of a zettel.
