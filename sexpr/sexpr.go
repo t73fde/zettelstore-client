@@ -30,7 +30,7 @@ func BindOther(env sxpf.Environment, sf sxpf.SymbolFactory) {
 func DoNothing(env sxpf.Environment, args *sxpf.List) (sxpf.Value, error) {
 	for elem := args; elem != nil; elem = elem.Tail() {
 		if lst, ok := elem.Head().(*sxpf.List); ok {
-			if _, err := eval.Eval(env, lst); err != nil {
+			if _, err := Evaluate(env, lst); err != nil {
 				return sxpf.Nil(), err
 			}
 		}
