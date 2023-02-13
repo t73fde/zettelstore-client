@@ -40,34 +40,30 @@ func DoNothing(env sxpf.Environment, args *sxpf.List) (sxpf.Value, error) {
 
 // Evaluate a given value in a given environment.
 func Evaluate(env sxpf.Environment, val sxpf.Value) (sxpf.Value, error) {
-	for {
-		switch v := val.(type) {
-		case *sxpf.Symbol:
-			res, found := env.Resolve(v)
-			if !found {
-				return sxpf.Nil(), eval.NotBoundError{Env: env, Sym: v}
-			}
-			return res, nil
-		case *sxpf.List:
-			if v.IsNil() {
-				return sxpf.Nil(), nil // Nil() evaluates to itself
-			}
-			res, err := Evaluate(env, v.Head())
-			if err != nil {
-				return sxpf.Nil(), err
-			}
-			if fn, ok := res.(sxpf.Callable); ok {
-				res, err = fn.Call(env, v.Tail())
-			} else if lst, ok := res.(*sxpf.List); ok {
-				res, err = EvaluateList(env, lst)
-			}
-			if err == nil || err != sxpf.ErrEvalAgain {
-				return res, err
-			}
-			val = res
-		default:
-			return val, nil // All other values evaluate to themself
+	switch v := val.(type) {
+	case *sxpf.Symbol:
+		res, found := env.Resolve(v)
+		if !found {
+			return sxpf.Nil(), eval.NotBoundError{Env: env, Sym: v}
 		}
+		return res, nil
+	case *sxpf.List:
+		if v.IsNil() {
+			return sxpf.Nil(), nil // Nil() evaluates to itself
+		}
+		res, err := Evaluate(env, v.Head())
+		if err != nil {
+			return sxpf.Nil(), err
+		}
+		tail := v.Tail()
+		if fn, ok := res.(sxpf.Callable); ok {
+			return fn.Call(env, tail)
+		}
+
+		rest, err := EvaluateList(env, tail)
+		return rest.Cons(res), err
+	default:
+		return val, nil // All other values evaluate to themself
 	}
 }
 
@@ -83,99 +79,3 @@ func EvaluateList(env sxpf.Environment, lst *sxpf.List) (*sxpf.List, error) {
 	}
 	return sxpf.MakeList(temp...), nil
 }
-
-// func MakeString(val sxpf.Value) string {
-// 	if strVal, ok := val.(*sxpf.String); ok {
-// 		return strVal.GetValue()
-// 	}
-// 	return ""
-// }
-
-// // GetMetaContent returns the metadata and the content of a sexpr encoded zettel.
-// func GetMetaContent(zettel sxpf.Value) (Meta, *sxpf.Pair) {
-// 	if pair, ok := zettel.(*sxpf.Pair); ok {
-// 		m := pair.GetFirst()
-// 		if s := pair.GetSecond(); s != nil {
-// 			if p, ok2 := s.(*sxpf.Pair); ok2 {
-// 				if content, err := p.GetPair(); err == nil {
-// 					return MakeMeta(m), content
-// 				}
-// 			}
-// 		}
-// 		return MakeMeta(m), nil
-// 	}
-// 	return nil, nil
-// }
-
-// type Meta map[string]MetaValue
-// type MetaValue struct {
-// 	Type  string
-// 	Key   string
-// 	Value sxpf.Value
-// }
-
-// func MakeMeta(val sxpf.Value) Meta {
-// 	if result := doMakeMeta(val); len(result) > 0 {
-// 		return result
-// 	}
-// 	return nil
-// }
-// func doMakeMeta(val sxpf.Value) Meta {
-// 	result := make(map[string]MetaValue)
-// 	for {
-// 		if val == nil {
-// 			return result
-// 		}
-// 		pair, ok := val.(*sxpf.Pair)
-// 		if !ok {
-// 			return result
-// 		}
-// 		if mv, ok2 := makeMetaValue(pair); ok2 {
-// 			result[mv.Key] = mv
-// 		}
-// 		val = pair.GetSecond()
-// 	}
-// }
-// func makeMetaValue(pair *sxpf.Pair) (MetaValue, bool) {
-// 	var result MetaValue
-// 	typePair, ok := pair.GetFirst().(*sxpf.Pair)
-// 	if !ok {
-// 		return result, false
-// 	}
-// 	typeVal, ok := typePair.GetFirst().(*sxpf.Symbol)
-// 	if !ok {
-// 		return result, false
-// 	}
-// 	keyPair, ok := typePair.GetSecond().(*sxpf.Pair)
-// 	if !ok {
-// 		return result, false
-// 	}
-// 	keyStr, ok := keyPair.GetFirst().(*sxpf.String)
-// 	if !ok {
-// 		return result, false
-// 	}
-// 	valPair, ok := keyPair.GetSecond().(*sxpf.Pair)
-// 	if !ok {
-// 		return result, false
-// 	}
-// 	result.Type = typeVal.GetValue()
-// 	result.Key = keyStr.GetValue()
-// 	result.Value = valPair.GetFirst()
-// 	return result, true
-// }
-
-// func (m Meta) GetString(key string) string {
-// 	if v, found := m[key]; found {
-// 		return MakeString(v.Value)
-// 	}
-// 	return ""
-// }
-
-// func (m Meta) GetPair(key string) *sxpf.Pair {
-// 	if mv, found := m[key]; found {
-// 		if seq, ok := mv.Value.(*sxpf.Pair); ok && !seq.IsEmpty() {
-// 			return seq
-// 		}
-// 	}
-// 	return nil
-// }
