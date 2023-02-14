@@ -19,20 +19,29 @@ import (
 	"zettelstore.de/c/sexpr"
 )
 
-// EvaluateInlineString returns the text content of the given inline list as a string.
-func EvaluateInlineString(lst *sxpf.List) string {
-	sf := sxpf.FindSymbolFactory(lst)
+// Encoder is the structure to hold relevant data to execute the encoding.
+type Encoder struct {
+	sf  sxpf.SymbolFactory
+	env sxpf.Environment
+	sb  strings.Builder
+}
+
+func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 	if sf == nil {
-		return ""
+		return nil
 	}
-	var sb strings.Builder
+	enc := &Encoder{
+		sf:  sf,
+		env: nil,
+		sb:  strings.Builder{},
+	}
 	env := sxpf.MakeRootEnvironment()
 	env.Bind(sf.Make(sexpr.NameSymText), eval.MakeSpecial(
 		sexpr.NameSymText,
 		func(_ sxpf.Environment, args *sxpf.List) (sxpf.Value, error) {
 			if args != nil {
 				if val, ok := args.Head().(sxpf.String); ok {
-					sb.WriteString(val.String())
+					enc.sb.WriteString(val.String())
 				}
 			}
 			return sxpf.Nil(), nil
@@ -41,26 +50,41 @@ func EvaluateInlineString(lst *sxpf.List) string {
 	env.Bind(sf.Make(sexpr.NameSymSpace), eval.MakeSpecial(
 		sexpr.NameSymSpace,
 		func(sxpf.Environment, *sxpf.List) (sxpf.Value, error) {
-			sb.WriteByte(' ')
+			enc.sb.WriteByte(' ')
 			return sxpf.Nil(), nil
 		},
 	))
 	env.Bind(sf.Make(sexpr.NameSymSoft), eval.MakeSpecial(
 		sexpr.NameSymSoft,
 		func(sxpf.Environment, *sxpf.List) (sxpf.Value, error) {
-			sb.WriteByte(' ')
+			enc.sb.WriteByte(' ')
 			return sxpf.Nil(), nil
 		},
 	))
 	env.Bind(sf.Make(sexpr.NameSymHard), eval.MakeSpecial(
 		sexpr.NameSymHard,
 		func(sxpf.Environment, *sxpf.List) (sxpf.Value, error) {
-			sb.WriteByte('\n')
+			enc.sb.WriteByte('\n')
 			return sxpf.Nil(), nil
 		},
 	))
 	sexpr.BindOther(env, sf)
 
-	eval.Eval(env, lst)
-	return sb.String()
+	enc.env = env
+	return enc
+}
+
+func (enc *Encoder) Encode(lst *sxpf.List) string {
+	sexpr.Evaluate(enc.env, lst)
+	result := enc.sb.String()
+	enc.sb.Reset()
+	return result
+}
+
+// EvaluateInlineString returns the text content of the given inline list as a string.
+func EvaluateInlineString(lst *sxpf.List) string {
+	if sf := sxpf.FindSymbolFactory(lst); sf != nil {
+		return NewEncoder(sf).Encode(lst)
+	}
+	return ""
 }
