@@ -160,6 +160,23 @@ func (te *transformEnv) bindBlocks() {
 		}
 		return result.Cons(te.make("hr"))
 	})
+	te.bind(sexpr.NameSymListOrdered, 0, te.makeListFn(te.make("ol")))
+	te.bind(sexpr.NameSymListUnordered, 0, te.makeListFn(te.make("ul")))
+}
+
+func (te *transformEnv) makeListFn(sym *sxpf.Symbol) specialFn {
+	return func(args *sxpf.List) sxpf.Value {
+		result := sxpf.Nil().Cons(sym)
+		last := result
+		for elem := args; elem != nil; elem = elem.Tail() {
+			item := sxpf.Nil().Cons(te.make("li"))
+			if res, ok := te.evaluate(elem.Head()).(*sxpf.List); ok {
+				item.ExtendBang(res)
+			}
+			last = last.AppendBang(item)
+		}
+		return result
+	}
 }
 
 func (te *transformEnv) bindInlines() {
