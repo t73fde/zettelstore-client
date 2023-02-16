@@ -151,6 +151,15 @@ func (te *transformEnv) bindBlocks() {
 		}
 		return result.Cons(te.make("h" + level))
 	})
+	te.bind(sexpr.NameSymThematic, 0, func(args *sxpf.List) sxpf.Value {
+		result := sxpf.Nil()
+		if args != nil {
+			if attrList := te.getList(args); attrList != nil {
+				result = result.Cons(te.transformAttrbute(sexpr.GetAttributes(attrList)))
+			}
+		}
+		return result.Cons(te.make("hr"))
+	})
 }
 
 func (te *transformEnv) bindInlines() {

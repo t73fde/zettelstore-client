@@ -1,5 +1,5 @@
 module zettelstore.de/c
 
-go 1.19
+go 1.20
 
-require codeberg.org/t73fde/sxpf v0.0.0-20230215184101-48a33cadd616
+require codeberg.org/t73fde/sxpf v0.0.0-20230216202101-236ba364a3de
