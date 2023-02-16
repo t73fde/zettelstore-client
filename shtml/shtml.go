@@ -278,7 +278,11 @@ func (te *transformEnv) transformLink(a attrs.Attributes, refValue sxpf.String, 
 	} else {
 		result = te.evaluateList(inline)
 	}
-	return result.Cons(te.transformAttrbute(a)).Cons(te.make("a"))
+	result = result.Cons(te.transformAttrbute(a)).Cons(te.make("a"))
+	if suffix != "" {
+		result = sxpf.Nil().Cons(sxpf.MakeString(suffix)).Cons(result).Cons(te.make("span"))
+	}
+	return result
 }
 
 func (te *transformEnv) transformAttrbute(a attrs.Attributes) *sxpf.List {
