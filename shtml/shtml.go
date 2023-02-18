@@ -32,14 +32,41 @@ type Transformer struct {
 	headingOffset int64
 	unique        string
 	noLinks       bool // true iff output must not include links
+	symAt         *sxpf.Symbol
+	symMeta       *sxpf.Symbol
 }
 
 // NewTransformer creates a new transformer object.
 func NewTransformer(headingOffset int) *Transformer {
+	sf := sxpf.MakeMappedFactory()
 	return &Transformer{
-		sf:            sxpf.MakeMappedFactory(),
+		sf:            sf,
 		headingOffset: int64(headingOffset),
+		symAt:         sf.Make("@"),
+		symMeta:       sf.Make("meta"),
 	}
+}
+
+// Make a new HTML symbol.
+func (tr *Transformer) Make(s string) *sxpf.Symbol { return tr.sf.Make(s) }
+
+// TransformAttrbute transforms the given attributes into a HTML s-expression.
+func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sxpf.List {
+	if len(a) == 0 {
+		return sxpf.Nil()
+	}
+	plist := sxpf.Nil()
+	keys := a.Keys()
+	for i := len(keys) - 1; i >= 0; i-- {
+		key := keys[i]
+		plist = plist.Cons(sxpf.MakePair(tr.Make(key), sxpf.MakeString(a[key])))
+	}
+	return plist.Cons(tr.symAt)
+}
+
+// TransformMeta creates a HTML meta s-expression
+func (tr *Transformer) TransformMeta(a attrs.Attributes) *sxpf.List {
+	return sxpf.Nil().Cons(tr.TransformAttrbute(a)).Cons(tr.symMeta)
 }
 
 // Transform an AST s-expression into a list of HTML s-expressions.
@@ -103,6 +130,9 @@ func (te *transformEnv) initialize() {
 }
 
 func (te *transformEnv) bindMetadata() {
+	te.bind(sexpr.NameSymMeta, 0, func(args *sxpf.List) sxpf.Value {
+		return te.evaluateList(args)
+	})
 	te.bind(sexpr.NameSymTypeZettelmarkup, 2, func(args *sxpf.List) sxpf.Value {
 		a := make(attrs.Attributes, 2).
 			Set("name", te.getString(args).String()).
@@ -413,7 +443,7 @@ func (te *transformEnv) evaluateList(lst *sxpf.List) *sxpf.List {
 	return sxpf.Nil()
 }
 
-func (te *transformEnv) make(name string) *sxpf.Symbol { return te.tr.sf.Make(name) }
+func (te *transformEnv) make(name string) *sxpf.Symbol { return te.tr.Make(name) }
 func (te *transformEnv) getString(lst *sxpf.List) sxpf.String {
 	if te.err != nil {
 		return ""
@@ -464,20 +494,11 @@ func (te *transformEnv) transformLink(a attrs.Attributes, refValue sxpf.String, 
 }
 
 func (te *transformEnv) transformAttrbute(a attrs.Attributes) *sxpf.List {
-	if len(a) == 0 {
-		return sxpf.Nil()
-	}
-	plist := sxpf.Nil()
-	keys := a.Keys()
-	for i := len(keys) - 1; i >= 0; i-- {
-		key := keys[i]
-		plist = plist.Cons(sxpf.MakePair(te.make(key), sxpf.MakeString(a[key])))
-	}
-	return plist.Cons(te.symAt)
+	return te.tr.TransformAttrbute(a)
 }
 
 func (te *transformEnv) transformMeta(a attrs.Attributes) *sxpf.List {
-	return sxpf.Nil().Cons(te.transformAttrbute(a)).Cons(te.symMeta)
+	return te.tr.TransformMeta(a)
 }
 
 var unsafeSnippets = []string{

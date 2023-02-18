@@ -19,6 +19,7 @@ const (
 	NameSymAttr   = "ATTR"
 	NameSymBlock  = "BLOCK"
 	NameSymInline = "INLINE"
+	NameSymMeta   = "META"
 
 	// Symbols for Zettel node types.
 	NameSymBLOB            = "BLOB"
@@ -112,6 +113,7 @@ type ZettelSymbols struct {
 	SymAttr   *sxpf.Symbol
 	SymBlock  *sxpf.Symbol
 	SymInline *sxpf.Symbol
+	SymMeta   *sxpf.Symbol
 
 	// Symbols for Zettel node types.
 	SymBLOB            *sxpf.Symbol
@@ -206,6 +208,7 @@ func (zs *ZettelSymbols) InitializeZettelSymbols(sf sxpf.SymbolFactory) {
 	zs.SymAttr = sf.Make(NameSymAttr)
 	zs.SymBlock = sf.Make(NameSymBlock)
 	zs.SymInline = sf.Make(NameSymInline)
+	zs.SymMeta = sf.Make(NameSymMeta)
 
 	// Symbols for Zettel node types.
 	zs.SymBLOB = sf.Make(NameSymBLOB)
