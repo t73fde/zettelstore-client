@@ -17,25 +17,21 @@ import (
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.
 func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
+	seq = seq.Tail() // TODO: check for "ATTR" symbol as head.
 	for elem := seq; elem != nil; elem = elem.Tail() {
-		p, ok := elem.Head().(*sxpf.List)
+		p, ok := elem.Head().(*sxpf.Pair)
 		if !ok || p == nil {
 			continue
 		}
-		key := p.Head()
+		key := p.Car()
 		if !sxpf.IsAtom(key) {
 			continue
 		}
-		var val string
-		q := p.Tail()
-		if q != nil {
-			v := q.Head()
-			if !sxpf.IsAtom(v) {
-				continue
-			}
-			val = v.String()
+		val := p.Cdr()
+		if !sxpf.IsAtom(val) {
+			continue
 		}
-		result = result.Set(key.String(), val)
+		result = result.Set(key.String(), val.String())
 	}
 	return result
 }

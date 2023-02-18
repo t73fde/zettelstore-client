@@ -61,7 +61,7 @@ func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
 	te.initialize()
 
 	sexpr.BindOther(te.eenv, astSF)
-	val, err := sexpr.Evaluate(te.eenv, lst)
+	val, err := eval.Eval(te.eenv, lst)
 	res, ok := val.(*sxpf.List)
 	if !ok {
 		panic("Result is not a list")
@@ -134,6 +134,9 @@ func (te *transformEnv) bindMetadata() {
 }
 
 func (te *transformEnv) bindBlocks() {
+	te.bind(sexpr.NameSymBlock, 0, func(args *sxpf.List) sxpf.Value {
+		return te.evaluateList(args)
+	})
 	te.bind(sexpr.NameSymPara, 0, func(args *sxpf.List) sxpf.Value {
 		return te.evaluateList(args).Cons(te.make("p"))
 	})
@@ -188,6 +191,9 @@ func (te *transformEnv) makeListFn(tag string) specialFn {
 }
 
 func (te *transformEnv) bindInlines() {
+	te.bind(sexpr.NameSymInline, 0, func(args *sxpf.List) sxpf.Value {
+		return te.evaluateList(args)
+	})
 	te.bind(sexpr.NameSymText, 1, func(args *sxpf.List) sxpf.Value { return te.getString(args) })
 	te.bind(sexpr.NameSymSpace, 0, func(args *sxpf.List) sxpf.Value {
 		if args.IsNil() {
@@ -377,7 +383,7 @@ func (te *transformEnv) bind(name string, minArity int, fn specialFn) {
 
 func (te *transformEnv) evaluate(val sxpf.Value) sxpf.Value {
 	if te.err == nil {
-		res, err := sexpr.Evaluate(te.eenv, val)
+		res, err := eval.Eval(te.eenv, val)
 		if err == nil {
 			return res
 		}
@@ -388,7 +394,7 @@ func (te *transformEnv) evaluate(val sxpf.Value) sxpf.Value {
 
 func (te *transformEnv) evaluateList(lst *sxpf.List) *sxpf.List {
 	if te.err == nil {
-		res, err := sexpr.EvaluateList(te.eenv, lst)
+		res, _, err := eval.EvalList(te.eenv, lst)
 		if err == nil {
 			return res
 		}

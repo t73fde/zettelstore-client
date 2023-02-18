@@ -75,7 +75,7 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 }
 
 func (enc *Encoder) Encode(lst *sxpf.List) string {
-	sexpr.Evaluate(enc.env, lst)
+	eval.Eval(enc.env, lst)
 	result := enc.sb.String()
 	enc.sb.Reset()
 	return result

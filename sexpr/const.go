@@ -15,6 +15,11 @@ import "codeberg.org/t73fde/sxpf"
 // Various constants for Zettel data. Some of them are technically variables.
 
 const (
+	// Symbols for Metanodes
+	NameSymAttr   = "ATTR"
+	NameSymBlock  = "BLOCK"
+	NameSymInline = "INLINE"
+
 	// Symbols for Zettel node types.
 	NameSymBLOB            = "BLOB"
 	NameSymCell            = "CELL"
@@ -60,6 +65,7 @@ const (
 	NameSymRegionBlock     = "REGION-BLOCK"
 	NameSymRegionQuote     = "REGION-QUOTE"
 	NameSymRegionVerse     = "REGION-VERSE"
+	NameSymRow             = "ROW"
 	NameSymSoft            = "SOFT"
 	NameSymSpace           = "SPACE"
 	NameSymTable           = "TABLE"
@@ -102,6 +108,12 @@ const (
 
 // ZettelSymbols collect all symbols needed to represent zettel data.
 type ZettelSymbols struct {
+	// Symbols for Metanodes
+	SymAttr   *sxpf.Symbol
+	SymBlock  *sxpf.Symbol
+	SymInline *sxpf.Symbol
+
+	// Symbols for Zettel node types.
 	SymBLOB            *sxpf.Symbol
 	SymCell            *sxpf.Symbol
 	SymCellCenter      *sxpf.Symbol
@@ -146,6 +158,7 @@ type ZettelSymbols struct {
 	SymRegionBlock     *sxpf.Symbol
 	SymRegionQuote     *sxpf.Symbol
 	SymRegionVerse     *sxpf.Symbol
+	SymRow             *sxpf.Symbol
 	SymSoft            *sxpf.Symbol
 	SymSpace           *sxpf.Symbol
 	SymTable           *sxpf.Symbol
@@ -189,6 +202,11 @@ type ZettelSymbols struct {
 }
 
 func (zs *ZettelSymbols) InitializeZettelSymbols(sf sxpf.SymbolFactory) {
+	// Symbols for Metanodes
+	zs.SymAttr = sf.Make(NameSymAttr)
+	zs.SymBlock = sf.Make(NameSymBlock)
+	zs.SymInline = sf.Make(NameSymInline)
+
 	// Symbols for Zettel node types.
 	zs.SymBLOB = sf.Make(NameSymBLOB)
 	zs.SymCell = sf.Make(NameSymCell)
@@ -234,6 +252,7 @@ func (zs *ZettelSymbols) InitializeZettelSymbols(sf sxpf.SymbolFactory) {
 	zs.SymRegionBlock = sf.Make(NameSymRegionBlock)
 	zs.SymRegionQuote = sf.Make(NameSymRegionQuote)
 	zs.SymRegionVerse = sf.Make(NameSymRegionVerse)
+	zs.SymRow = sf.Make(NameSymRow)
 	zs.SymSoft = sf.Make(NameSymSoft)
 	zs.SymSpace = sf.Make(NameSymSpace)
 	zs.SymTable = sf.Make(NameSymTable)
