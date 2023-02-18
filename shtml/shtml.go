@@ -42,8 +42,13 @@ func NewTransformer(headingOffset int) *Transformer {
 	}
 }
 
-// Transform an AST s-expression into a HTML s-expression.
+// Transform an AST s-expression into a list of HTML s-expressions.
 func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
+	return tr.TransformInline(lst, false, false)
+}
+
+// TransformInline an inlines AST s-expression into a list of HTML s-expressions.
+func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool) (*sxpf.List, error) {
 	astSF := sxpf.FindSymbolFactory(lst)
 	if astSF == nil {
 		return nil, nil
@@ -52,15 +57,18 @@ func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
 		panic("Invalid AST SymbolFactory")
 	}
 	te := transformEnv{
-		tr:      tr,
-		astSF:   astSF,
-		eenv:    sxpf.MakeRootEnvironment(),
-		err:     nil,
-		textEnc: text.NewEncoder(astSF),
+		tr:          tr,
+		astSF:       astSF,
+		eenv:        sxpf.MakeRootEnvironment(),
+		err:         nil,
+		textEnc:     text.NewEncoder(astSF),
+		noFootnotes: noFootnotes,
+		noLinks:     noLinks,
 	}
 	te.initialize()
 
 	sexpr.BindOther(te.eenv, astSF)
+
 	val, err := eval.Eval(te.eenv, lst)
 	res, ok := val.(*sxpf.List)
 	if !ok {
@@ -70,15 +78,17 @@ func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
 }
 
 type transformEnv struct {
-	tr      *Transformer
-	astSF   sxpf.SymbolFactory
-	eenv    sxpf.Environment
-	err     error
-	textEnc *text.Encoder
-	symAt   *sxpf.Symbol
-	symMeta *sxpf.Symbol
-	symA    *sxpf.Symbol
-	symSpan *sxpf.Symbol
+	tr          *Transformer
+	astSF       sxpf.SymbolFactory
+	eenv        sxpf.Environment
+	err         error
+	textEnc     *text.Encoder
+	noFootnotes bool
+	noLinks     bool
+	symAt       *sxpf.Symbol
+	symMeta     *sxpf.Symbol
+	symA        *sxpf.Symbol
+	symSpan     *sxpf.Symbol
 }
 
 func (te *transformEnv) initialize() {
