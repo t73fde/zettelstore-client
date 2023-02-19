@@ -221,7 +221,7 @@ func (te *transformEnv) makeListFn(tag string) specialFn {
 		last := result
 		for elem := args; elem != nil; elem = elem.Tail() {
 			item := sxpf.Nil().Cons(te.make("li"))
-			if res, ok := te.evaluate(elem.Head()).(*sxpf.List); ok {
+			if res, ok := te.evaluate(elem.Car()).(*sxpf.List); ok {
 				item.ExtendBang(res)
 			}
 			last = last.AppendBang(item)
@@ -246,7 +246,7 @@ func (te *transformEnv) bindInlines() {
 	te.bind(sexpr.NameSymHard, 0, func(*sxpf.List) sxpf.Value { return sxpf.Nil().Cons(brSym) })
 	transformAsSpan := func(args *sxpf.List) sxpf.Value {
 		if args.Length() > 2 {
-			return te.evaluate(args.Tail().Tail().Cons(args.Head()).Cons(te.make(sexpr.NameSymFormatSpan)))
+			return te.evaluate(args.Tail().Tail().Cons(args.Car()).Cons(te.make(sexpr.NameSymFormatSpan)))
 		}
 		return nil
 	}
@@ -448,7 +448,7 @@ func (te *transformEnv) getString(lst *sxpf.List) sxpf.String {
 	if te.err != nil {
 		return ""
 	}
-	val := lst.Head()
+	val := lst.Car()
 	if s, ok := val.(sxpf.String); ok {
 		return s
 	}
@@ -459,7 +459,7 @@ func (te *transformEnv) getInt64(lst *sxpf.List) int64 {
 	if te.err != nil {
 		return -1017
 	}
-	val := lst.Head()
+	val := lst.Car()
 	if num, ok := val.(*sxpf.Number); ok {
 		return num.GetInt64()
 	}
@@ -468,7 +468,7 @@ func (te *transformEnv) getInt64(lst *sxpf.List) int64 {
 }
 func (te *transformEnv) getList(lst *sxpf.List) *sxpf.List {
 	if te.err == nil {
-		val := lst.Head()
+		val := lst.Car()
 		if res, ok := val.(*sxpf.List); ok {
 			return res
 		}

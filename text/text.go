@@ -40,7 +40,7 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 		sexpr.NameSymText,
 		func(_ sxpf.Environment, args *sxpf.List) (sxpf.Value, error) {
 			if args != nil {
-				if val, ok := args.Head().(sxpf.String); ok {
+				if val, ok := args.Car().(sxpf.String); ok {
 					enc.sb.WriteString(val.String())
 				}
 			}
