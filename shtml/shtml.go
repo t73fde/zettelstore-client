@@ -59,7 +59,7 @@ func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sxpf.List {
 	keys := a.Keys()
 	for i := len(keys) - 1; i >= 0; i-- {
 		key := keys[i]
-		plist = plist.Cons(sxpf.MakePair(tr.Make(key), sxpf.MakeString(a[key])))
+		plist = plist.Cons(sxpf.Cons(tr.Make(key), sxpf.MakeString(a[key])))
 	}
 	return plist.Cons(tr.symAt)
 }

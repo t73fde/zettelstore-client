@@ -19,7 +19,7 @@ import (
 func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
 	seq = seq.Tail() // TODO: check for "ATTR" symbol as head.
 	for elem := seq; elem != nil; elem = elem.Tail() {
-		p, ok := elem.Car().(*sxpf.Pair)
+		p, ok := elem.Car().(*sxpf.List)
 		if !ok || p == nil {
 			continue
 		}
@@ -28,6 +28,9 @@ func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
 			continue
 		}
 		val := p.Cdr()
+		if tail, ok := val.(*sxpf.List); ok {
+			val = tail.Car()
+		}
 		if !sxpf.IsAtom(val) {
 			continue
 		}

@@ -30,6 +30,11 @@ func BindOther(env sxpf.Environment, sf sxpf.SymbolFactory) {
 func DoNothing(env sxpf.Environment, args *sxpf.List) (sxpf.Value, error) {
 	for elem := args; elem != nil; elem = elem.Tail() {
 		if lst, ok := elem.Car().(*sxpf.List); ok {
+			if cdr := lst.Cdr(); cdr != nil {
+				if _, ok := cdr.(*sxpf.List); !ok {
+					continue // Do not call if list is a dotted pair.
+				}
+			}
 			if _, err := eval.Eval(env, lst); err != nil {
 				return sxpf.Nil(), err
 			}
