@@ -212,6 +212,82 @@ func (te *transformEnv) bindBlocks() {
 	})
 	te.bind(sexpr.NameSymListOrdered, 0, te.makeListFn("ol"))
 	te.bind(sexpr.NameSymListUnordered, 0, te.makeListFn("ul"))
+	te.bind(sexpr.NameSymDescription, 0, func(args *sxpf.List) sxpf.Value {
+		if args == nil {
+			return sxpf.Nil()
+		}
+		items := sxpf.Nil().Cons(te.make("dl"))
+		curItem := items
+		for elem := args; elem != nil; elem = elem.Tail() {
+			term, ok := te.evaluate(te.getList(elem)).(*sxpf.List)
+			if !ok {
+				break
+			}
+			curItem = curItem.AppendBang(term.Cons(te.make("dt")))
+			elem = elem.Tail()
+			if elem == nil {
+				break
+			}
+			ddBlock := te.getList(elem)
+			if ddBlock == nil {
+				break
+			}
+			// TODO: assert ddBlock.Head() == symBlock
+			for ddlst := ddBlock.Tail(); ddlst != nil; ddlst = ddlst.Tail() {
+				dditem := te.getList(ddlst)
+				descr, ok2 := te.evaluate(dditem).(*sxpf.List)
+				if !ok2 {
+					continue
+				}
+				curItem = curItem.AppendBang(descr.Cons(te.make("dd")))
+			}
+		}
+		return items
+	})
+
+	te.bind(sexpr.NameSymTable, 1, func(args *sxpf.List) sxpf.Value {
+
+		thead := sxpf.Nil()
+		if header := te.getList(args); header != nil {
+			thead = sxpf.Nil().Cons(te.transformTableRow(header)).Cons(te.make("thead"))
+		}
+
+		tbody := sxpf.Nil()
+		if argBody := args.Tail(); argBody != nil {
+			tbody = sxpf.Nil().Cons(te.make("tbody"))
+			curBody := tbody
+			for row := argBody; row != nil; row = row.Tail() {
+				curBody = curBody.AppendBang(te.transformTableRow(te.getList(row)))
+			}
+		}
+
+		table := sxpf.Nil()
+		if tbody != nil {
+			table = table.Cons(tbody)
+		}
+		if thead != nil {
+			table = table.Cons(thead)
+		}
+		if table == nil {
+			return sxpf.Nil()
+		}
+		return table.Cons(te.make("table"))
+	})
+	te.bind(sexpr.NameSymCell, 0, te.makeCellFn(""))
+	te.bind(sexpr.NameSymCellCenter, 0, te.makeCellFn("center"))
+	te.bind(sexpr.NameSymCellLeft, 0, te.makeCellFn("left"))
+	te.bind(sexpr.NameSymCellRight, 0, te.makeCellFn("right"))
+
+	te.bind(sexpr.NameSymVerbatimComment, 1, func(args *sxpf.List) sxpf.Value {
+		if te.getAttributes(args).HasDefault() {
+			if s := te.getString(args.Tail()); s != "" {
+				t := sxpf.MakeString("\n" + s.String() + "\n")
+				return sxpf.Nil().Cons(t).Cons(te.make("@@"))
+			}
+		}
+		return nil
+	})
+	te.bind(sexpr.NameSymVerbatimHTML, 2, te.transformHTML)
 }
 
 func (te *transformEnv) makeListFn(tag string) specialFn {
@@ -227,6 +303,27 @@ func (te *transformEnv) makeListFn(tag string) specialFn {
 			last = last.AppendBang(item)
 		}
 		return result
+	}
+}
+func (te *transformEnv) transformTableRow(cells *sxpf.List) *sxpf.List {
+	row := sxpf.Nil().Cons(te.make("tr"))
+	if cells == nil {
+		return sxpf.Nil()
+	}
+	curRow := row
+	for cell := cells.Tail(); cell != nil; cell = cell.Tail() {
+		curRow = curRow.AppendBang(te.evaluate(cell.Car()))
+	}
+	return row
+}
+
+func (te *transformEnv) makeCellFn(align string) specialFn {
+	return func(args *sxpf.List) sxpf.Value {
+		tdata := te.evaluateList(args)
+		if align != "" {
+			tdata = tdata.Cons(te.transformAttrbute(attrs.Attributes{"class": align}))
+		}
+		return tdata.Cons(te.make("td"))
 	}
 }
 
