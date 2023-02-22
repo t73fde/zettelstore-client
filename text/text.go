@@ -38,7 +38,7 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 	env := sxpf.MakeRootEnvironment()
 	env.Bind(sf.Make(sexpr.NameSymText), eval.MakeSpecial(
 		sexpr.NameSymText,
-		func(_ sxpf.Environment, args *sxpf.List) (sxpf.Value, error) {
+		func(_ sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
 			if args != nil {
 				if val, ok := args.Car().(sxpf.String); ok {
 					enc.sb.WriteString(val.String())
@@ -49,21 +49,21 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 	))
 	env.Bind(sf.Make(sexpr.NameSymSpace), eval.MakeSpecial(
 		sexpr.NameSymSpace,
-		func(sxpf.Environment, *sxpf.List) (sxpf.Value, error) {
+		func(sxpf.Environment, *sxpf.List) (sxpf.Object, error) {
 			enc.sb.WriteByte(' ')
 			return sxpf.Nil(), nil
 		},
 	))
 	env.Bind(sf.Make(sexpr.NameSymSoft), eval.MakeSpecial(
 		sexpr.NameSymSoft,
-		func(sxpf.Environment, *sxpf.List) (sxpf.Value, error) {
+		func(sxpf.Environment, *sxpf.List) (sxpf.Object, error) {
 			enc.sb.WriteByte(' ')
 			return sxpf.Nil(), nil
 		},
 	))
 	env.Bind(sf.Make(sexpr.NameSymHard), eval.MakeSpecial(
 		sexpr.NameSymHard,
-		func(sxpf.Environment, *sxpf.List) (sxpf.Value, error) {
+		func(sxpf.Environment, *sxpf.List) (sxpf.Object, error) {
 			enc.sb.WriteByte('\n')
 			return sxpf.Nil(), nil
 		},

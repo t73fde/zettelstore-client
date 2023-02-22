@@ -374,16 +374,16 @@ func (c *Client) getZettelString(ctx context.Context, zid api.ZettelID, enc api.
 }
 
 // GetParsedSexpr returns an parsed zettel as a Sexpr-decoded data structure.
-func (c *Client) GetParsedSexpr(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Value, error) {
+func (c *Client) GetParsedSexpr(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Object, error) {
 	return c.getSexpr(ctx, zid, part, true, sf)
 }
 
 // GetEvaluatedSexpr returns an evaluated zettel as a Sexpr-decoded data structure.
-func (c *Client) GetEvaluatedSexpr(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Value, error) {
+func (c *Client) GetEvaluatedSexpr(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Object, error) {
 	return c.getSexpr(ctx, zid, part, false, sf)
 }
 
-func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, parseOnly bool, sf sxpf.SymbolFactory) (sxpf.Value, error) {
+func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, parseOnly bool, sf sxpf.SymbolFactory) (sxpf.Object, error) {
 	ub := c.newURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingSexpr)
 	if part != "" {
