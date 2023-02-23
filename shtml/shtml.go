@@ -29,6 +29,7 @@ import (
 // that represents HTML.
 type Transformer struct {
 	sf            sxpf.SymbolFactory
+	rebinder      RebindProc
 	headingOffset int64
 	unique        string
 	noLinks       bool // true iff output must not include links
@@ -41,6 +42,7 @@ func NewTransformer(headingOffset int) *Transformer {
 	sf := sxpf.MakeMappedFactory()
 	return &Transformer{
 		sf:            sf,
+		rebinder:      nil,
 		headingOffset: int64(headingOffset),
 		symAt:         sf.Make("@"),
 		symMeta:       sf.Make("meta"),
@@ -49,6 +51,12 @@ func NewTransformer(headingOffset int) *Transformer {
 
 // Make a new HTML symbol.
 func (tr *Transformer) Make(s string) *sxpf.Symbol { return tr.sf.Make(s) }
+
+// RebindProc is a procedure which is called every time before a tranformation takes place.
+type RebindProc func(*TransformEnv)
+
+// SetRebinder sets the rebinder procedure.
+func (tr *Transformer) SetRebinder(rb RebindProc) { tr.rebinder = rb }
 
 // TransformAttrbute transforms the given attributes into a HTML s-expression.
 func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sxpf.List {
@@ -81,7 +89,7 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 		panic("Invalid AST SymbolFactory")
 	}
 	eenv := sxpf.MakeRootEnvironment()
-	te := transformEnv{
+	te := TransformEnv{
 		tr:          tr,
 		astSF:       astSF,
 		eenv:        eenv,
@@ -95,6 +103,9 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 		if _, found := eenv.Resolve(sym); !found {
 			eenv.Bind(sym, eval.MakeSpecial(sym.String(), doNothing))
 		}
+	}
+	if rb := tr.rebinder; rb != nil {
+		rb(&te)
 	}
 
 	val, err := eval.Eval(te.eenv, lst)
@@ -121,7 +132,8 @@ func doNothing(env sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
 	return sxpf.Nil(), nil
 }
 
-type transformEnv struct {
+// TransformEnv is the environment where the actual transformation takes places.
+type TransformEnv struct {
 	tr          *Transformer
 	astSF       sxpf.SymbolFactory
 	eenv        sxpf.Environment
@@ -135,18 +147,18 @@ type transformEnv struct {
 	symSpan     *sxpf.Symbol
 }
 
-func (te *transformEnv) initialize() {
-	te.symAt = te.make("@")
-	te.symMeta = te.make("meta")
-	te.symA = te.make("a")
-	te.symSpan = te.make("span")
+func (te *TransformEnv) initialize() {
+	te.symAt = te.Make("@")
+	te.symMeta = te.Make("meta")
+	te.symA = te.Make("a")
+	te.symSpan = te.Make("span")
 
 	te.bindMetadata()
 	te.bindBlocks()
 	te.bindInlines()
 }
 
-func (te *transformEnv) bindMetadata() {
+func (te *TransformEnv) bindMetadata() {
 	te.bind(sexpr.NameSymMeta, 0, func(args *sxpf.List) sxpf.Object {
 		return te.evaluateList(args)
 	})
@@ -190,12 +202,12 @@ func (te *transformEnv) bindMetadata() {
 	te.bind(sexpr.NameSymTypeWordSet, 2, metaSet)
 }
 
-func (te *transformEnv) bindBlocks() {
+func (te *TransformEnv) bindBlocks() {
 	te.bind(sexpr.NameSymBlock, 0, func(args *sxpf.List) sxpf.Object {
 		return te.evaluateList(args)
 	})
 	te.bind(sexpr.NameSymPara, 0, func(args *sxpf.List) sxpf.Object {
-		return te.evaluateList(args).Cons(te.make("p"))
+		return te.evaluateList(args).Cons(te.Make("p"))
 	})
 	te.bind(sexpr.NameSymHeading, 5, func(args *sxpf.List) sxpf.Object {
 		nLevel := te.getInt64(args)
@@ -216,7 +228,7 @@ func (te *transformEnv) bindBlocks() {
 		if len(a) > 0 {
 			result = result.Cons(te.transformAttrbute(a))
 		}
-		return result.Cons(te.make("h" + level))
+		return result.Cons(te.Make("h" + level))
 	})
 	te.bind(sexpr.NameSymThematic, 0, func(args *sxpf.List) sxpf.Object {
 		result := sxpf.Nil()
@@ -225,7 +237,7 @@ func (te *transformEnv) bindBlocks() {
 				result = result.Cons(te.transformAttrbute(sexpr.GetAttributes(attrList)))
 			}
 		}
-		return result.Cons(te.make("hr"))
+		return result.Cons(te.Make("hr"))
 	})
 	te.bind(sexpr.NameSymListOrdered, 0, te.makeListFn("ol"))
 	te.bind(sexpr.NameSymListUnordered, 0, te.makeListFn("ul"))
@@ -233,14 +245,14 @@ func (te *transformEnv) bindBlocks() {
 		if args == nil {
 			return sxpf.Nil()
 		}
-		items := sxpf.Nil().Cons(te.make("dl"))
+		items := sxpf.Nil().Cons(te.Make("dl"))
 		curItem := items
 		for elem := args; elem != nil; elem = elem.Tail() {
 			term, ok := te.evaluate(te.getList(elem)).(*sxpf.List)
 			if !ok {
 				break
 			}
-			curItem = curItem.AppendBang(term.Cons(te.make("dt")))
+			curItem = curItem.AppendBang(term.Cons(te.Make("dt")))
 			elem = elem.Tail()
 			if elem == nil {
 				break
@@ -256,7 +268,7 @@ func (te *transformEnv) bindBlocks() {
 				if !ok2 {
 					continue
 				}
-				curItem = curItem.AppendBang(descr.Cons(te.make("dd")))
+				curItem = curItem.AppendBang(descr.Cons(te.Make("dd")))
 			}
 		}
 		return items
@@ -266,12 +278,12 @@ func (te *transformEnv) bindBlocks() {
 
 		thead := sxpf.Nil()
 		if header := te.getList(args); header != nil {
-			thead = sxpf.Nil().Cons(te.transformTableRow(header)).Cons(te.make("thead"))
+			thead = sxpf.Nil().Cons(te.transformTableRow(header)).Cons(te.Make("thead"))
 		}
 
 		tbody := sxpf.Nil()
 		if argBody := args.Tail(); argBody != nil {
-			tbody = sxpf.Nil().Cons(te.make("tbody"))
+			tbody = sxpf.Nil().Cons(te.Make("tbody"))
 			curBody := tbody
 			for row := argBody; row != nil; row = row.Tail() {
 				curBody = curBody.AppendBang(te.transformTableRow(te.getList(row)))
@@ -288,7 +300,7 @@ func (te *transformEnv) bindBlocks() {
 		if table == nil {
 			return sxpf.Nil()
 		}
-		return table.Cons(te.make("table"))
+		return table.Cons(te.Make("table"))
 	})
 	te.bind(sexpr.NameSymCell, 0, te.makeCellFn(""))
 	te.bind(sexpr.NameSymCellCenter, 0, te.makeCellFn("center"))
@@ -299,7 +311,7 @@ func (te *transformEnv) bindBlocks() {
 		if te.getAttributes(args).HasDefault() {
 			if s := te.getString(args.Tail()); s != "" {
 				t := sxpf.MakeString(s.String())
-				return sxpf.Nil().Cons(t).Cons(te.make("@@@"))
+				return sxpf.Nil().Cons(t).Cons(te.Make("@@@"))
 			}
 		}
 		return nil
@@ -307,13 +319,13 @@ func (te *transformEnv) bindBlocks() {
 	te.bind(sexpr.NameSymVerbatimHTML, 2, te.transformHTML)
 }
 
-func (te *transformEnv) makeListFn(tag string) specialFn {
-	sym := te.make(tag)
+func (te *TransformEnv) makeListFn(tag string) transformFn {
+	sym := te.Make(tag)
 	return func(args *sxpf.List) sxpf.Object {
 		result := sxpf.Nil().Cons(sym)
 		last := result
 		for elem := args; elem != nil; elem = elem.Tail() {
-			item := sxpf.Nil().Cons(te.make("li"))
+			item := sxpf.Nil().Cons(te.Make("li"))
 			if res, ok := te.evaluate(elem.Car()).(*sxpf.List); ok {
 				item.ExtendBang(res)
 			}
@@ -322,8 +334,8 @@ func (te *transformEnv) makeListFn(tag string) specialFn {
 		return result
 	}
 }
-func (te *transformEnv) transformTableRow(cells *sxpf.List) *sxpf.List {
-	row := sxpf.Nil().Cons(te.make("tr"))
+func (te *TransformEnv) transformTableRow(cells *sxpf.List) *sxpf.List {
+	row := sxpf.Nil().Cons(te.Make("tr"))
 	if cells == nil {
 		return sxpf.Nil()
 	}
@@ -334,17 +346,17 @@ func (te *transformEnv) transformTableRow(cells *sxpf.List) *sxpf.List {
 	return row
 }
 
-func (te *transformEnv) makeCellFn(align string) specialFn {
+func (te *TransformEnv) makeCellFn(align string) transformFn {
 	return func(args *sxpf.List) sxpf.Object {
 		tdata := te.evaluateList(args)
 		if align != "" {
 			tdata = tdata.Cons(te.transformAttrbute(attrs.Attributes{"class": align}))
 		}
-		return tdata.Cons(te.make("td"))
+		return tdata.Cons(te.Make("td"))
 	}
 }
 
-func (te *transformEnv) bindInlines() {
+func (te *TransformEnv) bindInlines() {
 	te.bind(sexpr.NameSymInline, 0, func(args *sxpf.List) sxpf.Object {
 		return te.evaluateList(args)
 	})
@@ -356,11 +368,11 @@ func (te *transformEnv) bindInlines() {
 		return te.getString(args)
 	})
 	te.bind(sexpr.NameSymSoft, 0, func(*sxpf.List) sxpf.Object { return sxpf.MakeString(" ") })
-	brSym := te.make("br")
+	brSym := te.Make("br")
 	te.bind(sexpr.NameSymHard, 0, func(*sxpf.List) sxpf.Object { return sxpf.Nil().Cons(brSym) })
 	transformAsSpan := func(args *sxpf.List) sxpf.Object {
 		if args.Length() > 2 {
-			return te.evaluate(args.Tail().Tail().Cons(args.Car()).Cons(te.make(sexpr.NameSymFormatSpan)))
+			return te.evaluate(args.Tail().Tail().Cons(args.Car()).Cons(te.Make(sexpr.NameSymFormatSpan)))
 		}
 		return nil
 	}
@@ -416,7 +428,7 @@ func (te *transformEnv) bindInlines() {
 		if !te.tr.noLinks {
 			if fragment := te.getString(argFragment); fragment != "" {
 				a := attrs.Attributes{"id": fragment.String() + te.tr.unique}
-				return result.Cons(te.transformAttrbute(a)).Cons(te.make("a"))
+				return result.Cons(te.transformAttrbute(a)).Cons(te.Make("a"))
 			}
 		}
 		return result.Cons(te.symSpan)
@@ -434,22 +446,22 @@ func (te *transformEnv) bindInlines() {
 	te.bind(sexpr.NameSymLiteralComment, 1, func(args *sxpf.List) sxpf.Object {
 		if te.getAttributes(args).HasDefault() {
 			if s := te.getString(args.Tail()); s != "" {
-				return sxpf.Nil().Cons(s).Cons(te.make("@@"))
+				return sxpf.Nil().Cons(s).Cons(te.Make("@@"))
 			}
 		}
 		return nil
 	})
 	te.bind(sexpr.NameSymLiteralHTML, 2, te.transformHTML)
-	kbdSym := te.make("kbd")
+	kbdSym := te.Make("kbd")
 	te.bind(sexpr.NameSymLiteralInput, 2, func(args *sxpf.List) sxpf.Object {
 		return te.transformLiteral(args, nil, kbdSym)
 	})
-	codeSym := te.make("code")
+	codeSym := te.Make("code")
 	te.bind(sexpr.NameSymLiteralMath, 2, func(args *sxpf.List) sxpf.Object {
 		a := te.getAttributes(args).AddClass("zs-math")
 		return te.transformLiteral(args, a, codeSym)
 	})
-	sampSym := te.make("samp")
+	sampSym := te.Make("samp")
 	te.bind(sexpr.NameSymLiteralOutput, 2, func(args *sxpf.List) sxpf.Object {
 		return te.transformLiteral(args, nil, sampSym)
 	})
@@ -459,8 +471,8 @@ func (te *transformEnv) bindInlines() {
 	})
 }
 
-func (te *transformEnv) makeFormatFn(tag string) specialFn {
-	sym := te.make(tag)
+func (te *TransformEnv) makeFormatFn(tag string) transformFn {
+	sym := te.Make(tag)
 	return func(args *sxpf.List) sxpf.Object {
 		a := te.getAttributes(args)
 		if val, found := a.Get(""); found {
@@ -473,7 +485,7 @@ func (te *transformEnv) makeFormatFn(tag string) specialFn {
 		return res.Cons(sym)
 	}
 }
-func (te *transformEnv) transformQuote(args *sxpf.List) sxpf.Object {
+func (te *TransformEnv) transformQuote(args *sxpf.List) sxpf.Object {
 	const langAttr = "lang"
 	a := te.getAttributes(args)
 	langVal, found := a.Get(langAttr)
@@ -487,16 +499,16 @@ func (te *transformEnv) transformQuote(args *sxpf.List) sxpf.Object {
 	if len(a) > 0 {
 		res = res.Cons(te.transformAttrbute(a))
 	}
-	res = res.Cons(te.make("q"))
+	res = res.Cons(te.Make("q"))
 	if found {
-		res = sxpf.Nil().Cons(res).Cons(te.transformAttrbute(attrs.Attributes{}.Set(langAttr, langVal))).Cons(te.make("span"))
+		res = sxpf.Nil().Cons(res).Cons(te.transformAttrbute(attrs.Attributes{}.Set(langAttr, langVal))).Cons(te.Make("span"))
 	}
 	return res
 }
 
 var visibleReplacer = strings.NewReplacer(" ", "\u2423")
 
-func (te *transformEnv) transformLiteral(args *sxpf.List, a attrs.Attributes, sym *sxpf.Symbol) sxpf.Object {
+func (te *TransformEnv) transformLiteral(args *sxpf.List, a attrs.Attributes, sym *sxpf.Symbol) sxpf.Object {
 	if a == nil {
 		a = te.getAttributes(args)
 	}
@@ -517,25 +529,42 @@ func setProgLang(a attrs.Attributes) attrs.Attributes {
 	}
 	return a
 }
-func (te *transformEnv) transformHTML(args *sxpf.List) sxpf.Object {
+func (te *TransformEnv) transformHTML(args *sxpf.List) sxpf.Object {
 	if s := te.getString(args.Tail()); s != "" && IsSafe(s.String()) {
 		return s
 	}
 	return nil
 }
 
-type specialFn func(*sxpf.List) sxpf.Object
+type transformFn func(*sxpf.List) sxpf.Object
 
-func (te *transformEnv) bind(name string, minArity int, fn specialFn) {
-	te.eenv.Bind(te.astSF.Make(name), eval.MakeSpecial(name, func(env sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
+func (te *TransformEnv) bind(name string, minArity int, fn transformFn) {
+	te.eenv.Bind(te.astSF.Make(name), eval.MakeSpecial(name, func(_ sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
 		if arity := args.Length(); arity < minArity {
 			return sxpf.Nil(), fmt.Errorf("not enough arguments (%d) for form %v (%d)", arity, name, minArity)
 		}
-		return fn(args), te.err
+		res := fn(args)
+		return res, te.err
 	}))
 }
 
-func (te *transformEnv) evaluate(val sxpf.Object) sxpf.Object {
+func (te *TransformEnv) Rebind(name string, fn func(sxpf.Environment, *sxpf.List, *eval.Special) sxpf.Object) {
+	sym := te.astSF.Make(name)
+	obj, found := te.eenv.Resolve(sym)
+	if !found {
+		panic(sym.String())
+	}
+	preFn, ok := obj.(*eval.Special)
+	if !ok {
+		panic(sym.String())
+	}
+	te.eenv.Bind(sym, eval.MakeSpecial(name, func(env sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
+		res := fn(env, args, preFn)
+		return res, te.err
+	}))
+}
+
+func (te *TransformEnv) evaluate(val sxpf.Object) sxpf.Object {
 	if te.err == nil {
 		res, err := eval.Eval(te.eenv, val)
 		if err == nil {
@@ -546,7 +575,7 @@ func (te *transformEnv) evaluate(val sxpf.Object) sxpf.Object {
 	return sxpf.Nil()
 }
 
-func (te *transformEnv) evaluateList(lst *sxpf.List) *sxpf.List {
+func (te *TransformEnv) evaluateList(lst *sxpf.List) *sxpf.List {
 	if te.err == nil {
 		res, _, err := eval.EvalList(te.eenv, lst)
 		if err == nil {
@@ -557,8 +586,8 @@ func (te *transformEnv) evaluateList(lst *sxpf.List) *sxpf.List {
 	return sxpf.Nil()
 }
 
-func (te *transformEnv) make(name string) *sxpf.Symbol { return te.tr.Make(name) }
-func (te *transformEnv) getString(lst *sxpf.List) sxpf.String {
+func (te *TransformEnv) Make(name string) *sxpf.Symbol { return te.tr.Make(name) }
+func (te *TransformEnv) getString(lst *sxpf.List) sxpf.String {
 	if te.err != nil {
 		return ""
 	}
@@ -569,7 +598,7 @@ func (te *transformEnv) getString(lst *sxpf.List) sxpf.String {
 	te.err = fmt.Errorf("%v/%T is not a string", val, val)
 	return ""
 }
-func (te *transformEnv) getInt64(lst *sxpf.List) int64 {
+func (te *TransformEnv) getInt64(lst *sxpf.List) int64 {
 	if te.err != nil {
 		return -1017
 	}
@@ -580,7 +609,7 @@ func (te *transformEnv) getInt64(lst *sxpf.List) int64 {
 	te.err = fmt.Errorf("%v/%T is not a number", val, val)
 	return -1017
 }
-func (te *transformEnv) getList(lst *sxpf.List) *sxpf.List {
+func (te *TransformEnv) getList(lst *sxpf.List) *sxpf.List {
 	if te.err == nil {
 		val := lst.Car()
 		if res, ok := val.(*sxpf.List); ok {
@@ -590,11 +619,11 @@ func (te *transformEnv) getList(lst *sxpf.List) *sxpf.List {
 	}
 	return sxpf.Nil()
 }
-func (te *transformEnv) getAttributes(args *sxpf.List) attrs.Attributes {
+func (te *TransformEnv) getAttributes(args *sxpf.List) attrs.Attributes {
 	return sexpr.GetAttributes(te.getList(args))
 }
 
-func (te *transformEnv) transformLink(a attrs.Attributes, refValue sxpf.String, inline *sxpf.List) sxpf.Object {
+func (te *TransformEnv) transformLink(a attrs.Attributes, refValue sxpf.String, inline *sxpf.List) sxpf.Object {
 	var result *sxpf.List
 	if inline.IsNil() {
 		result = sxpf.Nil().Cons(refValue)
@@ -604,14 +633,14 @@ func (te *transformEnv) transformLink(a attrs.Attributes, refValue sxpf.String, 
 	if te.tr.noLinks {
 		return result.Cons(te.symSpan)
 	}
-	return result.Cons(te.transformAttrbute(a)).Cons(te.make("a"))
+	return result.Cons(te.transformAttrbute(a)).Cons(te.Make("a"))
 }
 
-func (te *transformEnv) transformAttrbute(a attrs.Attributes) *sxpf.List {
+func (te *TransformEnv) transformAttrbute(a attrs.Attributes) *sxpf.List {
 	return te.tr.TransformAttrbute(a)
 }
 
-func (te *transformEnv) transformMeta(a attrs.Attributes) *sxpf.List {
+func (te *TransformEnv) transformMeta(a attrs.Attributes) *sxpf.List {
 	return te.tr.TransformMeta(a)
 }
 
