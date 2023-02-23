@@ -12,7 +12,6 @@
 package text
 
 import (
-	"log"
 	"strings"
 
 	"codeberg.org/t73fde/sxpf"
@@ -50,7 +49,6 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 func (enc *Encoder) Encode(lst *sxpf.List) string {
 	enc.executeList(lst)
 	result := enc.sb.String()
-	log.Printf("RESU %q\n", result)
 	enc.sb.Reset()
 	return result
 }
