@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 
+	"codeberg.org/t73fde/sxhtml"
 	"codeberg.org/t73fde/sxpf"
 	"codeberg.org/t73fde/sxpf/eval"
 	"zettelstore.de/c/api"
@@ -44,7 +45,7 @@ func NewTransformer(headingOffset int) *Transformer {
 		sf:            sf,
 		rebinder:      nil,
 		headingOffset: int64(headingOffset),
-		symAt:         sf.Make("@"),
+		symAt:         sf.Make(sxhtml.NameSymAttr),
 		symMeta:       sf.Make("meta"),
 	}
 }
@@ -148,7 +149,7 @@ type TransformEnv struct {
 }
 
 func (te *TransformEnv) initialize() {
-	te.symAt = te.Make("@")
+	te.symAt = te.tr.symAt
 	te.symMeta = te.Make("meta")
 	te.symA = te.Make("a")
 	te.symSpan = te.Make("span")
@@ -311,7 +312,7 @@ func (te *TransformEnv) bindBlocks() {
 		if te.getAttributes(args).HasDefault() {
 			if s := te.getString(args.Tail()); s != "" {
 				t := sxpf.MakeString(s.String())
-				return sxpf.Nil().Cons(t).Cons(te.Make("@@@"))
+				return sxpf.Nil().Cons(t).Cons(te.Make(sxhtml.NameSymBlockComment))
 			}
 		}
 		return nil
@@ -446,7 +447,7 @@ func (te *TransformEnv) bindInlines() {
 	te.bind(sexpr.NameSymLiteralComment, 1, func(args *sxpf.List) sxpf.Object {
 		if te.getAttributes(args).HasDefault() {
 			if s := te.getString(args.Tail()); s != "" {
-				return sxpf.Nil().Cons(s).Cons(te.Make("@@"))
+				return sxpf.Nil().Cons(s).Cons(te.Make(sxhtml.NameSymInlineComment))
 			}
 		}
 		return nil
