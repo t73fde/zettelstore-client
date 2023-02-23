@@ -18,7 +18,6 @@ import (
 	"testing"
 
 	"codeberg.org/t73fde/sxpf"
-	"codeberg.org/t73fde/sxpf/eval"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/client"
 	"zettelstore.de/c/sexpr"
@@ -58,12 +57,6 @@ func TestGetSexprZettel(t *testing.T) {
 	}
 	if value.IsNil() {
 		t.Error("No data")
-	}
-	env := sxpf.MakeRootEnvironment()
-	sexpr.BindOther(env, sf)
-	res, err := eval.Eval(env, value)
-	if err != nil {
-		t.Error(res, err)
 	}
 }
 

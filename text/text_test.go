@@ -25,8 +25,8 @@ func TestSexprText(t *testing.T) {
 		exp string
 	}{
 		{"()", ""},
-		{`(TEXT "a")`, "a"},
-		{`(SPACE "a")`, " "},
+		{`(INLINE (TEXT "a"))`, "a"},
+		{`(INLINE (SPACE "a"))`, " "},
 	}
 	sf := sxpf.MakeMappedFactory()
 	for i, tc := range testcases {

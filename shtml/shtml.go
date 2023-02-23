@@ -77,24 +77,25 @@ func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
 // TransformInline an inlines AST s-expression into a list of HTML s-expressions.
 func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool) (*sxpf.List, error) {
 	astSF := sxpf.FindSymbolFactory(lst)
-	if astSF == nil {
-		return nil, nil
-	}
-	if astSF == tr.sf {
+	if astSF != nil && astSF == tr.sf {
 		panic("Invalid AST SymbolFactory")
 	}
+	eenv := sxpf.MakeRootEnvironment()
 	te := transformEnv{
 		tr:          tr,
 		astSF:       astSF,
-		eenv:        sxpf.MakeRootEnvironment(),
+		eenv:        eenv,
 		err:         nil,
 		textEnc:     text.NewEncoder(astSF),
 		noFootnotes: noFootnotes,
 		noLinks:     noLinks,
 	}
 	te.initialize()
-
-	sexpr.BindOther(te.eenv, astSF)
+	for _, sym := range astSF.Symbols() {
+		if _, found := eenv.Resolve(sym); !found {
+			eenv.Bind(sym, eval.MakeSpecial(sym.String(), doNothing))
+		}
+	}
 
 	val, err := eval.Eval(te.eenv, lst)
 	res, ok := val.(*sxpf.List)
@@ -102,6 +103,22 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 		panic("Result is not a list")
 	}
 	return res, err
+}
+
+func doNothing(env sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
+	for elem := args; elem != nil; elem = elem.Tail() {
+		if lst, ok := elem.Car().(*sxpf.List); ok {
+			if cdr := lst.Cdr(); cdr != nil {
+				if _, ok2 := cdr.(*sxpf.List); !ok2 {
+					continue // Do not call if list is a dotted pair.
+				}
+			}
+			if _, err := eval.Eval(env, lst); err != nil {
+				return sxpf.Nil(), err
+			}
+		}
+	}
+	return sxpf.Nil(), nil
 }
 
 type transformEnv struct {
@@ -463,7 +480,7 @@ func (te *transformEnv) transformQuote(args *sxpf.List) sxpf.Object {
 	if found {
 		a = a.Remove(langAttr)
 	}
-	if val, found := a.Get(""); found {
+	if val, found2 := a.Get(""); found2 {
 		a = a.Remove("").AddClass(val)
 	}
 	res := te.evaluateList(args.Tail())

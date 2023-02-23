@@ -28,7 +28,7 @@ func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
 			continue
 		}
 		val := p.Cdr()
-		if tail, ok := val.(*sxpf.List); ok {
+		if tail, ok2 := val.(*sxpf.List); ok2 {
 			val = tail.Car()
 		}
 		if !sxpf.IsAtom(val) {

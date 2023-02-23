@@ -12,18 +12,23 @@
 package text
 
 import (
+	"log"
 	"strings"
 
 	"codeberg.org/t73fde/sxpf"
-	"codeberg.org/t73fde/sxpf/eval"
 	"zettelstore.de/c/sexpr"
 )
 
 // Encoder is the structure to hold relevant data to execute the encoding.
 type Encoder struct {
-	sf  sxpf.SymbolFactory
-	env sxpf.Environment
-	sb  strings.Builder
+	sf sxpf.SymbolFactory
+	sb strings.Builder
+
+	symText  *sxpf.Symbol
+	symSpace *sxpf.Symbol
+	symSoft  *sxpf.Symbol
+	symHard  *sxpf.Symbol
+	symAttr  *sxpf.Symbol
 }
 
 func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
@@ -31,52 +36,21 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 		return nil
 	}
 	enc := &Encoder{
-		sf:  sf,
-		env: nil,
-		sb:  strings.Builder{},
+		sf:       sf,
+		sb:       strings.Builder{},
+		symText:  sf.Make(sexpr.NameSymText),
+		symSpace: sf.Make(sexpr.NameSymSpace),
+		symSoft:  sf.Make(sexpr.NameSymSoft),
+		symHard:  sf.Make(sexpr.NameSymHard),
+		symAttr:  sf.Make(sexpr.NameSymAttr),
 	}
-	env := sxpf.MakeRootEnvironment()
-	env.Bind(sf.Make(sexpr.NameSymText), eval.MakeSpecial(
-		sexpr.NameSymText,
-		func(_ sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
-			if args != nil {
-				if val, ok := args.Car().(sxpf.String); ok {
-					enc.sb.WriteString(val.String())
-				}
-			}
-			return sxpf.Nil(), nil
-		},
-	))
-	env.Bind(sf.Make(sexpr.NameSymSpace), eval.MakeSpecial(
-		sexpr.NameSymSpace,
-		func(sxpf.Environment, *sxpf.List) (sxpf.Object, error) {
-			enc.sb.WriteByte(' ')
-			return sxpf.Nil(), nil
-		},
-	))
-	env.Bind(sf.Make(sexpr.NameSymSoft), eval.MakeSpecial(
-		sexpr.NameSymSoft,
-		func(sxpf.Environment, *sxpf.List) (sxpf.Object, error) {
-			enc.sb.WriteByte(' ')
-			return sxpf.Nil(), nil
-		},
-	))
-	env.Bind(sf.Make(sexpr.NameSymHard), eval.MakeSpecial(
-		sexpr.NameSymHard,
-		func(sxpf.Environment, *sxpf.List) (sxpf.Object, error) {
-			enc.sb.WriteByte('\n')
-			return sxpf.Nil(), nil
-		},
-	))
-	sexpr.BindOther(env, sf)
-
-	enc.env = env
 	return enc
 }
 
 func (enc *Encoder) Encode(lst *sxpf.List) string {
-	eval.Eval(enc.env, lst)
+	enc.executeList(lst)
 	result := enc.sb.String()
+	log.Printf("RESU %q\n", result)
 	enc.sb.Reset()
 	return result
 }
@@ -87,4 +61,35 @@ func EvaluateInlineString(lst *sxpf.List) string {
 		return NewEncoder(sf).Encode(lst)
 	}
 	return ""
+}
+
+func (enc *Encoder) executeList(lst *sxpf.List) {
+	for elem := lst; elem != nil; elem = elem.Tail() {
+		enc.execute(elem.Car())
+	}
+}
+func (enc *Encoder) execute(obj sxpf.Object) {
+	cmd, ok := obj.(*sxpf.List)
+	if !ok {
+		return
+	}
+	sym := cmd.Car()
+	if sxpf.IsNil(sym) {
+		return
+	}
+	if sym.IsEqual(enc.symText) {
+		args := cmd.Tail()
+		if args == nil {
+			return
+		}
+		if val, ok2 := args.Car().(sxpf.String); ok2 {
+			enc.sb.WriteString(val.String())
+		}
+	} else if sym.IsEqual(enc.symSpace) || sym.IsEqual(enc.symSoft) {
+		enc.sb.WriteByte(' ')
+	} else if sym.IsEqual(enc.symHard) {
+		enc.sb.WriteByte('\n')
+	} else if !sym.IsEqual(enc.symAttr) {
+		enc.executeList(cmd.Tail())
+	}
 }
