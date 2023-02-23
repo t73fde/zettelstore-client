@@ -298,8 +298,8 @@ func (te *transformEnv) bindBlocks() {
 	te.bind(sexpr.NameSymVerbatimComment, 1, func(args *sxpf.List) sxpf.Object {
 		if te.getAttributes(args).HasDefault() {
 			if s := te.getString(args.Tail()); s != "" {
-				t := sxpf.MakeString("\n" + s.String() + "\n")
-				return sxpf.Nil().Cons(t).Cons(te.make("@@"))
+				t := sxpf.MakeString(s.String())
+				return sxpf.Nil().Cons(t).Cons(te.make("@@@"))
 			}
 		}
 		return nil
