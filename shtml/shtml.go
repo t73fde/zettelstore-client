@@ -33,9 +33,19 @@ type Transformer struct {
 	rebinder      RebindProc
 	headingOffset int64
 	unique        string
+	endnotes      []endnoteInfo
 	noLinks       bool // true iff output must not include links
-	symAt         *sxpf.Symbol
+	symAttr       *sxpf.Symbol
+	symClass      *sxpf.Symbol
 	symMeta       *sxpf.Symbol
+	symA          *sxpf.Symbol
+	symSpan       *sxpf.Symbol
+}
+
+type endnoteInfo struct {
+	noteAST *sxpf.List // Endnote as AST
+	noteHx  *sxpf.List // Endnote as SxHTML
+	attrs   *sxpf.List // attrs a-list
 }
 
 // NewTransformer creates a new transformer object.
@@ -45,8 +55,11 @@ func NewTransformer(headingOffset int) *Transformer {
 		sf:            sf,
 		rebinder:      nil,
 		headingOffset: int64(headingOffset),
-		symAt:         sf.Make(sxhtml.NameSymAttr),
+		symAttr:       sf.Make(sxhtml.NameSymAttr),
+		symClass:      sf.Make("class"),
 		symMeta:       sf.Make("meta"),
+		symA:          sf.Make("a"),
+		symSpan:       sf.Make("span"),
 	}
 }
 
@@ -70,7 +83,7 @@ func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sxpf.List {
 		key := keys[i]
 		plist = plist.Cons(sxpf.Cons(tr.Make(key), sxpf.MakeString(a[key])))
 	}
-	return plist.Cons(tr.symAt)
+	return plist.Cons(tr.symAttr)
 }
 
 // TransformMeta creates a HTML meta s-expression
@@ -114,6 +127,9 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 	if !ok {
 		panic("Result is not a list")
 	}
+	for i := 0; i < len(tr.endnotes); i++ {
+		tr.endnotes[i].noteHx = te.evaluateList(tr.endnotes[i].noteAST) // May extend tr.endnotes
+	}
 	return res, err
 }
 
@@ -133,6 +149,40 @@ func doNothing(env sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
 	return sxpf.Nil(), nil
 }
 
+// Endnotes returns a SHTML object with all collected endnotes.
+func (tr *Transformer) Endnotes() *sxpf.List {
+	if len(tr.endnotes) == 0 {
+		return nil
+	}
+	result := sxpf.Nil().Cons(tr.Make("ol"))
+	currResult := result.AppendBang(sxpf.Nil().Cons(sxpf.Cons(tr.symClass, sxpf.MakeString("zs-endnotes"))).Cons(tr.symAttr))
+	for i, fni := range tr.endnotes {
+		noteNum := strconv.Itoa(i + 1)
+		noteID := tr.unique + noteNum
+
+		attrs := fni.attrs.Cons(sxpf.Cons(tr.symClass, sxpf.MakeString("zs-endnote"))).
+			Cons(sxpf.Cons(tr.Make("value"), sxpf.MakeString(noteNum))).
+			Cons(sxpf.Cons(tr.Make("id"), sxpf.MakeString("fn:"+noteID))).
+			Cons(sxpf.Cons(tr.Make("role"), sxpf.MakeString("doc-endnote"))).
+			Cons(tr.symAttr)
+
+		backref := sxpf.Nil().Cons(sxpf.MakeString("\u21a9\ufe0e")).
+			Cons(sxpf.Nil().
+				Cons(sxpf.Cons(tr.symClass, sxpf.MakeString("zs-endnote-backref"))).
+				Cons(sxpf.Cons(tr.Make("href"), sxpf.MakeString("#fnref:"+noteID))).
+				Cons(sxpf.Cons(tr.Make("role"), sxpf.MakeString("doc-backlink"))).
+				Cons(tr.symAttr)).
+			Cons(tr.symA)
+
+		li := sxpf.Nil().Cons(tr.Make("li"))
+		li.AppendBang(attrs).
+			ExtendBang(fni.noteHx).
+			AppendBang(sxpf.MakeString(" ")).AppendBang(backref)
+		currResult = currResult.AppendBang(li)
+	}
+	return result
+}
+
 // TransformEnv is the environment where the actual transformation takes places.
 type TransformEnv struct {
 	tr          *Transformer
@@ -142,17 +192,17 @@ type TransformEnv struct {
 	textEnc     *text.Encoder
 	noFootnotes bool
 	noLinks     bool
-	symAt       *sxpf.Symbol
+	symAttr     *sxpf.Symbol
 	symMeta     *sxpf.Symbol
 	symA        *sxpf.Symbol
 	symSpan     *sxpf.Symbol
 }
 
 func (te *TransformEnv) initialize() {
-	te.symAt = te.tr.symAt
-	te.symMeta = te.Make("meta")
-	te.symA = te.Make("a")
-	te.symSpan = te.Make("span")
+	te.symAttr = te.tr.symAttr
+	te.symMeta = te.tr.symMeta
+	te.symA = te.tr.symA
+	te.symSpan = te.tr.symSpan
 
 	te.bindMetadata()
 	te.bindBlocks()
@@ -275,6 +325,8 @@ func (te *TransformEnv) bindBlocks() {
 		return items
 	})
 
+	// sexpr.SymListQuote
+
 	te.bind(sexpr.NameSymTable, 1, func(args *sxpf.List) sxpf.Object {
 
 		thead := sxpf.Nil()
@@ -308,6 +360,10 @@ func (te *TransformEnv) bindBlocks() {
 	te.bind(sexpr.NameSymCellLeft, 0, te.makeCellFn("left"))
 	te.bind(sexpr.NameSymCellRight, 0, te.makeCellFn("right"))
 
+	// sexpr.SymRegionBlock
+	// sexpr.SymRegionQuote
+	// sexpr.SymRegionVerse
+
 	te.bind(sexpr.NameSymVerbatimComment, 1, func(args *sxpf.List) sxpf.Object {
 		if te.getAttributes(args).HasDefault() {
 			if s := te.getString(args.Tail()); s != "" {
@@ -317,7 +373,13 @@ func (te *TransformEnv) bindBlocks() {
 		}
 		return nil
 	})
+
+	// sexpr.SymVerbatimEval
 	te.bind(sexpr.NameSymVerbatimHTML, 2, te.transformHTML)
+	// sexpr.SymVerbatimProg
+	// sexpr.SymVerbatimZettel
+
+	// sexpr.SymTransclude
 }
 
 func (te *TransformEnv) makeListFn(tag string) transformFn {
@@ -405,6 +467,9 @@ func (te *TransformEnv) bindInlines() {
 		return te.transformLink(a.Set("href", refValue.String()).AddClass("external"), refValue, args.Tail().Tail())
 	})
 
+	// sexpr.SymEmbed
+	// sexpr.SymEmbedBLOB
+
 	te.bind(sexpr.NameSymCite, 2, func(args *sxpf.List) sxpf.Object {
 		result := sxpf.Nil()
 		argKey := args.Tail()
@@ -429,10 +494,33 @@ func (te *TransformEnv) bindInlines() {
 		if !te.tr.noLinks {
 			if fragment := te.getString(argFragment); fragment != "" {
 				a := attrs.Attributes{"id": fragment.String() + te.tr.unique}
-				return result.Cons(te.transformAttrbute(a)).Cons(te.Make("a"))
+				return result.Cons(te.transformAttrbute(a)).Cons(te.symA)
 			}
 		}
 		return result.Cons(te.symSpan)
+	})
+
+	te.bind(sexpr.NameSymFootnote, 1, func(args *sxpf.List) sxpf.Object {
+		if te.noFootnotes {
+			return sxpf.Nil()
+		}
+		attrPlist := sxpf.Nil()
+		if a := te.getAttributes(args); len(a) > 0 {
+			if attrs := te.transformAttrbute(a); attrs != nil {
+				attrPlist = attrs.Tail()
+			}
+		}
+
+		te.tr.endnotes = append(te.tr.endnotes, endnoteInfo{noteAST: args.Tail(), noteHx: nil, attrs: attrPlist})
+		noteNum := strconv.Itoa(len(te.tr.endnotes))
+		noteID := te.tr.unique + noteNum
+		hrefAttr := sxpf.Nil().Cons(sxpf.Cons(te.Make("role"), sxpf.MakeString("doc-noteref"))).
+			Cons(sxpf.Cons(te.Make("href"), sxpf.MakeString("#fn:"+noteID))).
+			Cons(sxpf.Cons(te.tr.symClass, sxpf.MakeString("zs-noteref"))).
+			Cons(te.symAttr)
+		href := sxpf.Nil().Cons(sxpf.MakeString(noteNum)).Cons(hrefAttr).Cons(te.symA)
+		supAttr := sxpf.Nil().Cons(sxpf.Cons(te.Make("id"), sxpf.MakeString("fnref:"+noteID))).Cons(te.symAttr)
+		return sxpf.Nil().Cons(href).Cons(supAttr).Cons(te.Make("sup"))
 	})
 
 	te.bind(sexpr.NameSymFormatDelete, 1, te.makeFormatFn("del"))
@@ -470,6 +558,8 @@ func (te *TransformEnv) bindInlines() {
 		a := setProgLang(te.getAttributes(args))
 		return te.transformLiteral(args, a, codeSym)
 	})
+
+	// sexpr.SymLiteralZettel
 }
 
 func (te *TransformEnv) makeFormatFn(tag string) transformFn {
