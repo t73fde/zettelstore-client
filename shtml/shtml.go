@@ -63,6 +63,9 @@ func NewTransformer(headingOffset int) *Transformer {
 	}
 }
 
+// SymbolFactory returns the symbol factory to create HTML symbols.
+func (tr *Transformer) SymbolFactory() sxpf.SymbolFactory { return tr.sf }
+
 // Make a new HTML symbol.
 func (tr *Transformer) Make(s string) *sxpf.Symbol { return tr.sf.Make(s) }
 
