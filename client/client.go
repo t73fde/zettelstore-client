@@ -401,7 +401,7 @@ func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, pa
 		return nil, statusToError(resp)
 	}
 
-	return reader.MakeReader(bufio.NewReaderSize(resp.Body, 8), sf).Read()
+	return reader.MakeReader(bufio.NewReaderSize(resp.Body, 8), reader.WithSymbolFactory(sf)).Read()
 }
 
 // GetMeta returns the metadata of a zettel.

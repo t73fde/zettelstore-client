@@ -28,9 +28,8 @@ func TestSexprText(t *testing.T) {
 		{`(INLINE (TEXT "a"))`, "a"},
 		{`(INLINE (SPACE "a"))`, " "},
 	}
-	sf := sxpf.MakeMappedFactory()
 	for i, tc := range testcases {
-		sval, err := reader.MakeReader(strings.NewReader(tc.src), sf).Read()
+		sval, err := reader.MakeReader(strings.NewReader(tc.src)).Read()
 		if err != nil {
 			t.Error(err)
 			continue

@@ -125,7 +125,7 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 		rb(&te)
 	}
 
-	val, err := eval.Eval(te.eenv, lst)
+	val, err := eval.Eval0(te.eenv, lst)
 	res, ok := val.(*sxpf.List)
 	if !ok {
 		panic("Result is not a list")
@@ -779,7 +779,7 @@ func (te *TransformEnv) Rebind(name string, fn func(sxpf.Environment, *sxpf.List
 
 func (te *TransformEnv) evaluate(val sxpf.Object) sxpf.Object {
 	if te.err == nil {
-		res, err := eval.Eval(te.eenv, val)
+		res, err := eval.Eval0(te.eenv, val)
 		if err == nil {
 			return res
 		}
