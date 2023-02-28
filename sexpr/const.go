@@ -16,10 +16,10 @@ import "codeberg.org/t73fde/sxpf"
 
 const (
 	// Symbols for Metanodes
-	NameSymAttr   = "ATTR"
 	NameSymBlock  = "BLOCK"
 	NameSymInline = "INLINE"
 	NameSymMeta   = "META"
+	NameSymQuote  = "quote"
 
 	// Symbols for Zettel node types.
 	NameSymBLOB            = "BLOB"
@@ -31,7 +31,7 @@ const (
 	NameSymDescription     = "DESCRIPTION"
 	NameSymEmbed           = "EMBED"
 	NameSymEmbedBLOB       = "EMBED-BLOB"
-	NameSymFootnote        = "FOOTNOTE"
+	NameSymEndnote         = "ENDNOTE"
 	NameSymFormatEmph      = "FORMAT-EMPH"
 	NameSymFormatDelete    = "FORMAT-DELETE"
 	NameSymFormatInsert    = "FORMAT-INSERT"
@@ -110,10 +110,10 @@ const (
 // ZettelSymbols collect all symbols needed to represent zettel data.
 type ZettelSymbols struct {
 	// Symbols for Metanodes
-	SymAttr   *sxpf.Symbol
 	SymBlock  *sxpf.Symbol
 	SymInline *sxpf.Symbol
 	SymMeta   *sxpf.Symbol
+	SymQuote  *sxpf.Symbol
 
 	// Symbols for Zettel node types.
 	SymBLOB            *sxpf.Symbol
@@ -125,7 +125,7 @@ type ZettelSymbols struct {
 	SymDescription     *sxpf.Symbol
 	SymEmbed           *sxpf.Symbol
 	SymEmbedBLOB       *sxpf.Symbol
-	SymFootnote        *sxpf.Symbol
+	SymEndnote         *sxpf.Symbol
 	SymFormatEmph      *sxpf.Symbol
 	SymFormatDelete    *sxpf.Symbol
 	SymFormatInsert    *sxpf.Symbol
@@ -205,10 +205,10 @@ type ZettelSymbols struct {
 
 func (zs *ZettelSymbols) InitializeZettelSymbols(sf sxpf.SymbolFactory) {
 	// Symbols for Metanodes
-	zs.SymAttr = sf.Make(NameSymAttr)
 	zs.SymBlock = sf.Make(NameSymBlock)
 	zs.SymInline = sf.Make(NameSymInline)
 	zs.SymMeta = sf.Make(NameSymMeta)
+	zs.SymQuote = sf.Make(NameSymQuote)
 
 	// Symbols for Zettel node types.
 	zs.SymBLOB = sf.Make(NameSymBLOB)
@@ -220,7 +220,7 @@ func (zs *ZettelSymbols) InitializeZettelSymbols(sf sxpf.SymbolFactory) {
 	zs.SymDescription = sf.Make(NameSymDescription)
 	zs.SymEmbed = sf.Make(NameSymEmbed)
 	zs.SymEmbedBLOB = sf.Make(NameSymEmbedBLOB)
-	zs.SymFootnote = sf.Make(NameSymFootnote)
+	zs.SymEndnote = sf.Make(NameSymEndnote)
 	zs.SymFormatEmph = sf.Make(NameSymFormatEmph)
 	zs.SymFormatDelete = sf.Make(NameSymFormatDelete)
 	zs.SymFormatInsert = sf.Make(NameSymFormatInsert)

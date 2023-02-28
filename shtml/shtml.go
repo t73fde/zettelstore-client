@@ -110,11 +110,11 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 	if astSF != nil && astSF == tr.sf {
 		panic("Invalid AST SymbolFactory")
 	}
-	eenv := sxpf.MakeRootEnvironment()
+	astEnv := sxpf.MakeRootEnvironment()
 	te := TransformEnv{
 		tr:          tr,
 		astSF:       astSF,
-		eenv:        eenv,
+		astEnv:      astEnv,
 		err:         nil,
 		textEnc:     text.NewEncoder(astSF),
 		noFootnotes: noFootnotes,
@@ -125,7 +125,7 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 		rb(&te)
 	}
 
-	val, err := eval.Eval0(te.eenv, lst)
+	val, err := eval.Eval0(te.astEnv, lst)
 	res, ok := val.(*sxpf.List)
 	if !ok {
 		panic("Result is not a list")
@@ -175,7 +175,7 @@ func (tr *Transformer) Endnotes() *sxpf.List {
 type TransformEnv struct {
 	tr          *Transformer
 	astSF       sxpf.SymbolFactory
-	eenv        sxpf.Environment
+	astEnv      sxpf.Environment
 	err         error
 	textEnc     *text.Encoder
 	noFootnotes bool
@@ -603,7 +603,7 @@ func (te *TransformEnv) bindInlines() {
 		return result.Cons(te.symSpan)
 	})
 
-	te.bind(sexpr.NameSymFootnote, 1, func(args *sxpf.List) sxpf.Object {
+	te.bind(sexpr.NameSymEndnote, 1, func(args *sxpf.List) sxpf.Object {
 		if te.noFootnotes {
 			return sxpf.Nil()
 		}
@@ -753,7 +753,7 @@ func (te *TransformEnv) transformBLOB(description *sxpf.List, syntax, data sxpf.
 type transformFn func(*sxpf.List) sxpf.Object
 
 func (te *TransformEnv) bind(name string, minArity int, fn transformFn) {
-	te.eenv.Bind(te.astSF.Make(name), eval.MakeSpecial(name, func(_ sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
+	te.astEnv.Bind(te.astSF.Make(name), eval.MakeSpecial(name, func(_ sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
 		if arity := args.Length(); arity < minArity {
 			return sxpf.Nil(), fmt.Errorf("not enough arguments (%d) for form %v (%d)", arity, name, minArity)
 		}
@@ -764,7 +764,7 @@ func (te *TransformEnv) bind(name string, minArity int, fn transformFn) {
 
 func (te *TransformEnv) Rebind(name string, fn func(sxpf.Environment, *sxpf.List, sxpf.Callable) sxpf.Object) {
 	sym := te.astSF.Make(name)
-	obj, found := te.eenv.Resolve(sym)
+	obj, found := te.astEnv.Resolve(sym)
 	if !found {
 		panic(sym.String())
 	}
@@ -772,7 +772,7 @@ func (te *TransformEnv) Rebind(name string, fn func(sxpf.Environment, *sxpf.List
 	if !ok {
 		panic(sym.String())
 	}
-	te.eenv.Bind(sym, eval.MakeSpecial(name, func(env sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
+	te.astEnv.Bind(sym, eval.MakeSpecial(name, func(env sxpf.Environment, args *sxpf.List) (sxpf.Object, error) {
 		res := fn(env, args, preFn)
 		return res, te.err
 	}))
@@ -780,7 +780,7 @@ func (te *TransformEnv) Rebind(name string, fn func(sxpf.Environment, *sxpf.List
 
 func (te *TransformEnv) evaluate(val sxpf.Object) sxpf.Object {
 	if te.err == nil {
-		res, err := eval.Eval0(te.eenv, val)
+		res, err := eval.Eval0(te.astEnv, val)
 		if err == nil {
 			return res
 		}
@@ -791,7 +791,7 @@ func (te *TransformEnv) evaluate(val sxpf.Object) sxpf.Object {
 
 func (te *TransformEnv) evaluateList(lst *sxpf.List) *sxpf.List {
 	if te.err == nil {
-		res, _, err := eval.EvalList(te.eenv, lst)
+		res, _, err := eval.EvalList(te.astEnv, lst)
 		if err == nil {
 			return res
 		}

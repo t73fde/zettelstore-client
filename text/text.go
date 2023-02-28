@@ -27,7 +27,7 @@ type Encoder struct {
 	symSpace *sxpf.Symbol
 	symSoft  *sxpf.Symbol
 	symHard  *sxpf.Symbol
-	symAttr  *sxpf.Symbol
+	symQuote *sxpf.Symbol
 }
 
 func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
@@ -41,7 +41,7 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 		symSpace: sf.Make(sexpr.NameSymSpace),
 		symSoft:  sf.Make(sexpr.NameSymSoft),
 		symHard:  sf.Make(sexpr.NameSymHard),
-		symAttr:  sf.Make(sexpr.NameSymAttr),
+		symQuote: sf.Make(sexpr.NameSymQuote),
 	}
 	return enc
 }
@@ -87,7 +87,7 @@ func (enc *Encoder) execute(obj sxpf.Object) {
 		enc.sb.WriteByte(' ')
 	} else if sym.IsEqual(enc.symHard) {
 		enc.sb.WriteByte('\n')
-	} else if !sym.IsEqual(enc.symAttr) {
+	} else if !sym.IsEqual(enc.symQuote) {
 		enc.executeList(cmd.Tail())
 	}
 }
