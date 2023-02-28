@@ -17,7 +17,6 @@ import (
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.
 func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
-	seq = seq.Tail() // TODO: check for "ATTR" symbol as head.
 	for elem := seq; elem != nil; elem = elem.Tail() {
 		p, ok := elem.Car().(*sxpf.List)
 		if !ok || p == nil {
