@@ -167,6 +167,7 @@ func (tr *Transformer) Endnotes() *sxpf.List {
 			AppendBang(sxpf.MakeString(" ")).AppendBang(backref)
 		currResult = currResult.AppendBang(li)
 	}
+	tr.endnotes = nil
 	return result
 }
 
