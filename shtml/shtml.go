@@ -127,15 +127,29 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 		rb(&te)
 	}
 
-	val, err := eval.Eval(te.astEnv, &eval.DefaultParser{}, lst)
+	parser := &eval.DefaultParser{}
+	val, err := eval.Eval(te.astEnv, parser, lst)
+	if err != nil {
+		return sxpf.Nil(), err
+	}
 	res, ok := val.(*sxpf.List)
 	if !ok {
 		panic("Result is not a list")
 	}
 	for i := 0; i < len(tr.endnotes); i++ {
-		tr.endnotes[i].noteHx = (tr.endnotes[i].noteAST) // May extend tr.endnotes
+		// May extend tr.endnotes
+		val, err = eval.Eval(te.astEnv, parser, tr.endnotes[i].noteAST)
+		if err != nil {
+			return res, err
+		}
+		en, ok2 := val.(*sxpf.List)
+		if !ok2 {
+			panic("Endnote is not a list")
+		}
+		tr.endnotes[i].noteHx = en
 	}
 	return res, err
+
 }
 
 // Endnotes returns a SHTML object with all collected endnotes.
@@ -606,7 +620,11 @@ func (te *TransformEnv) bindInlines() {
 			}
 		}
 
-		te.tr.endnotes = append(te.tr.endnotes, endnoteInfo{noteAST: args.Tail(), noteHx: nil, attrs: attrPlist})
+		text, ok := args.Tail().Car().(*sxpf.List)
+		if !ok {
+			return sxpf.Nil()
+		}
+		te.tr.endnotes = append(te.tr.endnotes, endnoteInfo{noteAST: text, noteHx: nil, attrs: attrPlist})
 		noteNum := strconv.Itoa(len(te.tr.endnotes))
 		noteID := te.tr.unique + noteNum
 		hrefAttr := sxpf.Nil().Cons(sxpf.Cons(te.Make("role"), sxpf.MakeString("doc-noteref"))).
