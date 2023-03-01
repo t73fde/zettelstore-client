@@ -50,8 +50,10 @@ type endnoteInfo struct {
 }
 
 // NewTransformer creates a new transformer object.
-func NewTransformer(headingOffset int) *Transformer {
-	sf := sxpf.MakeMappedFactory()
+func NewTransformer(headingOffset int, sf sxpf.SymbolFactory) *Transformer {
+	if sf == nil {
+		sf = sxpf.MakeMappedFactory()
+	}
 	return &Transformer{
 		sf:            sf,
 		rebinder:      nil,
