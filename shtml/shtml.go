@@ -58,11 +58,11 @@ func NewTransformer(headingOffset int, sf sxpf.SymbolFactory) *Transformer {
 		sf:            sf,
 		rebinder:      nil,
 		headingOffset: int64(headingOffset),
-		symAttr:       sf.Make(sxhtml.NameSymAttr),
-		symClass:      sf.Make("class"),
-		symMeta:       sf.Make("meta"),
-		symA:          sf.Make("a"),
-		symSpan:       sf.Make("span"),
+		symAttr:       sf.MustMake(sxhtml.NameSymAttr),
+		symClass:      sf.MustMake("class"),
+		symMeta:       sf.MustMake("meta"),
+		symA:          sf.MustMake("a"),
+		symSpan:       sf.MustMake("span"),
 	}
 }
 
@@ -70,7 +70,7 @@ func NewTransformer(headingOffset int, sf sxpf.SymbolFactory) *Transformer {
 func (tr *Transformer) SymbolFactory() sxpf.SymbolFactory { return tr.sf }
 
 // Make a new HTML symbol.
-func (tr *Transformer) Make(s string) *sxpf.Symbol { return tr.sf.Make(s) }
+func (tr *Transformer) Make(s string) *sxpf.Symbol { return tr.sf.MustMake(s) }
 
 // RebindProc is a procedure which is called every time before a tranformation takes place.
 type RebindProc func(*TransformEnv)
@@ -414,7 +414,7 @@ func (te *TransformEnv) bindBlocks() {
 			return sxpf.Nil()
 		}
 		if refValue := te.getString(ref.Tail()); refValue != "" {
-			if te.astSF.Make(sexpr.NameSymRefStateExternal).IsEqual(refKind) {
+			if te.astSF.MustMake(sexpr.NameSymRefStateExternal).IsEqual(refKind) {
 				a := te.getAttributes(args).Set("src", refValue.String()).AddClass("external")
 				return sxpf.Nil().Cons(sxpf.Nil().Cons(te.transformAttribute(a)).Cons(te.Make("img"))).Cons(te.symP)
 			}
@@ -575,7 +575,7 @@ func (te *TransformEnv) bindInlines() {
 		a, syntax, data := te.getAttributes(args), te.getString(argSyntax), te.getString(argSyntax.Tail())
 		summary, _ := a.Get(api.KeySummary)
 		return te.transformBLOB(
-			sxpf.MakeList(te.astSF.Make(sexpr.NameSymInline), sxpf.MakeString(summary)),
+			sxpf.MakeList(te.astSF.MustMake(sexpr.NameSymInline), sxpf.MakeString(summary)),
 			syntax,
 			data,
 		)
@@ -778,7 +778,7 @@ func (te *TransformEnv) flattenText(sb *strings.Builder, lst *sxpf.List) {
 type transformFn func(*sxpf.List) sxpf.Object
 
 func (te *TransformEnv) bind(name string, minArity int, fn transformFn) {
-	te.astEnv.Bind(te.astSF.Make(name), eval.MakeBuiltin(name, func(_ sxpf.Environment, args *sxpf.List, nArgs int) (sxpf.Object, error) {
+	te.astEnv.Bind(te.astSF.MustMake(name), eval.MakeBuiltin(name, func(_ sxpf.Environment, args *sxpf.List, nArgs int) (sxpf.Object, error) {
 		if nArgs < minArity {
 			return sxpf.Nil(), fmt.Errorf("not enough arguments (%d) for form %v (%d)", nArgs, name, minArity)
 		}
@@ -788,7 +788,7 @@ func (te *TransformEnv) bind(name string, minArity int, fn transformFn) {
 }
 
 func (te *TransformEnv) Rebind(name string, fn func(sxpf.Environment, *sxpf.List, int, sxpf.Callable) sxpf.Object) {
-	sym := te.astSF.Make(name)
+	sym := te.astSF.MustMake(name)
 	obj, found := te.astEnv.Resolve(sym)
 	if !found {
 		panic(sym.String())

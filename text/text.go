@@ -37,11 +37,11 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 	enc := &Encoder{
 		sf:       sf,
 		sb:       strings.Builder{},
-		symText:  sf.Make(sexpr.NameSymText),
-		symSpace: sf.Make(sexpr.NameSymSpace),
-		symSoft:  sf.Make(sexpr.NameSymSoft),
-		symHard:  sf.Make(sexpr.NameSymHard),
-		symQuote: sf.Make(sexpr.NameSymQuote),
+		symText:  sf.MustMake(sexpr.NameSymText),
+		symSpace: sf.MustMake(sexpr.NameSymSpace),
+		symSoft:  sf.MustMake(sexpr.NameSymSoft),
+		symHard:  sf.MustMake(sexpr.NameSymHard),
+		symQuote: sf.MustMake(sexpr.NameSymQuote),
 	}
 	return enc
 }
