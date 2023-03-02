@@ -18,6 +18,7 @@ const (
 	// Symbols for Metanodes
 	NameSymBlock  = "BLOCK"
 	NameSymInline = "INLINE"
+	NameSymList   = "LIST"
 	NameSymMeta   = "META"
 	NameSymQuote  = "quote"
 
@@ -66,7 +67,6 @@ const (
 	NameSymRegionBlock     = "REGION-BLOCK"
 	NameSymRegionQuote     = "REGION-QUOTE"
 	NameSymRegionVerse     = "REGION-VERSE"
-	NameSymRow             = "ROW"
 	NameSymSoft            = "SOFT"
 	NameSymSpace           = "SPACE"
 	NameSymTable           = "TABLE"
@@ -112,6 +112,7 @@ type ZettelSymbols struct {
 	// Symbols for Metanodes
 	SymBlock  *sxpf.Symbol
 	SymInline *sxpf.Symbol
+	SymList   *sxpf.Symbol
 	SymMeta   *sxpf.Symbol
 	SymQuote  *sxpf.Symbol
 
@@ -160,7 +161,6 @@ type ZettelSymbols struct {
 	SymRegionBlock     *sxpf.Symbol
 	SymRegionQuote     *sxpf.Symbol
 	SymRegionVerse     *sxpf.Symbol
-	SymRow             *sxpf.Symbol
 	SymSoft            *sxpf.Symbol
 	SymSpace           *sxpf.Symbol
 	SymTable           *sxpf.Symbol
@@ -207,6 +207,7 @@ func (zs *ZettelSymbols) InitializeZettelSymbols(sf sxpf.SymbolFactory) {
 	// Symbols for Metanodes
 	zs.SymBlock = sf.MustMake(NameSymBlock)
 	zs.SymInline = sf.MustMake(NameSymInline)
+	zs.SymList = sf.MustMake(NameSymList)
 	zs.SymMeta = sf.MustMake(NameSymMeta)
 	zs.SymQuote = sf.MustMake(NameSymQuote)
 
@@ -255,7 +256,6 @@ func (zs *ZettelSymbols) InitializeZettelSymbols(sf sxpf.SymbolFactory) {
 	zs.SymRegionBlock = sf.MustMake(NameSymRegionBlock)
 	zs.SymRegionQuote = sf.MustMake(NameSymRegionQuote)
 	zs.SymRegionVerse = sf.MustMake(NameSymRegionVerse)
-	zs.SymRow = sf.MustMake(NameSymRow)
 	zs.SymSoft = sf.MustMake(NameSymSoft)
 	zs.SymSpace = sf.MustMake(NameSymSpace)
 	zs.SymTable = sf.MustMake(NameSymTable)

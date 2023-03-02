@@ -214,13 +214,16 @@ func (te *TransformEnv) initialize() {
 	te.symSpan = te.tr.symSpan
 	te.symP = te.Make("p")
 
+	te.bind(sexpr.NameSymList, 0, listArgs)
 	te.bindMetadata()
 	te.bindBlocks()
 	te.bindInlines()
 }
 
+func listArgs(args *sxpf.List) sxpf.Object { return args }
+
 func (te *TransformEnv) bindMetadata() {
-	te.bind(sexpr.NameSymMeta, 0, func(args *sxpf.List) sxpf.Object { return args })
+	te.bind(sexpr.NameSymMeta, 0, listArgs)
 	te.bind(sexpr.NameSymTypeZettelmarkup, 2, func(args *sxpf.List) sxpf.Object {
 		a := make(attrs.Attributes, 2).
 			Set("name", te.getString(args).String()).
@@ -262,7 +265,7 @@ func (te *TransformEnv) bindMetadata() {
 }
 
 func (te *TransformEnv) bindBlocks() {
-	te.bind(sexpr.NameSymBlock, 0, func(args *sxpf.List) sxpf.Object { return args })
+	te.bind(sexpr.NameSymBlock, 0, listArgs)
 	te.bind(sexpr.NameSymPara, 0, func(args *sxpf.List) sxpf.Object { return args.Cons(te.symP) })
 	te.bind(sexpr.NameSymHeading, 5, func(args *sxpf.List) sxpf.Object {
 		nLevel := te.getInt64(args)
@@ -362,7 +365,6 @@ func (te *TransformEnv) bindBlocks() {
 		}
 		return table.Cons(te.Make("table"))
 	})
-	te.bind(sexpr.NameSymRow, 0, func(args *sxpf.List) sxpf.Object { return args })
 	te.bind(sexpr.NameSymCell, 0, te.makeCellFn(""))
 	te.bind(sexpr.NameSymCellCenter, 0, te.makeCellFn("center"))
 	te.bind(sexpr.NameSymCellLeft, 0, te.makeCellFn("left"))
@@ -495,7 +497,7 @@ func (te *TransformEnv) transformVerbatim(a attrs.Attributes, s sxpf.String) sxp
 }
 
 func (te *TransformEnv) bindInlines() {
-	te.bind(sexpr.NameSymInline, 0, func(args *sxpf.List) sxpf.Object { return args })
+	te.bind(sexpr.NameSymInline, 0, listArgs)
 	te.bind(sexpr.NameSymText, 1, func(args *sxpf.List) sxpf.Object { return te.getString(args) })
 	te.bind(sexpr.NameSymSpace, 0, func(args *sxpf.List) sxpf.Object {
 		if args.IsNil() {
@@ -789,7 +791,7 @@ func (te *TransformEnv) bind(name string, minArity int, fn transformFn) {
 
 func (te *TransformEnv) Rebind(name string, fn func(sxpf.Environment, *sxpf.List, int, sxpf.Callable) sxpf.Object) {
 	sym := te.astSF.MustMake(name)
-	obj, found := te.astEnv.Resolve(sym)
+	obj, found := te.astEnv.Lookup(sym)
 	if !found {
 		panic(sym.String())
 	}
