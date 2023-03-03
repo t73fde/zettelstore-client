@@ -114,7 +114,8 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 		panic("Invalid AST SymbolFactory")
 	}
 	astEnv := sxpf.MakeRootEnvironment()
-	quote.InstallQuote(astEnv, astSF, sexpr.NameSymQuote, nil, 0)
+	engine := eval.MakeEngine(astSF, astEnv, eval.MakeDefaultParser(), eval.MakeSimpleExecutor())
+	quote.InstallQuote(engine, sexpr.NameSymQuote, nil, 0)
 	te := TransformEnv{
 		tr:          tr,
 		astSF:       astSF,
@@ -129,8 +130,7 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 		rb(&te)
 	}
 
-	parser := &eval.DefaultParser{}
-	val, err := eval.Eval(te.astEnv, parser, lst)
+	val, err := engine.Eval(te.astEnv, lst)
 	if err != nil {
 		return sxpf.Nil(), err
 	}
@@ -140,7 +140,7 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 	}
 	for i := 0; i < len(tr.endnotes); i++ {
 		// May extend tr.endnotes
-		val, err = eval.Eval(te.astEnv, parser, tr.endnotes[i].noteAST)
+		val, err = engine.Eval(te.astEnv, tr.endnotes[i].noteAST)
 		if err != nil {
 			return res, err
 		}
