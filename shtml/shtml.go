@@ -69,6 +69,9 @@ func NewTransformer(headingOffset int, sf sxpf.SymbolFactory) *Transformer {
 // SymbolFactory returns the symbol factory to create HTML symbols.
 func (tr *Transformer) SymbolFactory() sxpf.SymbolFactory { return tr.sf }
 
+// SetUnique sets a prefix to make several HTML ids unique.
+func (tr *Transformer) SetUnique(s string) { tr.unique = s }
+
 // Make a new HTML symbol.
 func (tr *Transformer) Make(s string) *sxpf.Symbol { return tr.sf.MustMake(s) }
 
