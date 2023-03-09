@@ -285,11 +285,13 @@ func (te *TransformEnv) bindBlocks() {
 			a = a.Set("id", te.tr.unique+fragment)
 		}
 
-		result := argFragment.Tail()
-		if len(a) > 0 {
-			result = result.Cons(te.transformAttribute(a))
+		if result, ok := sxpf.GetList(argFragment.Tail().Car()); ok && result != nil {
+			if len(a) > 0 {
+				result = result.Cons(te.transformAttribute(a))
+			}
+			return result.Cons(te.Make("h" + level))
 		}
-		return result.Cons(te.Make("h" + level))
+		return sxpf.MakeList(te.Make("h"+level), sxpf.MakeString("<MISSING TEXT>"))
 	})
 	te.bind(sexpr.NameSymThematic, 0, func(args *sxpf.List) sxpf.Object {
 		result := sxpf.Nil()
