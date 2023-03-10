@@ -113,8 +113,12 @@ func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
 // TransformInline an inlines AST s-expression into a list of HTML s-expressions.
 func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool) (*sxpf.List, error) {
 	astSF := sxpf.FindSymbolFactory(lst)
-	if astSF != nil && astSF == tr.sf {
-		panic("Invalid AST SymbolFactory")
+	if astSF != nil {
+		if astSF == tr.sf {
+			panic("Invalid AST SymbolFactory")
+		}
+	} else {
+		astSF = sxpf.MakeMappedFactory()
 	}
 	astEnv := sxpf.MakeRootEnvironment()
 	engine := eval.MakeEngine(astSF, astEnv, eval.MakeDefaultParser(), eval.MakeSimpleExecutor())
