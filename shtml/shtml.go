@@ -379,9 +379,9 @@ func (te *TransformEnv) bindBlocks() {
 	te.bind(sexpr.NameSymCellLeft, 0, te.makeCellFn("left"))
 	te.bind(sexpr.NameSymCellRight, 0, te.makeCellFn("right"))
 
-	te.bind(sexpr.NameSymRegionBlock, 2, te.makeRegionFn(te.Make("div")))
-	te.bind(sexpr.NameSymRegionQuote, 2, te.makeRegionFn(te.Make("blockquote")))
-	te.bind(sexpr.NameSymRegionVerse, 2, te.makeRegionFn(te.Make("div")))
+	te.bind(sexpr.NameSymRegionBlock, 2, te.makeRegionFn(te.Make("div"), true))
+	te.bind(sexpr.NameSymRegionQuote, 2, te.makeRegionFn(te.Make("blockquote"), false))
+	te.bind(sexpr.NameSymRegionVerse, 2, te.makeRegionFn(te.Make("div"), false))
 
 	te.bind(sexpr.NameSymVerbatimComment, 1, func(args *sxpf.List) sxpf.Object {
 		if te.getAttributes(args).HasDefault() {
@@ -478,11 +478,16 @@ func (te *TransformEnv) makeCellFn(align string) transformFn {
 	}
 }
 
-func (te *TransformEnv) makeRegionFn(sym *sxpf.Symbol) transformFn {
+func (te *TransformEnv) makeRegionFn(sym *sxpf.Symbol, genericToClass bool) transformFn {
 	return func(args *sxpf.List) sxpf.Object {
-		// a := te.getAttributes(args)
-		result := sxpf.Nil().Cons(sym)
-		currResult := result
+		a := te.getAttributes(args)
+		if genericToClass {
+			if val, found := a.Get(""); found {
+				a = a.Remove("").AddClass(val)
+			}
+		}
+		result := sxpf.Nil().Cons(te.transformAttribute(a)).Cons(sym)
+		currResult := result.Last()
 		blockArg := args.Tail()
 		if region, ok := blockArg.Car().(*sxpf.List); ok {
 			currResult = currResult.ExtendBang(region)
