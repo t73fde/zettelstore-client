@@ -175,6 +175,7 @@ const (
 	EncodingHTML  = "html"
 	EncodingMD    = "md"
 	EncodingSexpr = "sexpr"
+	EncodingSHTML = "shtml"
 	EncodingText  = "text"
 	EncodingZMK   = "zmk"
 
@@ -186,6 +187,7 @@ var mapEncodingEnum = map[string]EncodingEnum{
 	EncodingHTML:  EncoderHTML,
 	EncodingMD:    EncoderMD,
 	EncodingSexpr: EncoderSexpr,
+	EncodingSHTML: EncoderSHTML,
 	EncodingText:  EncoderText,
 	EncodingZMK:   EncoderZmk,
 
@@ -217,6 +219,7 @@ const (
 	EncoderHTML
 	EncoderMD
 	EncoderSexpr
+	EncoderSHTML
 	EncoderText
 	EncoderZmk
 

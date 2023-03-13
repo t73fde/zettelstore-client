@@ -11,10 +11,11 @@
 package text_test
 
 import (
+	"strings"
 	"testing"
 
 	"codeberg.org/t73fde/sxpf"
-	"zettelstore.de/c/sexpr"
+	"codeberg.org/t73fde/sxpf/reader"
 	"zettelstore.de/c/text"
 )
 
@@ -24,16 +25,16 @@ func TestSexprText(t *testing.T) {
 		exp string
 	}{
 		{"()", ""},
-		{`(TEXT "a")`, "a"},
-		{`(SPACE "a")`, " "},
+		{`(INLINE (TEXT "a"))`, "a"},
+		{`(INLINE (SPACE "a"))`, " "},
 	}
 	for i, tc := range testcases {
-		sval, err := sxpf.ParseString(sexpr.Smk, tc.src)
+		sval, err := reader.MakeReader(strings.NewReader(tc.src)).Read()
 		if err != nil {
 			t.Error(err)
 			continue
 		}
-		seq, ok := sval.(*sxpf.Pair)
+		seq, ok := sval.(*sxpf.List)
 		if !ok {
 			t.Errorf("%d: not a list: %v", i, sval)
 		}

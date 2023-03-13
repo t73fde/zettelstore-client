@@ -20,6 +20,7 @@ import (
 	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/client"
+	"zettelstore.de/c/sexpr"
 )
 
 func TestZettelList(t *testing.T) {
@@ -46,31 +47,18 @@ func TestGetProtectedZettel(t *testing.T) {
 
 func TestGetSexprZettel(t *testing.T) {
 	c := getClient()
-	value, err := c.GetEvaluatedSexpr(context.Background(), api.ZidDefaultHome, api.PartContent)
+	sf := sxpf.MakeMappedFactory()
+	var zetSyms sexpr.ZettelSymbols
+	zetSyms.InitializeZettelSymbols(sf)
+	value, err := c.GetEvaluatedSexpr(context.Background(), api.ZidDefaultHome, api.PartContent, sf)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if value == nil {
+	if value.IsNil() {
 		t.Error("No data")
 	}
-	var env testEnv
-	env.t = t
-	res, err := sxpf.Eval(&env, value)
-	if err != nil {
-		t.Error(res, err)
-	}
 }
-
-type testEnv struct{ t *testing.T }
-
-func noneFn(sxpf.Environment, *sxpf.Pair, int) (sxpf.Value, error) { return sxpf.Nil(), nil }
-func (*testEnv) LookupForm(*sxpf.Symbol) (sxpf.Form, error) {
-	return sxpf.NewBuiltin("none", false, 0, -1, noneFn), nil
-}
-func (*testEnv) EvalSymbol(sym *sxpf.Symbol) (sxpf.Value, error) { return sym, nil }
-func (*testEnv) EvalOther(val sxpf.Value) (sxpf.Value, error)    { return val, nil }
-func (te *testEnv) EvalPair(p *sxpf.Pair) (sxpf.Value, error)    { return sxpf.EvalCallOrSeq(te, p) }
 
 var baseURL string
 

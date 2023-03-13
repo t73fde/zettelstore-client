@@ -10,24 +10,41 @@
 
 package sexpr
 
-import "codeberg.org/t73fde/sxpf"
+import (
+	"codeberg.org/t73fde/sxpf"
+	"zettelstore.de/c/attrs"
+)
 
-func MakeString(val sxpf.Value) string {
-	if strVal, ok := val.(*sxpf.String); ok {
-		return strVal.GetValue()
+// GetAttributes traverses a s-expression list and returns an attribute structure.
+func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
+	for elem := seq; elem != nil; elem = elem.Tail() {
+		p, ok := elem.Car().(*sxpf.List)
+		if !ok || p == nil {
+			continue
+		}
+		key := p.Car()
+		if !sxpf.IsAtom(key) {
+			continue
+		}
+		val := p.Cdr()
+		if tail, ok2 := val.(*sxpf.List); ok2 {
+			val = tail.Car()
+		}
+		if !sxpf.IsAtom(val) {
+			continue
+		}
+		result = result.Set(key.String(), val.String())
 	}
-	return ""
+	return result
 }
 
 // GetMetaContent returns the metadata and the content of a sexpr encoded zettel.
-func GetMetaContent(zettel sxpf.Value) (Meta, *sxpf.Pair) {
-	if pair, ok := zettel.(*sxpf.Pair); ok {
-		m := pair.GetFirst()
-		if s := pair.GetSecond(); s != nil {
-			if p, ok2 := s.(*sxpf.Pair); ok2 {
-				if content, err := p.GetPair(); err == nil {
-					return MakeMeta(m), content
-				}
+func GetMetaContent(zettel sxpf.Object) (Meta, *sxpf.List) {
+	if pair, ok := zettel.(*sxpf.List); ok {
+		m := pair.Car()
+		if s := pair.Tail(); s != nil {
+			if content, ok2 := s.Car().(*sxpf.List); ok2 {
+				return MakeMeta(m), content
 			}
 		}
 		return MakeMeta(m), nil
@@ -39,69 +56,69 @@ type Meta map[string]MetaValue
 type MetaValue struct {
 	Type  string
 	Key   string
-	Value sxpf.Value
+	Value sxpf.Object
 }
 
-func MakeMeta(val sxpf.Value) Meta {
+func MakeMeta(val sxpf.Object) Meta {
 	if result := doMakeMeta(val); len(result) > 0 {
 		return result
 	}
 	return nil
 }
-func doMakeMeta(val sxpf.Value) Meta {
+func doMakeMeta(val sxpf.Object) Meta {
 	result := make(map[string]MetaValue)
 	for {
-		if val == nil {
+		if sxpf.IsNil(val) {
 			return result
 		}
-		pair, ok := val.(*sxpf.Pair)
+		lst, ok := val.(*sxpf.List)
 		if !ok {
 			return result
 		}
-		if mv, ok2 := makeMetaValue(pair); ok2 {
+		if mv, ok2 := makeMetaValue(lst); ok2 {
 			result[mv.Key] = mv
 		}
-		val = pair.GetSecond()
+		val = lst.Cdr()
 	}
 }
-func makeMetaValue(pair *sxpf.Pair) (MetaValue, bool) {
+func makeMetaValue(pair *sxpf.List) (MetaValue, bool) {
 	var result MetaValue
-	typePair, ok := pair.GetFirst().(*sxpf.Pair)
+	typePair, ok := pair.Car().(*sxpf.List)
 	if !ok {
 		return result, false
 	}
-	typeVal, ok := typePair.GetFirst().(*sxpf.Symbol)
+	typeVal, ok := typePair.Car().(*sxpf.Symbol)
 	if !ok {
 		return result, false
 	}
-	keyPair, ok := typePair.GetSecond().(*sxpf.Pair)
+	keyPair, ok := typePair.Cdr().(*sxpf.List)
 	if !ok {
 		return result, false
 	}
-	keyStr, ok := keyPair.GetFirst().(*sxpf.String)
+	keyStr, ok := keyPair.Car().(sxpf.String)
 	if !ok {
 		return result, false
 	}
-	valPair, ok := keyPair.GetSecond().(*sxpf.Pair)
+	valPair, ok := keyPair.Cdr().(*sxpf.List)
 	if !ok {
 		return result, false
 	}
-	result.Type = typeVal.GetValue()
-	result.Key = keyStr.GetValue()
-	result.Value = valPair.GetFirst()
+	result.Type = typeVal.CanonicalName()
+	result.Key = keyStr.String()
+	result.Value = valPair.Car()
 	return result, true
 }
 
 func (m Meta) GetString(key string) string {
 	if v, found := m[key]; found {
-		return MakeString(v.Value)
+		return v.Value.String()
 	}
 	return ""
 }
 
-func (m Meta) GetPair(key string) *sxpf.Pair {
+func (m Meta) GetList(key string) *sxpf.List {
 	if mv, found := m[key]; found {
-		if seq, ok := mv.Value.(*sxpf.Pair); ok && !seq.IsEmpty() {
+		if seq, ok := mv.Value.(*sxpf.List); ok {
 			return seq
 		}
 	}
