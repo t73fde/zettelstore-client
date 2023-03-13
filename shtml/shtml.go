@@ -486,7 +486,11 @@ func (te *TransformEnv) makeRegionFn(sym *sxpf.Symbol, genericToClass bool) tran
 				a = a.Remove("").AddClass(val)
 			}
 		}
-		result := sxpf.Nil().Cons(te.transformAttribute(a)).Cons(sym)
+		result := sxpf.Nil()
+		if len(a) > 0 {
+			result = result.Cons(te.transformAttribute(a))
+		}
+		result = result.Cons(sym)
 		currResult := result.Last()
 		blockArg := args.Tail()
 		if region, ok := blockArg.Car().(*sxpf.List); ok {
