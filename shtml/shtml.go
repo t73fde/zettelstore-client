@@ -90,7 +90,7 @@ func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sxpf.List {
 	keys := a.Keys()
 	for i := len(keys) - 1; i >= 0; i-- {
 		key := keys[i]
-		if key != attrs.DefaultAttribute {
+		if key != "" && key != attrs.DefaultAttribute {
 			plist = plist.Cons(sxpf.Cons(tr.Make(key), sxpf.MakeString(a[key])))
 		}
 	}
@@ -401,7 +401,7 @@ func (te *TransformEnv) bindBlocks() {
 		return te.transformVerbatim(te.getAttributes(args).AddClass("zs-math"), te.getString(args.Tail()))
 	})
 	te.bind(sexpr.NameSymVerbatimProg, 2, func(args *sxpf.List) sxpf.Object {
-		a := setProgLang(te.getAttributes(args))
+		a := te.getAttributes(args)
 		content := te.getString(args.Tail())
 		if a.HasDefault() {
 			content = sxpf.MakeString(visibleReplacer.Replace(content.String()))
@@ -506,6 +506,7 @@ func (te *TransformEnv) makeRegionFn(sym *sxpf.Symbol, genericToClass bool) tran
 }
 
 func (te *TransformEnv) transformVerbatim(a attrs.Attributes, s sxpf.String) sxpf.Object {
+	a = setProgLang(a)
 	code := sxpf.Nil().Cons(s)
 	if al := te.transformAttribute(a); al != nil {
 		code = code.Cons(al)
@@ -690,8 +691,7 @@ func (te *TransformEnv) bindInlines() {
 		return te.transformLiteral(args, nil, sampSym)
 	})
 	te.bind(sexpr.NameSymLiteralProg, 2, func(args *sxpf.List) sxpf.Object {
-		a := setProgLang(te.getAttributes(args))
-		return te.transformLiteral(args, a, codeSym)
+		return te.transformLiteral(args, nil, codeSym)
 	})
 
 	te.bind(sexpr.NameSymLiteralZettel, 0, func(*sxpf.List) sxpf.Object { return sxpf.Nil() })
@@ -738,6 +738,7 @@ func (te *TransformEnv) transformLiteral(args *sxpf.List, a attrs.Attributes, sy
 	if a == nil {
 		a = te.getAttributes(args)
 	}
+	a = setProgLang(a)
 	literal := te.getString(args.Tail()).String()
 	if a.HasDefault() {
 		a = a.RemoveDefault()
