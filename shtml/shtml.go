@@ -273,7 +273,15 @@ func (te *TransformEnv) bindMetadata() {
 
 func (te *TransformEnv) bindBlocks() {
 	te.bind(sexpr.NameSymBlock, 0, listArgs)
-	te.bind(sexpr.NameSymPara, 0, func(args *sxpf.List) sxpf.Object { return args.Cons(te.symP) })
+	te.bind(sexpr.NameSymPara, 0, func(args *sxpf.List) sxpf.Object {
+		for ; args != nil; args = args.Tail() {
+			lst, ok := sxpf.GetList(args.Car())
+			if !ok || lst != nil {
+				break
+			}
+		}
+		return args.Cons(te.symP)
+	})
 	te.bind(sexpr.NameSymHeading, 5, func(args *sxpf.List) sxpf.Object {
 		nLevel := te.getInt64(args)
 		if nLevel <= 0 {
