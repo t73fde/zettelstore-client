@@ -272,7 +272,10 @@ func (c *Client) ListZettel(ctx context.Context, query string) ([][]byte, error)
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	switch resp.StatusCode {
+	case http.StatusOK:
+	case http.StatusNoContent:
+	default:
 		return nil, statusToError(resp)
 	}
 	data, err := io.ReadAll(resp.Body)
@@ -317,7 +320,10 @@ func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) (
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	switch resp.StatusCode {
+	case http.StatusOK:
+	case http.StatusNoContent:
+	default:
 		return nil, statusToError(resp)
 	}
 	return io.ReadAll(resp.Body)
@@ -367,7 +373,10 @@ func (c *Client) getZettelString(ctx context.Context, zid api.ZettelID, enc api.
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	switch resp.StatusCode {
+	case http.StatusOK:
+	case http.StatusNoContent:
+	default:
 		return nil, statusToError(resp)
 	}
 	return io.ReadAll(resp.Body)
@@ -400,7 +409,6 @@ func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, pa
 	if resp.StatusCode != http.StatusOK {
 		return nil, statusToError(resp)
 	}
-
 	return reader.MakeReader(bufio.NewReaderSize(resp.Body, 8), reader.WithSymbolFactory(sf)).Read()
 }
 
