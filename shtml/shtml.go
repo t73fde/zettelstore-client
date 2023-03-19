@@ -72,6 +72,9 @@ func (tr *Transformer) SymbolFactory() sxpf.SymbolFactory { return tr.sf }
 // SetUnique sets a prefix to make several HTML ids unique.
 func (tr *Transformer) SetUnique(s string) { tr.unique = s }
 
+// IsValidName returns true, if name is a valid symbol name.
+func (tr *Transformer) IsValidName(s string) bool { return tr.sf.IsValidName(s) }
+
 // Make a new HTML symbol.
 func (tr *Transformer) Make(s string) *sxpf.Symbol { return tr.sf.MustMake(s) }
 
@@ -90,7 +93,7 @@ func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sxpf.List {
 	keys := a.Keys()
 	for i := len(keys) - 1; i >= 0; i-- {
 		key := keys[i]
-		if key != "" && key != attrs.DefaultAttribute {
+		if key != attrs.DefaultAttribute && tr.IsValidName(key) {
 			plist = plist.Cons(sxpf.Cons(tr.Make(key), sxpf.MakeString(a[key])))
 		}
 	}
