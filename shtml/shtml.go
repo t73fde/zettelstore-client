@@ -110,11 +110,6 @@ func (tr *Transformer) TransformMeta(a attrs.Attributes) *sxpf.List {
 
 // Transform an AST s-expression into a list of HTML s-expressions.
 func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
-	return tr.TransformInline(lst, false, false)
-}
-
-// TransformInline an inlines AST s-expression into a list of HTML s-expressions.
-func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool) (*sxpf.List, error) {
 	astSF := sxpf.FindSymbolFactory(lst)
 	if astSF != nil {
 		if astSF == tr.sf {
@@ -127,13 +122,11 @@ func (tr *Transformer) TransformInline(lst *sxpf.List, noFootnotes, noLinks bool
 	engine := eval.MakeEngine(astSF, astEnv, eval.MakeDefaultParser(), eval.MakeSimpleExecutor())
 	quote.InstallQuote(engine, sexpr.NameSymQuote, nil, 0)
 	te := TransformEnv{
-		tr:          tr,
-		astSF:       astSF,
-		astEnv:      astEnv,
-		err:         nil,
-		textEnc:     text.NewEncoder(astSF),
-		noFootnotes: noFootnotes,
-		noLinks:     noLinks,
+		tr:      tr,
+		astSF:   astSF,
+		astEnv:  astEnv,
+		err:     nil,
+		textEnc: text.NewEncoder(astSF),
 	}
 	te.initialize()
 	if rb := tr.rebinder; rb != nil {
@@ -206,8 +199,6 @@ type TransformEnv struct {
 	astEnv      sxpf.Environment
 	err         error
 	textEnc     *text.Encoder
-	noFootnotes bool
-	noLinks     bool
 	symNoEscape *sxpf.Symbol
 	symAttr     *sxpf.Symbol
 	symMeta     *sxpf.Symbol
@@ -644,9 +635,6 @@ func (te *TransformEnv) bindInlines() {
 	})
 
 	te.bind(sexpr.NameSymEndnote, 1, func(args *sxpf.List) sxpf.Object {
-		if te.noFootnotes {
-			return sxpf.Nil()
-		}
 		attrPlist := sxpf.Nil()
 		if a := te.getAttributes(args); len(a) > 0 {
 			if attrs := te.transformAttribute(a); attrs != nil {
