@@ -1,8 +1,12 @@
 <title>Change Log</title>
 
+<a name="0_12"></a>
+<h2>Changes for Version 0.12.0 (pending)</h2>
+
 <a name="0_11"></a>
-<h2>Changes for Version 0.11.0 (pending)</h2>
+<h2>Changes for Version 0.11.0 (2023-03-27)</h2>
   *  Remove all zjson related declarations.
+  *  Generate HTML via SxHTML, not manually and direct.
 
 <a name="0_10"></a>
 <h2>Changes for Version 0.10.0 (2023-01-24)</h2>
