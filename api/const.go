@@ -92,6 +92,7 @@ const (
 	KeyCreated      = "created"
 	KeyCredential   = "credential"
 	KeyDead         = "dead"
+	KeyExpire       = "expire"
 	KeyFolge        = "folge"
 	KeyForward      = "forward"
 	KeyLang         = "lang"
