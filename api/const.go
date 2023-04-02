@@ -181,6 +181,7 @@ const (
 	EncodingZMK   = "zmk"
 
 	EncodingPlain = "plain"
+	EncodingData  = "data"
 	EncodingJson  = "json"
 )
 
@@ -193,6 +194,7 @@ var mapEncodingEnum = map[string]EncodingEnum{
 	EncodingZMK:   EncoderZmk,
 
 	EncodingPlain: EncoderPlain,
+	EncodingData:  EncoderData,
 	EncodingJson:  EncoderJson,
 }
 var mapEnumEncoding = map[EncodingEnum]string{}
@@ -225,6 +227,7 @@ const (
 	EncoderZmk
 
 	EncoderPlain
+	EncoderData
 	EncoderJson
 )
 
