@@ -18,7 +18,7 @@ const (
 	// Symbols for Metanodes
 	NameSymBlock  = "BLOCK"
 	NameSymInline = "INLINE"
-	NameSymList   = "LIST"
+	NameSymList   = "list"
 	NameSymMeta   = "META"
 	NameSymQuote  = "quote"
 
