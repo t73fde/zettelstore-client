@@ -103,7 +103,7 @@ func makeMetaValue(pair *sxpf.List) (MetaValue, bool) {
 	if !ok {
 		return result, false
 	}
-	result.Type = typeVal.CanonicalName()
+	result.Type = typeVal.Name()
 	result.Key = keyStr.String()
 	result.Value = valPair.Car()
 	return result, true
