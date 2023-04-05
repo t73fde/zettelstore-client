@@ -201,7 +201,6 @@ type TransformEnv struct {
 	textEnc     *text.Encoder
 	symNoEscape *sxpf.Symbol
 	symAttr     *sxpf.Symbol
-	symMeta     *sxpf.Symbol
 	symA        *sxpf.Symbol
 	symSpan     *sxpf.Symbol
 	symP        *sxpf.Symbol
@@ -210,7 +209,6 @@ type TransformEnv struct {
 func (te *TransformEnv) initialize() {
 	te.symNoEscape = te.Make(sxhtml.NameSymNoEscape)
 	te.symAttr = te.tr.symAttr
-	te.symMeta = te.tr.symMeta
 	te.symA = te.tr.symA
 	te.symSpan = te.tr.symSpan
 	te.symP = te.Make("p")
@@ -233,7 +231,7 @@ func (te *TransformEnv) bindMetadata() {
 	})
 	metaString := func(args *sxpf.List) sxpf.Object {
 		a := make(attrs.Attributes, 2).
-			Set("name", te.getString(args).String()).
+			Set("name", te.getSymbol(args).Name()).
 			Set("content", te.getString(args.Tail()).String())
 		return te.transformMeta(a)
 	}
@@ -256,7 +254,7 @@ func (te *TransformEnv) bindMetadata() {
 			s = s[1:]
 		}
 		a := make(attrs.Attributes, 2).
-			Set("name", te.getString(args).String()).
+			Set("name", te.getSymbol(args).Name()).
 			Set("content", s)
 		return te.transformMeta(a)
 	}
@@ -824,12 +822,23 @@ func (te *TransformEnv) Rebind(name string, fn func(sxpf.Environment, *sxpf.List
 }
 
 func (te *TransformEnv) Make(name string) *sxpf.Symbol { return te.tr.Make(name) }
+func (te *TransformEnv) getSymbol(lst *sxpf.List) *sxpf.Symbol {
+	if te.err != nil {
+		return nil
+	}
+	val := lst.Car()
+	if sym, ok := sxpf.GetSymbol(val); ok {
+		return sym
+	}
+	te.err = fmt.Errorf("%v/%T is not a symbol", val, val)
+	return nil
+}
 func (te *TransformEnv) getString(lst *sxpf.List) sxpf.String {
 	if te.err != nil {
 		return ""
 	}
 	val := lst.Car()
-	if s, ok := val.(sxpf.String); ok {
+	if s, ok := sxpf.GetString(val); ok {
 		return s
 	}
 	te.err = fmt.Errorf("%v/%T is not a string", val, val)
@@ -840,7 +849,7 @@ func (te *TransformEnv) getInt64(lst *sxpf.List) int64 {
 		return -1017
 	}
 	val := lst.Car()
-	if num, ok := val.(*sxpf.Number); ok {
+	if num, ok := sxpf.GetNumber(val); ok {
 		return num.GetInt64()
 	}
 	te.err = fmt.Errorf("%v/%T is not a number", val, val)
@@ -849,7 +858,7 @@ func (te *TransformEnv) getInt64(lst *sxpf.List) int64 {
 func (te *TransformEnv) getList(lst *sxpf.List) *sxpf.List {
 	if te.err == nil {
 		val := lst.Car()
-		if res, ok := val.(*sxpf.List); ok {
+		if res, ok := sxpf.GetList(val); ok {
 			return res
 		}
 		te.err = fmt.Errorf("%v/%T is not a list", val, val)
