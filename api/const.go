@@ -29,16 +29,15 @@ const (
 	ZidConfiguration        = ZettelID("00000000000100")
 
 	// WebUI HTML templates are in the range 10000..19999
-	ZidBaseTemplate    = ZettelID("00000000010100")
-	ZidLoginTemplate   = ZettelID("00000000010200")
-	ZidListTemplate    = ZettelID("00000000010300")
-	ZidZettelTemplate  = ZettelID("00000000010401")
-	ZidInfoTemplate    = ZettelID("00000000010402")
-	ZidFormTemplate    = ZettelID("00000000010403")
-	ZidRenameTemplate  = ZettelID("00000000010404")
-	ZidDeleteTemplate  = ZettelID("00000000010405")
-	ZidContextTemplate = ZettelID("00000000010406")
-	ZidErrorTemplate   = ZettelID("00000000010700")
+	ZidBaseTemplate   = ZettelID("00000000010100")
+	ZidLoginTemplate  = ZettelID("00000000010200")
+	ZidListTemplate   = ZettelID("00000000010300")
+	ZidZettelTemplate = ZettelID("00000000010401")
+	ZidInfoTemplate   = ZettelID("00000000010402")
+	ZidFormTemplate   = ZettelID("00000000010403")
+	ZidRenameTemplate = ZettelID("00000000010404")
+	ZidDeleteTemplate = ZettelID("00000000010405")
+	ZidErrorTemplate  = ZettelID("00000000010700")
 
 	// CSS-related zettel are in the range 20000..29999
 	ZidBaseCSS    = ZettelID("00000000020001")
@@ -154,21 +153,12 @@ const (
 // Values for HTTP query parameter.
 const (
 	QueryKeyCommand   = "cmd"
-	QueryKeyCost      = "cost"
-	QueryKeyDir       = "dir"
 	QueryKeyEncoding  = "enc"
 	QueryKeyParseOnly = "parseonly"
-	QueryKeyLimit     = "limit"
 	QueryKeyPart      = "part"
 	QueryKeyPhrase    = "phrase"
 	QueryKeyQuery     = "q"
 	QueryKeySeed      = "_seed"
-)
-
-// Supported dir values.
-const (
-	DirBackward = "backward"
-	DirForward  = "forward"
 )
 
 // Supported encoding values.
@@ -258,6 +248,7 @@ const (
 // Supported search operator representations
 const (
 	ActionSeparator        = "|"
+	ContextDirective       = "CONTEXT"
 	ExistOperator          = "?"
 	ExistNotOperator       = "!?"
 	SearchOperatorNot      = "!"
