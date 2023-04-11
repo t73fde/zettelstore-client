@@ -47,13 +47,6 @@ const (
 	ZettelCanDelete              // Requesting user is allowed to delete the zettel
 )
 
-// AuthJSON contains the result of an authentication call.
-type AuthJSON struct {
-	Token   string `json:"token"`
-	Type    string `json:"token_type"`
-	Expires int    `json:"expires_in"`
-}
-
 // ZidJSON contains the identifier data of a zettel.
 type ZidJSON struct {
 	ID ZettelID `json:"id"`

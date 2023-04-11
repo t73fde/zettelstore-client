@@ -16,6 +16,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -166,15 +167,32 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	if resp.StatusCode != http.StatusOK {
 		return statusToError(resp)
 	}
-	dec := json.NewDecoder(resp.Body)
-	var tinfo api.AuthJSON
-	err = dec.Decode(&tinfo)
+	rd := reader.MakeReader(resp.Body)
+	obj, err := rd.Read()
 	if err != nil {
 		return err
 	}
-	c.token = tinfo.Token
-	c.tokenType = tinfo.Type
-	c.expires = time.Now().Add(time.Duration(tinfo.Expires*10/9) * time.Second)
+	lst, ok := sxpf.GetList(obj)
+	if !ok {
+		return fmt.Errorf("list expected, but got %t/%v", obj, obj)
+	}
+	tokenType, ok := sxpf.GetString(lst.Car())
+	if !ok {
+		return fmt.Errorf("no token type found: %v/%v", lst, lst.Car())
+	}
+	lstToken := lst.Tail()
+	token, ok := sxpf.GetString(lstToken.Car())
+	if !ok || len(token) < 20 {
+		return fmt.Errorf("no valid token found: %v/%v", lst, lstToken.Car())
+	}
+	lstExpire := lstToken.Tail()
+	expire, ok := sxpf.GetNumber(lstExpire.Car())
+	if !ok {
+		return fmt.Errorf("no valid expire: %v/%v", lst, lstExpire.Car())
+	}
+	c.token = token.String()
+	c.tokenType = tokenType.String()
+	c.expires = time.Now().Add(time.Duration(expire.GetInt64()*10/9) * time.Second)
 	return nil
 }
 
