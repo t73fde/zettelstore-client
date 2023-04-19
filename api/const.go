@@ -252,6 +252,8 @@ const (
 	ExistOperator          = "?"
 	ExistNotOperator       = "!?"
 	SearchOperatorNot      = "!"
+	SearchOperatorEqual    = "="
+	SearchOperatorNotEqual = "!="
 	SearchOperatorHas      = ":"
 	SearchOperatorHasNot   = "!:"
 	SearchOperatorPrefix   = ">"
