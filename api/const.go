@@ -129,6 +129,7 @@ const (
 	ValueSyntaxMustache    = "mustache"
 	ValueSyntaxNone        = "none"
 	ValueSyntaxSVG         = "svg"
+	ValueSyntaxSxn         = "sxn"
 	ValueSyntaxText        = "text"
 	ValueSyntaxZmk         = "zmk"
 	ValueUserRoleCreator   = "creator"
