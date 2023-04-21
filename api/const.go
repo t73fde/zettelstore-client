@@ -167,8 +167,8 @@ const (
 const (
 	EncodingHTML  = "html"
 	EncodingMD    = "md"
-	EncodingSexpr = "sexpr"
 	EncodingSHTML = "shtml"
+	EncodingSz    = "sz"
 	EncodingText  = "text"
 	EncodingZMK   = "zmk"
 
@@ -180,8 +180,8 @@ const (
 var mapEncodingEnum = map[string]EncodingEnum{
 	EncodingHTML:  EncoderHTML,
 	EncodingMD:    EncoderMD,
-	EncodingSexpr: EncoderSexpr,
 	EncodingSHTML: EncoderSHTML,
+	EncodingSz:    EncoderSz,
 	EncodingText:  EncoderText,
 	EncodingZMK:   EncoderZmk,
 
@@ -213,8 +213,8 @@ const (
 	EncoderUnknown EncodingEnum = iota
 	EncoderHTML
 	EncoderMD
-	EncoderSexpr
 	EncoderSHTML
+	EncoderSz
 	EncoderText
 	EncoderZmk
 

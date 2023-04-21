@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"codeberg.org/t73fde/sxpf"
-	"zettelstore.de/c/sexpr"
+	"zettelstore.de/c/sz"
 )
 
 // Encoder is the structure to hold relevant data to execute the encoding.
@@ -37,11 +37,11 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 	enc := &Encoder{
 		sf:       sf,
 		sb:       strings.Builder{},
-		symText:  sf.MustMake(sexpr.NameSymText),
-		symSpace: sf.MustMake(sexpr.NameSymSpace),
-		symSoft:  sf.MustMake(sexpr.NameSymSoft),
-		symHard:  sf.MustMake(sexpr.NameSymHard),
-		symQuote: sf.MustMake(sexpr.NameSymQuote),
+		symText:  sf.MustMake(sz.NameSymText),
+		symSpace: sf.MustMake(sz.NameSymSpace),
+		symSoft:  sf.MustMake(sz.NameSymSoft),
+		symHard:  sf.MustMake(sz.NameSymHard),
+		symQuote: sf.MustMake(sz.NameSymQuote),
 	}
 	return enc
 }

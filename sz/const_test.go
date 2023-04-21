@@ -8,19 +8,19 @@
 // and obligations under this license.
 //-----------------------------------------------------------------------------
 
-package sexpr_test
+package sz_test
 
 import (
 	"testing"
 
 	"codeberg.org/t73fde/sxpf"
-	"zettelstore.de/c/sexpr"
+	"zettelstore.de/c/sz"
 )
 
 func BenchmarkInitializeZettelSymbols(b *testing.B) {
 	sf := sxpf.MakeMappedFactory()
 	for i := 0; i < b.N; i++ {
-		var zs sexpr.ZettelSymbols
+		var zs sz.ZettelSymbols
 		zs.InitializeZettelSymbols(sf)
 	}
 }

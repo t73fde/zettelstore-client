@@ -19,7 +19,7 @@ import (
 	"zettelstore.de/c/text"
 )
 
-func TestSexprText(t *testing.T) {
+func TestSzText(t *testing.T) {
 	testcases := []struct {
 		src string
 		exp string

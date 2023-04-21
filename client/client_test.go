@@ -20,7 +20,7 @@ import (
 	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/client"
-	"zettelstore.de/c/sexpr"
+	"zettelstore.de/c/sz"
 )
 
 func TestZettelList(t *testing.T) {
@@ -45,12 +45,12 @@ func TestGetProtectedZettel(t *testing.T) {
 	}
 }
 
-func TestGetSexprZettel(t *testing.T) {
+func TestGetSzZettel(t *testing.T) {
 	c := getClient()
 	sf := sxpf.MakeMappedFactory()
-	var zetSyms sexpr.ZettelSymbols
+	var zetSyms sz.ZettelSymbols
 	zetSyms.InitializeZettelSymbols(sf)
-	value, err := c.GetEvaluatedSexpr(context.Background(), api.ZidDefaultHome, api.PartContent, sf)
+	value, err := c.GetEvaluatedSz(context.Background(), api.ZidDefaultHome, api.PartContent, sf)
 	if err != nil {
 		t.Error(err)
 		return

@@ -400,19 +400,19 @@ func (c *Client) getZettelString(ctx context.Context, zid api.ZettelID, enc api.
 	return io.ReadAll(resp.Body)
 }
 
-// GetParsedSexpr returns an parsed zettel as a Sexpr-decoded data structure.
-func (c *Client) GetParsedSexpr(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Object, error) {
-	return c.getSexpr(ctx, zid, part, true, sf)
+// GetParsedSz returns an parsed zettel as a Sexpr-decoded data structure.
+func (c *Client) GetParsedSz(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Object, error) {
+	return c.getSz(ctx, zid, part, true, sf)
 }
 
-// GetEvaluatedSexpr returns an evaluated zettel as a Sexpr-decoded data structure.
-func (c *Client) GetEvaluatedSexpr(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Object, error) {
-	return c.getSexpr(ctx, zid, part, false, sf)
+// GetEvaluatedSz returns an evaluated zettel as a Sexpr-decoded data structure.
+func (c *Client) GetEvaluatedSz(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Object, error) {
+	return c.getSz(ctx, zid, part, false, sf)
 }
 
-func (c *Client) getSexpr(ctx context.Context, zid api.ZettelID, part string, parseOnly bool, sf sxpf.SymbolFactory) (sxpf.Object, error) {
+func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parseOnly bool, sf sxpf.SymbolFactory) (sxpf.Object, error) {
 	ub := c.newURLBuilder('z').SetZid(zid)
-	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingSexpr)
+	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingSz)
 	if part != "" {
 		ub.AppendKVQuery(api.QueryKeyPart, part)
 	}

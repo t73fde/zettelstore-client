@@ -8,7 +8,7 @@
 // and obligations under this license.
 //-----------------------------------------------------------------------------
 
-package sexpr
+package sz
 
 import (
 	"codeberg.org/t73fde/sxpf"
@@ -38,7 +38,7 @@ func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
 	return result
 }
 
-// GetMetaContent returns the metadata and the content of a sexpr encoded zettel.
+// GetMetaContent returns the metadata and the content of a sz encoded zettel.
 func GetMetaContent(zettel sxpf.Object) (Meta, *sxpf.List) {
 	if pair, ok := zettel.(*sxpf.List); ok {
 		m := pair.Car()

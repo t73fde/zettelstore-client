@@ -8,7 +8,7 @@
 // and obligations under this license.
 //-----------------------------------------------------------------------------
 
-package sexpr
+package sz
 
 import "codeberg.org/t73fde/sxpf"
 
