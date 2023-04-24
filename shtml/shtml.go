@@ -120,7 +120,7 @@ func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
 	}
 	astEnv := sxpf.MakeRootEnvironment()
 	engine := eval.MakeEngine(astSF, astEnv, eval.MakeDefaultParser(), eval.MakeSimpleExecutor())
-	quote.InstallQuote(engine, sz.NameSymQuote, nil, 0)
+	quote.InstallQuoteSyntax(astEnv, astSF.MustMake(sz.NameSymQuote))
 	te := TransformEnv{
 		tr:      tr,
 		astSF:   astSF,
