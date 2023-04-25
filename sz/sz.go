@@ -18,7 +18,7 @@ import (
 // GetAttributes traverses a s-expression list and returns an attribute structure.
 func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
 	for elem := seq; elem != nil; elem = elem.Tail() {
-		p, ok := elem.Car().(*sxpf.List)
+		p, ok := sxpf.GetList(elem.Car())
 		if !ok || p == nil {
 			continue
 		}
@@ -27,7 +27,7 @@ func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
 			continue
 		}
 		val := p.Cdr()
-		if tail, ok2 := val.(*sxpf.List); ok2 {
+		if tail, ok2 := sxpf.GetList(val); ok2 {
 			val = tail.Car()
 		}
 		if !sxpf.IsAtom(val) {
@@ -40,10 +40,10 @@ func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
 
 // GetMetaContent returns the metadata and the content of a sz encoded zettel.
 func GetMetaContent(zettel sxpf.Object) (Meta, *sxpf.List) {
-	if pair, ok := zettel.(*sxpf.List); ok {
+	if pair, ok := sxpf.GetList(zettel); ok {
 		m := pair.Car()
 		if s := pair.Tail(); s != nil {
-			if content, ok2 := s.Car().(*sxpf.List); ok2 {
+			if content, ok2 := sxpf.GetList(s.Car()); ok2 {
 				return MakeMeta(m), content
 			}
 		}
@@ -59,52 +59,60 @@ type MetaValue struct {
 	Value sxpf.Object
 }
 
-func MakeMeta(val sxpf.Object) Meta {
-	if result := doMakeMeta(val); len(result) > 0 {
+func MakeMeta(obj sxpf.Object) Meta {
+	if result := doMakeMeta(obj); len(result) > 0 {
 		return result
 	}
 	return nil
 }
-func doMakeMeta(val sxpf.Object) Meta {
+func doMakeMeta(obj sxpf.Object) Meta {
 	result := make(map[string]MetaValue)
 	for {
-		if sxpf.IsNil(val) {
+		if sxpf.IsNil(obj) {
 			return result
 		}
-		lst, ok := val.(*sxpf.List)
+		lst, ok := sxpf.GetList(obj)
 		if !ok {
 			return result
 		}
 		if mv, ok2 := makeMetaValue(lst); ok2 {
 			result[mv.Key] = mv
 		}
-		val = lst.Cdr()
+		obj = lst.Cdr()
 	}
 }
-func makeMetaValue(pair *sxpf.List) (MetaValue, bool) {
+func makeMetaValue(mnode *sxpf.List) (MetaValue, bool) {
 	var result MetaValue
-	typePair, ok := pair.Car().(*sxpf.List)
+	mval, ok := sxpf.GetList(mnode.Car())
 	if !ok {
 		return result, false
 	}
-	typeVal, ok := typePair.Car().(*sxpf.Symbol)
+	typeSym, ok := sxpf.GetSymbol(mval.Car())
 	if !ok {
 		return result, false
 	}
-	keyPair, ok := typePair.Cdr().(*sxpf.List)
+	keyPair, ok := sxpf.GetList(mval.Cdr())
 	if !ok {
 		return result, false
 	}
-	keyStr, ok := keyPair.Car().(sxpf.String)
+	keyList, ok := sxpf.GetList(keyPair.Car())
 	if !ok {
 		return result, false
 	}
-	valPair, ok := keyPair.Cdr().(*sxpf.List)
+	quoteSym, ok := sxpf.GetSymbol(keyList.Car())
+	if !ok || quoteSym.Name() != "quote" {
+		return result, false
+	}
+	keySym, ok := sxpf.GetSymbol(keyList.Tail().Car())
 	if !ok {
 		return result, false
 	}
-	result.Type = typeVal.Name()
-	result.Key = keyStr.String()
+	valPair, ok := sxpf.GetList(keyPair.Cdr())
+	if !ok {
+		return result, false
+	}
+	result.Type = typeSym.Name()
+	result.Key = keySym.Name()
 	result.Value = valPair.Car()
 	return result, true
 }
@@ -118,7 +126,7 @@ func (m Meta) GetString(key string) string {
 
 func (m Meta) GetList(key string) *sxpf.List {
 	if mv, found := m[key]; found {
-		if seq, ok := mv.Value.(*sxpf.List); ok {
+		if seq, ok := sxpf.GetList(mv.Value); ok {
 			return seq
 		}
 	}
