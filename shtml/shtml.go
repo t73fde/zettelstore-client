@@ -845,7 +845,7 @@ func (te *TransformEnv) getInt64(val sxpf.Object) int64 {
 		return -1017
 	}
 	if num, ok := sxpf.GetNumber(val); ok {
-		return num.GetInt64()
+		return int64(num.(sxpf.Int64))
 	}
 	te.err = fmt.Errorf("%v/%T is not a number", val, val)
 	return -1017

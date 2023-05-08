@@ -192,7 +192,7 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	}
 	c.token = token.String()
 	c.tokenType = tokenType.String()
-	c.expires = time.Now().Add(time.Duration(expire.GetInt64()*10/9) * time.Second)
+	c.expires = time.Now().Add(time.Duration(expire.(sxpf.Int64)*10/9) * time.Second)
 	return nil
 }
 
