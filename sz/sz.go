@@ -23,14 +23,14 @@ func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
 			continue
 		}
 		key := p.Car()
-		if !sxpf.IsAtom(key) {
+		if !key.IsAtom() {
 			continue
 		}
 		val := p.Cdr()
 		if tail, ok2 := sxpf.GetList(val); ok2 {
 			val = tail.Car()
 		}
-		if !sxpf.IsAtom(val) {
+		if !val.IsAtom() {
 			continue
 		}
 		result = result.Set(key.String(), val.String())
