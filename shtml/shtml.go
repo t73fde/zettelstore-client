@@ -490,8 +490,7 @@ func (te *TransformEnv) makeRegionFn(sym *sxpf.Symbol, genericToClass bool) tran
 			result = result.Cons(te.transformAttribute(a))
 		}
 		result = result.Cons(sym)
-		lastObject, _ := result.Last()
-		currResult, _ := sxpf.GetList(lastObject)
+		currResult := result.LastPair()
 		if region, ok := sxpf.GetList(args[1]); ok {
 			currResult = currResult.ExtendBang(region)
 		}
