@@ -126,7 +126,6 @@ const (
 	ValueSyntaxHTML        = "html"
 	ValueSyntaxMarkdown    = "markdown"
 	ValueSyntaxMD          = "md"
-	ValueSyntaxMustache    = "mustache"
 	ValueSyntaxNone        = "none"
 	ValueSyntaxSVG         = "svg"
 	ValueSyntaxSxn         = "sxn"
