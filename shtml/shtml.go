@@ -794,7 +794,7 @@ func (te *TransformEnv) flattenText(sb *strings.Builder, lst *sxpf.List) {
 type transformFn func([]sxpf.Object) sxpf.Object
 
 func (te *TransformEnv) bind(name string, minArity int, fn transformFn) {
-	te.astEnv.Bind(te.astSF.MustMake(name), eval.MakeBuiltinA(name, func(args []sxpf.Object) (sxpf.Object, error) {
+	te.astEnv.Bind(te.astSF.MustMake(name), eval.BuiltinA(func(args []sxpf.Object) (sxpf.Object, error) {
 		if nArgs := len(args); nArgs < minArity {
 			return sxpf.Nil(), fmt.Errorf("not enough arguments (%d) for form %v (%d)", nArgs, name, minArity)
 		}
@@ -813,7 +813,7 @@ func (te *TransformEnv) Rebind(name string, fn func([]sxpf.Object, eval.Callable
 	if !ok {
 		panic(sym.String())
 	}
-	te.astEnv.Bind(sym, eval.MakeBuiltinA(name, func(args []sxpf.Object) (sxpf.Object, error) {
+	te.astEnv.Bind(sym, eval.BuiltinA(func(args []sxpf.Object) (sxpf.Object, error) {
 		res := fn(args, preFn)
 		return res, te.err
 	}))
