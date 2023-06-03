@@ -225,7 +225,7 @@ func (te *TransformEnv) bindMetadata() {
 	te.bind(sz.NameSymMeta, 0, listArgs)
 	te.bind(sz.NameSymTypeZettelmarkup, 2, func(args []sxpf.Object) sxpf.Object {
 		a := make(attrs.Attributes, 2).
-			Set("name", te.getString(args[0]).String()).
+			Set("name", te.getSymbol(args[0]).String()).
 			Set("content", te.textEnc.Encode(te.getList(args[1])))
 		return te.transformMeta(a)
 	})
