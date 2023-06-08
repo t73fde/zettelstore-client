@@ -119,7 +119,7 @@ func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
 		astSF = sxpf.MakeMappedFactory()
 	}
 	astEnv := sxpf.MakeRootEnvironment()
-	engine := eval.MakeEngine(astSF, astEnv, eval.MakeDefaultParser(), eval.MakeSimpleExecutor())
+	engine := eval.MakeEngine(astSF, astEnv)
 	quote.InstallQuoteSyntax(astEnv, astSF.MustMake(sz.NameSymQuote))
 	te := TransformEnv{
 		tr:      tr,
