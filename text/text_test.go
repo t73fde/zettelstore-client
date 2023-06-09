@@ -34,7 +34,7 @@ func TestSzText(t *testing.T) {
 			t.Error(err)
 			continue
 		}
-		seq, ok := sval.(*sxpf.List)
+		seq, ok := sxpf.GetList(sval)
 		if !ok {
 			t.Errorf("%d: not a list: %v", i, sval)
 		}

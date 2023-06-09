@@ -16,7 +16,7 @@ import (
 )
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.
-func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
+func GetAttributes(seq *sxpf.Cell) (result attrs.Attributes) {
 	for elem := seq; elem != nil; elem = elem.Tail() {
 		p, ok := sxpf.GetList(elem.Car())
 		if !ok || p == nil {
@@ -39,7 +39,7 @@ func GetAttributes(seq *sxpf.List) (result attrs.Attributes) {
 }
 
 // GetMetaContent returns the metadata and the content of a sz encoded zettel.
-func GetMetaContent(zettel sxpf.Object) (Meta, *sxpf.List) {
+func GetMetaContent(zettel sxpf.Object) (Meta, *sxpf.Cell) {
 	if pair, ok := sxpf.GetList(zettel); ok {
 		m := pair.Car()
 		if s := pair.Tail(); s != nil {
@@ -81,7 +81,7 @@ func doMakeMeta(obj sxpf.Object) Meta {
 		obj = lst.Cdr()
 	}
 }
-func makeMetaValue(mnode *sxpf.List) (MetaValue, bool) {
+func makeMetaValue(mnode *sxpf.Cell) (MetaValue, bool) {
 	var result MetaValue
 	mval, ok := sxpf.GetList(mnode.Car())
 	if !ok {
@@ -124,7 +124,7 @@ func (m Meta) GetString(key string) string {
 	return ""
 }
 
-func (m Meta) GetList(key string) *sxpf.List {
+func (m Meta) GetList(key string) *sxpf.Cell {
 	if mv, found := m[key]; found {
 		if seq, ok := sxpf.GetList(mv.Value); ok {
 			return seq

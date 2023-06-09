@@ -46,7 +46,7 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 	return enc
 }
 
-func (enc *Encoder) Encode(lst *sxpf.List) string {
+func (enc *Encoder) Encode(lst *sxpf.Cell) string {
 	enc.executeList(lst)
 	result := enc.sb.String()
 	enc.sb.Reset()
@@ -54,20 +54,20 @@ func (enc *Encoder) Encode(lst *sxpf.List) string {
 }
 
 // EvaluateInlineString returns the text content of the given inline list as a string.
-func EvaluateInlineString(lst *sxpf.List) string {
+func EvaluateInlineString(lst *sxpf.Cell) string {
 	if sf := sxpf.FindSymbolFactory(lst); sf != nil {
 		return NewEncoder(sf).Encode(lst)
 	}
 	return ""
 }
 
-func (enc *Encoder) executeList(lst *sxpf.List) {
+func (enc *Encoder) executeList(lst *sxpf.Cell) {
 	for elem := lst; elem != nil; elem = elem.Tail() {
 		enc.execute(elem.Car())
 	}
 }
 func (enc *Encoder) execute(obj sxpf.Object) {
-	cmd, ok := obj.(*sxpf.List)
+	cmd, ok := obj.(*sxpf.Cell)
 	if !ok {
 		return
 	}

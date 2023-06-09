@@ -44,9 +44,9 @@ type Transformer struct {
 }
 
 type endnoteInfo struct {
-	noteAST *sxpf.List // Endnote as AST
-	noteHx  *sxpf.List // Endnote as SxHTML
-	attrs   *sxpf.List // attrs a-list
+	noteAST *sxpf.Cell // Endnote as AST
+	noteHx  *sxpf.Cell // Endnote as SxHTML
+	attrs   *sxpf.Cell // attrs a-list
 }
 
 // NewTransformer creates a new transformer object.
@@ -85,9 +85,9 @@ type RebindProc func(*TransformEnv)
 func (tr *Transformer) SetRebinder(rb RebindProc) { tr.rebinder = rb }
 
 // TransformAttrbute transforms the given attributes into a HTML s-expression.
-func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sxpf.List {
+func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sxpf.Cell {
 	if len(a) == 0 {
-		return sxpf.Nil()
+		return nil
 	}
 	plist := sxpf.Nil()
 	keys := a.Keys()
@@ -98,18 +98,18 @@ func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sxpf.List {
 		}
 	}
 	if plist == nil {
-		return sxpf.Nil()
+		return nil
 	}
 	return plist.Cons(tr.symAttr)
 }
 
 // TransformMeta creates a HTML meta s-expression
-func (tr *Transformer) TransformMeta(a attrs.Attributes) *sxpf.List {
+func (tr *Transformer) TransformMeta(a attrs.Attributes) *sxpf.Cell {
 	return sxpf.Nil().Cons(tr.TransformAttrbute(a)).Cons(tr.symMeta)
 }
 
 // Transform an AST s-expression into a list of HTML s-expressions.
-func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
+func (tr *Transformer) Transform(lst *sxpf.Cell) (*sxpf.Cell, error) {
 	astSF := sxpf.FindSymbolFactory(lst)
 	if astSF != nil {
 		if astSF == tr.sf {
@@ -135,9 +135,9 @@ func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
 
 	val, err := engine.Eval(te.astEnv, lst)
 	if err != nil {
-		return sxpf.Nil(), err
+		return nil, err
 	}
-	res, ok := val.(*sxpf.List)
+	res, ok := val.(*sxpf.Cell)
 	if !ok {
 		panic("Result is not a list")
 	}
@@ -147,7 +147,7 @@ func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
 		if err != nil {
 			return res, err
 		}
-		en, ok2 := val.(*sxpf.List)
+		en, ok2 := val.(*sxpf.Cell)
 		if !ok2 {
 			panic("Endnote is not a list")
 		}
@@ -158,7 +158,7 @@ func (tr *Transformer) Transform(lst *sxpf.List) (*sxpf.List, error) {
 }
 
 // Endnotes returns a SHTML object with all collected endnotes.
-func (tr *Transformer) Endnotes() *sxpf.List {
+func (tr *Transformer) Endnotes() *sxpf.Cell {
 	if len(tr.endnotes) == 0 {
 		return nil
 	}
@@ -455,10 +455,10 @@ func (te *TransformEnv) makeListFn(tag string) transformFn {
 		return result
 	}
 }
-func (te *TransformEnv) transformTableRow(cells *sxpf.List) *sxpf.List {
+func (te *TransformEnv) transformTableRow(cells *sxpf.Cell) *sxpf.Cell {
 	row := sxpf.Nil().Cons(te.Make("tr"))
 	if cells == nil {
-		return sxpf.Nil()
+		return nil
 	}
 	curRow := row
 	for cell := cells; cell != nil; cell = cell.Tail() {
@@ -528,7 +528,7 @@ func (te *TransformEnv) bindInlines() {
 
 	te.bind(sz.NameSymLinkInvalid, 2, func(args []sxpf.Object) sxpf.Object {
 		// a := te.getAttributes(args)
-		var inline *sxpf.List
+		var inline *sxpf.Cell
 		if len(args) > 2 {
 			inline = sxpf.MakeList(args[2:]...)
 		}
@@ -760,7 +760,7 @@ func (te *TransformEnv) transformHTML(args []sxpf.Object) sxpf.Object {
 	return nil
 }
 
-func (te *TransformEnv) transformBLOB(description *sxpf.List, syntax, data sxpf.String) sxpf.Object {
+func (te *TransformEnv) transformBLOB(description *sxpf.Cell, syntax, data sxpf.String) sxpf.Object {
 	if data == "" {
 		return sxpf.Nil()
 	}
@@ -780,12 +780,12 @@ func (te *TransformEnv) transformBLOB(description *sxpf.List, syntax, data sxpf.
 	}
 }
 
-func (te *TransformEnv) flattenText(sb *strings.Builder, lst *sxpf.List) {
+func (te *TransformEnv) flattenText(sb *strings.Builder, lst *sxpf.Cell) {
 	for elem := lst; elem != nil; elem = elem.Tail() {
 		switch obj := elem.Car().(type) {
 		case sxpf.String:
 			sb.WriteString(obj.String())
-		case *sxpf.List:
+		case *sxpf.Cell:
 			te.flattenText(sb, obj)
 		}
 	}
@@ -850,14 +850,14 @@ func (te *TransformEnv) getInt64(val sxpf.Object) int64 {
 	te.err = fmt.Errorf("%v/%T is not a number", val, val)
 	return -1017
 }
-func (te *TransformEnv) getList(val sxpf.Object) *sxpf.List {
+func (te *TransformEnv) getList(val sxpf.Object) *sxpf.Cell {
 	if te.err == nil {
 		if res, ok := sxpf.GetList(val); ok {
 			return res
 		}
 		te.err = fmt.Errorf("%v/%T is not a list", val, val)
 	}
-	return sxpf.Nil()
+	return nil
 }
 func (te *TransformEnv) getAttributes(args sxpf.Object) attrs.Attributes {
 	return sz.GetAttributes(te.getList(args))
@@ -874,11 +874,11 @@ func (te *TransformEnv) transformLink(a attrs.Attributes, refValue sxpf.String, 
 	return result.Cons(te.transformAttribute(a)).Cons(te.symA)
 }
 
-func (te *TransformEnv) transformAttribute(a attrs.Attributes) *sxpf.List {
+func (te *TransformEnv) transformAttribute(a attrs.Attributes) *sxpf.Cell {
 	return te.tr.TransformAttrbute(a)
 }
 
-func (te *TransformEnv) transformMeta(a attrs.Attributes) *sxpf.List {
+func (te *TransformEnv) transformMeta(a attrs.Attributes) *sxpf.Cell {
 	return te.tr.TransformMeta(a)
 }
 
