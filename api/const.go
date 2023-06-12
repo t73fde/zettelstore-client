@@ -256,6 +256,8 @@ const (
 	MaxDirective      = "MAX"
 	LimitDirective    = "LIMIT"
 	OffsetDirective   = "OFFSET"
+	OrDirective       = "OR"
+	OrderDirective    = "ORDER"
 	PickDirective     = "PICK"
 	RandomDirective   = "RANDOM"
 	ReverseDirective  = "REVERSE"
