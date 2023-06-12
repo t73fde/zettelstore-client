@@ -280,6 +280,6 @@ const (
 	SearchOperatorNoMatch    = "!~"
 	SearchOperatorLess       = "<"
 	SearchOperatorNotLess    = "!<"
-	SearchOperatorGreater    = "<"
-	SearchOperatorNotGreater = "!<"
+	SearchOperatorGreater    = ">"
+	SearchOperatorNotGreater = "!>"
 )
