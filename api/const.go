@@ -39,6 +39,9 @@ const (
 	ZidDeleteTemplate = ZettelID("00000000010405")
 	ZidErrorTemplate  = ZettelID("00000000010700")
 
+	// WebUI sxn code zettel are in the range 19000..19999
+	ZidSxnTemplate = ZettelID("00000000019100")
+
 	// CSS-related zettel are in the range 20000..29999
 	ZidBaseCSS    = ZettelID("00000000020001")
 	ZidUserCSS    = ZettelID("00000000025001")
@@ -48,6 +51,8 @@ const (
 
 	// WebUI image zettel are in the range 40000..49999
 	ZidEmoji = ZettelID("00000000040001")
+
+	// Other sxn code zettel are in the range 50000..59999
 
 	// Range 90000...99999 is reserved for zettel templates
 	ZidTOCNewTemplate    = ZettelID("00000000090000")
