@@ -34,8 +34,8 @@ func TestSzText(t *testing.T) {
 			t.Error(err)
 			continue
 		}
-		seq, ok := sxpf.GetList(sval)
-		if !ok {
+		seq, isCell := sxpf.GetCell(sval)
+		if !isCell {
 			t.Errorf("%d: not a list: %v", i, sval)
 		}
 		got := text.EvaluateInlineString(seq)

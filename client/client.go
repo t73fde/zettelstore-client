@@ -172,22 +172,22 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	lst, ok := sxpf.GetList(obj)
-	if !ok {
+	lst, isCell := sxpf.GetCell(obj)
+	if !isCell {
 		return fmt.Errorf("list expected, but got %t/%v", obj, obj)
 	}
-	tokenType, ok := sxpf.GetString(lst.Car())
-	if !ok {
+	tokenType, isString := sxpf.GetString(lst.Car())
+	if !isString {
 		return fmt.Errorf("no token type found: %v/%v", lst, lst.Car())
 	}
 	lstToken := lst.Tail()
-	token, ok := sxpf.GetString(lstToken.Car())
-	if !ok || len(token) < 20 {
+	token, isString := sxpf.GetString(lstToken.Car())
+	if !isString || len(token) < 20 {
 		return fmt.Errorf("no valid token found: %v/%v", lst, lstToken.Car())
 	}
 	lstExpire := lstToken.Tail()
-	expire, ok := sxpf.GetNumber(lstExpire.Car())
-	if !ok {
+	expire, isNumber := sxpf.GetNumber(lstExpire.Car())
+	if !isNumber {
 		return fmt.Errorf("no valid expire: %v/%v", lst, lstExpire.Car())
 	}
 	c.token = token.String()

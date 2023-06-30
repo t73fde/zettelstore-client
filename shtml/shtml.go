@@ -287,7 +287,7 @@ func (te *TransformEnv) bindBlocks() {
 			a = a.Set("id", te.tr.unique+fragment)
 		}
 
-		if result, ok := sxpf.GetList(args[4]); ok && result != nil {
+		if result, isCell := sxpf.GetCell(args[4]); isCell && result != nil {
 			if len(a) > 0 {
 				result = result.Cons(te.transformAttribute(a))
 			}
@@ -338,7 +338,7 @@ func (te *TransformEnv) bindBlocks() {
 		result := sxpf.Nil().Cons(te.Make("blockquote"))
 		currResult := result
 		for _, elem := range args {
-			if quote, ok := sxpf.GetList(elem); ok {
+			if quote, isCell := sxpf.GetCell(elem); isCell {
 				currResult = currResult.AppendBang(quote.Cons(te.symP))
 			}
 		}
@@ -415,8 +415,8 @@ func (te *TransformEnv) bindBlocks() {
 	})
 
 	te.bind(sz.NameSymTransclude, 2, func(args []sxpf.Object) sxpf.Object {
-		ref, ok := sxpf.GetList(args[1])
-		if !ok {
+		ref, isCell := sxpf.GetCell(args[1])
+		if !isCell {
 			return sxpf.Nil()
 		}
 		refKind := ref.Car()
@@ -447,7 +447,7 @@ func (te *TransformEnv) makeListFn(tag string) transformFn {
 		last := result
 		for _, elem := range args {
 			item := sxpf.Nil().Cons(te.Make("li"))
-			if res, ok := sxpf.GetList(elem); ok {
+			if res, isCell := sxpf.GetCell(elem); isCell {
 				item.ExtendBang(res)
 			}
 			last = last.AppendBang(item)
@@ -491,11 +491,11 @@ func (te *TransformEnv) makeRegionFn(sym *sxpf.Symbol, genericToClass bool) tran
 		}
 		result = result.Cons(sym)
 		currResult := result.LastPair()
-		if region, ok := sxpf.GetList(args[1]); ok {
+		if region, isCell := sxpf.GetCell(args[1]); isCell {
 			currResult = currResult.ExtendBang(region)
 		}
 		if len(args) > 2 {
-			if cite, ok := sxpf.GetList(args[2]); ok && cite != nil {
+			if cite, isCell := sxpf.GetCell(args[2]); isCell && cite != nil {
 				currResult.AppendBang(cite.Cons(te.Make("cite")))
 			}
 		}
@@ -636,8 +636,8 @@ func (te *TransformEnv) bindInlines() {
 			}
 		}
 
-		text, ok := sxpf.GetList(args[1])
-		if !ok {
+		text, isCell := sxpf.GetCell(args[1])
+		if !isCell {
 			return sxpf.Nil()
 		}
 		te.tr.endnotes = append(te.tr.endnotes, endnoteInfo{noteAST: text, noteHx: nil, attrs: attrPlist})
@@ -852,7 +852,7 @@ func (te *TransformEnv) getInt64(val sxpf.Object) int64 {
 }
 func (te *TransformEnv) getList(val sxpf.Object) *sxpf.Cell {
 	if te.err == nil {
-		if res, ok := sxpf.GetList(val); ok {
+		if res, isCell := sxpf.GetCell(val); isCell {
 			return res
 		}
 		te.err = fmt.Errorf("%v/%T is not a list", val, val)
