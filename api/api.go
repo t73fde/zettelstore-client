@@ -109,12 +109,3 @@ type MapMeta map[string][]ZettelID
 type MapListJSON struct {
 	Map MapMeta `json:"map"`
 }
-
-// VersionJSON contains version information.
-type VersionJSON struct {
-	Major int    `json:"major"`
-	Minor int    `json:"minor"`
-	Patch int    `json:"patch"`
-	Info  string `json:"info"`
-	Hash  string `json:"hash"`
-}

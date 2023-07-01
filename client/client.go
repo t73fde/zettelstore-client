@@ -28,6 +28,7 @@ import (
 	"codeberg.org/t73fde/sxpf"
 	"codeberg.org/t73fde/sxpf/reader"
 	"zettelstore.de/c/api"
+	"zettelstore.de/c/sx"
 )
 
 // Client contains all data to execute requests.
@@ -612,21 +613,37 @@ func (c *Client) QueryMapMeta(ctx context.Context, query string) (api.MapMeta, e
 	return mlj.Map, nil
 }
 
-// GetVersionJSON returns version information..
-func (c *Client) GetVersionJSON(ctx context.Context) (api.VersionJSON, error) {
+// GetVersionInfo returns version information..
+func (c *Client) GetVersionInfo(ctx context.Context) (VersionInfo, error) {
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, c.newURLBuilder('x'), nil, nil)
 	if err != nil {
-		return api.VersionJSON{}, err
+		return VersionInfo{}, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return api.VersionJSON{}, statusToError(resp)
+		return VersionInfo{}, statusToError(resp)
 	}
-	dec := json.NewDecoder(resp.Body)
-	var version api.VersionJSON
-	err = dec.Decode(&version)
-	if err != nil {
-		return api.VersionJSON{}, err
+	rdr := reader.MakeReader(resp.Body)
+	obj, err := rdr.Read()
+	if err == nil {
+		if vals, errVals := sx.ParseObject(obj, "iiiss"); errVals == nil {
+			return VersionInfo{
+				Major: int(vals[0].(sxpf.Int64)),
+				Minor: int(vals[1].(sxpf.Int64)),
+				Patch: int(vals[2].(sxpf.Int64)),
+				Info:  vals[3].(sxpf.String).String(),
+				Hash:  vals[4].(sxpf.String).String(),
+			}, nil
+		}
 	}
-	return version, nil
+	return VersionInfo{}, err
+}
+
+// VersionInfo contains version information.
+type VersionInfo struct {
+	Major int
+	Minor int
+	Patch int
+	Info  string
+	Hash  string
 }
