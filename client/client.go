@@ -183,7 +183,7 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	}
 	lstToken := lst.Tail()
 	token, isString := sxpf.GetString(lstToken.Car())
-	if !isString || len(token) < 20 {
+	if !isString || len(token) < 4 {
 		return fmt.Errorf("no valid token found: %v/%v", lst, lstToken.Car())
 	}
 	lstExpire := lstToken.Tail()
@@ -249,7 +249,7 @@ func (c *Client) CreateZettel(ctx context.Context, data []byte) (api.ZettelID, e
 }
 
 // CreateZettelJSON creates a new zettel and returns its URL.
-func (c *Client) CreateZettelJSON(ctx context.Context, data *api.ZettelDataJSON) (api.ZettelID, error) {
+func (c *Client) CreateZettelJSON(ctx context.Context, data *api.ZettelData) (api.ZettelID, error) {
 	var buf bytes.Buffer
 	if err := encodeZettelData(&buf, data); err != nil {
 		return api.InvalidZID, err
@@ -275,7 +275,7 @@ func (c *Client) CreateZettelJSON(ctx context.Context, data *api.ZettelDataJSON)
 	return api.InvalidZID, err
 }
 
-func encodeZettelData(buf *bytes.Buffer, data *api.ZettelDataJSON) error {
+func encodeZettelData(buf *bytes.Buffer, data *api.ZettelData) error {
 	enc := json.NewEncoder(buf)
 	enc.SetEscapeHTML(false)
 	return enc.Encode(&data)
@@ -348,10 +348,10 @@ func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) (
 	return io.ReadAll(resp.Body)
 }
 
-// GetZettelJSON returns a zettel as a JSON struct.
-func (c *Client) GetZettelJSON(ctx context.Context, zid api.ZettelID) (*api.ZettelDataJSON, error) {
+// GetZettelData returns a zettel as a struct of its parts.
+func (c *Client) GetZettelData(ctx context.Context, zid api.ZettelID) (*api.ZettelData, error) {
 	ub := c.newURLBuilder('z').SetZid(zid)
-	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson)
+	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartZettel)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
@@ -361,13 +361,73 @@ func (c *Client) GetZettelJSON(ctx context.Context, zid api.ZettelID) (*api.Zett
 	if resp.StatusCode != http.StatusOK {
 		return nil, statusToError(resp)
 	}
-	dec := json.NewDecoder(resp.Body)
-	var out api.ZettelDataJSON
-	err = dec.Decode(&out)
+	rdr := reader.MakeReader(resp.Body)
+	obj, err := rdr.Read()
+	if err == nil {
+		return parseZettelSxToStruct(obj)
+	}
+	return nil, err
+}
+
+func parseZettelSxToStruct(obj sxpf.Object) (*api.ZettelData, error) {
+	vals, err := sx.ParseObject(obj, "yccccc")
 	if err != nil {
 		return nil, err
 	}
-	return &out, nil
+	if errSym := checkSymbol(vals[0], "zettel"); errSym != nil {
+		return nil, errSym
+	}
+
+	// Ignore vals[1] (id "12345678901234"), we don't need it in ZettelData
+
+	meta, err := parseMetaSxToMap(vals[2].(*sxpf.Cell))
+	if err != nil {
+		return nil, err
+	}
+
+	// Ignore vals[3] (rights 4), we don't need the rights in ZettelData
+
+	encVals, err := sx.ParseObject(vals[4], "ys")
+	if err != nil {
+		return nil, err
+	}
+	if errSym := checkSymbol(encVals[0], "encoding"); errSym != nil {
+		return nil, errSym
+	}
+
+	contentVals, err := sx.ParseObject(vals[5], "ys")
+	if err != nil {
+		return nil, err
+	}
+	if errSym := checkSymbol(contentVals[0], "content"); errSym != nil {
+		return nil, errSym
+	}
+
+	var data api.ZettelData
+	data.Meta = meta
+	data.Encoding = encVals[1].(sxpf.String).String()
+	data.Content = contentVals[1].(sxpf.String).String()
+	return &data, nil
+}
+func checkSymbol(obj sxpf.Object, exp string) error {
+	if got := obj.(*sxpf.Symbol).Name(); got != exp {
+		return fmt.Errorf("symbol %q expected, but got: %q", exp, got)
+	}
+	return nil
+}
+func parseMetaSxToMap(m *sxpf.Cell) (api.ZettelMeta, error) {
+	if err := checkSymbol(m.Car(), "meta"); err != nil {
+		return nil, err
+	}
+	res := api.ZettelMeta{}
+	for node := m.Tail(); node != nil; node = node.Tail() {
+		mVals, err := sx.ParseObject(node.Car(), "ys")
+		if err != nil {
+			return nil, err
+		}
+		res[mVals[0].(*sxpf.Symbol).Name()] = mVals[1].(sxpf.String).String()
+	}
+	return res, nil
 }
 
 // GetParsedZettel return a parsed zettel in a defined encoding.
@@ -510,7 +570,7 @@ func (c *Client) UpdateZettel(ctx context.Context, zid api.ZettelID, data []byte
 }
 
 // UpdateZettelJSON updates an existing zettel.
-func (c *Client) UpdateZettelJSON(ctx context.Context, zid api.ZettelID, data *api.ZettelDataJSON) error {
+func (c *Client) UpdateZettelJSON(ctx context.Context, zid api.ZettelID, data *api.ZettelData) error {
 	var buf bytes.Buffer
 	if err := encodeZettelData(&buf, data); err != nil {
 		return err

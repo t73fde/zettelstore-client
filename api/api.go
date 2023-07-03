@@ -73,8 +73,8 @@ type ZidMetaRelatedList struct {
 	List   []ZidMetaJSON `json:"list"`
 }
 
-// ZettelDataJSON contains all data for a zettel.
-type ZettelDataJSON struct {
+// ZettelData contains all data for a zettel.
+type ZettelData struct {
 	Meta     ZettelMeta `json:"meta"`
 	Encoding string     `json:"encoding"`
 	Content  string     `json:"content"`

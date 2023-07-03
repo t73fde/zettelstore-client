@@ -54,7 +54,7 @@ func ParseObject(obj sxpf.Object, spec string) ([]sxpf.Object, error) {
 		case 'y':
 			val, ok = sxpf.GetSymbol(car)
 		default:
-			return nil, fmt.Errorf("unknown spec '%c", spec[i])
+			return nil, fmt.Errorf("unknown spec '%c'", spec[i])
 		}
 		if !ok {
 			return nil, fmt.Errorf("does not match spec '%v': %v", spec[i], car)
@@ -73,4 +73,4 @@ func ParseObject(obj sxpf.Object, spec string) ([]sxpf.Object, error) {
 }
 
 var ErrElementsMissing = errors.New("spec contains more data")
-var ErrNoSpec = errors.New("no spec for list elements")
+var ErrNoSpec = errors.New("no spec for elements")
