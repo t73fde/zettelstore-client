@@ -339,65 +339,65 @@ func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) (
 }
 
 // GetZettelData returns a zettel as a struct of its parts.
-func (c *Client) GetZettelData(ctx context.Context, zid api.ZettelID) (*api.ZettelData, error) {
+func (c *Client) GetZettelData(ctx context.Context, zid api.ZettelID) (api.ZettelData, error) {
 	ub := c.newURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartZettel)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, statusToError(resp)
-	}
-	rdr := reader.MakeReader(resp.Body)
-	obj, err := rdr.Read()
 	if err == nil {
-		return parseZettelSxToStruct(obj)
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return api.ZettelData{}, statusToError(resp)
+		}
+		rdr := reader.MakeReader(resp.Body)
+		obj, err2 := rdr.Read()
+		if err2 == nil {
+			var data api.ZettelData
+			err2 = parseZettelSxToStruct(obj, &data)
+			return data, err2
+		}
 	}
-	return nil, err
+	return api.ZettelData{}, err
 }
 
-func parseZettelSxToStruct(obj sxpf.Object) (*api.ZettelData, error) {
+func parseZettelSxToStruct(obj sxpf.Object, data *api.ZettelData) error {
 	vals, err := sx.ParseObject(obj, "yccccc")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if errSym := checkSymbol(vals[0], "zettel"); errSym != nil {
-		return nil, errSym
+		return errSym
 	}
 
 	// Ignore vals[1] (id "12345678901234"), we don't need it in ZettelData
 
 	meta, err := parseMetaSxToMap(vals[2].(*sxpf.Cell))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Ignore vals[3] (rights 4), we don't need the rights in ZettelData
 
 	encVals, err := sx.ParseObject(vals[4], "ys")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if errSym := checkSymbol(encVals[0], "encoding"); errSym != nil {
-		return nil, errSym
+		return errSym
 	}
 
 	contentVals, err := sx.ParseObject(vals[5], "ys")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if errSym := checkSymbol(contentVals[0], "content"); errSym != nil {
-		return nil, errSym
+		return errSym
 	}
 
-	var data api.ZettelData
 	data.Meta = meta
 	data.Encoding = encVals[1].(sxpf.String).String()
 	data.Content = contentVals[1].(sxpf.String).String()
-	return &data, nil
+	return nil
 }
 func checkSymbol(obj sxpf.Object, exp string) error {
 	if got := obj.(*sxpf.Symbol).Name(); got != exp {
