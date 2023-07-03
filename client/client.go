@@ -173,27 +173,17 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	lst, isCell := sxpf.GetCell(obj)
-	if !isCell {
-		return fmt.Errorf("list expected, but got %t/%v", obj, obj)
+	vals, err := sx.ParseObject(obj, "ssi")
+	if err != nil {
+		return err
 	}
-	tokenType, isString := sxpf.GetString(lst.Car())
-	if !isString {
-		return fmt.Errorf("no token type found: %v/%v", lst, lst.Car())
+	token := vals[1].(sxpf.String).String()
+	if len(token) < 4 {
+		return fmt.Errorf("no valid token found: %q", token)
 	}
-	lstToken := lst.Tail()
-	token, isString := sxpf.GetString(lstToken.Car())
-	if !isString || len(token) < 4 {
-		return fmt.Errorf("no valid token found: %v/%v", lst, lstToken.Car())
-	}
-	lstExpire := lstToken.Tail()
-	expire, isNumber := sxpf.GetNumber(lstExpire.Car())
-	if !isNumber {
-		return fmt.Errorf("no valid expire: %v/%v", lst, lstExpire.Car())
-	}
-	c.token = token.String()
-	c.tokenType = tokenType.String()
-	c.expires = time.Now().Add(time.Duration(expire.(sxpf.Int64)*10/9) * time.Second)
+	c.token = token
+	c.tokenType = vals[0].(sxpf.String).String()
+	c.expires = time.Now().Add(time.Duration(vals[2].(sxpf.Int64)*9/10) * time.Second)
 	return nil
 }
 
