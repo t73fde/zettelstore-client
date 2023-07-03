@@ -238,10 +238,10 @@ func (c *Client) CreateZettel(ctx context.Context, data []byte) (api.ZettelID, e
 	return api.InvalidZID, err
 }
 
-// CreateZettelJSON creates a new zettel and returns its URL.
-func (c *Client) CreateZettelJSON(ctx context.Context, data *api.ZettelData) (api.ZettelID, error) {
+// CreateZettelData creates a new zettel and returns its URL.
+func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelData) (api.ZettelID, error) {
 	var buf bytes.Buffer
-	if err := encodeZettelData(&buf, data); err != nil {
+	if err := encodeZettelData(&buf, &data); err != nil {
 		return api.InvalidZID, err
 	}
 	ub := c.newURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson)
@@ -559,10 +559,10 @@ func (c *Client) UpdateZettel(ctx context.Context, zid api.ZettelID, data []byte
 	return nil
 }
 
-// UpdateZettelJSON updates an existing zettel.
-func (c *Client) UpdateZettelJSON(ctx context.Context, zid api.ZettelID, data *api.ZettelData) error {
+// UpdateZettelData updates an existing zettel.
+func (c *Client) UpdateZettelData(ctx context.Context, zid api.ZettelID, data api.ZettelData) error {
 	var buf bytes.Buffer
-	if err := encodeZettelData(&buf, data); err != nil {
+	if err := encodeZettelData(&buf, &data); err != nil {
 		return err
 	}
 	ub := c.newURLBuilder('z').SetZid(zid).AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson)
