@@ -98,6 +98,7 @@ const (
 	KeyDead         = "dead"
 	KeyExpire       = "expire"
 	KeyFolge        = "folge"
+	KeyFolgeRole    = "folge-role"
 	KeyForward      = "forward"
 	KeyLang         = "lang"
 	KeyLicense      = "license"
