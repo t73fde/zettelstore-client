@@ -39,7 +39,7 @@ func TestParseObject(t *testing.T) {
 	if elems, err := sx.ParseObject(sxpf.MakeList(sxpf.MakeString("a")), "b"); err == nil {
 		t.Error("expected error, but got: ", elems)
 	}
-	if elems, err := sx.ParseObject(sxpf.Cons(sxpf.Nil(), sxpf.MakeString("a")), "cs"); err == nil {
+	if elems, err := sx.ParseObject(sxpf.Cons(sxpf.Nil(), sxpf.MakeString("a")), "ps"); err == nil {
 		t.Error("expected error, but got: ", elems)
 	}
 

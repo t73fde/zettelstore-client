@@ -361,7 +361,7 @@ func (c *Client) GetZettelData(ctx context.Context, zid api.ZettelID) (api.Zette
 }
 
 func parseZettelSxToStruct(obj sxpf.Object, data *api.ZettelData) error {
-	vals, err := sx.ParseObject(obj, "yccccc")
+	vals, err := sx.ParseObject(obj, "yppppp")
 	if err != nil {
 		return err
 	}
