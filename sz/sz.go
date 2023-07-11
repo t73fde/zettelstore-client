@@ -16,18 +16,18 @@ import (
 )
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.
-func GetAttributes(seq *sxpf.Cell) (result attrs.Attributes) {
+func GetAttributes(seq *sxpf.Pair) (result attrs.Attributes) {
 	for elem := seq; elem != nil; elem = elem.Tail() {
-		cell, isCell := sxpf.GetCell(elem.Car())
-		if !isCell || cell == nil {
+		pair, isPair := sxpf.GetPair(elem.Car())
+		if !isPair || pair == nil {
 			continue
 		}
-		key := cell.Car()
+		key := pair.Car()
 		if !key.IsAtom() {
 			continue
 		}
-		val := cell.Cdr()
-		if tail, isTailCell := sxpf.GetCell(val); isTailCell {
+		val := pair.Cdr()
+		if tail, isTailPair := sxpf.GetPair(val); isTailPair {
 			val = tail.Car()
 		}
 		if !val.IsAtom() {
@@ -39,11 +39,11 @@ func GetAttributes(seq *sxpf.Cell) (result attrs.Attributes) {
 }
 
 // GetMetaContent returns the metadata and the content of a sz encoded zettel.
-func GetMetaContent(zettel sxpf.Object) (Meta, *sxpf.Cell) {
-	if cell, isCell := sxpf.GetCell(zettel); isCell {
-		m := cell.Car()
-		if s := cell.Tail(); s != nil {
-			if content, isContentCell := sxpf.GetCell(s.Car()); isContentCell {
+func GetMetaContent(zettel sxpf.Object) (Meta, *sxpf.Pair) {
+	if pair, isPair := sxpf.GetPair(zettel); isPair {
+		m := pair.Car()
+		if s := pair.Tail(); s != nil {
+			if content, isContentPair := sxpf.GetPair(s.Car()); isContentPair {
 				return MakeMeta(m), content
 			}
 		}
@@ -71,32 +71,32 @@ func doMakeMeta(obj sxpf.Object) Meta {
 		if sxpf.IsNil(obj) {
 			return result
 		}
-		cell, isCell := sxpf.GetCell(obj)
-		if !isCell {
+		pair, isPair := sxpf.GetPair(obj)
+		if !isPair {
 			return result
 		}
-		if mv, ok2 := makeMetaValue(cell); ok2 {
+		if mv, ok2 := makeMetaValue(pair); ok2 {
 			result[mv.Key] = mv
 		}
-		obj = cell.Cdr()
+		obj = pair.Cdr()
 	}
 }
-func makeMetaValue(mnode *sxpf.Cell) (MetaValue, bool) {
+func makeMetaValue(mnode *sxpf.Pair) (MetaValue, bool) {
 	var result MetaValue
-	mval, isCell := sxpf.GetCell(mnode.Car())
-	if !isCell {
+	mval, isPair := sxpf.GetPair(mnode.Car())
+	if !isPair {
 		return result, false
 	}
 	typeSym, isSymbol := sxpf.GetSymbol(mval.Car())
 	if !isSymbol {
 		return result, false
 	}
-	keyPair, isCell := sxpf.GetCell(mval.Cdr())
-	if !isCell {
+	keyPair, isPair := sxpf.GetPair(mval.Cdr())
+	if !isPair {
 		return result, false
 	}
-	keyList, isCell := sxpf.GetCell(keyPair.Car())
-	if !isCell {
+	keyList, isPair := sxpf.GetPair(keyPair.Car())
+	if !isPair {
 		return result, false
 	}
 	quoteSym, isSymbol := sxpf.GetSymbol(keyList.Car())
@@ -107,8 +107,8 @@ func makeMetaValue(mnode *sxpf.Cell) (MetaValue, bool) {
 	if !isSymbol {
 		return result, false
 	}
-	valPair, isCell := sxpf.GetCell(keyPair.Cdr())
-	if !isCell {
+	valPair, isPair := sxpf.GetPair(keyPair.Cdr())
+	if !isPair {
 		return result, false
 	}
 	result.Type = typeSym.Name()
@@ -124,10 +124,10 @@ func (m Meta) GetString(key string) string {
 	return ""
 }
 
-func (m Meta) GetCell(key string) *sxpf.Cell {
+func (m Meta) GetPair(key string) *sxpf.Pair {
 	if mv, found := m[key]; found {
-		if cell, isCell := sxpf.GetCell(mv.Value); isCell {
-			return cell
+		if pair, isPair := sxpf.GetPair(mv.Value); isPair {
+			return pair
 		}
 	}
 	return nil

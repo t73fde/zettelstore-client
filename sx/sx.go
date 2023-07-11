@@ -20,11 +20,11 @@ import (
 
 // ParseObject parses the given object as a proper list, based on a type specification.
 func ParseObject(obj sxpf.Object, spec string) ([]sxpf.Object, error) {
-	cell, isCell := sxpf.GetCell(obj)
-	if !isCell {
+	pair, isPair := sxpf.GetPair(obj)
+	if !isPair {
 		return nil, fmt.Errorf("not a list: %T/%v", obj, obj)
 	}
-	if cell == nil {
+	if pair == nil {
 		if spec == "" {
 			return nil, nil
 		}
@@ -32,7 +32,7 @@ func ParseObject(obj sxpf.Object, spec string) ([]sxpf.Object, error) {
 	}
 
 	result := make([]sxpf.Object, 0, len(spec))
-	node, i := cell, 0
+	node, i := pair, 0
 	for ; node != nil; i++ {
 		if i >= len(spec) {
 			return nil, ErrNoSpec
@@ -43,12 +43,12 @@ func ParseObject(obj sxpf.Object, spec string) ([]sxpf.Object, error) {
 		switch spec[i] {
 		case 'b':
 			val, ok = sxpf.GetBoolean(car)
-		case 'c':
-			val, ok = sxpf.GetCell(car)
 		case 'i':
 			val, ok = car.(sxpf.Int64)
 		case 'o':
 			val, ok = car, true
+		case 'p':
+			val, ok = sxpf.GetPair(car)
 		case 's':
 			val, ok = sxpf.GetString(car)
 		case 'y':
@@ -60,9 +60,9 @@ func ParseObject(obj sxpf.Object, spec string) ([]sxpf.Object, error) {
 			return nil, fmt.Errorf("does not match spec '%v': %v", spec[i], car)
 		}
 		result = append(result, val)
-		next, isNextCell := sxpf.GetCell(node.Cdr())
-		if !isNextCell {
-			return nil, sxpf.ErrImproper{Cell: cell}
+		next, isNextPair := sxpf.GetPair(node.Cdr())
+		if !isNextPair {
+			return nil, sxpf.ErrImproper{Pair: pair}
 		}
 		node = next
 	}

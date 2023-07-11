@@ -371,7 +371,7 @@ func parseZettelSxToStruct(obj sxpf.Object, data *api.ZettelData) error {
 
 	// Ignore vals[1] (id "12345678901234"), we don't need it in ZettelData
 
-	meta, err := parseMetaSxToMap(vals[2].(*sxpf.Cell))
+	meta, err := parseMetaSxToMap(vals[2].(*sxpf.Pair))
 	if err != nil {
 		return err
 	}
@@ -405,12 +405,12 @@ func checkSymbol(obj sxpf.Object, exp string) error {
 	}
 	return nil
 }
-func parseMetaSxToMap(m *sxpf.Cell) (api.ZettelMeta, error) {
-	if err := checkSymbol(m.Car(), "meta"); err != nil {
+func parseMetaSxToMap(pair *sxpf.Pair) (api.ZettelMeta, error) {
+	if err := checkSymbol(pair.Car(), "meta"); err != nil {
 		return nil, err
 	}
 	res := api.ZettelMeta{}
-	for node := m.Tail(); node != nil; node = node.Tail() {
+	for node := pair.Tail(); node != nil; node = node.Tail() {
 		mVals, err := sx.ParseObject(node.Car(), "ys")
 		if err != nil {
 			return nil, err

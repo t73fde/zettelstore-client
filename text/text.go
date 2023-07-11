@@ -46,7 +46,7 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 	return enc
 }
 
-func (enc *Encoder) Encode(lst *sxpf.Cell) string {
+func (enc *Encoder) Encode(lst *sxpf.Pair) string {
 	enc.executeList(lst)
 	result := enc.sb.String()
 	enc.sb.Reset()
@@ -54,21 +54,21 @@ func (enc *Encoder) Encode(lst *sxpf.Cell) string {
 }
 
 // EvaluateInlineString returns the text content of the given inline list as a string.
-func EvaluateInlineString(lst *sxpf.Cell) string {
+func EvaluateInlineString(lst *sxpf.Pair) string {
 	if sf := sxpf.FindSymbolFactory(lst); sf != nil {
 		return NewEncoder(sf).Encode(lst)
 	}
 	return ""
 }
 
-func (enc *Encoder) executeList(lst *sxpf.Cell) {
+func (enc *Encoder) executeList(lst *sxpf.Pair) {
 	for elem := lst; elem != nil; elem = elem.Tail() {
 		enc.execute(elem.Car())
 	}
 }
 func (enc *Encoder) execute(obj sxpf.Object) {
-	cmd, ok := obj.(*sxpf.Cell)
-	if !ok {
+	cmd, isPair := sxpf.GetPair(obj)
+	if !isPair {
 		return
 	}
 	sym := cmd.Car()
@@ -80,7 +80,7 @@ func (enc *Encoder) execute(obj sxpf.Object) {
 		if args == nil {
 			return
 		}
-		if val, ok2 := args.Car().(sxpf.String); ok2 {
+		if val, isString := sxpf.GetString(args.Car()); isString {
 			enc.sb.WriteString(val.String())
 		}
 	} else if sym.IsEqual(enc.symSpace) || sym.IsEqual(enc.symSoft) {
