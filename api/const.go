@@ -259,6 +259,7 @@ const (
 	ContextDirective  = "CONTEXT"
 	CostDirective     = "COST"
 	ForwardDirective  = "FORWARD"
+	ItemsDirective    = "ITEMS"
 	MaxDirective      = "MAX"
 	LimitDirective    = "LIMIT"
 	OffsetDirective   = "OFFSET"
