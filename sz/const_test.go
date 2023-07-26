@@ -13,8 +13,8 @@ package sz_test
 import (
 	"testing"
 
-	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/sz"
+	"zettelstore.de/sx.fossil/sxpf"
 )
 
 func BenchmarkInitializeZettelSymbols(b *testing.B) {

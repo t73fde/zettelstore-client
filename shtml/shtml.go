@@ -17,14 +17,14 @@ import (
 	"strconv"
 	"strings"
 
-	"codeberg.org/t73fde/sxhtml"
-	"codeberg.org/t73fde/sxpf"
-	"codeberg.org/t73fde/sxpf/builtins/quote"
-	"codeberg.org/t73fde/sxpf/eval"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/attrs"
 	"zettelstore.de/c/sz"
 	"zettelstore.de/c/text"
+	"zettelstore.de/sx.fossil/sxhtml"
+	"zettelstore.de/sx.fossil/sxpf"
+	"zettelstore.de/sx.fossil/sxpf/builtins/quote"
+	"zettelstore.de/sx.fossil/sxpf/eval"
 )
 
 // Transformer will transform a s-expression that encodes the zettel AST into an s-expression

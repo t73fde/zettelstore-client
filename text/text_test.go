@@ -14,9 +14,9 @@ import (
 	"strings"
 	"testing"
 
-	"codeberg.org/t73fde/sxpf"
-	"codeberg.org/t73fde/sxpf/reader"
 	"zettelstore.de/c/text"
+	"zettelstore.de/sx.fossil/sxpf"
+	"zettelstore.de/sx.fossil/sxpf/reader"
 )
 
 func TestSzText(t *testing.T) {

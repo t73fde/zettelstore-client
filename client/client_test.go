@@ -17,10 +17,10 @@ import (
 	"net/url"
 	"testing"
 
-	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/client"
 	"zettelstore.de/c/sz"
+	"zettelstore.de/sx.fossil/sxpf"
 )
 
 func TestZettelList(t *testing.T) {

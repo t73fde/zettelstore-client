@@ -15,7 +15,7 @@ import (
 	"errors"
 	"fmt"
 
-	"codeberg.org/t73fde/sxpf"
+	"zettelstore.de/sx.fossil/sxpf"
 )
 
 // ParseObject parses the given object as a proper list, based on a type specification.

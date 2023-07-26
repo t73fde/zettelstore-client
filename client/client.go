@@ -25,10 +25,10 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/t73fde/sxpf"
-	"codeberg.org/t73fde/sxpf/reader"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/sx"
+	"zettelstore.de/sx.fossil/sxpf"
+	"zettelstore.de/sx.fossil/sxpf/reader"
 )
 
 // Client contains all data to execute requests.

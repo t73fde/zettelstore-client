@@ -10,7 +10,7 @@
 
 package sz
 
-import "codeberg.org/t73fde/sxpf"
+import "zettelstore.de/sx.fossil/sxpf"
 
 // Various constants for Zettel data. Some of them are technically variables.
 

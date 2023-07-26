@@ -1,4 +1,2 @@
-codeberg.org/t73fde/sxhtml v0.1.2-0.20230711130603-ebbc9f711576 h1:0OMwsZCOStkf/RKPHGkbjnd5KbgZqxBDtX2IyJkw2Zc=
-codeberg.org/t73fde/sxhtml v0.1.2-0.20230711130603-ebbc9f711576/go.mod h1:qELH+ocPINeoXeUcAeMMC5RfbgPR404D7yDmlkpCKKY=
-codeberg.org/t73fde/sxpf v0.2.1-0.20230711125102-caf21103c6db h1:cT+EUjoZ7gjLRi69WQu+D7DWThmZJ1mjWFuFmUklmdo=
-codeberg.org/t73fde/sxpf v0.2.1-0.20230711125102-caf21103c6db/go.mod h1:X+XmeukFGzykXmTnR1tyFmyB5kV7UdO8V1sX5gMwdRQ=
+zettelstore.de/sx.fossil v0.0.0-20230726100157-ef85a3d80e9d h1:VVPkVPg5bGYcqmPjTBfkLgHbk4sqAoU+IFGpg2xDzfo=
+zettelstore.de/sx.fossil v0.0.0-20230726100157-ef85a3d80e9d/go.mod h1:nsWXVrQG8RNKtoXzEMrWXNMdnpfIDU6Hb0pk56KpVKE=

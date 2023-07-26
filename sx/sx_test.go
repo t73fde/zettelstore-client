@@ -13,8 +13,8 @@ package sx_test
 import (
 	"testing"
 
-	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/sx"
+	"zettelstore.de/sx.fossil/sxpf"
 )
 
 func TestParseObject(t *testing.T) {

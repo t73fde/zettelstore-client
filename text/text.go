@@ -14,8 +14,8 @@ package text
 import (
 	"strings"
 
-	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/sz"
+	"zettelstore.de/sx.fossil/sxpf"
 )
 
 // Encoder is the structure to hold relevant data to execute the encoding.

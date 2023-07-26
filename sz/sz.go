@@ -11,8 +11,8 @@
 package sz
 
 import (
-	"codeberg.org/t73fde/sxpf"
 	"zettelstore.de/c/attrs"
+	"zettelstore.de/sx.fossil/sxpf"
 )
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.
