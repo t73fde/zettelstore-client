@@ -1,4 +1,4 @@
-module zettelstore.de/c
+module zettelstore.de/client.fossil
 
 go 1.20
 

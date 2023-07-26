@@ -13,7 +13,7 @@ package maps_test
 import (
 	"testing"
 
-	"zettelstore.de/c/maps"
+	"zettelstore.de/client.fossil/maps"
 )
 
 func isSorted(seq []string) bool {

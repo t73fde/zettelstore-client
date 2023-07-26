@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"zettelstore.de/c/text"
+	"zettelstore.de/client.fossil/text"
 	"zettelstore.de/sx.fossil/sxpf"
 	"zettelstore.de/sx.fossil/sxpf/reader"
 )

@@ -25,8 +25,8 @@ import (
 	"strings"
 	"time"
 
-	"zettelstore.de/c/api"
-	"zettelstore.de/c/sx"
+	"zettelstore.de/client.fossil/api"
+	"zettelstore.de/client.fossil/sx"
 	"zettelstore.de/sx.fossil/sxpf"
 	"zettelstore.de/sx.fossil/sxpf/reader"
 )

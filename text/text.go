@@ -14,7 +14,7 @@ package text
 import (
 	"strings"
 
-	"zettelstore.de/c/sz"
+	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil/sxpf"
 )
 

@@ -13,7 +13,7 @@ package sx_test
 import (
 	"testing"
 
-	"zettelstore.de/c/sx"
+	"zettelstore.de/client.fossil/sx"
 	"zettelstore.de/sx.fossil/sxpf"
 )
 

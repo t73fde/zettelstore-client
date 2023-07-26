@@ -13,7 +13,7 @@ package attrs_test
 import (
 	"testing"
 
-	"zettelstore.de/c/attrs"
+	"zettelstore.de/client.fossil/attrs"
 )
 
 func TestHasDefault(t *testing.T) {

@@ -17,9 +17,9 @@ import (
 	"net/url"
 	"testing"
 
-	"zettelstore.de/c/api"
-	"zettelstore.de/c/client"
-	"zettelstore.de/c/sz"
+	"zettelstore.de/client.fossil/api"
+	"zettelstore.de/client.fossil/client"
+	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil/sxpf"
 )
 

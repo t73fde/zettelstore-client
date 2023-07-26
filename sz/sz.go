@@ -11,7 +11,7 @@
 package sz
 
 import (
-	"zettelstore.de/c/attrs"
+	"zettelstore.de/client.fossil/attrs"
 	"zettelstore.de/sx.fossil/sxpf"
 )
 
