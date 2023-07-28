@@ -503,27 +503,6 @@ func (c *Client) GetMeta(ctx context.Context, zid api.ZettelID) (api.ZettelMeta,
 	return out.Meta, nil
 }
 
-// GetZettelOrder returns metadata of the given zettel and, more important,
-// metadata of zettel that are referenced in a list within the first zettel.
-func (c *Client) GetZettelOrder(ctx context.Context, zid api.ZettelID) (*api.ZidMetaRelatedList, error) {
-	ub := c.newURLBuilder('o').SetZid(zid)
-	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, statusToError(resp)
-	}
-	dec := json.NewDecoder(resp.Body)
-	var out api.ZidMetaRelatedList
-	err = dec.Decode(&out)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 // GetUnlinkedReferences returns connections to other zettel, embedded material, externals URLs.
 func (c *Client) GetUnlinkedReferences(
 	ctx context.Context, zid api.ZettelID, query url.Values) (*api.ZidMetaRelatedList, error) {
