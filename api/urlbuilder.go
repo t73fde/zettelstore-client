@@ -91,8 +91,10 @@ func (ub *URLBuilder) AppendKVQuery(key, value string) *URLBuilder {
 
 // AppendQuery adds a new query
 func (ub *URLBuilder) AppendQuery(value string) *URLBuilder {
-	ub.rawLocal = ""
-	ub.query = append(ub.query, urlQuery{QueryKeyQuery, value})
+	if value != "" {
+		ub.rawLocal = ""
+		ub.query = append(ub.query, urlQuery{QueryKeyQuery, value})
+	}
 	return ub
 }
 
