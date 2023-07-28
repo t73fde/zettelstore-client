@@ -80,21 +80,6 @@ type ZettelData struct {
 	Content  string     `json:"content"`
 }
 
-// ZettelJSON contains all data for a zettel, the identifier, the metadata, and the content.
-type ZettelJSON struct {
-	ID       ZettelID     `json:"id"`
-	Meta     ZettelMeta   `json:"meta"`
-	Encoding string       `json:"encoding"`
-	Content  string       `json:"content"`
-	Rights   ZettelRights `json:"rights"`
-}
-
-// ZettelContentJSON contains all elements to transfer the content of a zettel.
-type ZettelContentJSON struct {
-	Encoding string `json:"encoding"`
-	Content  string `json:"content"`
-}
-
 // ZettelListJSON contains data for a zettel list.
 type ZettelListJSON struct {
 	Query string        `json:"query"`
