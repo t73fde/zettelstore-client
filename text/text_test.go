@@ -15,8 +15,8 @@ import (
 	"testing"
 
 	"zettelstore.de/client.fossil/text"
-	"zettelstore.de/sx.fossil/sxpf"
-	"zettelstore.de/sx.fossil/sxpf/reader"
+	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxreader"
 )
 
 func TestSzText(t *testing.T) {
@@ -29,12 +29,12 @@ func TestSzText(t *testing.T) {
 		{`(INLINE (SPACE "a"))`, " "},
 	}
 	for i, tc := range testcases {
-		sval, err := reader.MakeReader(strings.NewReader(tc.src)).Read()
+		sval, err := sxreader.MakeReader(strings.NewReader(tc.src)).Read()
 		if err != nil {
 			t.Error(err)
 			continue
 		}
-		seq, isPair := sxpf.GetPair(sval)
+		seq, isPair := sx.GetPair(sval)
 		if !isPair {
 			t.Errorf("%d: not a list: %v", i, sval)
 		}

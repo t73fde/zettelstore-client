@@ -8,14 +8,15 @@
 // and obligations under this license.
 //-----------------------------------------------------------------------------
 
-// Package sx contains helper function to work with s-expression in an alien environment.
+// Package sx contains helper function to work with s-expression in an alien
+// environment.
 package sx
 
 import (
 	"errors"
 	"fmt"
 
-	"zettelstore.de/sx.fossil/sxpf"
+	sxpf "zettelstore.de/sx.fossil"
 )
 
 // ParseObject parses the given object as a proper list, based on a type specification.

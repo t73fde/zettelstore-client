@@ -20,7 +20,7 @@ import (
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/client"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil/sxpf"
+	"zettelstore.de/sx.fossil"
 )
 
 func TestZettelList(t *testing.T) {
@@ -47,7 +47,7 @@ func TestGetProtectedZettel(t *testing.T) {
 
 func TestGetSzZettel(t *testing.T) {
 	c := getClient()
-	sf := sxpf.MakeMappedFactory()
+	sf := sx.MakeMappedFactory()
 	var zetSyms sz.ZettelSymbols
 	zetSyms.InitializeZettelSymbols(sf)
 	value, err := c.GetEvaluatedSz(context.Background(), api.ZidDefaultHome, api.PartContent, sf)

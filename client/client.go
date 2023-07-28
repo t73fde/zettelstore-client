@@ -27,8 +27,8 @@ import (
 
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/sx"
-	"zettelstore.de/sx.fossil/sxpf"
-	"zettelstore.de/sx.fossil/sxpf/reader"
+	sxpf "zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxreader"
 )
 
 // Client contains all data to execute requests.
@@ -168,7 +168,7 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	if resp.StatusCode != http.StatusOK {
 		return statusToError(resp)
 	}
-	rd := reader.MakeReader(resp.Body)
+	rd := sxreader.MakeReader(resp.Body)
 	obj, err := rd.Read()
 	if err != nil {
 		return err
@@ -349,7 +349,7 @@ func (c *Client) GetZettelData(ctx context.Context, zid api.ZettelID) (api.Zette
 		if resp.StatusCode != http.StatusOK {
 			return api.ZettelData{}, statusToError(resp)
 		}
-		rdr := reader.MakeReader(resp.Body)
+		rdr := sxreader.MakeReader(resp.Body)
 		obj, err2 := rdr.Read()
 		if err2 == nil {
 			var data api.ZettelData
@@ -478,7 +478,7 @@ func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parse
 	if resp.StatusCode != http.StatusOK {
 		return nil, statusToError(resp)
 	}
-	return reader.MakeReader(bufio.NewReaderSize(resp.Body, 8), reader.WithSymbolFactory(sf)).Read()
+	return sxreader.MakeReader(bufio.NewReaderSize(resp.Body, 8), sxreader.WithSymbolFactory(sf)).Read()
 }
 
 // GetMeta returns the metadata of a zettel.
@@ -673,7 +673,7 @@ func (c *Client) GetVersionInfo(ctx context.Context) (VersionInfo, error) {
 	if resp.StatusCode != http.StatusOK {
 		return VersionInfo{}, statusToError(resp)
 	}
-	rdr := reader.MakeReader(resp.Body)
+	rdr := sxreader.MakeReader(resp.Body)
 	obj, err := rdr.Read()
 	if err == nil {
 		if vals, errVals := sx.ParseObject(obj, "iiiss"); errVals == nil {

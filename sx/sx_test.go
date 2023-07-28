@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"zettelstore.de/client.fossil/sx"
-	"zettelstore.de/sx.fossil/sxpf"
+	sxpf "zettelstore.de/sx.fossil"
 )
 
 func TestParseObject(t *testing.T) {

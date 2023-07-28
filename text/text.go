@@ -15,22 +15,22 @@ import (
 	"strings"
 
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil/sxpf"
+	"zettelstore.de/sx.fossil"
 )
 
 // Encoder is the structure to hold relevant data to execute the encoding.
 type Encoder struct {
-	sf sxpf.SymbolFactory
+	sf sx.SymbolFactory
 	sb strings.Builder
 
-	symText  *sxpf.Symbol
-	symSpace *sxpf.Symbol
-	symSoft  *sxpf.Symbol
-	symHard  *sxpf.Symbol
-	symQuote *sxpf.Symbol
+	symText  *sx.Symbol
+	symSpace *sx.Symbol
+	symSoft  *sx.Symbol
+	symHard  *sx.Symbol
+	symQuote *sx.Symbol
 }
 
-func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
+func NewEncoder(sf sx.SymbolFactory) *Encoder {
 	if sf == nil {
 		return nil
 	}
@@ -46,7 +46,7 @@ func NewEncoder(sf sxpf.SymbolFactory) *Encoder {
 	return enc
 }
 
-func (enc *Encoder) Encode(lst *sxpf.Pair) string {
+func (enc *Encoder) Encode(lst *sx.Pair) string {
 	enc.executeList(lst)
 	result := enc.sb.String()
 	enc.sb.Reset()
@@ -54,25 +54,25 @@ func (enc *Encoder) Encode(lst *sxpf.Pair) string {
 }
 
 // EvaluateInlineString returns the text content of the given inline list as a string.
-func EvaluateInlineString(lst *sxpf.Pair) string {
-	if sf := sxpf.FindSymbolFactory(lst); sf != nil {
+func EvaluateInlineString(lst *sx.Pair) string {
+	if sf := sx.FindSymbolFactory(lst); sf != nil {
 		return NewEncoder(sf).Encode(lst)
 	}
 	return ""
 }
 
-func (enc *Encoder) executeList(lst *sxpf.Pair) {
+func (enc *Encoder) executeList(lst *sx.Pair) {
 	for elem := lst; elem != nil; elem = elem.Tail() {
 		enc.execute(elem.Car())
 	}
 }
-func (enc *Encoder) execute(obj sxpf.Object) {
-	cmd, isPair := sxpf.GetPair(obj)
+func (enc *Encoder) execute(obj sx.Object) {
+	cmd, isPair := sx.GetPair(obj)
 	if !isPair {
 		return
 	}
 	sym := cmd.Car()
-	if sxpf.IsNil(sym) {
+	if sx.IsNil(sym) {
 		return
 	}
 	if sym.IsEqual(enc.symText) {
@@ -80,7 +80,7 @@ func (enc *Encoder) execute(obj sxpf.Object) {
 		if args == nil {
 			return
 		}
-		if val, isString := sxpf.GetString(args.Car()); isString {
+		if val, isString := sx.GetString(args.Car()); isString {
 			enc.sb.WriteString(val.String())
 		}
 	} else if sym.IsEqual(enc.symSpace) || sym.IsEqual(enc.symSoft) {

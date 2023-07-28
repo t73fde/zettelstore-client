@@ -14,11 +14,11 @@ import (
 	"testing"
 
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil/sxpf"
+	"zettelstore.de/sx.fossil"
 )
 
 func BenchmarkInitializeZettelSymbols(b *testing.B) {
-	sf := sxpf.MakeMappedFactory()
+	sf := sx.MakeMappedFactory()
 	for i := 0; i < b.N; i++ {
 		var zs sz.ZettelSymbols
 		zs.InitializeZettelSymbols(sf)

@@ -10,7 +10,7 @@
 
 package sz
 
-import "zettelstore.de/sx.fossil/sxpf"
+import "zettelstore.de/sx.fossil"
 
 // Various constants for Zettel data. Some of them are technically variables.
 
@@ -110,100 +110,100 @@ const (
 // ZettelSymbols collect all symbols needed to represent zettel data.
 type ZettelSymbols struct {
 	// Symbols for Metanodes
-	SymBlock  *sxpf.Symbol
-	SymInline *sxpf.Symbol
-	SymList   *sxpf.Symbol
-	SymMeta   *sxpf.Symbol
-	SymQuote  *sxpf.Symbol
+	SymBlock  *sx.Symbol
+	SymInline *sx.Symbol
+	SymList   *sx.Symbol
+	SymMeta   *sx.Symbol
+	SymQuote  *sx.Symbol
 
 	// Symbols for Zettel node types.
-	SymBLOB            *sxpf.Symbol
-	SymCell            *sxpf.Symbol
-	SymCellCenter      *sxpf.Symbol
-	SymCellLeft        *sxpf.Symbol
-	SymCellRight       *sxpf.Symbol
-	SymCite            *sxpf.Symbol
-	SymDescription     *sxpf.Symbol
-	SymEmbed           *sxpf.Symbol
-	SymEmbedBLOB       *sxpf.Symbol
-	SymEndnote         *sxpf.Symbol
-	SymFormatEmph      *sxpf.Symbol
-	SymFormatDelete    *sxpf.Symbol
-	SymFormatInsert    *sxpf.Symbol
-	SymFormatQuote     *sxpf.Symbol
-	SymFormatSpan      *sxpf.Symbol
-	SymFormatSub       *sxpf.Symbol
-	SymFormatSuper     *sxpf.Symbol
-	SymFormatStrong    *sxpf.Symbol
-	SymHard            *sxpf.Symbol
-	SymHeading         *sxpf.Symbol
-	SymLinkInvalid     *sxpf.Symbol
-	SymLinkZettel      *sxpf.Symbol
-	SymLinkSelf        *sxpf.Symbol
-	SymLinkFound       *sxpf.Symbol
-	SymLinkBroken      *sxpf.Symbol
-	SymLinkHosted      *sxpf.Symbol
-	SymLinkBased       *sxpf.Symbol
-	SymLinkQuery       *sxpf.Symbol
-	SymLinkExternal    *sxpf.Symbol
-	SymListOrdered     *sxpf.Symbol
-	SymListUnordered   *sxpf.Symbol
-	SymListQuote       *sxpf.Symbol
-	SymLiteralProg     *sxpf.Symbol
-	SymLiteralComment  *sxpf.Symbol
-	SymLiteralHTML     *sxpf.Symbol
-	SymLiteralInput    *sxpf.Symbol
-	SymLiteralMath     *sxpf.Symbol
-	SymLiteralOutput   *sxpf.Symbol
-	SymLiteralZettel   *sxpf.Symbol
-	SymMark            *sxpf.Symbol
-	SymPara            *sxpf.Symbol
-	SymRegionBlock     *sxpf.Symbol
-	SymRegionQuote     *sxpf.Symbol
-	SymRegionVerse     *sxpf.Symbol
-	SymSoft            *sxpf.Symbol
-	SymSpace           *sxpf.Symbol
-	SymTable           *sxpf.Symbol
-	SymText            *sxpf.Symbol
-	SymThematic        *sxpf.Symbol
-	SymTransclude      *sxpf.Symbol
-	SymUnknown         *sxpf.Symbol
-	SymVerbatimComment *sxpf.Symbol
-	SymVerbatimEval    *sxpf.Symbol
-	SymVerbatimHTML    *sxpf.Symbol
-	SymVerbatimMath    *sxpf.Symbol
-	SymVerbatimProg    *sxpf.Symbol
-	SymVerbatimZettel  *sxpf.Symbol
+	SymBLOB            *sx.Symbol
+	SymCell            *sx.Symbol
+	SymCellCenter      *sx.Symbol
+	SymCellLeft        *sx.Symbol
+	SymCellRight       *sx.Symbol
+	SymCite            *sx.Symbol
+	SymDescription     *sx.Symbol
+	SymEmbed           *sx.Symbol
+	SymEmbedBLOB       *sx.Symbol
+	SymEndnote         *sx.Symbol
+	SymFormatEmph      *sx.Symbol
+	SymFormatDelete    *sx.Symbol
+	SymFormatInsert    *sx.Symbol
+	SymFormatQuote     *sx.Symbol
+	SymFormatSpan      *sx.Symbol
+	SymFormatSub       *sx.Symbol
+	SymFormatSuper     *sx.Symbol
+	SymFormatStrong    *sx.Symbol
+	SymHard            *sx.Symbol
+	SymHeading         *sx.Symbol
+	SymLinkInvalid     *sx.Symbol
+	SymLinkZettel      *sx.Symbol
+	SymLinkSelf        *sx.Symbol
+	SymLinkFound       *sx.Symbol
+	SymLinkBroken      *sx.Symbol
+	SymLinkHosted      *sx.Symbol
+	SymLinkBased       *sx.Symbol
+	SymLinkQuery       *sx.Symbol
+	SymLinkExternal    *sx.Symbol
+	SymListOrdered     *sx.Symbol
+	SymListUnordered   *sx.Symbol
+	SymListQuote       *sx.Symbol
+	SymLiteralProg     *sx.Symbol
+	SymLiteralComment  *sx.Symbol
+	SymLiteralHTML     *sx.Symbol
+	SymLiteralInput    *sx.Symbol
+	SymLiteralMath     *sx.Symbol
+	SymLiteralOutput   *sx.Symbol
+	SymLiteralZettel   *sx.Symbol
+	SymMark            *sx.Symbol
+	SymPara            *sx.Symbol
+	SymRegionBlock     *sx.Symbol
+	SymRegionQuote     *sx.Symbol
+	SymRegionVerse     *sx.Symbol
+	SymSoft            *sx.Symbol
+	SymSpace           *sx.Symbol
+	SymTable           *sx.Symbol
+	SymText            *sx.Symbol
+	SymThematic        *sx.Symbol
+	SymTransclude      *sx.Symbol
+	SymUnknown         *sx.Symbol
+	SymVerbatimComment *sx.Symbol
+	SymVerbatimEval    *sx.Symbol
+	SymVerbatimHTML    *sx.Symbol
+	SymVerbatimMath    *sx.Symbol
+	SymVerbatimProg    *sx.Symbol
+	SymVerbatimZettel  *sx.Symbol
 
 	// Constant symbols for reference states.
 
-	SymRefStateInvalid  *sxpf.Symbol
-	SymRefStateZettel   *sxpf.Symbol
-	SymRefStateSelf     *sxpf.Symbol
-	SymRefStateFound    *sxpf.Symbol
-	SymRefStateBroken   *sxpf.Symbol
-	SymRefStateHosted   *sxpf.Symbol
-	SymRefStateBased    *sxpf.Symbol
-	SymRefStateQuery    *sxpf.Symbol
-	SymRefStateExternal *sxpf.Symbol
+	SymRefStateInvalid  *sx.Symbol
+	SymRefStateZettel   *sx.Symbol
+	SymRefStateSelf     *sx.Symbol
+	SymRefStateFound    *sx.Symbol
+	SymRefStateBroken   *sx.Symbol
+	SymRefStateHosted   *sx.Symbol
+	SymRefStateBased    *sx.Symbol
+	SymRefStateQuery    *sx.Symbol
+	SymRefStateExternal *sx.Symbol
 
 	// Symbols for metadata types
 
-	SymTypeCredential   *sxpf.Symbol
-	SymTypeEmpty        *sxpf.Symbol
-	SymTypeID           *sxpf.Symbol
-	SymTypeIDSet        *sxpf.Symbol
-	SymTypeNumber       *sxpf.Symbol
-	SymTypeString       *sxpf.Symbol
-	SymTypeTagSet       *sxpf.Symbol
-	SymTypeTimestamp    *sxpf.Symbol
-	SymTypeURL          *sxpf.Symbol
-	SymTypeWord         *sxpf.Symbol
-	SymTypeWordSet      *sxpf.Symbol
-	SymTypeZettelmarkup *sxpf.Symbol
+	SymTypeCredential   *sx.Symbol
+	SymTypeEmpty        *sx.Symbol
+	SymTypeID           *sx.Symbol
+	SymTypeIDSet        *sx.Symbol
+	SymTypeNumber       *sx.Symbol
+	SymTypeString       *sx.Symbol
+	SymTypeTagSet       *sx.Symbol
+	SymTypeTimestamp    *sx.Symbol
+	SymTypeURL          *sx.Symbol
+	SymTypeWord         *sx.Symbol
+	SymTypeWordSet      *sx.Symbol
+	SymTypeZettelmarkup *sx.Symbol
 }
 
-func (zs *ZettelSymbols) InitializeZettelSymbols(sf sxpf.SymbolFactory) {
+func (zs *ZettelSymbols) InitializeZettelSymbols(sf sx.SymbolFactory) {
 	// Symbols for Metanodes
 	zs.SymBlock = sf.MustMake(NameSymBlock)
 	zs.SymInline = sf.MustMake(NameSymInline)
