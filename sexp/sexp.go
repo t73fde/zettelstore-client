@@ -8,20 +8,20 @@
 // and obligations under this license.
 //-----------------------------------------------------------------------------
 
-// Package sx contains helper function to work with s-expression in an alien
+// Package sexp contains helper function to work with s-expression in an alien
 // environment.
-package sx
+package sexp
 
 import (
 	"errors"
 	"fmt"
 
-	sxpf "zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil"
 )
 
-// ParseObject parses the given object as a proper list, based on a type specification.
-func ParseObject(obj sxpf.Object, spec string) ([]sxpf.Object, error) {
-	pair, isPair := sxpf.GetPair(obj)
+// ParseList parses the given object as a proper list, based on a type specification.
+func ParseList(obj sx.Object, spec string) ([]sx.Object, error) {
+	pair, isPair := sx.GetPair(obj)
 	if !isPair {
 		return nil, fmt.Errorf("not a list: %T/%v", obj, obj)
 	}
@@ -32,28 +32,28 @@ func ParseObject(obj sxpf.Object, spec string) ([]sxpf.Object, error) {
 		return nil, ErrElementsMissing
 	}
 
-	result := make([]sxpf.Object, 0, len(spec))
+	result := make([]sx.Object, 0, len(spec))
 	node, i := pair, 0
 	for ; node != nil; i++ {
 		if i >= len(spec) {
 			return nil, ErrNoSpec
 		}
-		var val sxpf.Object
+		var val sx.Object
 		var ok bool
 		car := node.Car()
 		switch spec[i] {
 		case 'b':
-			val, ok = sxpf.GetBoolean(car)
+			val, ok = sx.GetBoolean(car)
 		case 'i':
-			val, ok = car.(sxpf.Int64)
+			val, ok = car.(sx.Int64)
 		case 'o':
 			val, ok = car, true
 		case 'p':
-			val, ok = sxpf.GetPair(car)
+			val, ok = sx.GetPair(car)
 		case 's':
-			val, ok = sxpf.GetString(car)
+			val, ok = sx.GetString(car)
 		case 'y':
-			val, ok = sxpf.GetSymbol(car)
+			val, ok = sx.GetSymbol(car)
 		default:
 			return nil, fmt.Errorf("unknown spec '%c'", spec[i])
 		}
@@ -61,9 +61,9 @@ func ParseObject(obj sxpf.Object, spec string) ([]sxpf.Object, error) {
 			return nil, fmt.Errorf("does not match spec '%v': %v", spec[i], car)
 		}
 		result = append(result, val)
-		next, isNextPair := sxpf.GetPair(node.Cdr())
+		next, isNextPair := sx.GetPair(node.Cdr())
 		if !isNextPair {
-			return nil, sxpf.ErrImproper{Pair: pair}
+			return nil, sx.ErrImproper{Pair: pair}
 		}
 		node = next
 	}

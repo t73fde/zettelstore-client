@@ -26,8 +26,8 @@ import (
 	"time"
 
 	"zettelstore.de/client.fossil/api"
-	"zettelstore.de/client.fossil/sx"
-	sxpf "zettelstore.de/sx.fossil"
+	"zettelstore.de/client.fossil/sexp"
+	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxreader"
 )
 
@@ -173,17 +173,17 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	vals, err := sx.ParseObject(obj, "ssi")
+	vals, err := sexp.ParseList(obj, "ssi")
 	if err != nil {
 		return err
 	}
-	token := vals[1].(sxpf.String).String()
+	token := vals[1].(sx.String).String()
 	if len(token) < 4 {
 		return fmt.Errorf("no valid token found: %q", token)
 	}
 	c.token = token
-	c.tokenType = vals[0].(sxpf.String).String()
-	c.expires = time.Now().Add(time.Duration(vals[2].(sxpf.Int64)*9/10) * time.Second)
+	c.tokenType = vals[0].(sx.String).String()
+	c.expires = time.Now().Add(time.Duration(vals[2].(sx.Int64)*9/10) * time.Second)
 	return nil
 }
 
@@ -360,8 +360,8 @@ func (c *Client) GetZettelData(ctx context.Context, zid api.ZettelID) (api.Zette
 	return api.ZettelData{}, err
 }
 
-func parseZettelSxToStruct(obj sxpf.Object, data *api.ZettelData) error {
-	vals, err := sx.ParseObject(obj, "yppppp")
+func parseZettelSxToStruct(obj sx.Object, data *api.ZettelData) error {
+	vals, err := sexp.ParseList(obj, "yppppp")
 	if err != nil {
 		return err
 	}
@@ -371,14 +371,14 @@ func parseZettelSxToStruct(obj sxpf.Object, data *api.ZettelData) error {
 
 	// Ignore vals[1] (id "12345678901234"), we don't need it in ZettelData
 
-	meta, err := parseMetaSxToMap(vals[2].(*sxpf.Pair))
+	meta, err := parseMetaSxToMap(vals[2].(*sx.Pair))
 	if err != nil {
 		return err
 	}
 
 	// Ignore vals[3] (rights 4), we don't need the rights in ZettelData
 
-	encVals, err := sx.ParseObject(vals[4], "ys")
+	encVals, err := sexp.ParseList(vals[4], "ys")
 	if err != nil {
 		return err
 	}
@@ -386,7 +386,7 @@ func parseZettelSxToStruct(obj sxpf.Object, data *api.ZettelData) error {
 		return errSym
 	}
 
-	contentVals, err := sx.ParseObject(vals[5], "ys")
+	contentVals, err := sexp.ParseList(vals[5], "ys")
 	if err != nil {
 		return err
 	}
@@ -395,27 +395,27 @@ func parseZettelSxToStruct(obj sxpf.Object, data *api.ZettelData) error {
 	}
 
 	data.Meta = meta
-	data.Encoding = encVals[1].(sxpf.String).String()
-	data.Content = contentVals[1].(sxpf.String).String()
+	data.Encoding = encVals[1].(sx.String).String()
+	data.Content = contentVals[1].(sx.String).String()
 	return nil
 }
-func checkSymbol(obj sxpf.Object, exp string) error {
-	if got := obj.(*sxpf.Symbol).Name(); got != exp {
+func checkSymbol(obj sx.Object, exp string) error {
+	if got := obj.(*sx.Symbol).Name(); got != exp {
 		return fmt.Errorf("symbol %q expected, but got: %q", exp, got)
 	}
 	return nil
 }
-func parseMetaSxToMap(pair *sxpf.Pair) (api.ZettelMeta, error) {
+func parseMetaSxToMap(pair *sx.Pair) (api.ZettelMeta, error) {
 	if err := checkSymbol(pair.Car(), "meta"); err != nil {
 		return nil, err
 	}
 	res := api.ZettelMeta{}
 	for node := pair.Tail(); node != nil; node = node.Tail() {
-		mVals, err := sx.ParseObject(node.Car(), "ys")
+		mVals, err := sexp.ParseList(node.Car(), "ys")
 		if err != nil {
 			return nil, err
 		}
-		res[mVals[0].(*sxpf.Symbol).Name()] = mVals[1].(sxpf.String).String()
+		res[mVals[0].(*sx.Symbol).Name()] = mVals[1].(sx.String).String()
 	}
 	return res, nil
 }
@@ -452,16 +452,16 @@ func (c *Client) getZettelString(ctx context.Context, zid api.ZettelID, enc api.
 }
 
 // GetParsedSz returns an parsed zettel as a Sexpr-decoded data structure.
-func (c *Client) GetParsedSz(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Object, error) {
+func (c *Client) GetParsedSz(ctx context.Context, zid api.ZettelID, part string, sf sx.SymbolFactory) (sx.Object, error) {
 	return c.getSz(ctx, zid, part, true, sf)
 }
 
 // GetEvaluatedSz returns an evaluated zettel as a Sexpr-decoded data structure.
-func (c *Client) GetEvaluatedSz(ctx context.Context, zid api.ZettelID, part string, sf sxpf.SymbolFactory) (sxpf.Object, error) {
+func (c *Client) GetEvaluatedSz(ctx context.Context, zid api.ZettelID, part string, sf sx.SymbolFactory) (sx.Object, error) {
 	return c.getSz(ctx, zid, part, false, sf)
 }
 
-func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parseOnly bool, sf sxpf.SymbolFactory) (sxpf.Object, error) {
+func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parseOnly bool, sf sx.SymbolFactory) (sx.Object, error) {
 	ub := c.newURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingSz)
 	if part != "" {
@@ -676,13 +676,13 @@ func (c *Client) GetVersionInfo(ctx context.Context) (VersionInfo, error) {
 	rdr := sxreader.MakeReader(resp.Body)
 	obj, err := rdr.Read()
 	if err == nil {
-		if vals, errVals := sx.ParseObject(obj, "iiiss"); errVals == nil {
+		if vals, errVals := sexp.ParseList(obj, "iiiss"); errVals == nil {
 			return VersionInfo{
-				Major: int(vals[0].(sxpf.Int64)),
-				Minor: int(vals[1].(sxpf.Int64)),
-				Patch: int(vals[2].(sxpf.Int64)),
-				Info:  vals[3].(sxpf.String).String(),
-				Hash:  vals[4].(sxpf.String).String(),
+				Major: int(vals[0].(sx.Int64)),
+				Minor: int(vals[1].(sx.Int64)),
+				Patch: int(vals[2].(sx.Int64)),
+				Info:  vals[3].(sx.String).String(),
+				Hash:  vals[4].(sx.String).String(),
 			}, nil
 		}
 	}
