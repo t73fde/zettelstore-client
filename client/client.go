@@ -503,27 +503,6 @@ func (c *Client) GetMeta(ctx context.Context, zid api.ZettelID) (api.ZettelMeta,
 	return out.Meta, nil
 }
 
-// GetUnlinkedReferences returns connections to other zettel, embedded material, externals URLs.
-func (c *Client) GetUnlinkedReferences(
-	ctx context.Context, zid api.ZettelID, query url.Values) (*api.ZidMetaRelatedList, error) {
-	ub := c.newQueryURLBuilder('u', query).SetZid(zid)
-	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, statusToError(resp)
-	}
-	dec := json.NewDecoder(resp.Body)
-	var out api.ZidMetaRelatedList
-	err = dec.Decode(&out)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 // UpdateZettel updates an existing zettel.
 func (c *Client) UpdateZettel(ctx context.Context, zid api.ZettelID, data []byte) error {
 	ub := c.newURLBuilder('z').SetZid(zid)
@@ -599,19 +578,6 @@ func (c *Client) ExecuteCommand(ctx context.Context, command api.Command) error 
 		return statusToError(resp)
 	}
 	return nil
-}
-
-func (c *Client) newQueryURLBuilder(key byte, query url.Values) *api.URLBuilder {
-	ub := c.newURLBuilder(key)
-	for key, values := range query {
-		if key == api.QueryKeyEncoding {
-			continue
-		}
-		for _, val := range values {
-			ub.AppendKVQuery(key, val)
-		}
-	}
-	return ub
 }
 
 // QueryMapMeta returns a map of all metadata values with the given query action to the

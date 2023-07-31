@@ -65,14 +65,6 @@ type ZidMetaJSON struct {
 	Rights ZettelRights `json:"rights"`
 }
 
-// ZidMetaRelatedList contains identifier/metadata of a zettel and the same for related zettel
-type ZidMetaRelatedList struct {
-	ID     ZettelID      `json:"id"`
-	Meta   ZettelMeta    `json:"meta"`
-	Rights ZettelRights  `json:"rights"`
-	List   []ZidMetaJSON `json:"list"`
-}
-
 // ZettelData contains all data for a zettel.
 type ZettelData struct {
 	Meta     ZettelMeta `json:"meta"`
