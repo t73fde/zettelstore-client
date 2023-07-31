@@ -266,9 +266,11 @@ const (
 	OffsetDirective   = "OFFSET"
 	OrDirective       = "OR"
 	OrderDirective    = "ORDER"
+	PhraseDirective   = "PHRASE"
 	PickDirective     = "PICK"
 	RandomDirective   = "RANDOM"
 	ReverseDirective  = "REVERSE"
+	UnlinkedDirective = "UNLINKED"
 
 	ActionSeparator = "|"
 
