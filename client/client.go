@@ -273,8 +273,8 @@ func encodeZettelData(buf *bytes.Buffer, data *api.ZettelData) error {
 
 var bsLF = []byte{'\n'}
 
-// ListZettel returns a list of all Zettel.
-func (c *Client) ListZettel(ctx context.Context, query string) ([][]byte, error) {
+// QueryZettel returns a list of all Zettel.
+func (c *Client) QueryZettel(ctx context.Context, query string) ([][]byte, error) {
 	ub := c.newURLBuilder('z').AppendQuery(query)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
@@ -481,8 +481,8 @@ func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parse
 	return sxreader.MakeReader(bufio.NewReaderSize(resp.Body, 8), sxreader.WithSymbolFactory(sf)).Read()
 }
 
-// GetMeta returns the metadata of a zettel.
-func (c *Client) GetMeta(ctx context.Context, zid api.ZettelID) (api.ZettelMeta, error) {
+// GetMetaJSON returns the metadata of a zettel.
+func (c *Client) GetMetaJSON(ctx context.Context, zid api.ZettelID) (api.ZettelMeta, error) {
 	ub := c.newURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson)
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartMeta)
@@ -578,34 +578,6 @@ func (c *Client) ExecuteCommand(ctx context.Context, command api.Command) error 
 		return statusToError(resp)
 	}
 	return nil
-}
-
-// QueryMapMeta returns a map of all metadata values with the given query action to the
-// list of zettel IDs containing this value.
-func (c *Client) QueryMapMeta(ctx context.Context, query string) (api.MapMeta, error) {
-	err := c.updateToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-	req, err := c.newRequest(ctx, http.MethodGet, c.newURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson).AppendQuery(query), nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.executeRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, statusToError(resp)
-	}
-	dec := json.NewDecoder(resp.Body)
-	var mlj api.MapListJSON
-	err = dec.Decode(&mlj)
-	if err != nil {
-		return nil, err
-	}
-	return mlj.Map, nil
 }
 
 // GetVersionInfo returns version information..

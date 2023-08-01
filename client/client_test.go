@@ -25,7 +25,7 @@ import (
 
 func TestZettelList(t *testing.T) {
 	c := getClient()
-	_, err := c.ListZettel(context.Background(), "")
+	_, err := c.QueryZettel(context.Background(), "")
 	if err != nil {
 		t.Error(err)
 		return
