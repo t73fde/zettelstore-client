@@ -45,6 +45,7 @@ const (
 	ZettelCanWrite               // Requesting user is allowed to update the zettel
 	ZettelCanRename              // Requesting user is allowed to provide the zettel with a new identifier
 	ZettelCanDelete              // Requesting user is allowed to delete the zettel
+	ZettelMaxRight               // Sentinel value
 )
 
 // ZidJSON contains the identifier data of a zettel.
@@ -58,11 +59,11 @@ type MetaJSON struct {
 	Rights ZettelRights `json:"rights"`
 }
 
-// ZidMetaJSON contains the identifier and the metadata of a zettel.
-type ZidMetaJSON struct {
-	ID     ZettelID     `json:"id"`
-	Meta   ZettelMeta   `json:"meta"`
-	Rights ZettelRights `json:"rights"`
+// ZidMetaRights contains the identifier, the metadata of a zettel, and its rights.
+type ZidMetaRights struct {
+	ID     ZettelID
+	Meta   ZettelMeta
+	Rights ZettelRights
 }
 
 // ZettelData contains all data for a zettel.
@@ -72,32 +73,5 @@ type ZettelData struct {
 	Content  string     `json:"content"`
 }
 
-// ZettelJSON contains all data for a zettel, the identifier, the metadata, and the content.
-type ZettelJSON struct {
-	ID       ZettelID     `json:"id"`
-	Meta     ZettelMeta   `json:"meta"`
-	Encoding string       `json:"encoding"`
-	Content  string       `json:"content"`
-	Rights   ZettelRights `json:"rights"`
-}
-
-// ZettelContentJSON contains all elements to transfer the content of a zettel.
-type ZettelContentJSON struct {
-	Encoding string `json:"encoding"`
-	Content  string `json:"content"`
-}
-
-// ZettelListJSON contains data for a zettel list.
-type ZettelListJSON struct {
-	Query string        `json:"query"`
-	Human string        `json:"human"`
-	List  []ZidMetaJSON `json:"list"`
-}
-
 // Aggregate maps metadata keys to list of zettel identifier.
 type Aggregate map[string][]ZettelID
-
-// MapListJSON specifies the map of metadata key to list of metadata that contains the key.
-type MapListJSON struct {
-	Map Aggregate `json:"map"`
-}

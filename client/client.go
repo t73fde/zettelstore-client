@@ -282,13 +282,14 @@ func (c *Client) QueryZettel(ctx context.Context, query string) ([][]byte, error
 		return nil, err
 	}
 	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
 	switch resp.StatusCode {
 	case http.StatusOK:
 	case http.StatusNoContent:
+		return nil, nil
 	default:
 		return nil, statusToError(resp)
 	}
-	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -297,6 +298,117 @@ func (c *Client) QueryZettel(ctx context.Context, query string) ([][]byte, error
 		lines = lines[:len(lines)-1]
 	}
 	return lines, nil
+}
+
+// QueryZettelData returns a list of zettel metadata.
+func (c *Client) QueryZettelData(ctx context.Context, query string) (string, string, []api.ZidMetaRights, error) {
+	ub := c.newURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingData).AppendQuery(query)
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
+	if err != nil {
+		return "", "", nil, err
+	}
+	defer resp.Body.Close()
+	rdr := sxreader.MakeReader(resp.Body)
+	obj, err := rdr.Read()
+	switch resp.StatusCode {
+	case http.StatusOK:
+	case http.StatusNoContent:
+		return "", "", nil, nil
+	default:
+		return "", "", nil, statusToError(resp)
+	}
+	if err != nil {
+		return "", "", nil, err
+	}
+	vals, err := sexp.ParseList(obj, "yppp")
+	if err != nil {
+		return "", "", nil, err
+	}
+	qVals, err := sexp.ParseList(vals[1], "ys")
+	if err != nil {
+		return "", "", nil, err
+	}
+	hVals, err := sexp.ParseList(vals[2], "ys")
+	if err != nil {
+		return "", "", nil, err
+	}
+	metaList, err := parseMetaList(vals[3].(*sx.Pair))
+	return qVals[1].String(), hVals[1].String(), metaList, err
+}
+
+func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
+	if metaPair == nil {
+		return nil, fmt.Errorf("no zettel list")
+	}
+	if errSym := checkSymbol(metaPair.Car(), "list"); errSym != nil {
+		return nil, errSym
+	}
+	var result []api.ZidMetaRights
+	for node := metaPair.Cdr(); !sx.IsNil(node); {
+		elem, isPair := sx.GetPair(node)
+		if !isPair {
+			return nil, fmt.Errorf("meta-list not a proper list: %v", metaPair.String())
+		}
+		node = elem.Cdr()
+		vals, err := sexp.ParseList(elem.Car(), "yppp")
+		if err != nil {
+			return nil, err
+		}
+
+		if errSym := checkSymbol(vals[0], "zettel"); errSym != nil {
+			return nil, errSym
+		}
+
+		idVals, err := sexp.ParseList(vals[1], "yi")
+		if err != nil {
+			return nil, err
+		}
+		if errSym := checkSymbol(idVals[0], "id"); errSym != nil {
+			return nil, errSym
+		}
+		zid, err := makeZettelID(idVals[1].(sx.Int64))
+		if err != nil {
+			return nil, err
+		}
+
+		meta, err := parseMetaSxToMap(vals[2].(*sx.Pair))
+		if err != nil {
+			return nil, err
+		}
+
+		rVals, err := sexp.ParseList(vals[3], "yi")
+		if err != nil {
+			return nil, err
+		}
+		if errSym := checkSymbol(rVals[0], "rights"); errSym != nil {
+			return nil, errSym
+		}
+		i64 := int64(rVals[1].(sx.Int64))
+		if i64 < 0 && i64 >= int64(api.ZettelMaxRight) {
+			return nil, fmt.Errorf("invalid zettel right value: %v", i64)
+		}
+
+		result = append(result, api.ZidMetaRights{
+			ID:     zid,
+			Meta:   meta,
+			Rights: api.ZettelRights(i64),
+		})
+	}
+	return result, nil
+}
+func makeZettelID(val sx.Int64) (api.ZettelID, error) {
+	if val <= 0 {
+		return api.InvalidZID, fmt.Errorf("invalid zettel ID: %v", val)
+	}
+	sVal := strconv.FormatInt(int64(val), 10)
+	if len(sVal) < 14 {
+		sVal = "00000000000000"[0:14-len(sVal)] + sVal
+	}
+	zid := api.ZettelID(sVal)
+	if !zid.IsValid() {
+		return api.InvalidZID, fmt.Errorf("invalid zettel ID: %v", val)
+	}
+	return zid, nil
 }
 
 // QueryAggregate returns a aggregate as a result of a query.
@@ -324,26 +436,6 @@ func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregat
 	return agg, nil
 }
 
-// ListZettelJSON returns a list of zettel.
-func (c *Client) ListZettelJSON(ctx context.Context, query string) (string, string, []api.ZidMetaJSON, error) {
-	ub := c.newURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson).AppendQuery(query)
-	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
-	if err != nil {
-		return "", "", nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return "", "", nil, statusToError(resp)
-	}
-	dec := json.NewDecoder(resp.Body)
-	var zl api.ZettelListJSON
-	err = dec.Decode(&zl)
-	if err != nil {
-		return "", "", nil, err
-	}
-	return zl.Query, zl.Human, zl.List, nil
-}
-
 // GetZettel returns a zettel as a string.
 func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) ([]byte, error) {
 	ub := c.newURLBuilder('z').SetZid(zid)
@@ -355,13 +447,15 @@ func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) (
 		return nil, err
 	}
 	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
 	switch resp.StatusCode {
 	case http.StatusOK:
 	case http.StatusNoContent:
+		return nil, nil
 	default:
 		return nil, statusToError(resp)
 	}
-	return io.ReadAll(resp.Body)
+	return data, err
 }
 
 // GetZettelData returns a zettel as a struct of its parts.
