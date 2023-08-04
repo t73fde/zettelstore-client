@@ -94,10 +94,10 @@ type ZettelListJSON struct {
 	List  []ZidMetaJSON `json:"list"`
 }
 
-// MapMeta maps metadata keys to list of metadata.
-type MapMeta map[string][]ZettelID
+// Aggregate maps metadata keys to list of zettel identifier.
+type Aggregate map[string][]ZettelID
 
 // MapListJSON specifies the map of metadata key to list of metadata that contains the key.
 type MapListJSON struct {
-	Map MapMeta `json:"map"`
+	Map Aggregate `json:"map"`
 }

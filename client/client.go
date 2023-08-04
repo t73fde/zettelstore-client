@@ -29,6 +29,7 @@ import (
 	"zettelstore.de/client.fossil/sexp"
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxreader"
+	"zettelstore.de/z/zettel/id"
 )
 
 // Client contains all data to execute requests.
@@ -296,6 +297,31 @@ func (c *Client) QueryZettel(ctx context.Context, query string) ([][]byte, error
 		lines = lines[:len(lines)-1]
 	}
 	return lines, nil
+}
+
+// QueryAggregate returns a aggregate as a result of a query.
+// It is most often used in a query with an action, where the action is either
+// a metadata key of type Word, WordSet, or TagSet.
+func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregate, error) {
+	lines, err := c.QueryZettel(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	if len(lines) == 0 {
+		return nil, nil
+	}
+	agg := make(api.Aggregate, len(lines))
+	for _, line := range lines {
+		if fields := bytes.Fields(line); len(fields) > 1 {
+			key := string(fields[0])
+			for _, field := range fields[1:] {
+				if zid, zidErr := id.Parse(string(field)); zidErr == nil {
+					agg[key] = append(agg[key], api.ZettelID(zid.String()))
+				}
+			}
+		}
+	}
+	return agg, nil
 }
 
 // ListZettelJSON returns a list of zettel.
