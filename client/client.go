@@ -29,7 +29,6 @@ import (
 	"zettelstore.de/client.fossil/sexp"
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxreader"
-	"zettelstore.de/z/zettel/id"
 )
 
 // Client contains all data to execute requests.
@@ -427,8 +426,8 @@ func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregat
 		if fields := bytes.Fields(line); len(fields) > 1 {
 			key := string(fields[0])
 			for _, field := range fields[1:] {
-				if zid, zidErr := id.Parse(string(field)); zidErr == nil {
-					agg[key] = append(agg[key], api.ZettelID(zid.String()))
+				if zid := api.ZettelID(string(field)); zid.IsValid() {
+					agg[key] = append(agg[key], zid)
 				}
 			}
 		}
