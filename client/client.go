@@ -375,22 +375,15 @@ func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
 			return nil, err
 		}
 
-		rVals, err := sexp.ParseList(vals[3], "yi")
+		rights, err := parseSxRights(vals[3])
 		if err != nil {
 			return nil, err
-		}
-		if errSym := checkSymbol(rVals[0], "rights"); errSym != nil {
-			return nil, errSym
-		}
-		i64 := int64(rVals[1].(sx.Int64))
-		if i64 < 0 && i64 >= int64(api.ZettelMaxRight) {
-			return nil, fmt.Errorf("invalid zettel right value: %v", i64)
 		}
 
 		result = append(result, api.ZidMetaRights{
 			ID:     zid,
 			Meta:   meta,
-			Rights: api.ZettelRights(i64),
+			Rights: rights,
 		})
 	}
 	return result, nil
@@ -408,6 +401,20 @@ func makeZettelID(val sx.Int64) (api.ZettelID, error) {
 		return api.InvalidZID, fmt.Errorf("invalid zettel ID: %v", val)
 	}
 	return zid, nil
+}
+func parseSxRights(obj sx.Object) (api.ZettelRights, error) {
+	rVals, err := sexp.ParseList(obj, "yi")
+	if err != nil {
+		return api.ZettelMaxRight, err
+	}
+	if errSym := checkSymbol(rVals[0], "rights"); errSym != nil {
+		return api.ZettelMaxRight, errSym
+	}
+	i64 := int64(rVals[1].(sx.Int64))
+	if i64 < 0 && i64 >= int64(api.ZettelMaxRight) {
+		return api.ZettelMaxRight, fmt.Errorf("invalid zettel right value: %v", i64)
+	}
+	return api.ZettelRights(i64), nil
 }
 
 // QueryAggregate returns a aggregate as a result of a query.
@@ -600,26 +607,46 @@ func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parse
 	return sxreader.MakeReader(bufio.NewReaderSize(resp.Body, 8), sxreader.WithSymbolFactory(sf)).Read()
 }
 
-// GetMetaJSON returns the metadata of a zettel.
-func (c *Client) GetMetaJSON(ctx context.Context, zid api.ZettelID) (api.ZettelMeta, error) {
+// GetMetaData returns the metadata of a zettel.
+func (c *Client) GetMetaData(ctx context.Context, zid api.ZettelID) (api.MetaRights, error) {
 	ub := c.newURLBuilder('z').SetZid(zid)
-	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson)
+	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartMeta)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
-		return nil, err
+		return api.MetaRights{}, err
 	}
 	defer resp.Body.Close()
+	rdr := sxreader.MakeReader(resp.Body)
+	obj, err := rdr.Read()
 	if resp.StatusCode != http.StatusOK {
-		return nil, statusToError(resp)
+		return api.MetaRights{}, statusToError(resp)
 	}
-	dec := json.NewDecoder(resp.Body)
-	var out api.MetaJSON
-	err = dec.Decode(&out)
 	if err != nil {
-		return nil, err
+		return api.MetaRights{}, err
 	}
-	return out.Meta, nil
+	vals, err := sexp.ParseList(obj, "ypp")
+	if err != nil {
+		return api.MetaRights{}, err
+	}
+	if errSym := checkSymbol(vals[0], "list"); errSym != nil {
+		return api.MetaRights{}, err
+	}
+
+	meta, err := parseMetaSxToMap(vals[1].(*sx.Pair))
+	if err != nil {
+		return api.MetaRights{}, err
+	}
+
+	rights, err := parseSxRights(vals[2])
+	if err != nil {
+		return api.MetaRights{}, err
+	}
+
+	return api.MetaRights{
+		Meta:   meta,
+		Rights: rights,
+	}, nil
 }
 
 // UpdateZettel updates an existing zettel.
