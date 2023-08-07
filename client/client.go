@@ -239,7 +239,7 @@ func (c *Client) CreateZettel(ctx context.Context, data []byte) (api.ZettelID, e
 }
 
 // CreateZettelData creates a new zettel and returns its URL.
-func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelData) (api.ZettelID, error) {
+func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelDataJSON) (api.ZettelID, error) {
 	var buf bytes.Buffer
 	if err := encodeZettelData(&buf, &data); err != nil {
 		return api.InvalidZID, err
@@ -265,7 +265,7 @@ func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelData) (api
 	return api.InvalidZID, err
 }
 
-func encodeZettelData(buf *bytes.Buffer, data *api.ZettelData) error {
+func encodeZettelData(buf *bytes.Buffer, data *api.ZettelDataJSON) error {
 	enc := json.NewEncoder(buf)
 	enc.SetEscapeHTML(false)
 	return enc.Encode(&data)
@@ -339,7 +339,7 @@ func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
 	if metaPair == nil {
 		return nil, fmt.Errorf("no zettel list")
 	}
-	if errSym := checkSymbol(metaPair.Car(), "list"); errSym != nil {
+	if errSym := sexp.CheckSymbol(metaPair.Car(), "list"); errSym != nil {
 		return nil, errSym
 	}
 	var result []api.ZidMetaRights
@@ -354,7 +354,7 @@ func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
 			return nil, err
 		}
 
-		if errSym := checkSymbol(vals[0], "zettel"); errSym != nil {
+		if errSym := sexp.CheckSymbol(vals[0], "zettel"); errSym != nil {
 			return nil, errSym
 		}
 
@@ -362,7 +362,7 @@ func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
 		if err != nil {
 			return nil, err
 		}
-		if errSym := checkSymbol(idVals[0], "id"); errSym != nil {
+		if errSym := sexp.CheckSymbol(idVals[0], "id"); errSym != nil {
 			return nil, errSym
 		}
 		zid, err := makeZettelID(idVals[1].(sx.Int64))
@@ -370,12 +370,12 @@ func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
 			return nil, err
 		}
 
-		meta, err := parseMetaSxToMap(vals[2].(*sx.Pair))
+		meta, err := sexp.ParseMeta(vals[2].(*sx.Pair))
 		if err != nil {
 			return nil, err
 		}
 
-		rights, err := parseSxRights(vals[3])
+		rights, err := sexp.ParseRights(vals[3])
 		if err != nil {
 			return nil, err
 		}
@@ -401,20 +401,6 @@ func makeZettelID(val sx.Int64) (api.ZettelID, error) {
 		return api.InvalidZID, fmt.Errorf("invalid zettel ID: %v", val)
 	}
 	return zid, nil
-}
-func parseSxRights(obj sx.Object) (api.ZettelRights, error) {
-	rVals, err := sexp.ParseList(obj, "yi")
-	if err != nil {
-		return api.ZettelMaxRight, err
-	}
-	if errSym := checkSymbol(rVals[0], "rights"); errSym != nil {
-		return api.ZettelMaxRight, errSym
-	}
-	i64 := int64(rVals[1].(sx.Int64))
-	if i64 < 0 && i64 >= int64(api.ZettelMaxRight) {
-		return api.ZettelMaxRight, fmt.Errorf("invalid zettel right value: %v", i64)
-	}
-	return api.ZettelRights(i64), nil
 }
 
 // QueryAggregate returns a aggregate as a result of a query.
@@ -478,72 +464,10 @@ func (c *Client) GetZettelData(ctx context.Context, zid api.ZettelID) (api.Zette
 		rdr := sxreader.MakeReader(resp.Body)
 		obj, err2 := rdr.Read()
 		if err2 == nil {
-			var data api.ZettelData
-			err2 = parseZettelSxToStruct(obj, &data)
-			return data, err2
+			return sexp.ParseZettel(obj)
 		}
 	}
 	return api.ZettelData{}, err
-}
-
-func parseZettelSxToStruct(obj sx.Object, data *api.ZettelData) error {
-	vals, err := sexp.ParseList(obj, "yppppp")
-	if err != nil {
-		return err
-	}
-	if errSym := checkSymbol(vals[0], "zettel"); errSym != nil {
-		return errSym
-	}
-
-	// Ignore vals[1] (id "12345678901234"), we don't need it in ZettelData
-
-	meta, err := parseMetaSxToMap(vals[2].(*sx.Pair))
-	if err != nil {
-		return err
-	}
-
-	// Ignore vals[3] (rights 4), we don't need the rights in ZettelData
-
-	encVals, err := sexp.ParseList(vals[4], "ys")
-	if err != nil {
-		return err
-	}
-	if errSym := checkSymbol(encVals[0], "encoding"); errSym != nil {
-		return errSym
-	}
-
-	contentVals, err := sexp.ParseList(vals[5], "ys")
-	if err != nil {
-		return err
-	}
-	if errSym := checkSymbol(contentVals[0], "content"); errSym != nil {
-		return errSym
-	}
-
-	data.Meta = meta
-	data.Encoding = encVals[1].(sx.String).String()
-	data.Content = contentVals[1].(sx.String).String()
-	return nil
-}
-func checkSymbol(obj sx.Object, exp string) error {
-	if got := obj.(*sx.Symbol).Name(); got != exp {
-		return fmt.Errorf("symbol %q expected, but got: %q", exp, got)
-	}
-	return nil
-}
-func parseMetaSxToMap(pair *sx.Pair) (api.ZettelMeta, error) {
-	if err := checkSymbol(pair.Car(), "meta"); err != nil {
-		return nil, err
-	}
-	res := api.ZettelMeta{}
-	for node := pair.Tail(); node != nil; node = node.Tail() {
-		mVals, err := sexp.ParseList(node.Car(), "ys")
-		if err != nil {
-			return nil, err
-		}
-		res[mVals[0].(*sx.Symbol).Name()] = mVals[1].(sx.String).String()
-	}
-	return res, nil
 }
 
 // GetParsedZettel return a parsed zettel in a defined encoding.
@@ -629,16 +553,16 @@ func (c *Client) GetMetaData(ctx context.Context, zid api.ZettelID) (api.MetaRig
 	if err != nil {
 		return api.MetaRights{}, err
 	}
-	if errSym := checkSymbol(vals[0], "list"); errSym != nil {
+	if errSym := sexp.CheckSymbol(vals[0], "list"); errSym != nil {
 		return api.MetaRights{}, err
 	}
 
-	meta, err := parseMetaSxToMap(vals[1].(*sx.Pair))
+	meta, err := sexp.ParseMeta(vals[1].(*sx.Pair))
 	if err != nil {
 		return api.MetaRights{}, err
 	}
 
-	rights, err := parseSxRights(vals[2])
+	rights, err := sexp.ParseRights(vals[2])
 	if err != nil {
 		return api.MetaRights{}, err
 	}
@@ -664,7 +588,7 @@ func (c *Client) UpdateZettel(ctx context.Context, zid api.ZettelID, data []byte
 }
 
 // UpdateZettelData updates an existing zettel.
-func (c *Client) UpdateZettelData(ctx context.Context, zid api.ZettelID, data api.ZettelData) error {
+func (c *Client) UpdateZettelData(ctx context.Context, zid api.ZettelID, data api.ZettelDataJSON) error {
 	var buf bytes.Buffer
 	if err := encodeZettelData(&buf, &data); err != nil {
 		return err

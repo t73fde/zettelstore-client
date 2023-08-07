@@ -15,9 +15,123 @@ package sexp
 import (
 	"errors"
 	"fmt"
+	"sort"
 
+	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/sx.fossil"
 )
+
+// EncodeZettel transforms zettel data into a sx object.
+func EncodeZettel(zettel api.ZettelData) sx.Object {
+	sf := sx.MakeMappedFactory()
+	return sx.MakeList(
+		sf.MustMake("zettel"),
+		meta2sz(zettel.Meta, sf),
+		sx.MakeList(sf.MustMake("rights"), sx.Int64(int64(zettel.Rights))),
+		sx.MakeList(sf.MustMake("encoding"), sx.MakeString(zettel.Encoding)),
+		sx.MakeList(sf.MustMake("content"), sx.MakeString(zettel.Content)),
+	)
+}
+
+func ParseZettel(obj sx.Object) (api.ZettelData, error) {
+	vals, err := ParseList(obj, "ypppp")
+	if err != nil {
+		return api.ZettelData{}, err
+	}
+	if errSym := CheckSymbol(vals[0], "zettel"); errSym != nil {
+		return api.ZettelData{}, errSym
+	}
+
+	meta, err := ParseMeta(vals[1].(*sx.Pair))
+	if err != nil {
+		return api.ZettelData{}, err
+	}
+
+	rights, err := ParseRights(vals[2])
+	if err != nil {
+		return api.ZettelData{}, err
+	}
+
+	encVals, err := ParseList(vals[3], "ys")
+	if err != nil {
+		return api.ZettelData{}, err
+	}
+	if errSym := CheckSymbol(encVals[0], "encoding"); errSym != nil {
+		return api.ZettelData{}, errSym
+	}
+
+	contentVals, err := ParseList(vals[4], "ys")
+	if err != nil {
+		return api.ZettelData{}, err
+	}
+	if errSym := CheckSymbol(contentVals[0], "content"); errSym != nil {
+		return api.ZettelData{}, errSym
+	}
+
+	return api.ZettelData{
+		Meta:     meta,
+		Rights:   rights,
+		Encoding: encVals[1].(sx.String).String(),
+		Content:  contentVals[1].(sx.String).String(),
+	}, nil
+}
+
+// EncodeMetaRights translates metadata/rights into a sx object.
+func EncodeMetaRights(mr api.MetaRights) *sx.Pair {
+	sf := sx.MakeMappedFactory()
+	return sx.MakeList(
+		sf.MustMake("list"),
+		meta2sz(mr.Meta, sf),
+		sx.MakeList(sf.MustMake("rights"), sx.Int64(int64(mr.Rights))),
+	)
+}
+
+func meta2sz(m api.ZettelMeta, sf sx.SymbolFactory) sx.Object {
+	result := sx.Nil().Cons(sf.MustMake("meta"))
+	curr := result
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		val := sx.MakeList(sf.MustMake(k), sx.MakeString(m[k]))
+		curr = curr.AppendBang(val)
+	}
+	return result
+}
+
+// ParseMeta translates the given list to metadata.
+func ParseMeta(pair *sx.Pair) (api.ZettelMeta, error) {
+	if err := CheckSymbol(pair.Car(), "meta"); err != nil {
+		return nil, err
+	}
+	res := api.ZettelMeta{}
+	for node := pair.Tail(); node != nil; node = node.Tail() {
+		mVals, err := ParseList(node.Car(), "ys")
+		if err != nil {
+			return nil, err
+		}
+		res[mVals[0].(*sx.Symbol).Name()] = mVals[1].(sx.String).String()
+	}
+	return res, nil
+}
+
+// ParseRights returns the rights values of the given object.
+func ParseRights(obj sx.Object) (api.ZettelRights, error) {
+	rVals, err := ParseList(obj, "yi")
+	if err != nil {
+		return api.ZettelMaxRight, err
+	}
+	if errSym := CheckSymbol(rVals[0], "rights"); errSym != nil {
+		return api.ZettelMaxRight, errSym
+	}
+	i64 := int64(rVals[1].(sx.Int64))
+	if i64 < 0 && i64 >= int64(api.ZettelMaxRight) {
+		return api.ZettelMaxRight, fmt.Errorf("invalid zettel right value: %v", i64)
+	}
+	return api.ZettelRights(i64), nil
+}
 
 // ParseList parses the given object as a proper list, based on a type specification.
 func ParseList(obj sx.Object, spec string) ([]sx.Object, error) {
@@ -75,3 +189,15 @@ func ParseList(obj sx.Object, spec string) ([]sx.Object, error) {
 
 var ErrElementsMissing = errors.New("spec contains more data")
 var ErrNoSpec = errors.New("no spec for elements")
+
+// CheckSymbol ensures that the given object is a symbol with the given name.
+func CheckSymbol(obj sx.Object, name string) error {
+	sym, isSymbol := sx.GetSymbol(obj)
+	if !isSymbol {
+		return fmt.Errorf("object %v/%T is not a symbol", obj, obj)
+	}
+	if got := sym.Name(); got != name {
+		return fmt.Errorf("symbol %q expected, but got: %q", name, got)
+	}
+	return nil
+}

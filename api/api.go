@@ -66,11 +66,19 @@ type ZidMetaRights struct {
 	Rights ZettelRights
 }
 
-// ZettelData contains all data for a zettel.
-type ZettelData struct {
+// ZettelDataJSON contains all data for a zettel.
+type ZettelDataJSON struct {
 	Meta     ZettelMeta `json:"meta"`
 	Encoding string     `json:"encoding"`
 	Content  string     `json:"content"`
+}
+
+// ZettelData contains all data for a zettel.
+type ZettelData struct {
+	Meta     ZettelMeta
+	Rights   ZettelRights
+	Encoding string
+	Content  string
 }
 
 // Aggregate maps metadata keys to list of zettel identifier.
