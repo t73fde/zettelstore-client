@@ -15,7 +15,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -239,36 +238,26 @@ func (c *Client) CreateZettel(ctx context.Context, data []byte) (api.ZettelID, e
 }
 
 // CreateZettelData creates a new zettel and returns its URL.
-func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelDataJSON) (api.ZettelID, error) {
+func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelData) (api.ZettelID, error) {
 	var buf bytes.Buffer
-	if err := encodeZettelData(&buf, &data); err != nil {
+	if _, err := sx.Print(&buf, sexp.EncodeZettel(data)); err != nil {
 		return api.InvalidZID, err
 	}
-	ub := c.newURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson)
+	ub := c.newURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, &buf, nil)
 	if err != nil {
 		return api.InvalidZID, err
 	}
 	defer resp.Body.Close()
+	rdr := sxreader.MakeReader(resp.Body)
+	obj, err := rdr.Read()
 	if resp.StatusCode != http.StatusCreated {
 		return api.InvalidZID, statusToError(resp)
 	}
-	dec := json.NewDecoder(resp.Body)
-	var newZid api.ZidJSON
-	err = dec.Decode(&newZid)
 	if err != nil {
 		return api.InvalidZID, err
 	}
-	if zid := newZid.ID; zid.IsValid() {
-		return zid, nil
-	}
-	return api.InvalidZID, err
-}
-
-func encodeZettelData(buf *bytes.Buffer, data *api.ZettelDataJSON) error {
-	enc := json.NewEncoder(buf)
-	enc.SetEscapeHTML(false)
-	return enc.Encode(&data)
+	return makeZettelID(obj)
 }
 
 var bsLF = []byte{'\n'}
@@ -365,7 +354,7 @@ func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
 		if errSym := sexp.CheckSymbol(idVals[0], "id"); errSym != nil {
 			return nil, errSym
 		}
-		zid, err := makeZettelID(idVals[1].(sx.Int64))
+		zid, err := makeZettelID(idVals[1])
 		if err != nil {
 			return nil, err
 		}
@@ -388,8 +377,9 @@ func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
 	}
 	return result, nil
 }
-func makeZettelID(val sx.Int64) (api.ZettelID, error) {
-	if val <= 0 {
+func makeZettelID(obj sx.Object) (api.ZettelID, error) {
+	val, isInt64 := obj.(sx.Int64)
+	if !isInt64 || val <= 0 {
 		return api.InvalidZID, fmt.Errorf("invalid zettel ID: %v", val)
 	}
 	sVal := strconv.FormatInt(int64(val), 10)
@@ -588,12 +578,12 @@ func (c *Client) UpdateZettel(ctx context.Context, zid api.ZettelID, data []byte
 }
 
 // UpdateZettelData updates an existing zettel.
-func (c *Client) UpdateZettelData(ctx context.Context, zid api.ZettelID, data api.ZettelDataJSON) error {
+func (c *Client) UpdateZettelData(ctx context.Context, zid api.ZettelID, data api.ZettelData) error {
 	var buf bytes.Buffer
-	if err := encodeZettelData(&buf, &data); err != nil {
+	if _, err := sx.Print(&buf, sexp.EncodeZettel(data)); err != nil {
 		return err
 	}
-	ub := c.newURLBuilder('z').SetZid(zid).AppendKVQuery(api.QueryKeyEncoding, api.EncodingJson)
+	ub := c.newURLBuilder('z').SetZid(zid).AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPut, ub, &buf, nil)
 	if err != nil {
 		return err

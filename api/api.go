@@ -48,11 +48,6 @@ const (
 	ZettelMaxRight               // Sentinel value
 )
 
-// ZidJSON contains the identifier data of a zettel.
-type ZidJSON struct {
-	ID ZettelID `json:"id"`
-}
-
 // MetaRights contains the metadata of a zettel, and its rights.
 type MetaRights struct {
 	Meta   ZettelMeta
@@ -64,13 +59,6 @@ type ZidMetaRights struct {
 	ID     ZettelID
 	Meta   ZettelMeta
 	Rights ZettelRights
-}
-
-// ZettelDataJSON contains all data for a zettel.
-type ZettelDataJSON struct {
-	Meta     ZettelMeta `json:"meta"`
-	Encoding string     `json:"encoding"`
-	Content  string     `json:"content"`
 }
 
 // ZettelData contains all data for a zettel.
