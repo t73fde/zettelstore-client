@@ -180,7 +180,6 @@ const (
 
 	EncodingPlain = "plain"
 	EncodingData  = "data"
-	EncodingJson  = "json"
 )
 
 var mapEncodingEnum = map[string]EncodingEnum{
@@ -193,7 +192,6 @@ var mapEncodingEnum = map[string]EncodingEnum{
 
 	EncodingPlain: EncoderPlain,
 	EncodingData:  EncoderData,
-	EncodingJson:  EncoderJson,
 }
 var mapEnumEncoding = map[EncodingEnum]string{}
 
@@ -226,7 +224,6 @@ const (
 
 	EncoderPlain
 	EncoderData
-	EncoderJson
 )
 
 // String representation of an encoder key.
