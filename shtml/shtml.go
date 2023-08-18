@@ -118,7 +118,7 @@ func (tr *Transformer) Transform(lst *sx.Pair) (*sx.Pair, error) {
 	} else {
 		astSF = sx.MakeMappedFactory()
 	}
-	astEnv := sx.MakeRootEnvironment()
+	astEnv := sxeval.MakeRootEnvironment()
 	engine := sxeval.MakeEngine(astSF, astEnv)
 	quote.InstallQuoteSyntax(astEnv, astSF.MustMake(sz.NameSymQuote))
 	te := TransformEnv{
@@ -196,7 +196,7 @@ func (tr *Transformer) Endnotes() *sx.Pair {
 type TransformEnv struct {
 	tr          *Transformer
 	astSF       sx.SymbolFactory
-	astEnv      sx.Environment
+	astEnv      sxeval.Environment
 	err         error
 	textEnc     *text.Encoder
 	symNoEscape *sx.Symbol
