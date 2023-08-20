@@ -22,7 +22,7 @@ import (
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/client.fossil/text"
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins/quote"
+	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 	"zettelstore.de/sx.fossil/sxhtml"
 )
@@ -120,7 +120,7 @@ func (tr *Transformer) Transform(lst *sx.Pair) (*sx.Pair, error) {
 	}
 	astEnv := sxeval.MakeRootEnvironment()
 	engine := sxeval.MakeEngine(astSF, astEnv)
-	quote.InstallQuoteSyntax(astEnv, astSF.MustMake(sz.NameSymQuote))
+	sxbuiltins.InstallQuoteSyntax(astEnv, astSF.MustMake(sz.NameSymQuote))
 	te := TransformEnv{
 		tr:      tr,
 		astSF:   astSF,
