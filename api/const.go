@@ -40,7 +40,8 @@ const (
 	ZidErrorTemplate  = ZettelID("00000000010700")
 
 	// WebUI sxn code zettel are in the range 19000..19999
-	ZidSxnTemplate = ZettelID("00000000019100")
+	ZidSxnStart = ZettelID("00000000019000")
+	ZidSxnBase  = ZettelID("00000000019990")
 
 	// CSS-related zettel are in the range 20000..29999
 	ZidBaseCSS    = ZettelID("00000000020001")
