@@ -118,7 +118,7 @@ func (tr *Transformer) Transform(lst *sx.Pair) (*sx.Pair, error) {
 	} else {
 		astSF = sx.MakeMappedFactory()
 	}
-	astEnv := sxeval.MakeRootEnvironment()
+	astEnv := sxeval.MakeRootEnvironment(128) // approx: number of bindings in te.initialize()
 	engine := sxeval.MakeEngine(astSF, astEnv)
 	sxbuiltins.InstallQuoteSyntax(astEnv, astSF.MustMake(sz.NameSymQuote))
 	te := TransformEnv{
