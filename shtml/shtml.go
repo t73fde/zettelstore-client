@@ -52,7 +52,7 @@ type endnoteInfo struct {
 // NewTransformer creates a new transformer object.
 func NewTransformer(headingOffset int, sf sx.SymbolFactory) *Transformer {
 	if sf == nil {
-		sf = sx.MakeMappedFactory()
+		sf = sx.MakeMappedFactory(128)
 	}
 	return &Transformer{
 		sf:            sf,
@@ -116,7 +116,7 @@ func (tr *Transformer) Transform(lst *sx.Pair) (*sx.Pair, error) {
 			panic("Invalid AST SymbolFactory")
 		}
 	} else {
-		astSF = sx.MakeMappedFactory()
+		astSF = sx.MakeMappedFactory(1024)
 	}
 	astEnv := sxeval.MakeRootEnvironment(128) // approx: number of bindings in te.initialize()
 	engine := sxeval.MakeEngine(astSF, astEnv)

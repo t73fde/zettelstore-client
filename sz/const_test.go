@@ -11,16 +11,21 @@
 package sz_test
 
 import (
+	"strconv"
 	"testing"
 
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil"
 )
 
-func BenchmarkInitializeZettelSymbols(b *testing.B) {
-	sf := sx.MakeMappedFactory()
-	for i := 0; i < b.N; i++ {
-		var zs sz.ZettelSymbols
-		zs.InitializeZettelSymbols(sf)
+func BenchmarkInitZttlSyms(b *testing.B) {
+	for i := 0; i < 20; i++ {
+		b.Run("hint-"+strconv.Itoa(i), func(b *testing.B) {
+			sf := sx.MakeMappedFactory(1 << i)
+			for i := 0; i < b.N; i++ {
+				var zs sz.ZettelSymbols
+				zs.InitializeZettelSymbols(sf)
+			}
+		})
 	}
 }

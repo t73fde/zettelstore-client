@@ -47,7 +47,7 @@ func TestGetProtectedZettel(t *testing.T) {
 
 func TestGetSzZettel(t *testing.T) {
 	c := getClient()
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(1024)
 	var zetSyms sz.ZettelSymbols
 	zetSyms.InitializeZettelSymbols(sf)
 	value, err := c.GetEvaluatedSz(context.Background(), api.ZidDefaultHome, api.PartContent, sf)

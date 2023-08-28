@@ -23,7 +23,7 @@ import (
 
 // EncodeZettel transforms zettel data into a sx object.
 func EncodeZettel(zettel api.ZettelData) sx.Object {
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(1024)
 	return sx.MakeList(
 		sf.MustMake("zettel"),
 		meta2sz(zettel.Meta, sf),
@@ -78,7 +78,7 @@ func ParseZettel(obj sx.Object) (api.ZettelData, error) {
 
 // EncodeMetaRights translates metadata/rights into a sx object.
 func EncodeMetaRights(mr api.MetaRights) *sx.Pair {
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(1024)
 	return sx.MakeList(
 		sf.MustMake("list"),
 		meta2sz(mr.Meta, sf),
