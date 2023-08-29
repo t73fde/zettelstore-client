@@ -125,6 +125,7 @@ const (
 	ValueTrue              = "true"
 	ValueLangEN            = "en"
 	ValueRoleConfiguration = "configuration"
+	ValueRoleTag           = "tag"
 	ValueRoleZettel        = "zettel"
 	ValueSyntaxCSS         = "css"
 	ValueSyntaxDraw        = "draw"
