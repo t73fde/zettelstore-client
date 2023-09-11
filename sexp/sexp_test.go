@@ -36,8 +36,8 @@ func TestParseObject(t *testing.T) {
 	if elems, err := sexp.ParseList(sx.MakeList(sx.MakeString("a")), ""); err == nil {
 		t.Error("expected error, but got: ", elems)
 	}
-	if elems, err := sexp.ParseList(sx.MakeList(sx.MakeString("a")), "b"); err == nil {
-		t.Error("expected error, but got: ", elems)
+	if _, err := sexp.ParseList(sx.MakeList(sx.MakeString("a")), "b"); err != nil {
+		t.Error("expected [1], but got error: ", err)
 	}
 	if elems, err := sexp.ParseList(sx.Cons(sx.Nil(), sx.MakeString("a")), "ps"); err == nil {
 		t.Error("expected error, but got: ", elems)

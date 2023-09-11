@@ -157,7 +157,7 @@ func ParseList(obj sx.Object, spec string) ([]sx.Object, error) {
 		car := node.Car()
 		switch spec[i] {
 		case 'b':
-			val, ok = sx.GetBoolean(car)
+			val, ok = sx.MakeBoolean(!sx.IsNil(car)), true
 		case 'i':
 			val, ok = car.(sx.Int64)
 		case 'o':
