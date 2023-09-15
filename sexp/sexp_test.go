@@ -18,7 +18,7 @@ import (
 )
 
 func TestParseObject(t *testing.T) {
-	if elems, err := sexp.ParseList(sx.MakeString("a"), "s"); err == nil {
+	if elems, err := sexp.ParseList(sx.String("a"), "s"); err == nil {
 		t.Error("expected an error, but got: ", elems)
 	}
 	if elems, err := sexp.ParseList(sx.Nil(), ""); err != nil {
@@ -30,20 +30,20 @@ func TestParseObject(t *testing.T) {
 		t.Error("expected error, but got: ", elems)
 	}
 
-	if elems, err := sexp.ParseList(sx.MakeList(sx.MakeString("a")), "ss"); err == nil {
+	if elems, err := sexp.ParseList(sx.MakeList(sx.String("a")), "ss"); err == nil {
 		t.Error("expected error, but got: ", elems)
 	}
-	if elems, err := sexp.ParseList(sx.MakeList(sx.MakeString("a")), ""); err == nil {
+	if elems, err := sexp.ParseList(sx.MakeList(sx.String("a")), ""); err == nil {
 		t.Error("expected error, but got: ", elems)
 	}
-	if _, err := sexp.ParseList(sx.MakeList(sx.MakeString("a")), "b"); err != nil {
+	if _, err := sexp.ParseList(sx.MakeList(sx.String("a")), "b"); err != nil {
 		t.Error("expected [1], but got error: ", err)
 	}
-	if elems, err := sexp.ParseList(sx.Cons(sx.Nil(), sx.MakeString("a")), "ps"); err == nil {
+	if elems, err := sexp.ParseList(sx.Cons(sx.Nil(), sx.String("a")), "ps"); err == nil {
 		t.Error("expected error, but got: ", elems)
 	}
 
-	if elems, err := sexp.ParseList(sx.MakeList(sx.MakeString("a")), "s"); err != nil {
+	if elems, err := sexp.ParseList(sx.MakeList(sx.String("a")), "s"); err != nil {
 		t.Error(err)
 	} else if len(elems) != 1 {
 		t.Error("length == 1, but got: ", elems)

@@ -28,8 +28,8 @@ func EncodeZettel(zettel api.ZettelData) sx.Object {
 		sf.MustMake("zettel"),
 		meta2sz(zettel.Meta, sf),
 		sx.MakeList(sf.MustMake("rights"), sx.Int64(int64(zettel.Rights))),
-		sx.MakeList(sf.MustMake("encoding"), sx.MakeString(zettel.Encoding)),
-		sx.MakeList(sf.MustMake("content"), sx.MakeString(zettel.Content)),
+		sx.MakeList(sf.MustMake("encoding"), sx.String(zettel.Encoding)),
+		sx.MakeList(sf.MustMake("content"), sx.String(zettel.Content)),
 	)
 }
 
@@ -95,7 +95,7 @@ func meta2sz(m api.ZettelMeta, sf sx.SymbolFactory) sx.Object {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		val := sx.MakeList(sf.MustMake(k), sx.MakeString(m[k]))
+		val := sx.MakeList(sf.MustMake(k), sx.String(m[k]))
 		curr = curr.AppendBang(val)
 	}
 	return result

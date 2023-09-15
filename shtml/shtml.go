@@ -94,7 +94,7 @@ func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sx.Pair {
 	for i := len(keys) - 1; i >= 0; i-- {
 		key := keys[i]
 		if key != attrs.DefaultAttribute && tr.IsValidName(key) {
-			plist = plist.Cons(sx.Cons(tr.Make(key), sx.MakeString(a[key])))
+			plist = plist.Cons(sx.Cons(tr.Make(key), sx.String(a[key])))
 		}
 	}
 	if plist == nil {
@@ -163,29 +163,29 @@ func (tr *Transformer) Endnotes() *sx.Pair {
 		return nil
 	}
 	result := sx.Nil().Cons(tr.Make("ol"))
-	currResult := result.AppendBang(sx.Nil().Cons(sx.Cons(tr.symClass, sx.MakeString("zs-endnotes"))).Cons(tr.symAttr))
+	currResult := result.AppendBang(sx.Nil().Cons(sx.Cons(tr.symClass, sx.String("zs-endnotes"))).Cons(tr.symAttr))
 	for i, fni := range tr.endnotes {
 		noteNum := strconv.Itoa(i + 1)
 		noteID := tr.unique + noteNum
 
-		attrs := fni.attrs.Cons(sx.Cons(tr.symClass, sx.MakeString("zs-endnote"))).
-			Cons(sx.Cons(tr.Make("value"), sx.MakeString(noteNum))).
-			Cons(sx.Cons(tr.Make("id"), sx.MakeString("fn:"+noteID))).
-			Cons(sx.Cons(tr.Make("role"), sx.MakeString("doc-endnote"))).
+		attrs := fni.attrs.Cons(sx.Cons(tr.symClass, sx.String("zs-endnote"))).
+			Cons(sx.Cons(tr.Make("value"), sx.String(noteNum))).
+			Cons(sx.Cons(tr.Make("id"), sx.String("fn:"+noteID))).
+			Cons(sx.Cons(tr.Make("role"), sx.String("doc-endnote"))).
 			Cons(tr.symAttr)
 
-		backref := sx.Nil().Cons(sx.MakeString("\u21a9\ufe0e")).
+		backref := sx.Nil().Cons(sx.String("\u21a9\ufe0e")).
 			Cons(sx.Nil().
-				Cons(sx.Cons(tr.symClass, sx.MakeString("zs-endnote-backref"))).
-				Cons(sx.Cons(tr.Make("href"), sx.MakeString("#fnref:"+noteID))).
-				Cons(sx.Cons(tr.Make("role"), sx.MakeString("doc-backlink"))).
+				Cons(sx.Cons(tr.symClass, sx.String("zs-endnote-backref"))).
+				Cons(sx.Cons(tr.Make("href"), sx.String("#fnref:"+noteID))).
+				Cons(sx.Cons(tr.Make("role"), sx.String("doc-backlink"))).
 				Cons(tr.symAttr)).
 			Cons(tr.symA)
 
 		li := sx.Nil().Cons(tr.Make("li"))
 		li.AppendBang(attrs).
 			ExtendBang(fni.noteHx).
-			AppendBang(sx.MakeString(" ")).AppendBang(backref)
+			AppendBang(sx.String(" ")).AppendBang(backref)
 		currResult = currResult.AppendBang(li)
 	}
 	tr.endnotes = nil
@@ -293,7 +293,7 @@ func (te *TransformEnv) bindBlocks() {
 			}
 			return result.Cons(te.Make("h" + level))
 		}
-		return sx.MakeList(te.Make("h"+level), sx.MakeString("<MISSING TEXT>"))
+		return sx.MakeList(te.Make("h"+level), sx.String("<MISSING TEXT>"))
 	})
 	te.bind(sz.NameSymThematic, 0, func(args []sx.Object) sx.Object {
 		result := sx.Nil()
@@ -385,7 +385,7 @@ func (te *TransformEnv) bindBlocks() {
 		if te.getAttributes(args[0]).HasDefault() {
 			if len(args) > 1 {
 				if s := te.getString(args[1]); s != "" {
-					t := sx.MakeString(s.String())
+					t := sx.String(s.String())
 					return sx.Nil().Cons(t).Cons(te.Make(sxhtml.NameSymBlockComment))
 				}
 			}
@@ -404,7 +404,7 @@ func (te *TransformEnv) bindBlocks() {
 		a := te.getAttributes(args[0])
 		content := te.getString(args[1])
 		if a.HasDefault() {
-			content = sx.MakeString(visibleReplacer.Replace(content.String()))
+			content = sx.String(visibleReplacer.Replace(content.String()))
 		}
 		return te.transformVerbatim(a, content)
 	})
@@ -430,9 +430,9 @@ func (te *TransformEnv) bindBlocks() {
 			}
 			return sx.MakeList(
 				te.Make(sxhtml.NameSymInlineComment),
-				sx.MakeString("transclude"),
+				sx.String("transclude"),
 				refKind,
-				sx.MakeString("->"),
+				sx.String("->"),
 				refValue,
 			)
 		}
@@ -518,11 +518,11 @@ func (te *TransformEnv) bindInlines() {
 	te.bind(sz.NameSymText, 1, func(args []sx.Object) sx.Object { return te.getString(args[0]) })
 	te.bind(sz.NameSymSpace, 0, func(args []sx.Object) sx.Object {
 		if len(args) == 0 {
-			return sx.MakeString(" ")
+			return sx.String(" ")
 		}
 		return te.getString(args[0])
 	})
-	te.bind(sz.NameSymSoft, 0, func([]sx.Object) sx.Object { return sx.MakeString(" ") })
+	te.bind(sz.NameSymSoft, 0, func([]sx.Object) sx.Object { return sx.String(" ") })
 	brSym := te.Make("br")
 	te.bind(sz.NameSymHard, 0, func([]sx.Object) sx.Object { return sx.Nil().Cons(brSym) })
 
@@ -570,8 +570,8 @@ func (te *TransformEnv) bindInlines() {
 		if syntax == api.ValueSyntaxSVG {
 			embedAttr := sx.MakeList(
 				te.symAttr,
-				sx.Cons(te.Make("type"), sx.MakeString("image/svg+xml")),
-				sx.Cons(te.Make("src"), sx.MakeString("/"+te.getString(ref.Tail()).String()+".svg")),
+				sx.Cons(te.Make("type"), sx.String("image/svg+xml")),
+				sx.Cons(te.Make("src"), sx.String("/"+te.getString(ref.Tail()).String()+".svg")),
 			)
 			return sx.MakeList(
 				te.Make("figure"),
@@ -594,7 +594,7 @@ func (te *TransformEnv) bindInlines() {
 		a, syntax, data := te.getAttributes(args[0]), te.getString(args[1]), te.getString(args[2])
 		summary, _ := a.Get(api.KeySummary)
 		return te.transformBLOB(
-			sx.MakeList(te.astSF.MustMake(sz.NameSymInline), sx.MakeString(summary)),
+			sx.MakeList(te.astSF.MustMake(sz.NameSymInline), sx.String(summary)),
 			syntax,
 			data,
 		)
@@ -604,7 +604,7 @@ func (te *TransformEnv) bindInlines() {
 		result := sx.Nil()
 		if key := te.getString(args[1]); key != "" {
 			if len(args) > 2 {
-				result = sx.MakeList(args[2:]...).Cons(sx.MakeString(", "))
+				result = sx.MakeList(args[2:]...).Cons(sx.String(", "))
 			}
 			result = result.Cons(key)
 		}
@@ -643,12 +643,12 @@ func (te *TransformEnv) bindInlines() {
 		te.tr.endnotes = append(te.tr.endnotes, endnoteInfo{noteAST: text, noteHx: nil, attrs: attrPlist})
 		noteNum := strconv.Itoa(len(te.tr.endnotes))
 		noteID := te.tr.unique + noteNum
-		hrefAttr := sx.Nil().Cons(sx.Cons(te.Make("role"), sx.MakeString("doc-noteref"))).
-			Cons(sx.Cons(te.Make("href"), sx.MakeString("#fn:"+noteID))).
-			Cons(sx.Cons(te.tr.symClass, sx.MakeString("zs-noteref"))).
+		hrefAttr := sx.Nil().Cons(sx.Cons(te.Make("role"), sx.String("doc-noteref"))).
+			Cons(sx.Cons(te.Make("href"), sx.String("#fn:"+noteID))).
+			Cons(sx.Cons(te.tr.symClass, sx.String("zs-noteref"))).
 			Cons(te.symAttr)
-		href := sx.Nil().Cons(sx.MakeString(noteNum)).Cons(hrefAttr).Cons(te.symA)
-		supAttr := sx.Nil().Cons(sx.Cons(te.Make("id"), sx.MakeString("fnref:"+noteID))).Cons(te.symAttr)
+		href := sx.Nil().Cons(sx.String(noteNum)).Cons(hrefAttr).Cons(te.symA)
+		supAttr := sx.Nil().Cons(sx.Cons(te.Make("id"), sx.String("fnref:"+noteID))).Cons(te.symAttr)
 		return sx.Nil().Cons(href).Cons(supAttr).Cons(te.Make("sup"))
 	})
 
@@ -739,7 +739,7 @@ func (te *TransformEnv) transformLiteral(args []sx.Object, a attrs.Attributes, s
 		a = a.RemoveDefault()
 		literal = visibleReplacer.Replace(literal)
 	}
-	res := sx.Nil().Cons(sx.MakeString(literal))
+	res := sx.Nil().Cons(sx.String(literal))
 	if len(a) > 0 {
 		res = res.Cons(te.transformAttribute(a))
 	}
@@ -770,11 +770,11 @@ func (te *TransformEnv) transformBLOB(description *sx.Pair, syntax, data sx.Stri
 	case api.ValueSyntaxSVG:
 		return sx.Nil().Cons(sx.Nil().Cons(data).Cons(te.symNoEscape)).Cons(te.symP)
 	default:
-		imgAttr := sx.Nil().Cons(sx.Cons(te.Make("src"), sx.MakeString("data:image/"+syntax.String()+";base64,"+data.String())))
+		imgAttr := sx.Nil().Cons(sx.Cons(te.Make("src"), sx.String("data:image/"+syntax.String()+";base64,"+data.String())))
 		var sb strings.Builder
 		te.flattenText(&sb, description)
 		if d := sb.String(); d != "" {
-			imgAttr = imgAttr.Cons(sx.Cons(te.Make("alt"), sx.MakeString(d)))
+			imgAttr = imgAttr.Cons(sx.Cons(te.Make("alt"), sx.String(d)))
 		}
 		return sx.Nil().Cons(sx.Nil().Cons(imgAttr.Cons(te.symAttr)).Cons(te.Make("img"))).Cons(te.symP)
 	}
