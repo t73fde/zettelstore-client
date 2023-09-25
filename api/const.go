@@ -168,6 +168,7 @@ const (
 	QueryKeyPhrase    = "phrase"
 	QueryKeyQuery     = "q"
 	QueryKeySeed      = "_seed"
+	QueryKeyTag       = "tag"
 )
 
 // Supported encoding values.
