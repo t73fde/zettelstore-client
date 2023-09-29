@@ -435,6 +435,9 @@ func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregat
 //
 // This method only works if c.AllowRedirect(true) was called.
 func (c *Client) TagZettel(ctx context.Context, tag string) (api.ZettelID, error) {
+	if c.client.CheckRedirect == nil {
+		panic("client does not allow to track redirect")
+	}
 	ub := c.newURLBuilder('z').AppendKVQuery(api.QueryKeyTag, tag)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
