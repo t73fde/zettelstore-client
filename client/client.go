@@ -71,6 +71,19 @@ func NewClient(u *url.URL) *Client {
 	return &c
 }
 
+// AllowRedirect will modify the client to not follow redirect status code when
+// using the Zettelstore. The original behaviour can be restored by settinh
+// "allow" to false.
+func (c *Client) AllowRedirect(allow bool) {
+	if allow {
+		c.client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	} else {
+		c.client.CheckRedirect = nil
+	}
+}
+
 // Error encapsulates the possible client call errors.
 type Error struct {
 	StatusCode int
@@ -416,6 +429,35 @@ func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregat
 		}
 	}
 	return agg, nil
+}
+
+// TagZettel returns the tag zettel of a given tag.
+//
+// This method only works if c.AllowRedirect(true) was called.
+func (c *Client) TagZettel(ctx context.Context, tag string) (api.ZettelID, error) {
+	ub := c.newURLBuilder('z').AppendKVQuery(api.QueryKeyTag, tag)
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
+	if err != nil {
+		return api.InvalidZID, err
+	}
+	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return api.InvalidZID, err
+	}
+
+	switch resp.StatusCode {
+	case http.StatusNotFound:
+		return "", nil
+	case http.StatusFound:
+		zid := api.ZettelID(data)
+		if zid.IsValid() {
+			return zid, nil
+		}
+		return api.InvalidZID, nil
+	default:
+		return api.InvalidZID, statusToError(resp)
+	}
 }
 
 // GetZettel returns a zettel as a string.
