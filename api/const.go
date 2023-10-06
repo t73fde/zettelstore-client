@@ -53,6 +53,7 @@ const (
 	ZidEmoji = ZettelID("00000000040001")
 
 	// Other sxn code zettel are in the range 50000..59999
+	ZidSxnPrelude = ZettelID("00000000059900")
 
 	// Range 90000...99999 is reserved for zettel templates
 	ZidTOCNewTemplate    = ZettelID("00000000090000")
