@@ -19,9 +19,9 @@ import (
 )
 
 func BenchmarkInitZttlSyms(b *testing.B) {
-	for i := 0; i < 20; i++ {
-		b.Run("hint-"+strconv.Itoa(i), func(b *testing.B) {
-			sf := sx.MakeMappedFactory(1 << i)
+	for j := 0; j < 20; j++ {
+		b.Run("hint-"+strconv.Itoa(j), func(b *testing.B) {
+			sf := sx.MakeMappedFactory(1 << j)
 			for i := 0; i < b.N; i++ {
 				var zs sz.ZettelSymbols
 				zs.InitializeZettelSymbols(sf)
