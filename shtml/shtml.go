@@ -793,13 +793,16 @@ func (te *TransformEnv) flattenText(sb *strings.Builder, lst *sx.Pair) {
 type transformFn func([]sx.Object) sx.Object
 
 func (te *TransformEnv) bind(name string, minArity int, fn transformFn) {
-	te.astEnv.Bind(te.astSF.MustMake(name), sxeval.BuiltinA(func(args []sx.Object) (sx.Object, error) {
-		if nArgs := len(args); nArgs < minArity {
-			return sx.Nil(), fmt.Errorf("not enough arguments (%d) for form %v (%d)", nArgs, name, minArity)
-		}
-		res := fn(args)
-		return res, te.err
-	}))
+	te.astEnv.Bind(te.astSF.MustMake(name), &sxeval.Builtin{
+		Name:     name,
+		MinArity: minArity,
+		MaxArity: -1,
+		IsPure:   true,
+		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+			res := fn(args)
+			return res, te.err
+		},
+	})
 }
 
 func (te *TransformEnv) Rebind(name string, fn func([]sx.Object, sxeval.Callable) sx.Object) {
@@ -812,10 +815,16 @@ func (te *TransformEnv) Rebind(name string, fn func([]sx.Object, sxeval.Callable
 	if !ok {
 		panic(sym.String())
 	}
-	te.astEnv.Bind(sym, sxeval.BuiltinA(func(args []sx.Object) (sx.Object, error) {
-		res := fn(args, preFn)
-		return res, te.err
-	}))
+	te.astEnv.Bind(sym, &sxeval.Builtin{
+		Name:     name,
+		MinArity: 0,
+		MaxArity: -1,
+		IsPure:   true,
+		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
+			res := fn(args, preFn)
+			return res, te.err
+		},
+	})
 }
 
 func (te *TransformEnv) Make(name string) *sx.Symbol { return te.tr.Make(name) }
