@@ -792,7 +792,7 @@ func (te *TransformEnv) flattenText(sb *strings.Builder, lst *sx.Pair) {
 
 type transformFn func([]sx.Object) sx.Object
 
-func (te *TransformEnv) bind(name string, minArity int, fn transformFn) {
+func (te *TransformEnv) bind(name string, minArity int16, fn transformFn) {
 	te.astEnv.Bind(te.astSF.MustMake(name), &sxeval.Builtin{
 		Name:     name,
 		MinArity: minArity,
