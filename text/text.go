@@ -41,7 +41,7 @@ func NewEncoder(sf sx.SymbolFactory) *Encoder {
 		symSpace: sf.MustMake(sz.NameSymSpace),
 		symSoft:  sf.MustMake(sz.NameSymSoft),
 		symHard:  sf.MustMake(sz.NameSymHard),
-		symQuote: sf.MustMake(sz.NameSymQuote),
+		symQuote: sf.MustMake(sx.QuoteName),
 	}
 	return enc
 }

@@ -18,9 +18,7 @@ const (
 	// Symbols for Metanodes
 	NameSymBlock  = "BLOCK"
 	NameSymInline = "INLINE"
-	NameSymList   = "list"
 	NameSymMeta   = "META"
-	NameSymQuote  = "quote"
 
 	// Symbols for Zettel node types.
 	NameSymBLOB            = "BLOB"
@@ -207,9 +205,9 @@ func (zs *ZettelSymbols) InitializeZettelSymbols(sf sx.SymbolFactory) {
 	// Symbols for Metanodes
 	zs.SymBlock = sf.MustMake(NameSymBlock)
 	zs.SymInline = sf.MustMake(NameSymInline)
-	zs.SymList = sf.MustMake(NameSymList)
+	zs.SymList = sf.MustMake(sx.ListName)
 	zs.SymMeta = sf.MustMake(NameSymMeta)
-	zs.SymQuote = sf.MustMake(NameSymQuote)
+	zs.SymQuote = sf.MustMake(sx.QuoteName)
 
 	// Symbols for Zettel node types.
 	zs.SymBLOB = sf.MustMake(NameSymBLOB)

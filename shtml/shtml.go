@@ -22,6 +22,7 @@ import (
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/client.fossil/text"
 	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 	"zettelstore.de/sx.fossil/sxhtml"
 )
@@ -119,7 +120,7 @@ func (tr *Transformer) Transform(lst *sx.Pair) (*sx.Pair, error) {
 	}
 	astEnv := sxeval.MakeRootEnvironment(128) // approx: number of bindings in te.initialize()
 	engine := sxeval.MakeEngine(astSF, astEnv)
-	engine.SetQuote(astSF.MustMake(sz.NameSymQuote))
+	engine.BindSyntax(&sxbuiltins.QuoteS)
 	te := TransformEnv{
 		tr:      tr,
 		astSF:   astSF,
@@ -212,7 +213,7 @@ func (te *TransformEnv) initialize() {
 	te.symSpan = te.tr.symSpan
 	te.symP = te.Make("p")
 
-	te.bind(sz.NameSymList, 0, listArgs)
+	te.bind(sx.ListName, 0, listArgs)
 	te.bindMetadata()
 	te.bindBlocks()
 	te.bindInlines()
