@@ -321,7 +321,7 @@ func (te *TransformEnv) bindBlocks() {
 			}
 			ddBlock := te.getList(args[pos])
 			if ddBlock == nil {
-				break
+				continue
 			}
 			for ddlst := ddBlock; ddlst != nil; ddlst = ddlst.Tail() {
 				dditem := te.getList(ddlst.Car())
