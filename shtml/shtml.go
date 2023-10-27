@@ -120,7 +120,7 @@ func (tr *Transformer) Transform(lst *sx.Pair) (*sx.Pair, error) {
 	}
 	astEnv := sxeval.MakeRootEnvironment(128) // approx: number of bindings in te.initialize()
 	engine := sxeval.MakeEngine(astSF, astEnv)
-	engine.BindSyntax(&sxbuiltins.QuoteS)
+	engine.BindSpecial(&sxbuiltins.QuoteS)
 	te := TransformEnv{
 		tr:      tr,
 		astSF:   astSF,
