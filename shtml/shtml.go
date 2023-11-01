@@ -133,7 +133,7 @@ func (tr *Transformer) Transform(lst *sx.Pair) (*sx.Pair, error) {
 		rb(&te)
 	}
 
-	val, err := engine.Eval(te.astEnv, lst)
+	val, err := engine.Eval(lst, te.astEnv, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (tr *Transformer) Transform(lst *sx.Pair) (*sx.Pair, error) {
 	}
 	for i := 0; i < len(tr.endnotes); i++ {
 		// May extend tr.endnotes
-		val, err = engine.Eval(te.astEnv, tr.endnotes[i].noteAST)
+		val, err = engine.Eval(tr.endnotes[i].noteAST, te.astEnv, nil)
 		if err != nil {
 			return res, err
 		}
