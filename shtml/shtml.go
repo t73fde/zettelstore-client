@@ -798,7 +798,7 @@ func (te *TransformEnv) bind(name string, minArity int16, fn transformFn) {
 		Name:     name,
 		MinArity: minArity,
 		MaxArity: -1,
-		IsPure:   true,
+		TestPure: sxeval.AssertPure,
 		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 			res := fn(args)
 			return res, te.err
@@ -820,7 +820,7 @@ func (te *TransformEnv) Rebind(name string, fn func([]sx.Object, sxeval.Callable
 		Name:     name,
 		MinArity: 0,
 		MaxArity: -1,
-		IsPure:   true,
+		TestPure: sxeval.AssertPure,
 		Fn: func(_ *sxeval.Frame, args []sx.Object) (sx.Object, error) {
 			res := fn(args, preFn)
 			return res, te.err
