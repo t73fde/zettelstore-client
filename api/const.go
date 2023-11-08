@@ -176,6 +176,7 @@ const (
 // Supported encoding values.
 const (
 	EncodingHTML  = "html"
+	EncodingHTMLS = "htmls"
 	EncodingMD    = "md"
 	EncodingSHTML = "shtml"
 	EncodingSz    = "sz"
@@ -188,6 +189,7 @@ const (
 
 var mapEncodingEnum = map[string]EncodingEnum{
 	EncodingHTML:  EncoderHTML,
+	EncodingHTMLS: EncoderHTMLS,
 	EncodingMD:    EncoderMD,
 	EncodingSHTML: EncoderSHTML,
 	EncodingSz:    EncoderSz,
@@ -220,6 +222,7 @@ type EncodingEnum uint8
 const (
 	EncoderUnknown EncodingEnum = iota
 	EncoderHTML
+	EncoderHTMLS
 	EncoderMD
 	EncoderSHTML
 	EncoderSz
