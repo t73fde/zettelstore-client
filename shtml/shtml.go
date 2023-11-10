@@ -92,13 +92,13 @@ func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sx.Pair {
 	return plist.Cons(tr.symAttr)
 }
 
-func (tr *Transformer) createVisitor(lst *sx.Pair) visitor {
+func (tr *Transformer) createEvaluator() evaluator {
 	sf := tr.sf
-	v := visitor{
+	ev := evaluator{
 		tr:          tr,
 		sf:          sf,
 		err:         nil,
-		fns:         make(map[string]transformFn, 128),
+		fns:         make(map[string]evalFn, 128),
 		minArgs:     make(map[string]int, 128),
 		symNoEscape: sf.MustMake(sxhtml.NameSymNoEscape),
 		symAttr:     tr.symAttr,
@@ -107,17 +107,17 @@ func (tr *Transformer) createVisitor(lst *sx.Pair) visitor {
 		symA:        tr.symA,
 		symSpan:     tr.symSpan,
 	}
-	return v
+	return ev
 }
 
 // TransformMetadate transforms a metadata s-expression into a list of HTML s-expressions.
 func (tr *Transformer) TransformMetadata(lst *sx.Pair) (sx.Object, error) {
 	log.Println("TMET", lst)
-	v := tr.createVisitor(lst)
+	v := tr.createEvaluator()
 	v.bindCommon()
 	v.bindMetadata()
 	v.bindInlines()
-	result := v.visit(lst)
+	result := v.eval(lst)
 	log.Println("RMET", v.err, result)
 	return result, v.err
 }
@@ -125,11 +125,11 @@ func (tr *Transformer) TransformMetadata(lst *sx.Pair) (sx.Object, error) {
 // TransformBlock transforms a block AST s-expression into a list of HTML s-expressions.
 func (tr *Transformer) TransformBlock(lst *sx.Pair) (sx.Object, error) {
 	log.Println("TBLO", lst)
-	v := tr.createVisitor(lst)
+	v := tr.createEvaluator()
 	v.bindCommon()
 	v.bindBlocks()
 	v.bindInlines()
-	result := v.visit(lst)
+	result := v.eval(lst)
 	log.Println("RBLO", v.err, result)
 	return result, v.err
 }
@@ -137,10 +137,10 @@ func (tr *Transformer) TransformBlock(lst *sx.Pair) (sx.Object, error) {
 // TransformInline transforms an inline AST s-expression into a list of HTML s-expressions.
 func (tr *Transformer) TransformInline(lst *sx.Pair) (sx.Object, error) {
 	log.Println("TINL", lst)
-	v := tr.createVisitor(lst)
+	v := tr.createEvaluator()
 	v.bindCommon()
 	v.bindInlines()
-	result := v.visit(lst)
+	result := v.eval(lst)
 	log.Println("RINL", v.err, result)
 	return result, v.err
 }
@@ -180,12 +180,12 @@ func (tr *Transformer) Endnotes() *sx.Pair {
 	return result
 }
 
-// visitor is the environment where the actual transformation takes places.
-type visitor struct {
+// evaluator is the environment where the actual transformation takes places.
+type evaluator struct {
 	tr          *Transformer
 	sf          sx.SymbolFactory
 	err         error
-	fns         map[string]transformFn
+	fns         map[string]evalFn
 	minArgs     map[string]int
 	symNoEscape *sx.Symbol
 	symAttr     *sx.Symbol
@@ -194,150 +194,150 @@ type visitor struct {
 	symA        *sx.Symbol
 	symSpan     *sx.Symbol
 }
-type transformFn func([]sx.Object) sx.Object
+type evalFn func([]sx.Object) sx.Object
 
-func (v *visitor) bind(name string, minArgs int, fn transformFn) {
-	v.fns[name] = fn
+func (ev *evaluator) bind(name string, minArgs int, fn evalFn) {
+	ev.fns[name] = fn
 	if minArgs > 0 {
-		v.minArgs[name] = minArgs
+		ev.minArgs[name] = minArgs
 	}
 }
 
-func (v *visitor) bindCommon() {
-	v.bind(sx.ListName, 0, v.visitList)
-	v.bind("quote", 1, func(args []sx.Object) sx.Object { return args[0] })
+func (ev *evaluator) bindCommon() {
+	ev.bind(sx.ListName, 0, ev.evalList)
+	ev.bind("quote", 1, func(args []sx.Object) sx.Object { return args[0] })
 }
 
-func (v *visitor) bindMetadata() {
-	v.bind(sz.NameSymMeta, 0, v.visitList)
-	metaString := func(args []sx.Object) sx.Object {
+func (ev *evaluator) bindMetadata() {
+	ev.bind(sz.NameSymMeta, 0, ev.evalList)
+	evalMetaString := func(args []sx.Object) sx.Object {
 		a := make(attrs.Attributes, 2).
-			Set("name", v.getSymbol(v.visit(args[0])).Name()).
-			Set("content", v.getString(args[1]).String())
-		return v.visitMeta(a)
+			Set("name", ev.getSymbol(ev.eval(args[0])).Name()).
+			Set("content", ev.getString(args[1]).String())
+		return ev.evalMeta(a)
 	}
-	v.bind(sz.NameSymTypeCredential, 2, metaString)
-	v.bind(sz.NameSymTypeEmpty, 2, metaString)
-	v.bind(sz.NameSymTypeID, 2, metaString)
-	v.bind(sz.NameSymTypeNumber, 2, metaString)
-	v.bind(sz.NameSymTypeString, 2, metaString)
-	v.bind(sz.NameSymTypeTimestamp, 2, metaString)
-	v.bind(sz.NameSymTypeURL, 2, metaString)
-	v.bind(sz.NameSymTypeWord, 2, metaString)
+	ev.bind(sz.NameSymTypeCredential, 2, evalMetaString)
+	ev.bind(sz.NameSymTypeEmpty, 2, evalMetaString)
+	ev.bind(sz.NameSymTypeID, 2, evalMetaString)
+	ev.bind(sz.NameSymTypeNumber, 2, evalMetaString)
+	ev.bind(sz.NameSymTypeString, 2, evalMetaString)
+	ev.bind(sz.NameSymTypeTimestamp, 2, evalMetaString)
+	ev.bind(sz.NameSymTypeURL, 2, evalMetaString)
+	ev.bind(sz.NameSymTypeWord, 2, evalMetaString)
 
-	metaSet := func(args []sx.Object) sx.Object {
+	evalMetaSet := func(args []sx.Object) sx.Object {
 		var sb strings.Builder
-		lst := v.visit(args[1])
-		for elem := v.getList(lst); elem != nil; elem = elem.Tail() {
+		lst := ev.eval(args[1])
+		for elem := ev.getList(lst); elem != nil; elem = elem.Tail() {
 			sb.WriteByte(' ')
-			sb.WriteString(v.getString(elem.Car()).String())
+			sb.WriteString(ev.getString(elem.Car()).String())
 		}
 		s := sb.String()
 		if len(s) > 0 {
 			s = s[1:]
 		}
 		a := make(attrs.Attributes, 2).
-			Set("name", v.getSymbol(v.visit(args[0])).Name()).
+			Set("name", ev.getSymbol(ev.eval(args[0])).Name()).
 			Set("content", s)
-		return v.visitMeta(a)
+		return ev.evalMeta(a)
 	}
-	v.bind(sz.NameSymTypeIDSet, 2, metaSet)
-	v.bind(sz.NameSymTypeTagSet, 2, metaSet)
-	v.bind(sz.NameSymTypeWordSet, 2, metaSet)
+	ev.bind(sz.NameSymTypeIDSet, 2, evalMetaSet)
+	ev.bind(sz.NameSymTypeTagSet, 2, evalMetaSet)
+	ev.bind(sz.NameSymTypeWordSet, 2, evalMetaSet)
 }
 
-func (v *visitor) visitMeta(a attrs.Attributes) *sx.Pair {
-	return sx.Nil().Cons(v.tr.TransformAttrbute(a)).Cons(v.symMeta)
+func (ev *evaluator) evalMeta(a attrs.Attributes) *sx.Pair {
+	return sx.Nil().Cons(ev.tr.TransformAttrbute(a)).Cons(ev.symMeta)
 }
 
-func (v *visitor) bindBlocks() {
-	v.bind(sz.NameSymBlock, 0, v.visitList)
-	v.bind(sz.NameSymPara, 0, func(args []sx.Object) sx.Object {
-		return v.visitSlice(args).Cons(v.symP)
+func (ev *evaluator) bindBlocks() {
+	ev.bind(sz.NameSymBlock, 0, ev.evalList)
+	ev.bind(sz.NameSymPara, 0, func(args []sx.Object) sx.Object {
+		return ev.evalSlice(args).Cons(ev.symP)
 	})
-	v.bind(sz.NameSymHeading, 5, func(args []sx.Object) sx.Object {
-		nLevel := v.getInt64(args[0])
+	ev.bind(sz.NameSymHeading, 5, func(args []sx.Object) sx.Object {
+		nLevel := ev.getInt64(args[0])
 		if nLevel <= 0 {
-			v.err = fmt.Errorf("%v is a negative level", nLevel)
+			ev.err = fmt.Errorf("%v is a negative level", nLevel)
 			return sx.Nil()
 		}
-		level := strconv.FormatInt(nLevel+v.tr.headingOffset, 10)
+		level := strconv.FormatInt(nLevel+ev.tr.headingOffset, 10)
 
-		a := v.getAttributes(args[1])
-		if fragment := v.getString(args[3]).String(); fragment != "" {
-			a = a.Set("id", v.tr.unique+fragment)
+		a := ev.getAttributes(args[1])
+		if fragment := ev.getString(args[3]).String(); fragment != "" {
+			a = a.Set("id", ev.tr.unique+fragment)
 		}
 
-		if result, isPair := sx.GetPair(v.visit(args[4])); isPair && result != nil {
+		if result, isPair := sx.GetPair(ev.eval(args[4])); isPair && result != nil {
 			if len(a) > 0 {
-				result = result.Cons(v.visitAttribute(a))
+				result = result.Cons(ev.evalAttribute(a))
 			}
-			return result.Cons(v.make("h" + level))
+			return result.Cons(ev.make("h" + level))
 		}
-		return sx.MakeList(v.make("h"+level), sx.String("<MISSING TEXT>"))
+		return sx.MakeList(ev.make("h"+level), sx.String("<MISSING TEXT>"))
 	})
-	v.bind(sz.NameSymThematic, 0, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymThematic, 0, func(args []sx.Object) sx.Object {
 		result := sx.Nil()
 		if len(args) > 0 {
-			if attrList := v.getList(v.visit(args[0])); attrList != nil {
-				result = result.Cons(v.visitAttribute(sz.GetAttributes(attrList)))
+			if attrList := ev.getList(ev.eval(args[0])); attrList != nil {
+				result = result.Cons(ev.evalAttribute(sz.GetAttributes(attrList)))
 			}
 		}
-		return result.Cons(v.make("hr"))
+		return result.Cons(ev.make("hr"))
 	})
 
-	v.bind(sz.NameSymListOrdered, 0, v.makeListFn("ol"))
-	v.bind(sz.NameSymListUnordered, 0, v.makeListFn("ul"))
-	v.bind(sz.NameSymDescription, 0, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymListOrdered, 0, ev.makeListFn("ol"))
+	ev.bind(sz.NameSymListUnordered, 0, ev.makeListFn("ul"))
+	ev.bind(sz.NameSymDescription, 0, func(args []sx.Object) sx.Object {
 		if len(args) == 0 {
 			return sx.Nil()
 		}
-		items := sx.Nil().Cons(v.make("dl"))
+		items := sx.Nil().Cons(ev.make("dl"))
 		curItem := items
 		for pos := 0; pos < len(args); pos++ {
-			term := v.getList(v.visit(args[pos]))
-			curItem = curItem.AppendBang(term.Cons(v.make("dt")))
+			term := ev.getList(ev.eval(args[pos]))
+			curItem = curItem.AppendBang(term.Cons(ev.make("dt")))
 			pos++
 			if pos >= len(args) {
 				break
 			}
-			ddBlock := v.getList(v.visit(args[pos]))
+			ddBlock := ev.getList(ev.eval(args[pos]))
 			if ddBlock == nil {
 				continue
 			}
 			for ddlst := ddBlock; ddlst != nil; ddlst = ddlst.Tail() {
-				dditem := v.getList(ddlst.Car())
-				curItem = curItem.AppendBang(dditem.Cons(v.make("dd")))
+				dditem := ev.getList(ddlst.Car())
+				curItem = curItem.AppendBang(dditem.Cons(ev.make("dd")))
 			}
 		}
 		return items
 	})
-	v.bind(sz.NameSymListQuote, 0, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymListQuote, 0, func(args []sx.Object) sx.Object {
 		if args == nil {
 			return sx.Nil()
 		}
-		result := sx.Nil().Cons(v.make("blockquote"))
+		result := sx.Nil().Cons(ev.make("blockquote"))
 		currResult := result
 		for _, elem := range args {
-			if quote, isPair := sx.GetPair(v.visit(elem)); isPair {
-				currResult = currResult.AppendBang(quote.Cons(v.symP))
+			if quote, isPair := sx.GetPair(ev.eval(elem)); isPair {
+				currResult = currResult.AppendBang(quote.Cons(ev.symP))
 			}
 		}
 		return result
 	})
 
-	v.bind(sz.NameSymTable, 1, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymTable, 1, func(args []sx.Object) sx.Object {
 		thead := sx.Nil()
-		if header := v.getList(v.visit(args[0])); !sx.IsNil(header) {
-			thead = sx.Nil().Cons(v.transformTableRow(header)).Cons(v.make("thead"))
+		if header := ev.getList(ev.eval(args[0])); !sx.IsNil(header) {
+			thead = sx.Nil().Cons(ev.transformTableRow(header)).Cons(ev.make("thead"))
 		}
 
 		tbody := sx.Nil()
 		if len(args) > 1 {
-			tbody = sx.Nil().Cons(v.make("tbody"))
+			tbody = sx.Nil().Cons(ev.make("tbody"))
 			curBody := tbody
 			for _, row := range args[1:] {
-				curBody = curBody.AppendBang(v.transformTableRow(v.getList(v.visit(row))))
+				curBody = curBody.AppendBang(ev.transformTableRow(ev.getList(ev.eval(row))))
 			}
 		}
 
@@ -351,50 +351,50 @@ func (v *visitor) bindBlocks() {
 		if table == nil {
 			return sx.Nil()
 		}
-		return table.Cons(v.make("table"))
+		return table.Cons(ev.make("table"))
 	})
-	v.bind(sz.NameSymCell, 0, v.makeCellFn(""))
-	v.bind(sz.NameSymCellCenter, 0, v.makeCellFn("center"))
-	v.bind(sz.NameSymCellLeft, 0, v.makeCellFn("left"))
-	v.bind(sz.NameSymCellRight, 0, v.makeCellFn("right"))
+	ev.bind(sz.NameSymCell, 0, ev.makeCellFn(""))
+	ev.bind(sz.NameSymCellCenter, 0, ev.makeCellFn("center"))
+	ev.bind(sz.NameSymCellLeft, 0, ev.makeCellFn("left"))
+	ev.bind(sz.NameSymCellRight, 0, ev.makeCellFn("right"))
 
-	symDiv := v.make("div")
-	v.bind(sz.NameSymRegionBlock, 2, v.makeRegionFn(symDiv, true))
-	v.bind(sz.NameSymRegionQuote, 2, v.makeRegionFn(v.make("blockquote"), false))
-	v.bind(sz.NameSymRegionVerse, 2, v.makeRegionFn(symDiv, false))
+	symDiv := ev.make("div")
+	ev.bind(sz.NameSymRegionBlock, 2, ev.makeRegionFn(symDiv, true))
+	ev.bind(sz.NameSymRegionQuote, 2, ev.makeRegionFn(ev.make("blockquote"), false))
+	ev.bind(sz.NameSymRegionVerse, 2, ev.makeRegionFn(symDiv, false))
 
-	v.bind(sz.NameSymVerbatimComment, 1, func(args []sx.Object) sx.Object {
-		if v.getAttributes(args[0]).HasDefault() {
+	ev.bind(sz.NameSymVerbatimComment, 1, func(args []sx.Object) sx.Object {
+		if ev.getAttributes(args[0]).HasDefault() {
 			if len(args) > 1 {
-				if s := v.getString(args[1]); s != "" {
+				if s := ev.getString(args[1]); s != "" {
 					t := sx.String(s.String())
-					return sx.Nil().Cons(t).Cons(v.make(sxhtml.NameSymBlockComment))
+					return sx.Nil().Cons(t).Cons(ev.make(sxhtml.NameSymBlockComment))
 				}
 			}
 		}
 		return nil
 	})
-	v.bind(sz.NameSymVerbatimEval, 2, func(args []sx.Object) sx.Object {
-		return v.visitVerbatim(v.getAttributes(args[0]).AddClass("zs-eval"), v.getString(args[1]))
+	ev.bind(sz.NameSymVerbatimEval, 2, func(args []sx.Object) sx.Object {
+		return ev.evalVerbatim(ev.getAttributes(args[0]).AddClass("zs-eval"), ev.getString(args[1]))
 	})
-	v.bind(sz.NameSymVerbatimHTML, 2, v.visitHTML)
-	v.bind(sz.NameSymVerbatimMath, 2, func(args []sx.Object) sx.Object {
-		return v.visitVerbatim(v.getAttributes(args[0]).AddClass("zs-math"), v.getString(args[1]))
+	ev.bind(sz.NameSymVerbatimHTML, 2, ev.visitHTML)
+	ev.bind(sz.NameSymVerbatimMath, 2, func(args []sx.Object) sx.Object {
+		return ev.evalVerbatim(ev.getAttributes(args[0]).AddClass("zs-math"), ev.getString(args[1]))
 	})
-	v.bind(sz.NameSymVerbatimProg, 2, func(args []sx.Object) sx.Object {
-		a := v.getAttributes(args[0])
-		content := v.getString(args[1])
+	ev.bind(sz.NameSymVerbatimProg, 2, func(args []sx.Object) sx.Object {
+		a := ev.getAttributes(args[0])
+		content := ev.getString(args[1])
 		if a.HasDefault() {
 			content = sx.String(visibleReplacer.Replace(content.String()))
 		}
-		return v.visitVerbatim(a, content)
+		return ev.evalVerbatim(a, content)
 	})
-	v.bind(sz.NameSymVerbatimZettel, 0, noopFn)
-	v.bind(sz.NameSymBLOB, 3, func(args []sx.Object) sx.Object {
-		return v.visitBLOB(v.getList(args[0]), v.getString(args[1]), v.getString(args[2]))
+	ev.bind(sz.NameSymVerbatimZettel, 0, noopFn)
+	ev.bind(sz.NameSymBLOB, 3, func(args []sx.Object) sx.Object {
+		return ev.visitBLOB(ev.getList(args[0]), ev.getString(args[1]), ev.getString(args[2]))
 	})
-	v.bind(sz.NameSymTransclude, 2, func(args []sx.Object) sx.Object {
-		ref, isPair := sx.GetPair(v.visit(args[1]))
+	ev.bind(sz.NameSymTransclude, 2, func(args []sx.Object) sx.Object {
+		ref, isPair := sx.GetPair(ev.eval(args[1]))
 		if !isPair {
 			return sx.Nil()
 		}
@@ -402,32 +402,32 @@ func (v *visitor) bindBlocks() {
 		if sx.IsNil(refKind) {
 			return sx.Nil()
 		}
-		if refValue := v.getString(ref.Tail().Car()); refValue != "" {
+		if refValue := ev.getString(ref.Tail().Car()); refValue != "" {
 			if refSym, isRefSym := sx.GetSymbol(refKind); isRefSym && refSym.Name() == sz.NameSymRefStateExternal {
-				a := v.getAttributes(args[0]).Set("src", refValue.String()).AddClass("external")
-				return sx.Nil().Cons(sx.Nil().Cons(v.visitAttribute(a)).Cons(v.make("img"))).Cons(v.symP)
+				a := ev.getAttributes(args[0]).Set("src", refValue.String()).AddClass("external")
+				return sx.Nil().Cons(sx.Nil().Cons(ev.evalAttribute(a)).Cons(ev.make("img"))).Cons(ev.symP)
 			}
 			return sx.MakeList(
-				v.make(sxhtml.NameSymInlineComment),
+				ev.make(sxhtml.NameSymInlineComment),
 				sx.String("transclude"),
 				refKind,
 				sx.String("->"),
 				refValue,
 			)
 		}
-		return v.visitSlice(args)
+		return ev.evalSlice(args)
 	})
 }
 
-func (v *visitor) makeListFn(tag string) transformFn {
-	sym := v.make(tag)
-	symLI := v.make("li")
+func (ev *evaluator) makeListFn(tag string) evalFn {
+	sym := ev.make(tag)
+	symLI := ev.make("li")
 	return func(args []sx.Object) sx.Object {
 		result := sx.Nil().Cons(sym)
 		last := result
 		for _, elem := range args {
 			item := sx.Nil().Cons(symLI)
-			if res, isPair := sx.GetPair(v.visit(elem)); isPair {
+			if res, isPair := sx.GetPair(ev.eval(elem)); isPair {
 				item.ExtendBang(res)
 			}
 			last = last.AppendBang(item)
@@ -436,8 +436,8 @@ func (v *visitor) makeListFn(tag string) transformFn {
 	}
 }
 
-func (v *visitor) transformTableRow(pairs *sx.Pair) *sx.Pair {
-	row := sx.Nil().Cons(v.make("tr"))
+func (ev *evaluator) transformTableRow(pairs *sx.Pair) *sx.Pair {
+	row := sx.Nil().Cons(ev.make("tr"))
 	if pairs == nil {
 		return nil
 	}
@@ -447,19 +447,19 @@ func (v *visitor) transformTableRow(pairs *sx.Pair) *sx.Pair {
 	}
 	return row
 }
-func (v *visitor) makeCellFn(align string) transformFn {
+func (ev *evaluator) makeCellFn(align string) evalFn {
 	return func(args []sx.Object) sx.Object {
-		tdata := v.visitSlice(args)
+		tdata := ev.evalSlice(args)
 		if align != "" {
-			tdata = tdata.Cons(v.visitAttribute(attrs.Attributes{"class": align}))
+			tdata = tdata.Cons(ev.evalAttribute(attrs.Attributes{"class": align}))
 		}
-		return tdata.Cons(v.make("td"))
+		return tdata.Cons(ev.make("td"))
 	}
 }
 
-func (v *visitor) makeRegionFn(sym *sx.Symbol, genericToClass bool) transformFn {
+func (ev *evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) evalFn {
 	return func(args []sx.Object) sx.Object {
-		a := v.getAttributes(args[0])
+		a := ev.getAttributes(args[0])
 		if genericToClass {
 			if val, found := a.Get(""); found {
 				a = a.Remove("").AddClass(val)
@@ -467,141 +467,141 @@ func (v *visitor) makeRegionFn(sym *sx.Symbol, genericToClass bool) transformFn 
 		}
 		result := sx.Nil()
 		if len(a) > 0 {
-			result = result.Cons(v.visitAttribute(a))
+			result = result.Cons(ev.evalAttribute(a))
 		}
 		result = result.Cons(sym)
 		currResult := result.LastPair()
-		if region, isPair := sx.GetPair(v.visit(args[1])); isPair {
+		if region, isPair := sx.GetPair(ev.eval(args[1])); isPair {
 			currResult = currResult.ExtendBang(region)
 		}
 		if len(args) > 2 {
-			if cite, isPair := sx.GetPair(v.visit(args[2])); isPair && cite != nil {
-				currResult.AppendBang(cite.Cons(v.make("cite")))
+			if cite, isPair := sx.GetPair(ev.eval(args[2])); isPair && cite != nil {
+				currResult.AppendBang(cite.Cons(ev.make("cite")))
 			}
 		}
 		return result
 	}
 }
 
-func (v *visitor) visitVerbatim(a attrs.Attributes, s sx.String) sx.Object {
+func (ev *evaluator) evalVerbatim(a attrs.Attributes, s sx.String) sx.Object {
 	a = setProgLang(a)
 	code := sx.Nil().Cons(s)
-	if al := v.visitAttribute(a); al != nil {
+	if al := ev.evalAttribute(a); al != nil {
 		code = code.Cons(al)
 	}
-	code = code.Cons(v.make("code"))
-	return sx.Nil().Cons(code).Cons(v.make("pre"))
+	code = code.Cons(ev.make("code"))
+	return sx.Nil().Cons(code).Cons(ev.make("pre"))
 }
 
-func (v *visitor) bindInlines() {
-	v.bind(sz.NameSymInline, 0, v.visitList)
-	v.bind(sz.NameSymText, 1, func(args []sx.Object) sx.Object { return v.getString(args[0]) })
-	v.bind(sz.NameSymSpace, 0, func(args []sx.Object) sx.Object {
+func (ev *evaluator) bindInlines() {
+	ev.bind(sz.NameSymInline, 0, ev.evalList)
+	ev.bind(sz.NameSymText, 1, func(args []sx.Object) sx.Object { return ev.getString(args[0]) })
+	ev.bind(sz.NameSymSpace, 0, func(args []sx.Object) sx.Object {
 		if len(args) == 0 {
 			return sx.String(" ")
 		}
-		return v.getString(args[0])
+		return ev.getString(args[0])
 	})
-	v.bind(sz.NameSymSoft, 0, func([]sx.Object) sx.Object { return sx.String(" ") })
-	brSym := v.make("br")
-	v.bind(sz.NameSymHard, 0, func([]sx.Object) sx.Object { return sx.Nil().Cons(brSym) })
+	ev.bind(sz.NameSymSoft, 0, func([]sx.Object) sx.Object { return sx.String(" ") })
+	symBR := ev.make("br")
+	ev.bind(sz.NameSymHard, 0, func([]sx.Object) sx.Object { return sx.Nil().Cons(symBR) })
 
-	v.bind(sz.NameSymLinkInvalid, 2, func(args []sx.Object) sx.Object {
-		// a := te.getAttributes(args)
+	ev.bind(sz.NameSymLinkInvalid, 2, func(args []sx.Object) sx.Object {
+		// a := ev.getAttributes(args)
 		var inline *sx.Pair
 		if len(args) > 2 {
-			inline = v.visitSlice(args[2:])
+			inline = ev.evalSlice(args[2:])
 		}
 		if inline == nil {
-			inline = sx.Nil().Cons(v.visit(args[1]))
+			inline = sx.Nil().Cons(ev.eval(args[1]))
 		}
-		return inline.Cons(v.symSpan)
+		return inline.Cons(ev.symSpan)
 	})
-	transformHREF := func(args []sx.Object) sx.Object {
-		a := v.getAttributes(args[0])
-		refValue := v.getString(args[1])
-		return v.visitLink(a.Set("href", refValue.String()), refValue, args[2:])
+	evalHREF := func(args []sx.Object) sx.Object {
+		a := ev.getAttributes(args[0])
+		refValue := ev.getString(args[1])
+		return ev.evalLink(a.Set("href", refValue.String()), refValue, args[2:])
 	}
-	v.bind(sz.NameSymLinkZettel, 2, transformHREF)
-	v.bind(sz.NameSymLinkSelf, 2, transformHREF)
-	v.bind(sz.NameSymLinkFound, 2, transformHREF)
-	v.bind(sz.NameSymLinkBroken, 2, func(args []sx.Object) sx.Object {
-		a := v.getAttributes(args[0])
-		refValue := v.getString(args[1])
-		return v.visitLink(a.AddClass("broken"), refValue, args[2:])
+	ev.bind(sz.NameSymLinkZettel, 2, evalHREF)
+	ev.bind(sz.NameSymLinkSelf, 2, evalHREF)
+	ev.bind(sz.NameSymLinkFound, 2, evalHREF)
+	ev.bind(sz.NameSymLinkBroken, 2, func(args []sx.Object) sx.Object {
+		a := ev.getAttributes(args[0])
+		refValue := ev.getString(args[1])
+		return ev.evalLink(a.AddClass("broken"), refValue, args[2:])
 	})
-	v.bind(sz.NameSymLinkHosted, 2, transformHREF)
-	v.bind(sz.NameSymLinkBased, 2, transformHREF)
-	v.bind(sz.NameSymLinkQuery, 2, func(args []sx.Object) sx.Object {
-		a := v.getAttributes(args[0])
-		refValue := v.getString(args[1])
+	ev.bind(sz.NameSymLinkHosted, 2, evalHREF)
+	ev.bind(sz.NameSymLinkBased, 2, evalHREF)
+	ev.bind(sz.NameSymLinkQuery, 2, func(args []sx.Object) sx.Object {
+		a := ev.getAttributes(args[0])
+		refValue := ev.getString(args[1])
 		query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(refValue.String())
-		return v.visitLink(a.Set("href", query), refValue, args[2:])
+		return ev.evalLink(a.Set("href", query), refValue, args[2:])
 	})
-	v.bind(sz.NameSymLinkExternal, 2, func(args []sx.Object) sx.Object {
-		a := v.getAttributes(args[0])
-		refValue := v.getString(args[1])
-		return v.visitLink(a.Set("href", refValue.String()).AddClass("external"), refValue, args[2:])
+	ev.bind(sz.NameSymLinkExternal, 2, func(args []sx.Object) sx.Object {
+		a := ev.getAttributes(args[0])
+		refValue := ev.getString(args[1])
+		return ev.evalLink(a.Set("href", refValue.String()).AddClass("external"), refValue, args[2:])
 	})
 
-	v.bind(sz.NameSymEmbed, 3, func(args []sx.Object) sx.Object {
-		ref := v.getList(v.visit(args[1]))
-		syntax := v.getString(args[2])
+	ev.bind(sz.NameSymEmbed, 3, func(args []sx.Object) sx.Object {
+		ref := ev.getList(ev.eval(args[1]))
+		syntax := ev.getString(args[2])
 		if syntax == api.ValueSyntaxSVG {
 			embedAttr := sx.MakeList(
-				v.symAttr,
-				sx.Cons(v.make("type"), sx.String("image/svg+xml")),
-				sx.Cons(v.make("src"), sx.String("/"+v.getString(ref.Tail()).String()+".svg")),
+				ev.symAttr,
+				sx.Cons(ev.make("type"), sx.String("image/svg+xml")),
+				sx.Cons(ev.make("src"), sx.String("/"+ev.getString(ref.Tail()).String()+".svg")),
 			)
 			return sx.MakeList(
-				v.make("figure"),
+				ev.make("figure"),
 				sx.MakeList(
-					v.make("embed"),
+					ev.make("embed"),
 					embedAttr,
 				),
 			)
 		}
-		a := v.getAttributes(args[0])
-		a = a.Set("src", string(v.getString(ref.Tail().Car())))
+		a := ev.getAttributes(args[0])
+		a = a.Set("src", string(ev.getString(ref.Tail().Car())))
 		var sb strings.Builder
-		v.flattenText(&sb, ref.Tail().Tail().Tail())
+		ev.flattenText(&sb, ref.Tail().Tail().Tail())
 		if d := sb.String(); d != "" {
 			a = a.Set("alt", d)
 		}
-		return sx.MakeList(v.make("img"), v.visitAttribute(a))
+		return sx.MakeList(ev.make("img"), ev.evalAttribute(a))
 	})
-	v.bind(sz.NameSymEmbedBLOB, 3, noopFn)
+	ev.bind(sz.NameSymEmbedBLOB, 3, noopFn)
 
-	v.bind(sz.NameSymCite, 2, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymCite, 2, func(args []sx.Object) sx.Object {
 		result := sx.Nil()
-		if key := v.getString(args[1]); key != "" {
+		if key := ev.getString(args[1]); key != "" {
 			if len(args) > 2 {
-				result = v.visitSlice(args[2:]).Cons(sx.String(", "))
+				result = ev.evalSlice(args[2:]).Cons(sx.String(", "))
 			}
 			result = result.Cons(key)
 		}
-		if a := v.getAttributes(args[0]); len(a) > 0 {
-			result = result.Cons(v.visitAttribute(a))
+		if a := ev.getAttributes(args[0]); len(a) > 0 {
+			result = result.Cons(ev.evalAttribute(a))
 		}
 		if result == nil {
 			return nil
 		}
-		return result.Cons(v.symSpan)
+		return result.Cons(ev.symSpan)
 	})
-	v.bind(sz.NameSymMark, 3, func(args []sx.Object) sx.Object {
-		result := v.visitSlice(args[3:])
-		if !v.tr.noLinks {
-			if fragment := v.getString(args[2]); fragment != "" {
-				a := attrs.Attributes{"id": fragment.String() + v.tr.unique}
-				return result.Cons(v.visitAttribute(a)).Cons(v.symA)
+	ev.bind(sz.NameSymMark, 3, func(args []sx.Object) sx.Object {
+		result := ev.evalSlice(args[3:])
+		if !ev.tr.noLinks {
+			if fragment := ev.getString(args[2]); fragment != "" {
+				a := attrs.Attributes{"id": fragment.String() + ev.tr.unique}
+				return result.Cons(ev.evalAttribute(a)).Cons(ev.symA)
 			}
 		}
-		return result.Cons(v.symSpan)
+		return result.Cons(ev.symSpan)
 	})
-	v.bind(sz.NameSymEndnote, 1, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymEndnote, 1, func(args []sx.Object) sx.Object {
 		attrPlist := sx.Nil()
-		if a := v.getAttributes(args[0]); len(a) > 0 {
-			if attrs := v.visitAttribute(a); attrs != nil {
+		if a := ev.getAttributes(args[0]); len(a) > 0 {
+			if attrs := ev.evalAttribute(a); attrs != nil {
 				attrPlist = attrs.Tail()
 			}
 		}
@@ -610,24 +610,24 @@ func (v *visitor) bindInlines() {
 		if !isPair {
 			return sx.Nil()
 		}
-		v.tr.endnotes = append(v.tr.endnotes, endnoteInfo{noteAST: text, noteHx: nil, attrs: attrPlist})
-		noteNum := strconv.Itoa(len(v.tr.endnotes))
-		noteID := v.tr.unique + noteNum
-		hrefAttr := sx.Nil().Cons(sx.Cons(v.make("role"), sx.String("doc-noteref"))).
-			Cons(sx.Cons(v.make("href"), sx.String("#fn:"+noteID))).
-			Cons(sx.Cons(v.tr.symClass, sx.String("zs-noteref"))).
-			Cons(v.symAttr)
-		href := sx.Nil().Cons(sx.String(noteNum)).Cons(hrefAttr).Cons(v.symA)
-		supAttr := sx.Nil().Cons(sx.Cons(v.make("id"), sx.String("fnref:"+noteID))).Cons(v.symAttr)
-		return sx.Nil().Cons(href).Cons(supAttr).Cons(v.make("sup"))
+		ev.tr.endnotes = append(ev.tr.endnotes, endnoteInfo{noteAST: text, noteHx: nil, attrs: attrPlist})
+		noteNum := strconv.Itoa(len(ev.tr.endnotes))
+		noteID := ev.tr.unique + noteNum
+		hrefAttr := sx.Nil().Cons(sx.Cons(ev.make("role"), sx.String("doc-noteref"))).
+			Cons(sx.Cons(ev.make("href"), sx.String("#fn:"+noteID))).
+			Cons(sx.Cons(ev.tr.symClass, sx.String("zs-noteref"))).
+			Cons(ev.symAttr)
+		href := sx.Nil().Cons(sx.String(noteNum)).Cons(hrefAttr).Cons(ev.symA)
+		supAttr := sx.Nil().Cons(sx.Cons(ev.make("id"), sx.String("fnref:"+noteID))).Cons(ev.symAttr)
+		return sx.Nil().Cons(href).Cons(supAttr).Cons(ev.make("sup"))
 	})
 
-	v.bind(sz.NameSymFormatDelete, 1, v.makeFormatFn("del"))
-	v.bind(sz.NameSymFormatEmph, 1, v.makeFormatFn("em"))
-	v.bind(sz.NameSymFormatInsert, 1, v.makeFormatFn("ins"))
-	v.bind(sz.NameSymFormatQuote, 1, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymFormatDelete, 1, ev.makeFormatFn("del"))
+	ev.bind(sz.NameSymFormatEmph, 1, ev.makeFormatFn("em"))
+	ev.bind(sz.NameSymFormatInsert, 1, ev.makeFormatFn("ins"))
+	ev.bind(sz.NameSymFormatQuote, 1, func(args []sx.Object) sx.Object {
 		const langAttr = "lang"
-		a := v.getAttributes(args[0])
+		a := ev.getAttributes(args[0])
 		langVal, found := a.Get(langAttr)
 		if found {
 			a = a.Remove(langAttr)
@@ -635,62 +635,62 @@ func (v *visitor) bindInlines() {
 		if val, found2 := a.Get(""); found2 {
 			a = a.Remove("").AddClass(val)
 		}
-		res := v.visitSlice(args[1:])
+		res := ev.evalSlice(args[1:])
 		if len(a) > 0 {
-			res = res.Cons(v.visitAttribute(a))
+			res = res.Cons(ev.evalAttribute(a))
 		}
-		res = res.Cons(v.make("q"))
+		res = res.Cons(ev.make("q"))
 		if found {
-			res = sx.Nil().Cons(res).Cons(v.visitAttribute(attrs.Attributes{}.Set(langAttr, langVal))).Cons(v.symSpan)
+			res = sx.Nil().Cons(res).Cons(ev.evalAttribute(attrs.Attributes{}.Set(langAttr, langVal))).Cons(ev.symSpan)
 		}
 		return res
 	})
-	v.bind(sz.NameSymFormatSpan, 1, v.makeFormatFn("span"))
-	v.bind(sz.NameSymFormatStrong, 1, v.makeFormatFn("strong"))
-	v.bind(sz.NameSymFormatSub, 1, v.makeFormatFn("sub"))
-	v.bind(sz.NameSymFormatSuper, 1, v.makeFormatFn("sup"))
+	ev.bind(sz.NameSymFormatSpan, 1, ev.makeFormatFn("span"))
+	ev.bind(sz.NameSymFormatStrong, 1, ev.makeFormatFn("strong"))
+	ev.bind(sz.NameSymFormatSub, 1, ev.makeFormatFn("sub"))
+	ev.bind(sz.NameSymFormatSuper, 1, ev.makeFormatFn("sup"))
 
-	v.bind(sz.NameSymLiteralComment, 1, func(args []sx.Object) sx.Object {
-		if v.getAttributes(args[0]).HasDefault() {
+	ev.bind(sz.NameSymLiteralComment, 1, func(args []sx.Object) sx.Object {
+		if ev.getAttributes(args[0]).HasDefault() {
 			if len(args) > 1 {
-				if s := v.getString(v.visit(args[1])); s != "" {
-					return sx.Nil().Cons(s).Cons(v.make(sxhtml.NameSymInlineComment))
+				if s := ev.getString(ev.eval(args[1])); s != "" {
+					return sx.Nil().Cons(s).Cons(ev.make(sxhtml.NameSymInlineComment))
 				}
 			}
 		}
 		return sx.Nil()
 	})
-	v.bind(sz.NameSymLiteralHTML, 2, v.visitHTML)
-	kbdSym := v.make("kbd")
-	v.bind(sz.NameSymLiteralInput, 2, func(args []sx.Object) sx.Object {
-		return v.visitLiteral(args, nil, kbdSym)
+	ev.bind(sz.NameSymLiteralHTML, 2, ev.visitHTML)
+	kbdSym := ev.make("kbd")
+	ev.bind(sz.NameSymLiteralInput, 2, func(args []sx.Object) sx.Object {
+		return ev.visitLiteral(args, nil, kbdSym)
 	})
-	codeSym := v.make("code")
-	v.bind(sz.NameSymLiteralMath, 2, func(args []sx.Object) sx.Object {
-		a := v.getAttributes(args[0]).AddClass("zs-math")
-		return v.visitLiteral(args, a, codeSym)
+	codeSym := ev.make("code")
+	ev.bind(sz.NameSymLiteralMath, 2, func(args []sx.Object) sx.Object {
+		a := ev.getAttributes(args[0]).AddClass("zs-math")
+		return ev.visitLiteral(args, a, codeSym)
 	})
-	sampSym := v.make("samp")
-	v.bind(sz.NameSymLiteralOutput, 2, func(args []sx.Object) sx.Object {
-		return v.visitLiteral(args, nil, sampSym)
+	sampSym := ev.make("samp")
+	ev.bind(sz.NameSymLiteralOutput, 2, func(args []sx.Object) sx.Object {
+		return ev.visitLiteral(args, nil, sampSym)
 	})
-	v.bind(sz.NameSymLiteralProg, 2, func(args []sx.Object) sx.Object {
-		return v.visitLiteral(args, nil, codeSym)
+	ev.bind(sz.NameSymLiteralProg, 2, func(args []sx.Object) sx.Object {
+		return ev.visitLiteral(args, nil, codeSym)
 	})
 
-	v.bind(sz.NameSymLiteralZettel, 0, noopFn)
+	ev.bind(sz.NameSymLiteralZettel, 0, noopFn)
 }
 
-func (v *visitor) makeFormatFn(tag string) transformFn {
-	sym := v.make(tag)
+func (ev *evaluator) makeFormatFn(tag string) evalFn {
+	sym := ev.make(tag)
 	return func(args []sx.Object) sx.Object {
-		a := v.getAttributes(args[0])
+		a := ev.getAttributes(args[0])
 		if val, found := a.Get(""); found {
 			a = a.Remove("").AddClass(val)
 		}
-		res := v.visitSlice(args[1:])
+		res := ev.evalSlice(args[1:])
 		if len(a) > 0 {
-			res = res.Cons(v.visitAttribute(a))
+			res = res.Cons(ev.evalAttribute(a))
 		}
 		return res.Cons(sym)
 	}
@@ -698,19 +698,19 @@ func (v *visitor) makeFormatFn(tag string) transformFn {
 
 var visibleReplacer = strings.NewReplacer(" ", "\u2423")
 
-func (te *visitor) visitLiteral(args []sx.Object, a attrs.Attributes, sym *sx.Symbol) sx.Object {
+func (ev *evaluator) visitLiteral(args []sx.Object, a attrs.Attributes, sym *sx.Symbol) sx.Object {
 	if a == nil {
-		a = te.getAttributes(args[0])
+		a = ev.getAttributes(args[0])
 	}
 	a = setProgLang(a)
-	literal := te.getString(args[1]).String()
+	literal := ev.getString(args[1]).String()
 	if a.HasDefault() {
 		a = a.RemoveDefault()
 		literal = visibleReplacer.Replace(literal)
 	}
 	res := sx.Nil().Cons(sx.String(literal))
 	if len(a) > 0 {
-		res = res.Cons(te.visitAttribute(a))
+		res = res.Cons(ev.evalAttribute(a))
 	}
 	return res.Cons(sym)
 }
@@ -721,14 +721,14 @@ func setProgLang(a attrs.Attributes) attrs.Attributes {
 	return a
 }
 
-func (v *visitor) visitHTML(args []sx.Object) sx.Object {
-	if s := v.getString(v.visit(args[1])); s != "" && IsSafe(s.String()) {
-		return sx.Nil().Cons(s).Cons(v.symNoEscape)
+func (ev *evaluator) visitHTML(args []sx.Object) sx.Object {
+	if s := ev.getString(ev.eval(args[1])); s != "" && IsSafe(s.String()) {
+		return sx.Nil().Cons(s).Cons(ev.symNoEscape)
 	}
 	return nil
 }
 
-func (te *visitor) visitBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
+func (ev *evaluator) visitBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
 	if data == "" {
 		return sx.Nil()
 	}
@@ -736,34 +736,34 @@ func (te *visitor) visitBLOB(description *sx.Pair, syntax, data sx.String) sx.Ob
 	case "":
 		return sx.Nil()
 	case api.ValueSyntaxSVG:
-		return sx.Nil().Cons(sx.Nil().Cons(data).Cons(te.symNoEscape)).Cons(te.symP)
+		return sx.Nil().Cons(sx.Nil().Cons(data).Cons(ev.symNoEscape)).Cons(ev.symP)
 	default:
-		imgAttr := sx.Nil().Cons(sx.Cons(te.make("src"), sx.String("data:image/"+syntax.String()+";base64,"+data.String())))
+		imgAttr := sx.Nil().Cons(sx.Cons(ev.make("src"), sx.String("data:image/"+syntax.String()+";base64,"+data.String())))
 		var sb strings.Builder
-		te.flattenText(&sb, description)
+		ev.flattenText(&sb, description)
 		if d := sb.String(); d != "" {
-			imgAttr = imgAttr.Cons(sx.Cons(te.make("alt"), sx.String(d)))
+			imgAttr = imgAttr.Cons(sx.Cons(ev.make("alt"), sx.String(d)))
 		}
-		return sx.Nil().Cons(sx.Nil().Cons(imgAttr.Cons(te.symAttr)).Cons(te.make("img"))).Cons(te.symP)
+		return sx.Nil().Cons(sx.Nil().Cons(imgAttr.Cons(ev.symAttr)).Cons(ev.make("img"))).Cons(ev.symP)
 	}
 }
 
-func (v *visitor) flattenText(sb *strings.Builder, lst *sx.Pair) {
+func (ev *evaluator) flattenText(sb *strings.Builder, lst *sx.Pair) {
 	for elem := lst; elem != nil; elem = elem.Tail() {
 		switch obj := elem.Car().(type) {
 		case sx.String:
 			sb.WriteString(obj.String())
 		case *sx.Pair:
-			v.flattenText(sb, obj)
+			ev.flattenText(sb, obj)
 		}
 	}
 }
 
-func (v *visitor) visitList(args []sx.Object) sx.Object { return v.visitSlice(args) }
-func noopFn([]sx.Object) sx.Object                      { return sx.Nil() }
+func (ev *evaluator) evalList(args []sx.Object) sx.Object { return ev.evalSlice(args) }
+func noopFn([]sx.Object) sx.Object                        { return sx.Nil() }
 
-func (v *visitor) visit(obj sx.Object) sx.Object {
-	if v.err != nil {
+func (ev *evaluator) eval(obj sx.Object) sx.Object {
+	if ev.err != nil {
 		return sx.Nil()
 	}
 	if sx.IsNil(obj) {
@@ -775,13 +775,13 @@ func (v *visitor) visit(obj sx.Object) sx.Object {
 	}
 	sym, found := sx.GetSymbol(lst.Car())
 	if !found {
-		v.err = fmt.Errorf("symbol expected, but got %T/%v", lst.Car(), lst.Car())
+		ev.err = fmt.Errorf("symbol expected, but got %T/%v", lst.Car(), lst.Car())
 		return sx.Nil()
 	}
 	name := sym.Name()
-	fn, found := v.fns[name]
+	fn, found := ev.fns[name]
 	if !found {
-		v.err = fmt.Errorf("symbol %q not bound", name)
+		ev.err = fmt.Errorf("symbol %q not bound", name)
 		return sx.Nil()
 	}
 	var args []sx.Object
@@ -793,28 +793,28 @@ func (v *visitor) visit(obj sx.Object) sx.Object {
 		args = append(args, pair.Car())
 		cdr = pair.Cdr()
 	}
-	if minArgs, hasMinArgs := v.minArgs[name]; hasMinArgs {
+	if minArgs, hasMinArgs := ev.minArgs[name]; hasMinArgs {
 		if minArgs > len(args) {
-			v.err = fmt.Errorf("%v needs at least %d arguments, but got only %d", name, minArgs, len(args))
+			ev.err = fmt.Errorf("%v needs at least %d arguments, but got only %d", name, minArgs, len(args))
 			return sx.Nil()
 		}
 	}
 	log.Println("EXEC", sym, args)
 	result := fn(args)
-	if v.err != nil {
-		log.Println("EERR", v.err)
+	if ev.err != nil {
+		log.Println("EERR", ev.err)
 		return sx.Nil()
 	}
 	log.Println("REXE", result)
 	return result
 }
 
-func (v *visitor) visitSlice(args []sx.Object) *sx.Pair {
+func (ev *evaluator) evalSlice(args []sx.Object) *sx.Pair {
 	result := sx.Cons(sx.Nil(), sx.Nil())
 	curr := result
 	for _, arg := range args {
-		elem := v.visit(arg)
-		if v.err != nil {
+		elem := ev.eval(arg)
+		if ev.err != nil {
 			return nil
 		}
 		curr = curr.AppendBang(elem)
@@ -822,62 +822,62 @@ func (v *visitor) visitSlice(args []sx.Object) *sx.Pair {
 	return result.Tail()
 }
 
-func (v *visitor) visitLink(a attrs.Attributes, refValue sx.String, inline []sx.Object) sx.Object {
-	result := v.visitSlice(inline)
+func (ev *evaluator) evalLink(a attrs.Attributes, refValue sx.String, inline []sx.Object) sx.Object {
+	result := ev.evalSlice(inline)
 	if len(inline) == 0 {
 		result = sx.Nil().Cons(refValue)
 	}
-	if v.tr.noLinks {
-		return result.Cons(v.symSpan)
+	if ev.tr.noLinks {
+		return result.Cons(ev.symSpan)
 	}
-	return result.Cons(v.visitAttribute(a)).Cons(v.symA)
+	return result.Cons(ev.evalAttribute(a)).Cons(ev.symA)
 }
 
-func (v *visitor) visitAttribute(a attrs.Attributes) *sx.Pair { return v.tr.TransformAttrbute(a) }
+func (ev *evaluator) evalAttribute(a attrs.Attributes) *sx.Pair { return ev.tr.TransformAttrbute(a) }
 
-func (v *visitor) getSymbol(val sx.Object) *sx.Symbol {
-	if v.err == nil {
+func (ev *evaluator) getSymbol(val sx.Object) *sx.Symbol {
+	if ev.err == nil {
 		if sym, ok := sx.GetSymbol(val); ok {
 			return sym
 		}
-		v.err = fmt.Errorf("%v/%T is not a symbol", val, val)
+		ev.err = fmt.Errorf("%v/%T is not a symbol", val, val)
 	}
-	return v.make("???")
+	return ev.make("???")
 }
-func (v *visitor) getString(val sx.Object) sx.String {
-	if v.err != nil {
+func (ev *evaluator) getString(val sx.Object) sx.String {
+	if ev.err != nil {
 		return ""
 	}
 	if s, ok := sx.GetString(val); ok {
 		return s
 	}
-	v.err = fmt.Errorf("%v/%T is not a string", val, val)
+	ev.err = fmt.Errorf("%v/%T is not a string", val, val)
 	return ""
 }
-func (v *visitor) getList(val sx.Object) *sx.Pair {
-	if v.err == nil {
+func (ev *evaluator) getList(val sx.Object) *sx.Pair {
+	if ev.err == nil {
 		if res, isPair := sx.GetPair(val); isPair {
 			return res
 		}
-		v.err = fmt.Errorf("%v/%T is not a list", val, val)
+		ev.err = fmt.Errorf("%v/%T is not a list", val, val)
 	}
 	return nil
 }
-func (v *visitor) getInt64(val sx.Object) int64 {
-	if v.err != nil {
+func (ev *evaluator) getInt64(val sx.Object) int64 {
+	if ev.err != nil {
 		return -1017
 	}
 	if num, ok := sx.GetNumber(val); ok {
 		return int64(num.(sx.Int64))
 	}
-	v.err = fmt.Errorf("%v/%T is not a number", val, val)
+	ev.err = fmt.Errorf("%v/%T is not a number", val, val)
 	return -1017
 }
-func (v *visitor) getAttributes(arg sx.Object) attrs.Attributes {
-	return sz.GetAttributes(v.getList(v.visit(arg)))
+func (ev *evaluator) getAttributes(arg sx.Object) attrs.Attributes {
+	return sz.GetAttributes(ev.getList(ev.eval(arg)))
 }
 
-func (v *visitor) make(name string) *sx.Symbol { return v.sf.MustMake(name) }
+func (ev *evaluator) make(name string) *sx.Symbol { return ev.sf.MustMake(name) }
 
 var unsafeSnippets = []string{
 	"<script", "</script",
