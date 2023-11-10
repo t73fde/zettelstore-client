@@ -13,7 +13,6 @@ package shtml
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"strconv"
 	"strings"
@@ -108,23 +107,13 @@ func (tr *Evaluator) EvaluateAttrbute(a attrs.Attributes) *sx.Pair {
 
 // Evaluate a metadata s-expression into a list of HTML s-expressions.
 func (ev *Evaluator) Evaluate(lst *sx.Pair, env *Environment) (*sx.Pair, error) {
-	log.Println("EVEV", lst)
 	result := ev.eval(lst, env)
-	log.Println("EVRV", env.err, result)
 	if err := env.err; err != nil {
 		return nil, err
 	}
 	pair, isPair := sx.GetPair(result)
 	if !isPair {
 		return nil, fmt.Errorf("evaluation does not result in a pair, but %T/%v", result, result)
-	}
-	return pair, nil
-}
-
-// Endnotes returns a SHTML object with all collected endnotes.
-func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
-	if env.err != nil || len(env.endnotes) == 0 {
-		return nil
 	}
 
 	for i := 0; i < len(env.endnotes); i++ {
@@ -138,12 +127,20 @@ func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
 		if env.err != nil {
 			break
 		}
-		noteHx, isPair := sx.GetPair(objHx)
-		if !isPair {
-			env.err = fmt.Errorf("endnote evaluation does not result in pair, but %T/%v", objHx, objHx)
-			return nil
+		noteHx, isHx := sx.GetPair(objHx)
+		if !isHx {
+			return nil, fmt.Errorf("endnote evaluation does not result in pair, but %T/%v", objHx, objHx)
 		}
 		env.endnotes[i].noteHx = noteHx
+	}
+
+	return pair, nil
+}
+
+// Endnotes returns a SHTML object with all collected endnotes.
+func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
+	if env.err != nil || len(env.endnotes) == 0 {
+		return nil
 	}
 
 	result := sx.Nil().Cons(ev.Make("ol"))
@@ -152,18 +149,16 @@ func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
 	currResult := result.AppendBang(sx.Nil().Cons(sx.Cons(ev.symClass, sx.String("zs-endnotes"))).Cons(ev.symAttr))
 	for i, fni := range env.endnotes {
 		noteNum := strconv.Itoa(i + 1)
-		noteID := ev.unique + noteNum
-
 		attrs := fni.attrs.Cons(sx.Cons(ev.symClass, sx.String("zs-endnote"))).
 			Cons(sx.Cons(symValue, sx.String(noteNum))).
-			Cons(sx.Cons(symId, sx.String("fn:"+noteID))).
+			Cons(sx.Cons(symId, sx.String("fn:"+fni.noteID))).
 			Cons(sx.Cons(symRole, sx.String("doc-endnote"))).
 			Cons(ev.symAttr)
 
 		backref := sx.Nil().Cons(sx.String("\u21a9\ufe0e")).
 			Cons(sx.Nil().
 				Cons(sx.Cons(ev.symClass, sx.String("zs-endnote-backref"))).
-				Cons(sx.Cons(ev.symHREF, sx.String("#fnref:"+noteID))).
+				Cons(sx.Cons(ev.symHREF, sx.String("#fnref:"+fni.noteID))).
 				Cons(sx.Cons(symRole, sx.String("doc-backlink"))).
 				Cons(ev.symAttr)).
 			Cons(ev.symA)
@@ -184,6 +179,7 @@ type Environment struct {
 	endnotes  []endnoteInfo
 }
 type endnoteInfo struct {
+	noteID  string    // link id
 	noteAST sx.Object // Endnote as AST
 	attrs   *sx.Pair  // attrs a-list
 	noteHx  *sx.Pair  // Endnote as SxHTML
@@ -202,6 +198,12 @@ func MakeEnvironment(lang string) Environment {
 
 // GetError returns the last error found.
 func (env *Environment) GetError() error { return env.err }
+
+// Reset the environment.
+func (env *Environment) Reset() {
+	env.langStack = env.langStack[0:1]
+	env.endnotes = nil
+}
 
 // PushAttribute adds the current attributes to the environment.
 func (env *Environment) pushAttributes(a attrs.Attributes) {
@@ -675,9 +677,10 @@ func (ev *Evaluator) bindInlines() {
 		if !isPair {
 			return sx.Nil()
 		}
-		env.endnotes = append(env.endnotes, endnoteInfo{noteAST: ev.eval(text, env), noteHx: nil, attrs: attrPlist})
-		noteNum := strconv.Itoa(len(env.endnotes))
+		noteNum := strconv.Itoa(len(env.endnotes) + 1)
 		noteID := ev.unique + noteNum
+		env.endnotes = append(env.endnotes, endnoteInfo{
+			noteID: noteID, noteAST: ev.eval(text, env), noteHx: nil, attrs: attrPlist})
 		hrefAttr := sx.Nil().Cons(sx.Cons(ev.Make("role"), sx.String("doc-noteref"))).
 			Cons(sx.Cons(ev.symHREF, sx.String("#fn:"+noteID))).
 			Cons(sx.Cons(ev.symClass, sx.String("zs-noteref"))).
@@ -893,13 +896,10 @@ func (ev *Evaluator) eval(obj sx.Object, env *Environment) sx.Object {
 			return sx.Nil()
 		}
 	}
-	log.Println("EXEC", sym, args)
 	result := fn(args, env)
 	if env.err != nil {
-		log.Println("EERR", env.err)
 		return sx.Nil()
 	}
-	log.Println("REXE", result)
 	return result
 }
 
