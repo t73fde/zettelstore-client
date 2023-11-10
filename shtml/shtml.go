@@ -41,7 +41,7 @@ type Evaluator struct {
 	symA          *sx.Symbol
 	symSpan       *sx.Symbol
 
-	fns     map[string]evalFn
+	fns     map[string]EvalFn
 	minArgs map[string]int
 }
 
@@ -67,7 +67,7 @@ func NewEvaluator(headingOffset int, sf sx.SymbolFactory) *Evaluator {
 		symA:          sf.MustMake("a"),
 		symSpan:       sf.MustMake("span"),
 
-		fns:     make(map[string]evalFn, 128),
+		fns:     make(map[string]EvalFn, 128),
 		minArgs: make(map[string]int, 128),
 	}
 	ev.bindCommon()
@@ -149,9 +149,23 @@ func (tr *Evaluator) Endnotes() *sx.Pair {
 	return result
 }
 
-type evalFn func([]sx.Object, *environment) sx.Object
+// EvalFn is a function to be called for evaluation.
+type EvalFn func([]sx.Object, *environment) sx.Object
 
-func (ev *Evaluator) bind(name string, minArgs int, fn evalFn) {
+// Bind a name to a function, requiring at least a minimum number of arguments.
+func (ev *Evaluator) Bind(name string, minArgs int, fn EvalFn) EvalFn {
+	prevFn, found := ev.fns[name]
+	if found {
+		if prevMinArgs := ev.minArgs[name]; prevMinArgs != minArgs {
+			panic(fmt.Sprintf("Bind: min-args differ, expected %d but now %d are given", prevMinArgs, minArgs))
+		}
+		return prevFn
+	}
+	ev.bind(name, minArgs, fn)
+	return nil
+}
+
+func (ev *Evaluator) bind(name string, minArgs int, fn EvalFn) {
 	ev.fns[name] = fn
 	if minArgs > 0 {
 		ev.minArgs[name] = minArgs
@@ -374,7 +388,7 @@ func (ev *Evaluator) bindBlocks() {
 	})
 }
 
-func (ev *Evaluator) makeListFn(tag string) evalFn {
+func (ev *Evaluator) makeListFn(tag string) EvalFn {
 	sym := ev.Make(tag)
 	symLI := ev.Make("li")
 	return func(args []sx.Object, env *environment) sx.Object {
@@ -402,7 +416,7 @@ func (ev *Evaluator) transformTableRow(pairs *sx.Pair) *sx.Pair {
 	}
 	return row
 }
-func (ev *Evaluator) makeCellFn(align string) evalFn {
+func (ev *Evaluator) makeCellFn(align string) EvalFn {
 	return func(args []sx.Object, env *environment) sx.Object {
 		tdata := ev.evalSlice(args, env)
 		if align != "" {
@@ -412,7 +426,7 @@ func (ev *Evaluator) makeCellFn(align string) evalFn {
 	}
 }
 
-func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) evalFn {
+func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) EvalFn {
 	return func(args []sx.Object, env *environment) sx.Object {
 		a := ev.getAttributes(args[0], env)
 		if genericToClass {
@@ -636,7 +650,7 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.NameSymLiteralZettel, 0, noopFn)
 }
 
-func (ev *Evaluator) makeFormatFn(tag string) evalFn {
+func (ev *Evaluator) makeFormatFn(tag string) EvalFn {
 	sym := ev.Make(tag)
 	return func(args []sx.Object, env *environment) sx.Object {
 		a := ev.getAttributes(args[0], env)
