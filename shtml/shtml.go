@@ -108,7 +108,7 @@ func (tr *Evaluator) EvaluateAttrbute(a attrs.Attributes) *sx.Pair {
 // Evaluate a metadata s-expression into a list of HTML s-expressions.
 func (ev *Evaluator) Evaluate(lst *sx.Pair) (sx.Object, error) {
 	log.Println("EVEV", lst)
-	env := environment{err: nil}
+	env := Environment{err: nil}
 	result := ev.eval(lst, &env)
 	log.Println("EVRV", env.err, result)
 	return result, env.err
@@ -149,8 +149,35 @@ func (tr *Evaluator) Endnotes() *sx.Pair {
 	return result
 }
 
+// Environment where sz objects are evaluated to shtml objects
+type Environment struct {
+	err       error
+	langStack []string
+}
+
+// PushAttribute adds the current attributes to the environment.
+func (env *Environment) PushAttributes(a attrs.Attributes) {
+	if value, ok := a.Get("lang"); ok {
+		env.langStack = append(env.langStack, value)
+	} else if stackSize := len(env.langStack); stackSize > 0 {
+		env.langStack = append(env.langStack, env.langStack[stackSize-1])
+	}
+}
+
+// PopAttributes removes the current attributes from the envrionment
+func (env *Environment) PopAttributes() {
+	if stackSize := len(env.langStack); stackSize > 0 {
+		env.langStack = env.langStack[0 : stackSize-1]
+	}
+}
+
+// GetLanguage returns the current language
+func (env *Environment) GetLanguage() string {
+	return env.langStack[len(env.langStack)-1]
+}
+
 // EvalFn is a function to be called for evaluation.
-type EvalFn func([]sx.Object, *environment) sx.Object
+type EvalFn func([]sx.Object, *Environment) sx.Object
 
 // Bind a name to a function, requiring at least a minimum number of arguments.
 func (ev *Evaluator) Bind(name string, minArgs int, fn EvalFn) EvalFn {
@@ -174,12 +201,12 @@ func (ev *Evaluator) bind(name string, minArgs int, fn EvalFn) {
 
 func (ev *Evaluator) bindCommon() {
 	ev.bind(sx.ListName, 0, ev.evalList)
-	ev.bind("quote", 1, func(args []sx.Object, _ *environment) sx.Object { return args[0] })
+	ev.bind("quote", 1, func(args []sx.Object, _ *Environment) sx.Object { return args[0] })
 }
 
 func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.NameSymMeta, 0, ev.evalList)
-	evalMetaString := func(args []sx.Object, env *environment) sx.Object {
+	evalMetaString := func(args []sx.Object, env *Environment) sx.Object {
 		a := make(attrs.Attributes, 2).
 			Set("name", ev.getSymbol(ev.eval(args[0], env), env).Name()).
 			Set("content", getString(args[1], env).String())
@@ -194,7 +221,7 @@ func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.NameSymTypeURL, 2, evalMetaString)
 	ev.bind(sz.NameSymTypeWord, 2, evalMetaString)
 
-	evalMetaSet := func(args []sx.Object, env *environment) sx.Object {
+	evalMetaSet := func(args []sx.Object, env *Environment) sx.Object {
 		var sb strings.Builder
 		lst := ev.eval(args[1], env)
 		for elem := getList(lst, env); elem != nil; elem = elem.Tail() {
@@ -221,10 +248,10 @@ func (ev *Evaluator) evalMeta(a attrs.Attributes) *sx.Pair {
 
 func (ev *Evaluator) bindBlocks() {
 	ev.bind(sz.NameSymBlock, 0, ev.evalList)
-	ev.bind(sz.NameSymPara, 0, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymPara, 0, func(args []sx.Object, env *Environment) sx.Object {
 		return ev.evalSlice(args, env).Cons(ev.symP)
 	})
-	ev.bind(sz.NameSymHeading, 5, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymHeading, 5, func(args []sx.Object, env *Environment) sx.Object {
 		nLevel := getInt64(args[0], env)
 		if nLevel <= 0 {
 			env.err = fmt.Errorf("%v is a negative level", nLevel)
@@ -245,7 +272,7 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		return sx.MakeList(ev.Make("h"+level), sx.String("<MISSING TEXT>"))
 	})
-	ev.bind(sz.NameSymThematic, 0, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymThematic, 0, func(args []sx.Object, env *Environment) sx.Object {
 		result := sx.Nil()
 		if len(args) > 0 {
 			if attrList := getList(ev.eval(args[0], env), env); attrList != nil {
@@ -257,7 +284,7 @@ func (ev *Evaluator) bindBlocks() {
 
 	ev.bind(sz.NameSymListOrdered, 0, ev.makeListFn("ol"))
 	ev.bind(sz.NameSymListUnordered, 0, ev.makeListFn("ul"))
-	ev.bind(sz.NameSymDescription, 0, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymDescription, 0, func(args []sx.Object, env *Environment) sx.Object {
 		if len(args) == 0 {
 			return sx.Nil()
 		}
@@ -281,7 +308,7 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		return items
 	})
-	ev.bind(sz.NameSymListQuote, 0, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymListQuote, 0, func(args []sx.Object, env *Environment) sx.Object {
 		if args == nil {
 			return sx.Nil()
 		}
@@ -295,10 +322,10 @@ func (ev *Evaluator) bindBlocks() {
 		return result
 	})
 
-	ev.bind(sz.NameSymTable, 1, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymTable, 1, func(args []sx.Object, env *Environment) sx.Object {
 		thead := sx.Nil()
 		if header := getList(ev.eval(args[0], env), env); !sx.IsNil(header) {
-			thead = sx.Nil().Cons(ev.transformTableRow(header)).Cons(ev.Make("thead"))
+			thead = sx.Nil().Cons(ev.evalTableRow(header)).Cons(ev.Make("thead"))
 		}
 
 		tbody := sx.Nil()
@@ -306,7 +333,7 @@ func (ev *Evaluator) bindBlocks() {
 			tbody = sx.Nil().Cons(ev.Make("tbody"))
 			curBody := tbody
 			for _, row := range args[1:] {
-				curBody = curBody.AppendBang(ev.transformTableRow(getList(ev.eval(row, env), env)))
+				curBody = curBody.AppendBang(ev.evalTableRow(getList(ev.eval(row, env), env)))
 			}
 		}
 
@@ -332,7 +359,7 @@ func (ev *Evaluator) bindBlocks() {
 	ev.bind(sz.NameSymRegionQuote, 2, ev.makeRegionFn(ev.Make("blockquote"), false))
 	ev.bind(sz.NameSymRegionVerse, 2, ev.makeRegionFn(symDiv, false))
 
-	ev.bind(sz.NameSymVerbatimComment, 1, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymVerbatimComment, 1, func(args []sx.Object, env *Environment) sx.Object {
 		if ev.getAttributes(args[0], env).HasDefault() {
 			if len(args) > 1 {
 				if s := getString(args[1], env); s != "" {
@@ -343,14 +370,14 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		return nil
 	})
-	ev.bind(sz.NameSymVerbatimEval, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymVerbatimEval, 2, func(args []sx.Object, env *Environment) sx.Object {
 		return ev.evalVerbatim(ev.getAttributes(args[0], env).AddClass("zs-eval"), getString(args[1], env))
 	})
-	ev.bind(sz.NameSymVerbatimHTML, 2, ev.visitHTML)
-	ev.bind(sz.NameSymVerbatimMath, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymVerbatimHTML, 2, ev.evalHTML)
+	ev.bind(sz.NameSymVerbatimMath, 2, func(args []sx.Object, env *Environment) sx.Object {
 		return ev.evalVerbatim(ev.getAttributes(args[0], env).AddClass("zs-math"), getString(args[1], env))
 	})
-	ev.bind(sz.NameSymVerbatimProg, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymVerbatimProg, 2, func(args []sx.Object, env *Environment) sx.Object {
 		a := ev.getAttributes(args[0], env)
 		content := getString(args[1], env)
 		if a.HasDefault() {
@@ -359,10 +386,10 @@ func (ev *Evaluator) bindBlocks() {
 		return ev.evalVerbatim(a, content)
 	})
 	ev.bind(sz.NameSymVerbatimZettel, 0, noopFn)
-	ev.bind(sz.NameSymBLOB, 3, func(args []sx.Object, env *environment) sx.Object {
-		return ev.visitBLOB(getList(args[0], env), getString(args[1], env), getString(args[2], env))
+	ev.bind(sz.NameSymBLOB, 3, func(args []sx.Object, env *Environment) sx.Object {
+		return ev.evalBLOB(getList(args[0], env), getString(args[1], env), getString(args[2], env))
 	})
-	ev.bind(sz.NameSymTransclude, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymTransclude, 2, func(args []sx.Object, env *Environment) sx.Object {
 		ref, isPair := sx.GetPair(ev.eval(args[1], env))
 		if !isPair {
 			return sx.Nil()
@@ -391,7 +418,7 @@ func (ev *Evaluator) bindBlocks() {
 func (ev *Evaluator) makeListFn(tag string) EvalFn {
 	sym := ev.Make(tag)
 	symLI := ev.Make("li")
-	return func(args []sx.Object, env *environment) sx.Object {
+	return func(args []sx.Object, env *Environment) sx.Object {
 		result := sx.Nil().Cons(sym)
 		last := result
 		for _, elem := range args {
@@ -405,7 +432,7 @@ func (ev *Evaluator) makeListFn(tag string) EvalFn {
 	}
 }
 
-func (ev *Evaluator) transformTableRow(pairs *sx.Pair) *sx.Pair {
+func (ev *Evaluator) evalTableRow(pairs *sx.Pair) *sx.Pair {
 	row := sx.Nil().Cons(ev.Make("tr"))
 	if pairs == nil {
 		return nil
@@ -417,7 +444,7 @@ func (ev *Evaluator) transformTableRow(pairs *sx.Pair) *sx.Pair {
 	return row
 }
 func (ev *Evaluator) makeCellFn(align string) EvalFn {
-	return func(args []sx.Object, env *environment) sx.Object {
+	return func(args []sx.Object, env *Environment) sx.Object {
 		tdata := ev.evalSlice(args, env)
 		if align != "" {
 			tdata = tdata.Cons(ev.EvaluateAttrbute(attrs.Attributes{"class": align}))
@@ -427,7 +454,7 @@ func (ev *Evaluator) makeCellFn(align string) EvalFn {
 }
 
 func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) EvalFn {
-	return func(args []sx.Object, env *environment) sx.Object {
+	return func(args []sx.Object, env *Environment) sx.Object {
 		a := ev.getAttributes(args[0], env)
 		if genericToClass {
 			if val, found := a.Get(""); found {
@@ -464,18 +491,18 @@ func (ev *Evaluator) evalVerbatim(a attrs.Attributes, s sx.String) sx.Object {
 
 func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.NameSymInline, 0, ev.evalList)
-	ev.bind(sz.NameSymText, 1, func(args []sx.Object, env *environment) sx.Object { return getString(args[0], env) })
-	ev.bind(sz.NameSymSpace, 0, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymText, 1, func(args []sx.Object, env *Environment) sx.Object { return getString(args[0], env) })
+	ev.bind(sz.NameSymSpace, 0, func(args []sx.Object, env *Environment) sx.Object {
 		if len(args) == 0 {
 			return sx.String(" ")
 		}
 		return getString(args[0], env)
 	})
-	ev.bind(sz.NameSymSoft, 0, func([]sx.Object, *environment) sx.Object { return sx.String(" ") })
+	ev.bind(sz.NameSymSoft, 0, func([]sx.Object, *Environment) sx.Object { return sx.String(" ") })
 	symBR := ev.Make("br")
-	ev.bind(sz.NameSymHard, 0, func([]sx.Object, *environment) sx.Object { return sx.Nil().Cons(symBR) })
+	ev.bind(sz.NameSymHard, 0, func([]sx.Object, *Environment) sx.Object { return sx.Nil().Cons(symBR) })
 
-	ev.bind(sz.NameSymLinkInvalid, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymLinkInvalid, 2, func(args []sx.Object, env *Environment) sx.Object {
 		// a := ev.getAttributes(args)
 		var inline *sx.Pair
 		if len(args) > 2 {
@@ -486,7 +513,7 @@ func (ev *Evaluator) bindInlines() {
 		}
 		return inline.Cons(ev.symSpan)
 	})
-	evalHREF := func(args []sx.Object, env *environment) sx.Object {
+	evalHREF := func(args []sx.Object, env *Environment) sx.Object {
 		a := ev.getAttributes(args[0], env)
 		refValue := getString(args[1], env)
 		return ev.evalLink(a.Set("href", refValue.String()), refValue, args[2:], env)
@@ -494,26 +521,26 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.NameSymLinkZettel, 2, evalHREF)
 	ev.bind(sz.NameSymLinkSelf, 2, evalHREF)
 	ev.bind(sz.NameSymLinkFound, 2, evalHREF)
-	ev.bind(sz.NameSymLinkBroken, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymLinkBroken, 2, func(args []sx.Object, env *Environment) sx.Object {
 		a := ev.getAttributes(args[0], env)
 		refValue := getString(args[1], env)
 		return ev.evalLink(a.AddClass("broken"), refValue, args[2:], env)
 	})
 	ev.bind(sz.NameSymLinkHosted, 2, evalHREF)
 	ev.bind(sz.NameSymLinkBased, 2, evalHREF)
-	ev.bind(sz.NameSymLinkQuery, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymLinkQuery, 2, func(args []sx.Object, env *Environment) sx.Object {
 		a := ev.getAttributes(args[0], env)
 		refValue := getString(args[1], env)
 		query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(refValue.String())
 		return ev.evalLink(a.Set("href", query), refValue, args[2:], env)
 	})
-	ev.bind(sz.NameSymLinkExternal, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymLinkExternal, 2, func(args []sx.Object, env *Environment) sx.Object {
 		a := ev.getAttributes(args[0], env)
 		refValue := getString(args[1], env)
 		return ev.evalLink(a.Set("href", refValue.String()).AddClass("external"), refValue, args[2:], env)
 	})
 
-	ev.bind(sz.NameSymEmbed, 3, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymEmbed, 3, func(args []sx.Object, env *Environment) sx.Object {
 		ref := getList(ev.eval(args[1], env), env)
 		syntax := getString(args[2], env)
 		if syntax == api.ValueSyntaxSVG {
@@ -541,7 +568,7 @@ func (ev *Evaluator) bindInlines() {
 	})
 	ev.bind(sz.NameSymEmbedBLOB, 3, noopFn)
 
-	ev.bind(sz.NameSymCite, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymCite, 2, func(args []sx.Object, env *Environment) sx.Object {
 		result := sx.Nil()
 		if key := getString(args[1], env); key != "" {
 			if len(args) > 2 {
@@ -557,7 +584,7 @@ func (ev *Evaluator) bindInlines() {
 		}
 		return result.Cons(ev.symSpan)
 	})
-	ev.bind(sz.NameSymMark, 3, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymMark, 3, func(args []sx.Object, env *Environment) sx.Object {
 		result := ev.evalSlice(args[3:], env)
 		if !ev.noLinks {
 			if fragment := getString(args[2], env); fragment != "" {
@@ -567,7 +594,7 @@ func (ev *Evaluator) bindInlines() {
 		}
 		return result.Cons(ev.symSpan)
 	})
-	ev.bind(sz.NameSymEndnote, 1, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymEndnote, 1, func(args []sx.Object, env *Environment) sx.Object {
 		attrPlist := sx.Nil()
 		if a := ev.getAttributes(args[0], env); len(a) > 0 {
 			if attrs := ev.EvaluateAttrbute(a); attrs != nil {
@@ -594,7 +621,7 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.NameSymFormatDelete, 1, ev.makeFormatFn("del"))
 	ev.bind(sz.NameSymFormatEmph, 1, ev.makeFormatFn("em"))
 	ev.bind(sz.NameSymFormatInsert, 1, ev.makeFormatFn("ins"))
-	ev.bind(sz.NameSymFormatQuote, 1, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymFormatQuote, 1, func(args []sx.Object, env *Environment) sx.Object {
 		const langAttr = "lang"
 		a := ev.getAttributes(args[0], env)
 		langVal, found := a.Get(langAttr)
@@ -619,7 +646,7 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.NameSymFormatSub, 1, ev.makeFormatFn("sub"))
 	ev.bind(sz.NameSymFormatSuper, 1, ev.makeFormatFn("sup"))
 
-	ev.bind(sz.NameSymLiteralComment, 1, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymLiteralComment, 1, func(args []sx.Object, env *Environment) sx.Object {
 		if ev.getAttributes(args[0], env).HasDefault() {
 			if len(args) > 1 {
 				if s := getString(ev.eval(args[1], env), env); s != "" {
@@ -629,21 +656,21 @@ func (ev *Evaluator) bindInlines() {
 		}
 		return sx.Nil()
 	})
-	ev.bind(sz.NameSymLiteralHTML, 2, ev.visitHTML)
+	ev.bind(sz.NameSymLiteralHTML, 2, ev.evalHTML)
 	kbdSym := ev.Make("kbd")
-	ev.bind(sz.NameSymLiteralInput, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymLiteralInput, 2, func(args []sx.Object, env *Environment) sx.Object {
 		return ev.visitLiteral(args, nil, kbdSym, env)
 	})
 	codeSym := ev.Make("code")
-	ev.bind(sz.NameSymLiteralMath, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymLiteralMath, 2, func(args []sx.Object, env *Environment) sx.Object {
 		a := ev.getAttributes(args[0], env).AddClass("zs-math")
 		return ev.visitLiteral(args, a, codeSym, env)
 	})
 	sampSym := ev.Make("samp")
-	ev.bind(sz.NameSymLiteralOutput, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymLiteralOutput, 2, func(args []sx.Object, env *Environment) sx.Object {
 		return ev.visitLiteral(args, nil, sampSym, env)
 	})
-	ev.bind(sz.NameSymLiteralProg, 2, func(args []sx.Object, env *environment) sx.Object {
+	ev.bind(sz.NameSymLiteralProg, 2, func(args []sx.Object, env *Environment) sx.Object {
 		return ev.visitLiteral(args, nil, codeSym, env)
 	})
 
@@ -652,7 +679,7 @@ func (ev *Evaluator) bindInlines() {
 
 func (ev *Evaluator) makeFormatFn(tag string) EvalFn {
 	sym := ev.Make(tag)
-	return func(args []sx.Object, env *environment) sx.Object {
+	return func(args []sx.Object, env *Environment) sx.Object {
 		a := ev.getAttributes(args[0], env)
 		if val, found := a.Get(""); found {
 			a = a.Remove("").AddClass(val)
@@ -667,7 +694,7 @@ func (ev *Evaluator) makeFormatFn(tag string) EvalFn {
 
 var visibleReplacer = strings.NewReplacer(" ", "\u2423")
 
-func (ev *Evaluator) visitLiteral(args []sx.Object, a attrs.Attributes, sym *sx.Symbol, env *environment) sx.Object {
+func (ev *Evaluator) visitLiteral(args []sx.Object, a attrs.Attributes, sym *sx.Symbol, env *Environment) sx.Object {
 	if a == nil {
 		a = ev.getAttributes(args[0], env)
 	}
@@ -690,14 +717,14 @@ func setProgLang(a attrs.Attributes) attrs.Attributes {
 	return a
 }
 
-func (ev *Evaluator) visitHTML(args []sx.Object, env *environment) sx.Object {
+func (ev *Evaluator) evalHTML(args []sx.Object, env *Environment) sx.Object {
 	if s := getString(ev.eval(args[1], env), env); s != "" && IsSafe(s.String()) {
 		return sx.Nil().Cons(s).Cons(ev.symNoEscape)
 	}
 	return nil
 }
 
-func (ev *Evaluator) visitBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
+func (ev *Evaluator) evalBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
 	if data == "" {
 		return sx.Nil()
 	}
@@ -728,16 +755,12 @@ func flattenText(sb *strings.Builder, lst *sx.Pair) {
 	}
 }
 
-func (ev *Evaluator) evalList(args []sx.Object, env *environment) sx.Object {
+func (ev *Evaluator) evalList(args []sx.Object, env *Environment) sx.Object {
 	return ev.evalSlice(args, env)
 }
-func noopFn([]sx.Object, *environment) sx.Object { return sx.Nil() }
+func noopFn([]sx.Object, *Environment) sx.Object { return sx.Nil() }
 
-type environment struct {
-	err error
-}
-
-func (ev *Evaluator) eval(obj sx.Object, env *environment) sx.Object {
+func (ev *Evaluator) eval(obj sx.Object, env *Environment) sx.Object {
 	if env.err != nil {
 		return sx.Nil()
 	}
@@ -784,7 +807,7 @@ func (ev *Evaluator) eval(obj sx.Object, env *environment) sx.Object {
 	return result
 }
 
-func (ev *Evaluator) evalSlice(args []sx.Object, env *environment) *sx.Pair {
+func (ev *Evaluator) evalSlice(args []sx.Object, env *Environment) *sx.Pair {
 	result := sx.Cons(sx.Nil(), sx.Nil())
 	curr := result
 	for _, arg := range args {
@@ -797,7 +820,7 @@ func (ev *Evaluator) evalSlice(args []sx.Object, env *environment) *sx.Pair {
 	return result.Tail()
 }
 
-func (ev *Evaluator) evalLink(a attrs.Attributes, refValue sx.String, inline []sx.Object, env *environment) sx.Object {
+func (ev *Evaluator) evalLink(a attrs.Attributes, refValue sx.String, inline []sx.Object, env *Environment) sx.Object {
 	result := ev.evalSlice(inline, env)
 	if len(inline) == 0 {
 		result = sx.Nil().Cons(refValue)
@@ -808,7 +831,7 @@ func (ev *Evaluator) evalLink(a attrs.Attributes, refValue sx.String, inline []s
 	return result.Cons(ev.EvaluateAttrbute(a)).Cons(ev.symA)
 }
 
-func (ev *Evaluator) getSymbol(val sx.Object, env *environment) *sx.Symbol {
+func (ev *Evaluator) getSymbol(val sx.Object, env *Environment) *sx.Symbol {
 	if env.err == nil {
 		if sym, ok := sx.GetSymbol(val); ok {
 			return sym
@@ -817,7 +840,7 @@ func (ev *Evaluator) getSymbol(val sx.Object, env *environment) *sx.Symbol {
 	}
 	return ev.Make("???")
 }
-func getString(val sx.Object, env *environment) sx.String {
+func getString(val sx.Object, env *Environment) sx.String {
 	if env.err != nil {
 		return ""
 	}
@@ -827,7 +850,7 @@ func getString(val sx.Object, env *environment) sx.String {
 	env.err = fmt.Errorf("%v/%T is not a string", val, val)
 	return ""
 }
-func getList(val sx.Object, env *environment) *sx.Pair {
+func getList(val sx.Object, env *Environment) *sx.Pair {
 	if env.err == nil {
 		if res, isPair := sx.GetPair(val); isPair {
 			return res
@@ -836,7 +859,7 @@ func getList(val sx.Object, env *environment) *sx.Pair {
 	}
 	return nil
 }
-func getInt64(val sx.Object, env *environment) int64 {
+func getInt64(val sx.Object, env *Environment) int64 {
 	if env.err != nil {
 		return -1017
 	}
@@ -846,7 +869,7 @@ func getInt64(val sx.Object, env *environment) int64 {
 	env.err = fmt.Errorf("%v/%T is not a number", val, val)
 	return -1017
 }
-func (ev *Evaluator) getAttributes(arg sx.Object, env *environment) attrs.Attributes {
+func (ev *Evaluator) getAttributes(arg sx.Object, env *Environment) attrs.Attributes {
 	return sz.GetAttributes(getList(ev.eval(arg, env), env))
 }
 
