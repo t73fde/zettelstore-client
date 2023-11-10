@@ -200,6 +200,9 @@ func MakeEnvironment(lang string) Environment {
 	}
 }
 
+// GetError returns the last error found.
+func (env *Environment) GetError() error { return env.err }
+
 // PushAttribute adds the current attributes to the environment.
 func (env *Environment) pushAttributes(a attrs.Attributes) {
 	if value, ok := a.Get("lang"); ok {
@@ -222,24 +225,27 @@ func (env *Environment) getLanguage() string {
 // EvalFn is a function to be called for evaluation.
 type EvalFn func([]sx.Object, *Environment) sx.Object
 
-// Bind a name to a function, requiring at least a minimum number of arguments.
-func (ev *Evaluator) Bind(name string, minArgs int, fn EvalFn) EvalFn {
-	prevFn, found := ev.fns[name]
-	if found {
-		if prevMinArgs := ev.minArgs[name]; prevMinArgs != minArgs {
-			panic(fmt.Sprintf("Bind: min-args differ, expected %d but now %d are given", prevMinArgs, minArgs))
-		}
-		return prevFn
-	}
-	ev.bind(name, minArgs, fn)
-	return nil
-}
-
 func (ev *Evaluator) bind(name string, minArgs int, fn EvalFn) {
 	ev.fns[name] = fn
 	if minArgs > 0 {
 		ev.minArgs[name] = minArgs
 	}
+}
+
+// ResolveBinding returns the function bound to the given name.
+func (ev *Evaluator) ResolveBinding(name string) EvalFn {
+	if fn, found := ev.fns[name]; found {
+		return fn
+	}
+	return nil
+}
+
+// Rebind overwrites a binding, but leaves the minimum number of arguments intact.
+func (ev *Evaluator) Rebind(name string, fn EvalFn) {
+	if _, found := ev.fns[name]; !found {
+		panic(name)
+	}
+	ev.fns[name] = fn
 }
 
 func (ev *Evaluator) bindCommon() {
@@ -253,7 +259,7 @@ func (ev *Evaluator) bindMetadata() {
 		a := make(attrs.Attributes, 2).
 			Set("name", ev.getSymbol(ev.eval(args[0], env), env).Name()).
 			Set("content", getString(args[1], env).String())
-		return ev.evalMeta(a)
+		return ev.EvaluateMeta(a)
 	}
 	ev.bind(sz.NameSymTypeCredential, 2, evalMetaString)
 	ev.bind(sz.NameSymTypeEmpty, 2, evalMetaString)
@@ -278,14 +284,15 @@ func (ev *Evaluator) bindMetadata() {
 		a := make(attrs.Attributes, 2).
 			Set("name", ev.getSymbol(ev.eval(args[0], env), env).Name()).
 			Set("content", s)
-		return ev.evalMeta(a)
+		return ev.EvaluateMeta(a)
 	}
 	ev.bind(sz.NameSymTypeIDSet, 2, evalMetaSet)
 	ev.bind(sz.NameSymTypeTagSet, 2, evalMetaSet)
 	ev.bind(sz.NameSymTypeWordSet, 2, evalMetaSet)
 }
 
-func (ev *Evaluator) evalMeta(a attrs.Attributes) *sx.Pair {
+// EvaluateMeta returns HTML meta object for an attribute.
+func (ev *Evaluator) EvaluateMeta(a attrs.Attributes) *sx.Pair {
 	return sx.Nil().Cons(ev.EvaluateAttrbute(a)).Cons(ev.symMeta)
 }
 
