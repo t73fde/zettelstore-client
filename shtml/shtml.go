@@ -30,9 +30,7 @@ import (
 type Evaluator struct {
 	sf            sx.SymbolFactory
 	headingOffset int64
-	lang          string
 	unique        string
-	endnotes      []endnoteInfo
 	noLinks       bool // true iff output must not include links
 
 	symAttr     *sx.Symbol
@@ -40,37 +38,31 @@ type Evaluator struct {
 	symClass    *sx.Symbol
 	symMeta     *sx.Symbol
 	symP        *sx.Symbol
+	symLI       *sx.Symbol
 	symA        *sx.Symbol
+	symHREF     *sx.Symbol
 	symSpan     *sx.Symbol
 
 	fns     map[string]EvalFn
 	minArgs map[string]int
 }
 
-type endnoteInfo struct {
-	noteAST *sx.Pair // Endnote as AST
-	noteHx  *sx.Pair // Endnote as SxHTML
-	attrs   *sx.Pair // attrs a-list
-}
-
 // NewEvaluator creates a new Evaluator object.
-func NewEvaluator(headingOffset int, lang string, sf sx.SymbolFactory) *Evaluator {
+func NewEvaluator(headingOffset int, sf sx.SymbolFactory) *Evaluator {
 	if sf == nil {
 		sf = sx.MakeMappedFactory(128)
-	}
-	if lang == "" {
-		lang = api.ValueLangEN
 	}
 	ev := &Evaluator{
 		sf:            sf,
 		headingOffset: int64(headingOffset),
-		lang:          lang,
 		symAttr:       sf.MustMake(sxhtml.NameSymAttr),
 		symNoEscape:   sf.MustMake(sxhtml.NameSymNoEscape),
 		symClass:      sf.MustMake("class"),
 		symMeta:       sf.MustMake("meta"),
 		symP:          sf.MustMake("p"),
+		symLI:         sf.MustMake("li"),
 		symA:          sf.MustMake("a"),
+		symHREF:       sf.MustMake("href"),
 		symSpan:       sf.MustMake("span"),
 
 		fns:     make(map[string]EvalFn, 128),
@@ -85,6 +77,9 @@ func NewEvaluator(headingOffset int, lang string, sf sx.SymbolFactory) *Evaluato
 
 // SetUnique sets a prefix to make several HTML ids unique.
 func (tr *Evaluator) SetUnique(s string) { tr.unique = s }
+
+// SymbolFactory returns the symbol factory of this evaluator.
+func (ev *Evaluator) SymbolFactory() sx.SymbolFactory { return ev.sf }
 
 // IsValidName returns true, if name is a valid symbol name.
 func (tr *Evaluator) IsValidName(s string) bool { return tr.sf.IsValidName(s) }
@@ -112,46 +107,73 @@ func (tr *Evaluator) EvaluateAttrbute(a attrs.Attributes) *sx.Pair {
 }
 
 // Evaluate a metadata s-expression into a list of HTML s-expressions.
-func (ev *Evaluator) Evaluate(lst *sx.Pair) (sx.Object, error) {
+func (ev *Evaluator) Evaluate(lst *sx.Pair, env *Environment) (*sx.Pair, error) {
 	log.Println("EVEV", lst)
-	env := Environment{err: nil, langStack: []string{ev.lang}}
-	result := ev.eval(lst, &env)
+	result := ev.eval(lst, env)
 	log.Println("EVRV", env.err, result)
-	return result, env.err
+	if err := env.err; err != nil {
+		return nil, err
+	}
+	pair, isPair := sx.GetPair(result)
+	if !isPair {
+		return nil, fmt.Errorf("evaluation does not result in a pair, but %T/%v", result, result)
+	}
+	return pair, nil
 }
 
 // Endnotes returns a SHTML object with all collected endnotes.
-func (tr *Evaluator) Endnotes() *sx.Pair {
-	if len(tr.endnotes) == 0 {
+func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
+	if env.err != nil || len(env.endnotes) == 0 {
 		return nil
 	}
-	result := sx.Nil().Cons(tr.Make("ol"))
-	currResult := result.AppendBang(sx.Nil().Cons(sx.Cons(tr.symClass, sx.String("zs-endnotes"))).Cons(tr.symAttr))
-	for i, fni := range tr.endnotes {
-		noteNum := strconv.Itoa(i + 1)
-		noteID := tr.unique + noteNum
 
-		attrs := fni.attrs.Cons(sx.Cons(tr.symClass, sx.String("zs-endnote"))).
-			Cons(sx.Cons(tr.Make("value"), sx.String(noteNum))).
-			Cons(sx.Cons(tr.Make("id"), sx.String("fn:"+noteID))).
-			Cons(sx.Cons(tr.Make("role"), sx.String("doc-endnote"))).
-			Cons(tr.symAttr)
+	for i := 0; i < len(env.endnotes); i++ {
+		// May extend tr.endnotes
+
+		if env.endnotes[i].noteHx != nil {
+			continue
+		}
+
+		objHx := ev.eval(env.endnotes[i].noteAST, env)
+		if env.err != nil {
+			break
+		}
+		noteHx, isPair := sx.GetPair(objHx)
+		if !isPair {
+			env.err = fmt.Errorf("endnote evaluation does not result in pair, but %T/%v", objHx, objHx)
+			return nil
+		}
+		env.endnotes[i].noteHx = noteHx
+	}
+
+	result := sx.Nil().Cons(ev.Make("ol"))
+	symValue, symId, symRole := ev.Make("value"), ev.Make("id"), ev.Make("role")
+
+	currResult := result.AppendBang(sx.Nil().Cons(sx.Cons(ev.symClass, sx.String("zs-endnotes"))).Cons(ev.symAttr))
+	for i, fni := range env.endnotes {
+		noteNum := strconv.Itoa(i + 1)
+		noteID := ev.unique + noteNum
+
+		attrs := fni.attrs.Cons(sx.Cons(ev.symClass, sx.String("zs-endnote"))).
+			Cons(sx.Cons(symValue, sx.String(noteNum))).
+			Cons(sx.Cons(symId, sx.String("fn:"+noteID))).
+			Cons(sx.Cons(symRole, sx.String("doc-endnote"))).
+			Cons(ev.symAttr)
 
 		backref := sx.Nil().Cons(sx.String("\u21a9\ufe0e")).
 			Cons(sx.Nil().
-				Cons(sx.Cons(tr.symClass, sx.String("zs-endnote-backref"))).
-				Cons(sx.Cons(tr.Make("href"), sx.String("#fnref:"+noteID))).
-				Cons(sx.Cons(tr.Make("role"), sx.String("doc-backlink"))).
-				Cons(tr.symAttr)).
-			Cons(tr.symA)
+				Cons(sx.Cons(ev.symClass, sx.String("zs-endnote-backref"))).
+				Cons(sx.Cons(ev.symHREF, sx.String("#fnref:"+noteID))).
+				Cons(sx.Cons(symRole, sx.String("doc-backlink"))).
+				Cons(ev.symAttr)).
+			Cons(ev.symA)
 
-		li := sx.Nil().Cons(tr.Make("li"))
+		li := sx.Nil().Cons(ev.symLI)
 		li.AppendBang(attrs).
 			ExtendBang(fni.noteHx).
 			AppendBang(sx.String(" ")).AppendBang(backref)
 		currResult = currResult.AppendBang(li)
 	}
-	tr.endnotes = nil
 	return result
 }
 
@@ -159,6 +181,23 @@ func (tr *Evaluator) Endnotes() *sx.Pair {
 type Environment struct {
 	err       error
 	langStack []string
+	endnotes  []endnoteInfo
+}
+type endnoteInfo struct {
+	noteAST sx.Object // Endnote as AST
+	attrs   *sx.Pair  // attrs a-list
+	noteHx  *sx.Pair  // Endnote as SxHTML
+}
+
+// MakeEnvironment builds a new evaluation environment.
+func MakeEnvironment(lang string) Environment {
+	langStack := make([]string, 1, 16)
+	langStack[0] = lang
+	return Environment{
+		err:       nil,
+		langStack: langStack,
+		endnotes:  nil,
+	}
 }
 
 // PushAttribute adds the current attributes to the environment.
@@ -423,12 +462,11 @@ func (ev *Evaluator) bindBlocks() {
 
 func (ev *Evaluator) makeListFn(tag string) EvalFn {
 	sym := ev.Make(tag)
-	symLI := ev.Make("li")
 	return func(args []sx.Object, env *Environment) sx.Object {
 		result := sx.Nil().Cons(sym)
 		last := result
 		for _, elem := range args {
-			item := sx.Nil().Cons(symLI)
+			item := sx.Nil().Cons(ev.symLI)
 			if res, isPair := sx.GetPair(ev.eval(elem, env)); isPair {
 				item.ExtendBang(res)
 			}
@@ -630,11 +668,11 @@ func (ev *Evaluator) bindInlines() {
 		if !isPair {
 			return sx.Nil()
 		}
-		ev.endnotes = append(ev.endnotes, endnoteInfo{noteAST: text, noteHx: nil, attrs: attrPlist})
-		noteNum := strconv.Itoa(len(ev.endnotes))
+		env.endnotes = append(env.endnotes, endnoteInfo{noteAST: ev.eval(text, env), noteHx: nil, attrs: attrPlist})
+		noteNum := strconv.Itoa(len(env.endnotes))
 		noteID := ev.unique + noteNum
 		hrefAttr := sx.Nil().Cons(sx.Cons(ev.Make("role"), sx.String("doc-noteref"))).
-			Cons(sx.Cons(ev.Make("href"), sx.String("#fn:"+noteID))).
+			Cons(sx.Cons(ev.symHREF, sx.String("#fn:"+noteID))).
 			Cons(sx.Cons(ev.symClass, sx.String("zs-noteref"))).
 			Cons(ev.symAttr)
 		href := sx.Nil().Cons(sx.String(noteNum)).Cons(hrefAttr).Cons(ev.symA)
