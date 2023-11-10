@@ -25,20 +25,24 @@ import (
 	"zettelstore.de/sx.fossil/sxhtml"
 )
 
-// Transformer will transform a s-expression that encodes the zettel AST into an s-expression
+// Evaluator will transform a s-expression that encodes the zettel AST into an s-expression
 // that represents HTML.
-type Transformer struct {
+type Evaluator struct {
 	sf            sx.SymbolFactory
 	headingOffset int64
 	unique        string
 	endnotes      []endnoteInfo
 	noLinks       bool // true iff output must not include links
 	symAttr       *sx.Symbol
+	symNoEscape   *sx.Symbol
 	symClass      *sx.Symbol
 	symMeta       *sx.Symbol
 	symP          *sx.Symbol
 	symA          *sx.Symbol
 	symSpan       *sx.Symbol
+
+	fns     map[string]evalFn
+	minArgs map[string]int
 }
 
 type endnoteInfo struct {
@@ -47,34 +51,43 @@ type endnoteInfo struct {
 	attrs   *sx.Pair // attrs a-list
 }
 
-// NewTransformer creates a new transformer object.
-func NewTransformer(headingOffset int, sf sx.SymbolFactory) *Transformer {
+// NewEvaluator creates a new Evaluator object.
+func NewEvaluator(headingOffset int, sf sx.SymbolFactory) *Evaluator {
 	if sf == nil {
 		sf = sx.MakeMappedFactory(128)
 	}
-	return &Transformer{
+	ev := &Evaluator{
 		sf:            sf,
 		headingOffset: int64(headingOffset),
 		symAttr:       sf.MustMake(sxhtml.NameSymAttr),
+		symNoEscape:   sf.MustMake(sxhtml.NameSymNoEscape),
 		symClass:      sf.MustMake("class"),
 		symMeta:       sf.MustMake("meta"),
 		symP:          sf.MustMake("p"),
 		symA:          sf.MustMake("a"),
 		symSpan:       sf.MustMake("span"),
+
+		fns:     make(map[string]evalFn, 128),
+		minArgs: make(map[string]int, 128),
 	}
+	ev.bindCommon()
+	ev.bindMetadata()
+	ev.bindBlocks()
+	ev.bindInlines()
+	return ev
 }
 
 // SetUnique sets a prefix to make several HTML ids unique.
-func (tr *Transformer) SetUnique(s string) { tr.unique = s }
+func (tr *Evaluator) SetUnique(s string) { tr.unique = s }
 
 // IsValidName returns true, if name is a valid symbol name.
-func (tr *Transformer) IsValidName(s string) bool { return tr.sf.IsValidName(s) }
+func (tr *Evaluator) IsValidName(s string) bool { return tr.sf.IsValidName(s) }
 
 // Make a new HTML symbol.
-func (tr *Transformer) Make(s string) *sx.Symbol { return tr.sf.MustMake(s) }
+func (tr *Evaluator) Make(s string) *sx.Symbol { return tr.sf.MustMake(s) }
 
-// TransformAttrbute transforms the given attributes into a HTML s-expression.
-func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sx.Pair {
+// EvaluateAttrbute transforms the given attributes into a HTML s-expression.
+func (tr *Evaluator) EvaluateAttrbute(a attrs.Attributes) *sx.Pair {
 	if len(a) == 0 {
 		return nil
 	}
@@ -92,61 +105,17 @@ func (tr *Transformer) TransformAttrbute(a attrs.Attributes) *sx.Pair {
 	return plist.Cons(tr.symAttr)
 }
 
-func (tr *Transformer) createEvaluator() evaluator {
-	sf := tr.sf
-	ev := evaluator{
-		tr:          tr,
-		sf:          sf,
-		err:         nil,
-		fns:         make(map[string]evalFn, 128),
-		minArgs:     make(map[string]int, 128),
-		symNoEscape: sf.MustMake(sxhtml.NameSymNoEscape),
-		symAttr:     tr.symAttr,
-		symMeta:     tr.symMeta,
-		symP:        tr.symP,
-		symA:        tr.symA,
-		symSpan:     tr.symSpan,
-	}
-	return ev
-}
-
-// TransformMetadate transforms a metadata s-expression into a list of HTML s-expressions.
-func (tr *Transformer) TransformMetadata(lst *sx.Pair) (sx.Object, error) {
-	log.Println("TMET", lst)
-	v := tr.createEvaluator()
-	v.bindCommon()
-	v.bindMetadata()
-	v.bindInlines()
-	result := v.eval(lst)
-	log.Println("RMET", v.err, result)
-	return result, v.err
-}
-
-// TransformBlock transforms a block AST s-expression into a list of HTML s-expressions.
-func (tr *Transformer) TransformBlock(lst *sx.Pair) (sx.Object, error) {
-	log.Println("TBLO", lst)
-	v := tr.createEvaluator()
-	v.bindCommon()
-	v.bindBlocks()
-	v.bindInlines()
-	result := v.eval(lst)
-	log.Println("RBLO", v.err, result)
-	return result, v.err
-}
-
-// TransformInline transforms an inline AST s-expression into a list of HTML s-expressions.
-func (tr *Transformer) TransformInline(lst *sx.Pair) (sx.Object, error) {
-	log.Println("TINL", lst)
-	v := tr.createEvaluator()
-	v.bindCommon()
-	v.bindInlines()
-	result := v.eval(lst)
-	log.Println("RINL", v.err, result)
-	return result, v.err
+// Evaluate a metadata s-expression into a list of HTML s-expressions.
+func (ev *Evaluator) Evaluate(lst *sx.Pair) (sx.Object, error) {
+	log.Println("EVEV", lst)
+	env := environment{err: nil}
+	result := ev.eval(lst, &env)
+	log.Println("EVRV", env.err, result)
+	return result, env.err
 }
 
 // Endnotes returns a SHTML object with all collected endnotes.
-func (tr *Transformer) Endnotes() *sx.Pair {
+func (tr *Evaluator) Endnotes() *sx.Pair {
 	if len(tr.endnotes) == 0 {
 		return nil
 	}
@@ -180,40 +149,26 @@ func (tr *Transformer) Endnotes() *sx.Pair {
 	return result
 }
 
-// evaluator is the environment where the actual transformation takes places.
-type evaluator struct {
-	tr          *Transformer
-	sf          sx.SymbolFactory
-	err         error
-	fns         map[string]evalFn
-	minArgs     map[string]int
-	symNoEscape *sx.Symbol
-	symAttr     *sx.Symbol
-	symMeta     *sx.Symbol
-	symP        *sx.Symbol
-	symA        *sx.Symbol
-	symSpan     *sx.Symbol
-}
-type evalFn func([]sx.Object) sx.Object
+type evalFn func([]sx.Object, *environment) sx.Object
 
-func (ev *evaluator) bind(name string, minArgs int, fn evalFn) {
+func (ev *Evaluator) bind(name string, minArgs int, fn evalFn) {
 	ev.fns[name] = fn
 	if minArgs > 0 {
 		ev.minArgs[name] = minArgs
 	}
 }
 
-func (ev *evaluator) bindCommon() {
+func (ev *Evaluator) bindCommon() {
 	ev.bind(sx.ListName, 0, ev.evalList)
-	ev.bind("quote", 1, func(args []sx.Object) sx.Object { return args[0] })
+	ev.bind("quote", 1, func(args []sx.Object, _ *environment) sx.Object { return args[0] })
 }
 
-func (ev *evaluator) bindMetadata() {
+func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.NameSymMeta, 0, ev.evalList)
-	evalMetaString := func(args []sx.Object) sx.Object {
+	evalMetaString := func(args []sx.Object, env *environment) sx.Object {
 		a := make(attrs.Attributes, 2).
-			Set("name", ev.getSymbol(ev.eval(args[0])).Name()).
-			Set("content", ev.getString(args[1]).String())
+			Set("name", ev.getSymbol(ev.eval(args[0], env), env).Name()).
+			Set("content", getString(args[1], env).String())
 		return ev.evalMeta(a)
 	}
 	ev.bind(sz.NameSymTypeCredential, 2, evalMetaString)
@@ -225,19 +180,19 @@ func (ev *evaluator) bindMetadata() {
 	ev.bind(sz.NameSymTypeURL, 2, evalMetaString)
 	ev.bind(sz.NameSymTypeWord, 2, evalMetaString)
 
-	evalMetaSet := func(args []sx.Object) sx.Object {
+	evalMetaSet := func(args []sx.Object, env *environment) sx.Object {
 		var sb strings.Builder
-		lst := ev.eval(args[1])
-		for elem := ev.getList(lst); elem != nil; elem = elem.Tail() {
+		lst := ev.eval(args[1], env)
+		for elem := getList(lst, env); elem != nil; elem = elem.Tail() {
 			sb.WriteByte(' ')
-			sb.WriteString(ev.getString(elem.Car()).String())
+			sb.WriteString(getString(elem.Car(), env).String())
 		}
 		s := sb.String()
 		if len(s) > 0 {
 			s = s[1:]
 		}
 		a := make(attrs.Attributes, 2).
-			Set("name", ev.getSymbol(ev.eval(args[0])).Name()).
+			Set("name", ev.getSymbol(ev.eval(args[0], env), env).Name()).
 			Set("content", s)
 		return ev.evalMeta(a)
 	}
@@ -246,98 +201,98 @@ func (ev *evaluator) bindMetadata() {
 	ev.bind(sz.NameSymTypeWordSet, 2, evalMetaSet)
 }
 
-func (ev *evaluator) evalMeta(a attrs.Attributes) *sx.Pair {
-	return sx.Nil().Cons(ev.tr.TransformAttrbute(a)).Cons(ev.symMeta)
+func (ev *Evaluator) evalMeta(a attrs.Attributes) *sx.Pair {
+	return sx.Nil().Cons(ev.EvaluateAttrbute(a)).Cons(ev.symMeta)
 }
 
-func (ev *evaluator) bindBlocks() {
+func (ev *Evaluator) bindBlocks() {
 	ev.bind(sz.NameSymBlock, 0, ev.evalList)
-	ev.bind(sz.NameSymPara, 0, func(args []sx.Object) sx.Object {
-		return ev.evalSlice(args).Cons(ev.symP)
+	ev.bind(sz.NameSymPara, 0, func(args []sx.Object, env *environment) sx.Object {
+		return ev.evalSlice(args, env).Cons(ev.symP)
 	})
-	ev.bind(sz.NameSymHeading, 5, func(args []sx.Object) sx.Object {
-		nLevel := ev.getInt64(args[0])
+	ev.bind(sz.NameSymHeading, 5, func(args []sx.Object, env *environment) sx.Object {
+		nLevel := getInt64(args[0], env)
 		if nLevel <= 0 {
-			ev.err = fmt.Errorf("%v is a negative level", nLevel)
+			env.err = fmt.Errorf("%v is a negative level", nLevel)
 			return sx.Nil()
 		}
-		level := strconv.FormatInt(nLevel+ev.tr.headingOffset, 10)
+		level := strconv.FormatInt(nLevel+ev.headingOffset, 10)
 
-		a := ev.getAttributes(args[1])
-		if fragment := ev.getString(args[3]).String(); fragment != "" {
-			a = a.Set("id", ev.tr.unique+fragment)
+		a := ev.getAttributes(args[1], env)
+		if fragment := getString(args[3], env).String(); fragment != "" {
+			a = a.Set("id", ev.unique+fragment)
 		}
 
-		if result, isPair := sx.GetPair(ev.eval(args[4])); isPair && result != nil {
+		if result, isPair := sx.GetPair(ev.eval(args[4], env)); isPair && result != nil {
 			if len(a) > 0 {
-				result = result.Cons(ev.evalAttribute(a))
+				result = result.Cons(ev.EvaluateAttrbute(a))
 			}
-			return result.Cons(ev.make("h" + level))
+			return result.Cons(ev.Make("h" + level))
 		}
-		return sx.MakeList(ev.make("h"+level), sx.String("<MISSING TEXT>"))
+		return sx.MakeList(ev.Make("h"+level), sx.String("<MISSING TEXT>"))
 	})
-	ev.bind(sz.NameSymThematic, 0, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymThematic, 0, func(args []sx.Object, env *environment) sx.Object {
 		result := sx.Nil()
 		if len(args) > 0 {
-			if attrList := ev.getList(ev.eval(args[0])); attrList != nil {
-				result = result.Cons(ev.evalAttribute(sz.GetAttributes(attrList)))
+			if attrList := getList(ev.eval(args[0], env), env); attrList != nil {
+				result = result.Cons(ev.EvaluateAttrbute(sz.GetAttributes(attrList)))
 			}
 		}
-		return result.Cons(ev.make("hr"))
+		return result.Cons(ev.Make("hr"))
 	})
 
 	ev.bind(sz.NameSymListOrdered, 0, ev.makeListFn("ol"))
 	ev.bind(sz.NameSymListUnordered, 0, ev.makeListFn("ul"))
-	ev.bind(sz.NameSymDescription, 0, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymDescription, 0, func(args []sx.Object, env *environment) sx.Object {
 		if len(args) == 0 {
 			return sx.Nil()
 		}
-		items := sx.Nil().Cons(ev.make("dl"))
+		items := sx.Nil().Cons(ev.Make("dl"))
 		curItem := items
 		for pos := 0; pos < len(args); pos++ {
-			term := ev.getList(ev.eval(args[pos]))
-			curItem = curItem.AppendBang(term.Cons(ev.make("dt")))
+			term := getList(ev.eval(args[pos], env), env)
+			curItem = curItem.AppendBang(term.Cons(ev.Make("dt")))
 			pos++
 			if pos >= len(args) {
 				break
 			}
-			ddBlock := ev.getList(ev.eval(args[pos]))
+			ddBlock := getList(ev.eval(args[pos], env), env)
 			if ddBlock == nil {
 				continue
 			}
 			for ddlst := ddBlock; ddlst != nil; ddlst = ddlst.Tail() {
-				dditem := ev.getList(ddlst.Car())
-				curItem = curItem.AppendBang(dditem.Cons(ev.make("dd")))
+				dditem := getList(ddlst.Car(), env)
+				curItem = curItem.AppendBang(dditem.Cons(ev.Make("dd")))
 			}
 		}
 		return items
 	})
-	ev.bind(sz.NameSymListQuote, 0, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymListQuote, 0, func(args []sx.Object, env *environment) sx.Object {
 		if args == nil {
 			return sx.Nil()
 		}
-		result := sx.Nil().Cons(ev.make("blockquote"))
+		result := sx.Nil().Cons(ev.Make("blockquote"))
 		currResult := result
 		for _, elem := range args {
-			if quote, isPair := sx.GetPair(ev.eval(elem)); isPair {
+			if quote, isPair := sx.GetPair(ev.eval(elem, env)); isPair {
 				currResult = currResult.AppendBang(quote.Cons(ev.symP))
 			}
 		}
 		return result
 	})
 
-	ev.bind(sz.NameSymTable, 1, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymTable, 1, func(args []sx.Object, env *environment) sx.Object {
 		thead := sx.Nil()
-		if header := ev.getList(ev.eval(args[0])); !sx.IsNil(header) {
-			thead = sx.Nil().Cons(ev.transformTableRow(header)).Cons(ev.make("thead"))
+		if header := getList(ev.eval(args[0], env), env); !sx.IsNil(header) {
+			thead = sx.Nil().Cons(ev.transformTableRow(header)).Cons(ev.Make("thead"))
 		}
 
 		tbody := sx.Nil()
 		if len(args) > 1 {
-			tbody = sx.Nil().Cons(ev.make("tbody"))
+			tbody = sx.Nil().Cons(ev.Make("tbody"))
 			curBody := tbody
 			for _, row := range args[1:] {
-				curBody = curBody.AppendBang(ev.transformTableRow(ev.getList(ev.eval(row))))
+				curBody = curBody.AppendBang(ev.transformTableRow(getList(ev.eval(row, env), env)))
 			}
 		}
 
@@ -351,50 +306,50 @@ func (ev *evaluator) bindBlocks() {
 		if table == nil {
 			return sx.Nil()
 		}
-		return table.Cons(ev.make("table"))
+		return table.Cons(ev.Make("table"))
 	})
 	ev.bind(sz.NameSymCell, 0, ev.makeCellFn(""))
 	ev.bind(sz.NameSymCellCenter, 0, ev.makeCellFn("center"))
 	ev.bind(sz.NameSymCellLeft, 0, ev.makeCellFn("left"))
 	ev.bind(sz.NameSymCellRight, 0, ev.makeCellFn("right"))
 
-	symDiv := ev.make("div")
+	symDiv := ev.Make("div")
 	ev.bind(sz.NameSymRegionBlock, 2, ev.makeRegionFn(symDiv, true))
-	ev.bind(sz.NameSymRegionQuote, 2, ev.makeRegionFn(ev.make("blockquote"), false))
+	ev.bind(sz.NameSymRegionQuote, 2, ev.makeRegionFn(ev.Make("blockquote"), false))
 	ev.bind(sz.NameSymRegionVerse, 2, ev.makeRegionFn(symDiv, false))
 
-	ev.bind(sz.NameSymVerbatimComment, 1, func(args []sx.Object) sx.Object {
-		if ev.getAttributes(args[0]).HasDefault() {
+	ev.bind(sz.NameSymVerbatimComment, 1, func(args []sx.Object, env *environment) sx.Object {
+		if ev.getAttributes(args[0], env).HasDefault() {
 			if len(args) > 1 {
-				if s := ev.getString(args[1]); s != "" {
+				if s := getString(args[1], env); s != "" {
 					t := sx.String(s.String())
-					return sx.Nil().Cons(t).Cons(ev.make(sxhtml.NameSymBlockComment))
+					return sx.Nil().Cons(t).Cons(ev.Make(sxhtml.NameSymBlockComment))
 				}
 			}
 		}
 		return nil
 	})
-	ev.bind(sz.NameSymVerbatimEval, 2, func(args []sx.Object) sx.Object {
-		return ev.evalVerbatim(ev.getAttributes(args[0]).AddClass("zs-eval"), ev.getString(args[1]))
+	ev.bind(sz.NameSymVerbatimEval, 2, func(args []sx.Object, env *environment) sx.Object {
+		return ev.evalVerbatim(ev.getAttributes(args[0], env).AddClass("zs-eval"), getString(args[1], env))
 	})
 	ev.bind(sz.NameSymVerbatimHTML, 2, ev.visitHTML)
-	ev.bind(sz.NameSymVerbatimMath, 2, func(args []sx.Object) sx.Object {
-		return ev.evalVerbatim(ev.getAttributes(args[0]).AddClass("zs-math"), ev.getString(args[1]))
+	ev.bind(sz.NameSymVerbatimMath, 2, func(args []sx.Object, env *environment) sx.Object {
+		return ev.evalVerbatim(ev.getAttributes(args[0], env).AddClass("zs-math"), getString(args[1], env))
 	})
-	ev.bind(sz.NameSymVerbatimProg, 2, func(args []sx.Object) sx.Object {
-		a := ev.getAttributes(args[0])
-		content := ev.getString(args[1])
+	ev.bind(sz.NameSymVerbatimProg, 2, func(args []sx.Object, env *environment) sx.Object {
+		a := ev.getAttributes(args[0], env)
+		content := getString(args[1], env)
 		if a.HasDefault() {
 			content = sx.String(visibleReplacer.Replace(content.String()))
 		}
 		return ev.evalVerbatim(a, content)
 	})
 	ev.bind(sz.NameSymVerbatimZettel, 0, noopFn)
-	ev.bind(sz.NameSymBLOB, 3, func(args []sx.Object) sx.Object {
-		return ev.visitBLOB(ev.getList(args[0]), ev.getString(args[1]), ev.getString(args[2]))
+	ev.bind(sz.NameSymBLOB, 3, func(args []sx.Object, env *environment) sx.Object {
+		return ev.visitBLOB(getList(args[0], env), getString(args[1], env), getString(args[2], env))
 	})
-	ev.bind(sz.NameSymTransclude, 2, func(args []sx.Object) sx.Object {
-		ref, isPair := sx.GetPair(ev.eval(args[1]))
+	ev.bind(sz.NameSymTransclude, 2, func(args []sx.Object, env *environment) sx.Object {
+		ref, isPair := sx.GetPair(ev.eval(args[1], env))
 		if !isPair {
 			return sx.Nil()
 		}
@@ -402,32 +357,32 @@ func (ev *evaluator) bindBlocks() {
 		if sx.IsNil(refKind) {
 			return sx.Nil()
 		}
-		if refValue := ev.getString(ref.Tail().Car()); refValue != "" {
+		if refValue := getString(ref.Tail().Car(), env); refValue != "" {
 			if refSym, isRefSym := sx.GetSymbol(refKind); isRefSym && refSym.Name() == sz.NameSymRefStateExternal {
-				a := ev.getAttributes(args[0]).Set("src", refValue.String()).AddClass("external")
-				return sx.Nil().Cons(sx.Nil().Cons(ev.evalAttribute(a)).Cons(ev.make("img"))).Cons(ev.symP)
+				a := ev.getAttributes(args[0], env).Set("src", refValue.String()).AddClass("external")
+				return sx.Nil().Cons(sx.Nil().Cons(ev.EvaluateAttrbute(a)).Cons(ev.Make("img"))).Cons(ev.symP)
 			}
 			return sx.MakeList(
-				ev.make(sxhtml.NameSymInlineComment),
+				ev.Make(sxhtml.NameSymInlineComment),
 				sx.String("transclude"),
 				refKind,
 				sx.String("->"),
 				refValue,
 			)
 		}
-		return ev.evalSlice(args)
+		return ev.evalSlice(args, env)
 	})
 }
 
-func (ev *evaluator) makeListFn(tag string) evalFn {
-	sym := ev.make(tag)
-	symLI := ev.make("li")
-	return func(args []sx.Object) sx.Object {
+func (ev *Evaluator) makeListFn(tag string) evalFn {
+	sym := ev.Make(tag)
+	symLI := ev.Make("li")
+	return func(args []sx.Object, env *environment) sx.Object {
 		result := sx.Nil().Cons(sym)
 		last := result
 		for _, elem := range args {
 			item := sx.Nil().Cons(symLI)
-			if res, isPair := sx.GetPair(ev.eval(elem)); isPair {
+			if res, isPair := sx.GetPair(ev.eval(elem, env)); isPair {
 				item.ExtendBang(res)
 			}
 			last = last.AppendBang(item)
@@ -436,8 +391,8 @@ func (ev *evaluator) makeListFn(tag string) evalFn {
 	}
 }
 
-func (ev *evaluator) transformTableRow(pairs *sx.Pair) *sx.Pair {
-	row := sx.Nil().Cons(ev.make("tr"))
+func (ev *Evaluator) transformTableRow(pairs *sx.Pair) *sx.Pair {
+	row := sx.Nil().Cons(ev.Make("tr"))
 	if pairs == nil {
 		return nil
 	}
@@ -447,19 +402,19 @@ func (ev *evaluator) transformTableRow(pairs *sx.Pair) *sx.Pair {
 	}
 	return row
 }
-func (ev *evaluator) makeCellFn(align string) evalFn {
-	return func(args []sx.Object) sx.Object {
-		tdata := ev.evalSlice(args)
+func (ev *Evaluator) makeCellFn(align string) evalFn {
+	return func(args []sx.Object, env *environment) sx.Object {
+		tdata := ev.evalSlice(args, env)
 		if align != "" {
-			tdata = tdata.Cons(ev.evalAttribute(attrs.Attributes{"class": align}))
+			tdata = tdata.Cons(ev.EvaluateAttrbute(attrs.Attributes{"class": align}))
 		}
-		return tdata.Cons(ev.make("td"))
+		return tdata.Cons(ev.Make("td"))
 	}
 }
 
-func (ev *evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) evalFn {
-	return func(args []sx.Object) sx.Object {
-		a := ev.getAttributes(args[0])
+func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) evalFn {
+	return func(args []sx.Object, env *environment) sx.Object {
+		a := ev.getAttributes(args[0], env)
 		if genericToClass {
 			if val, found := a.Get(""); found {
 				a = a.Remove("").AddClass(val)
@@ -467,141 +422,141 @@ func (ev *evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) evalFn {
 		}
 		result := sx.Nil()
 		if len(a) > 0 {
-			result = result.Cons(ev.evalAttribute(a))
+			result = result.Cons(ev.EvaluateAttrbute(a))
 		}
 		result = result.Cons(sym)
 		currResult := result.LastPair()
-		if region, isPair := sx.GetPair(ev.eval(args[1])); isPair {
+		if region, isPair := sx.GetPair(ev.eval(args[1], env)); isPair {
 			currResult = currResult.ExtendBang(region)
 		}
 		if len(args) > 2 {
-			if cite, isPair := sx.GetPair(ev.eval(args[2])); isPair && cite != nil {
-				currResult.AppendBang(cite.Cons(ev.make("cite")))
+			if cite, isPair := sx.GetPair(ev.eval(args[2], env)); isPair && cite != nil {
+				currResult.AppendBang(cite.Cons(ev.Make("cite")))
 			}
 		}
 		return result
 	}
 }
 
-func (ev *evaluator) evalVerbatim(a attrs.Attributes, s sx.String) sx.Object {
+func (ev *Evaluator) evalVerbatim(a attrs.Attributes, s sx.String) sx.Object {
 	a = setProgLang(a)
 	code := sx.Nil().Cons(s)
-	if al := ev.evalAttribute(a); al != nil {
+	if al := ev.EvaluateAttrbute(a); al != nil {
 		code = code.Cons(al)
 	}
-	code = code.Cons(ev.make("code"))
-	return sx.Nil().Cons(code).Cons(ev.make("pre"))
+	code = code.Cons(ev.Make("code"))
+	return sx.Nil().Cons(code).Cons(ev.Make("pre"))
 }
 
-func (ev *evaluator) bindInlines() {
+func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.NameSymInline, 0, ev.evalList)
-	ev.bind(sz.NameSymText, 1, func(args []sx.Object) sx.Object { return ev.getString(args[0]) })
-	ev.bind(sz.NameSymSpace, 0, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymText, 1, func(args []sx.Object, env *environment) sx.Object { return getString(args[0], env) })
+	ev.bind(sz.NameSymSpace, 0, func(args []sx.Object, env *environment) sx.Object {
 		if len(args) == 0 {
 			return sx.String(" ")
 		}
-		return ev.getString(args[0])
+		return getString(args[0], env)
 	})
-	ev.bind(sz.NameSymSoft, 0, func([]sx.Object) sx.Object { return sx.String(" ") })
-	symBR := ev.make("br")
-	ev.bind(sz.NameSymHard, 0, func([]sx.Object) sx.Object { return sx.Nil().Cons(symBR) })
+	ev.bind(sz.NameSymSoft, 0, func([]sx.Object, *environment) sx.Object { return sx.String(" ") })
+	symBR := ev.Make("br")
+	ev.bind(sz.NameSymHard, 0, func([]sx.Object, *environment) sx.Object { return sx.Nil().Cons(symBR) })
 
-	ev.bind(sz.NameSymLinkInvalid, 2, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymLinkInvalid, 2, func(args []sx.Object, env *environment) sx.Object {
 		// a := ev.getAttributes(args)
 		var inline *sx.Pair
 		if len(args) > 2 {
-			inline = ev.evalSlice(args[2:])
+			inline = ev.evalSlice(args[2:], env)
 		}
 		if inline == nil {
-			inline = sx.Nil().Cons(ev.eval(args[1]))
+			inline = sx.Nil().Cons(ev.eval(args[1], env))
 		}
 		return inline.Cons(ev.symSpan)
 	})
-	evalHREF := func(args []sx.Object) sx.Object {
-		a := ev.getAttributes(args[0])
-		refValue := ev.getString(args[1])
-		return ev.evalLink(a.Set("href", refValue.String()), refValue, args[2:])
+	evalHREF := func(args []sx.Object, env *environment) sx.Object {
+		a := ev.getAttributes(args[0], env)
+		refValue := getString(args[1], env)
+		return ev.evalLink(a.Set("href", refValue.String()), refValue, args[2:], env)
 	}
 	ev.bind(sz.NameSymLinkZettel, 2, evalHREF)
 	ev.bind(sz.NameSymLinkSelf, 2, evalHREF)
 	ev.bind(sz.NameSymLinkFound, 2, evalHREF)
-	ev.bind(sz.NameSymLinkBroken, 2, func(args []sx.Object) sx.Object {
-		a := ev.getAttributes(args[0])
-		refValue := ev.getString(args[1])
-		return ev.evalLink(a.AddClass("broken"), refValue, args[2:])
+	ev.bind(sz.NameSymLinkBroken, 2, func(args []sx.Object, env *environment) sx.Object {
+		a := ev.getAttributes(args[0], env)
+		refValue := getString(args[1], env)
+		return ev.evalLink(a.AddClass("broken"), refValue, args[2:], env)
 	})
 	ev.bind(sz.NameSymLinkHosted, 2, evalHREF)
 	ev.bind(sz.NameSymLinkBased, 2, evalHREF)
-	ev.bind(sz.NameSymLinkQuery, 2, func(args []sx.Object) sx.Object {
-		a := ev.getAttributes(args[0])
-		refValue := ev.getString(args[1])
+	ev.bind(sz.NameSymLinkQuery, 2, func(args []sx.Object, env *environment) sx.Object {
+		a := ev.getAttributes(args[0], env)
+		refValue := getString(args[1], env)
 		query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(refValue.String())
-		return ev.evalLink(a.Set("href", query), refValue, args[2:])
+		return ev.evalLink(a.Set("href", query), refValue, args[2:], env)
 	})
-	ev.bind(sz.NameSymLinkExternal, 2, func(args []sx.Object) sx.Object {
-		a := ev.getAttributes(args[0])
-		refValue := ev.getString(args[1])
-		return ev.evalLink(a.Set("href", refValue.String()).AddClass("external"), refValue, args[2:])
+	ev.bind(sz.NameSymLinkExternal, 2, func(args []sx.Object, env *environment) sx.Object {
+		a := ev.getAttributes(args[0], env)
+		refValue := getString(args[1], env)
+		return ev.evalLink(a.Set("href", refValue.String()).AddClass("external"), refValue, args[2:], env)
 	})
 
-	ev.bind(sz.NameSymEmbed, 3, func(args []sx.Object) sx.Object {
-		ref := ev.getList(ev.eval(args[1]))
-		syntax := ev.getString(args[2])
+	ev.bind(sz.NameSymEmbed, 3, func(args []sx.Object, env *environment) sx.Object {
+		ref := getList(ev.eval(args[1], env), env)
+		syntax := getString(args[2], env)
 		if syntax == api.ValueSyntaxSVG {
 			embedAttr := sx.MakeList(
 				ev.symAttr,
-				sx.Cons(ev.make("type"), sx.String("image/svg+xml")),
-				sx.Cons(ev.make("src"), sx.String("/"+ev.getString(ref.Tail()).String()+".svg")),
+				sx.Cons(ev.Make("type"), sx.String("image/svg+xml")),
+				sx.Cons(ev.Make("src"), sx.String("/"+getString(ref.Tail(), env).String()+".svg")),
 			)
 			return sx.MakeList(
-				ev.make("figure"),
+				ev.Make("figure"),
 				sx.MakeList(
-					ev.make("embed"),
+					ev.Make("embed"),
 					embedAttr,
 				),
 			)
 		}
-		a := ev.getAttributes(args[0])
-		a = a.Set("src", string(ev.getString(ref.Tail().Car())))
+		a := ev.getAttributes(args[0], env)
+		a = a.Set("src", getString(ref.Tail().Car(), env).String())
 		var sb strings.Builder
-		ev.flattenText(&sb, ref.Tail().Tail().Tail())
+		flattenText(&sb, ref.Tail().Tail().Tail())
 		if d := sb.String(); d != "" {
 			a = a.Set("alt", d)
 		}
-		return sx.MakeList(ev.make("img"), ev.evalAttribute(a))
+		return sx.MakeList(ev.Make("img"), ev.EvaluateAttrbute(a))
 	})
 	ev.bind(sz.NameSymEmbedBLOB, 3, noopFn)
 
-	ev.bind(sz.NameSymCite, 2, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymCite, 2, func(args []sx.Object, env *environment) sx.Object {
 		result := sx.Nil()
-		if key := ev.getString(args[1]); key != "" {
+		if key := getString(args[1], env); key != "" {
 			if len(args) > 2 {
-				result = ev.evalSlice(args[2:]).Cons(sx.String(", "))
+				result = ev.evalSlice(args[2:], env).Cons(sx.String(", "))
 			}
 			result = result.Cons(key)
 		}
-		if a := ev.getAttributes(args[0]); len(a) > 0 {
-			result = result.Cons(ev.evalAttribute(a))
+		if a := ev.getAttributes(args[0], env); len(a) > 0 {
+			result = result.Cons(ev.EvaluateAttrbute(a))
 		}
 		if result == nil {
 			return nil
 		}
 		return result.Cons(ev.symSpan)
 	})
-	ev.bind(sz.NameSymMark, 3, func(args []sx.Object) sx.Object {
-		result := ev.evalSlice(args[3:])
-		if !ev.tr.noLinks {
-			if fragment := ev.getString(args[2]); fragment != "" {
-				a := attrs.Attributes{"id": fragment.String() + ev.tr.unique}
-				return result.Cons(ev.evalAttribute(a)).Cons(ev.symA)
+	ev.bind(sz.NameSymMark, 3, func(args []sx.Object, env *environment) sx.Object {
+		result := ev.evalSlice(args[3:], env)
+		if !ev.noLinks {
+			if fragment := getString(args[2], env); fragment != "" {
+				a := attrs.Attributes{"id": fragment.String() + ev.unique}
+				return result.Cons(ev.EvaluateAttrbute(a)).Cons(ev.symA)
 			}
 		}
 		return result.Cons(ev.symSpan)
 	})
-	ev.bind(sz.NameSymEndnote, 1, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymEndnote, 1, func(args []sx.Object, env *environment) sx.Object {
 		attrPlist := sx.Nil()
-		if a := ev.getAttributes(args[0]); len(a) > 0 {
-			if attrs := ev.evalAttribute(a); attrs != nil {
+		if a := ev.getAttributes(args[0], env); len(a) > 0 {
+			if attrs := ev.EvaluateAttrbute(a); attrs != nil {
 				attrPlist = attrs.Tail()
 			}
 		}
@@ -610,24 +565,24 @@ func (ev *evaluator) bindInlines() {
 		if !isPair {
 			return sx.Nil()
 		}
-		ev.tr.endnotes = append(ev.tr.endnotes, endnoteInfo{noteAST: text, noteHx: nil, attrs: attrPlist})
-		noteNum := strconv.Itoa(len(ev.tr.endnotes))
-		noteID := ev.tr.unique + noteNum
-		hrefAttr := sx.Nil().Cons(sx.Cons(ev.make("role"), sx.String("doc-noteref"))).
-			Cons(sx.Cons(ev.make("href"), sx.String("#fn:"+noteID))).
-			Cons(sx.Cons(ev.tr.symClass, sx.String("zs-noteref"))).
+		ev.endnotes = append(ev.endnotes, endnoteInfo{noteAST: text, noteHx: nil, attrs: attrPlist})
+		noteNum := strconv.Itoa(len(ev.endnotes))
+		noteID := ev.unique + noteNum
+		hrefAttr := sx.Nil().Cons(sx.Cons(ev.Make("role"), sx.String("doc-noteref"))).
+			Cons(sx.Cons(ev.Make("href"), sx.String("#fn:"+noteID))).
+			Cons(sx.Cons(ev.symClass, sx.String("zs-noteref"))).
 			Cons(ev.symAttr)
 		href := sx.Nil().Cons(sx.String(noteNum)).Cons(hrefAttr).Cons(ev.symA)
-		supAttr := sx.Nil().Cons(sx.Cons(ev.make("id"), sx.String("fnref:"+noteID))).Cons(ev.symAttr)
-		return sx.Nil().Cons(href).Cons(supAttr).Cons(ev.make("sup"))
+		supAttr := sx.Nil().Cons(sx.Cons(ev.Make("id"), sx.String("fnref:"+noteID))).Cons(ev.symAttr)
+		return sx.Nil().Cons(href).Cons(supAttr).Cons(ev.Make("sup"))
 	})
 
 	ev.bind(sz.NameSymFormatDelete, 1, ev.makeFormatFn("del"))
 	ev.bind(sz.NameSymFormatEmph, 1, ev.makeFormatFn("em"))
 	ev.bind(sz.NameSymFormatInsert, 1, ev.makeFormatFn("ins"))
-	ev.bind(sz.NameSymFormatQuote, 1, func(args []sx.Object) sx.Object {
+	ev.bind(sz.NameSymFormatQuote, 1, func(args []sx.Object, env *environment) sx.Object {
 		const langAttr = "lang"
-		a := ev.getAttributes(args[0])
+		a := ev.getAttributes(args[0], env)
 		langVal, found := a.Get(langAttr)
 		if found {
 			a = a.Remove(langAttr)
@@ -635,13 +590,13 @@ func (ev *evaluator) bindInlines() {
 		if val, found2 := a.Get(""); found2 {
 			a = a.Remove("").AddClass(val)
 		}
-		res := ev.evalSlice(args[1:])
+		res := ev.evalSlice(args[1:], env)
 		if len(a) > 0 {
-			res = res.Cons(ev.evalAttribute(a))
+			res = res.Cons(ev.EvaluateAttrbute(a))
 		}
-		res = res.Cons(ev.make("q"))
+		res = res.Cons(ev.Make("q"))
 		if found {
-			res = sx.Nil().Cons(res).Cons(ev.evalAttribute(attrs.Attributes{}.Set(langAttr, langVal))).Cons(ev.symSpan)
+			res = sx.Nil().Cons(res).Cons(ev.EvaluateAttrbute(attrs.Attributes{}.Set(langAttr, langVal))).Cons(ev.symSpan)
 		}
 		return res
 	})
@@ -650,47 +605,47 @@ func (ev *evaluator) bindInlines() {
 	ev.bind(sz.NameSymFormatSub, 1, ev.makeFormatFn("sub"))
 	ev.bind(sz.NameSymFormatSuper, 1, ev.makeFormatFn("sup"))
 
-	ev.bind(sz.NameSymLiteralComment, 1, func(args []sx.Object) sx.Object {
-		if ev.getAttributes(args[0]).HasDefault() {
+	ev.bind(sz.NameSymLiteralComment, 1, func(args []sx.Object, env *environment) sx.Object {
+		if ev.getAttributes(args[0], env).HasDefault() {
 			if len(args) > 1 {
-				if s := ev.getString(ev.eval(args[1])); s != "" {
-					return sx.Nil().Cons(s).Cons(ev.make(sxhtml.NameSymInlineComment))
+				if s := getString(ev.eval(args[1], env), env); s != "" {
+					return sx.Nil().Cons(s).Cons(ev.Make(sxhtml.NameSymInlineComment))
 				}
 			}
 		}
 		return sx.Nil()
 	})
 	ev.bind(sz.NameSymLiteralHTML, 2, ev.visitHTML)
-	kbdSym := ev.make("kbd")
-	ev.bind(sz.NameSymLiteralInput, 2, func(args []sx.Object) sx.Object {
-		return ev.visitLiteral(args, nil, kbdSym)
+	kbdSym := ev.Make("kbd")
+	ev.bind(sz.NameSymLiteralInput, 2, func(args []sx.Object, env *environment) sx.Object {
+		return ev.visitLiteral(args, nil, kbdSym, env)
 	})
-	codeSym := ev.make("code")
-	ev.bind(sz.NameSymLiteralMath, 2, func(args []sx.Object) sx.Object {
-		a := ev.getAttributes(args[0]).AddClass("zs-math")
-		return ev.visitLiteral(args, a, codeSym)
+	codeSym := ev.Make("code")
+	ev.bind(sz.NameSymLiteralMath, 2, func(args []sx.Object, env *environment) sx.Object {
+		a := ev.getAttributes(args[0], env).AddClass("zs-math")
+		return ev.visitLiteral(args, a, codeSym, env)
 	})
-	sampSym := ev.make("samp")
-	ev.bind(sz.NameSymLiteralOutput, 2, func(args []sx.Object) sx.Object {
-		return ev.visitLiteral(args, nil, sampSym)
+	sampSym := ev.Make("samp")
+	ev.bind(sz.NameSymLiteralOutput, 2, func(args []sx.Object, env *environment) sx.Object {
+		return ev.visitLiteral(args, nil, sampSym, env)
 	})
-	ev.bind(sz.NameSymLiteralProg, 2, func(args []sx.Object) sx.Object {
-		return ev.visitLiteral(args, nil, codeSym)
+	ev.bind(sz.NameSymLiteralProg, 2, func(args []sx.Object, env *environment) sx.Object {
+		return ev.visitLiteral(args, nil, codeSym, env)
 	})
 
 	ev.bind(sz.NameSymLiteralZettel, 0, noopFn)
 }
 
-func (ev *evaluator) makeFormatFn(tag string) evalFn {
-	sym := ev.make(tag)
-	return func(args []sx.Object) sx.Object {
-		a := ev.getAttributes(args[0])
+func (ev *Evaluator) makeFormatFn(tag string) evalFn {
+	sym := ev.Make(tag)
+	return func(args []sx.Object, env *environment) sx.Object {
+		a := ev.getAttributes(args[0], env)
 		if val, found := a.Get(""); found {
 			a = a.Remove("").AddClass(val)
 		}
-		res := ev.evalSlice(args[1:])
+		res := ev.evalSlice(args[1:], env)
 		if len(a) > 0 {
-			res = res.Cons(ev.evalAttribute(a))
+			res = res.Cons(ev.EvaluateAttrbute(a))
 		}
 		return res.Cons(sym)
 	}
@@ -698,19 +653,19 @@ func (ev *evaluator) makeFormatFn(tag string) evalFn {
 
 var visibleReplacer = strings.NewReplacer(" ", "\u2423")
 
-func (ev *evaluator) visitLiteral(args []sx.Object, a attrs.Attributes, sym *sx.Symbol) sx.Object {
+func (ev *Evaluator) visitLiteral(args []sx.Object, a attrs.Attributes, sym *sx.Symbol, env *environment) sx.Object {
 	if a == nil {
-		a = ev.getAttributes(args[0])
+		a = ev.getAttributes(args[0], env)
 	}
 	a = setProgLang(a)
-	literal := ev.getString(args[1]).String()
+	literal := getString(args[1], env).String()
 	if a.HasDefault() {
 		a = a.RemoveDefault()
 		literal = visibleReplacer.Replace(literal)
 	}
 	res := sx.Nil().Cons(sx.String(literal))
 	if len(a) > 0 {
-		res = res.Cons(ev.evalAttribute(a))
+		res = res.Cons(ev.EvaluateAttrbute(a))
 	}
 	return res.Cons(sym)
 }
@@ -721,14 +676,14 @@ func setProgLang(a attrs.Attributes) attrs.Attributes {
 	return a
 }
 
-func (ev *evaluator) visitHTML(args []sx.Object) sx.Object {
-	if s := ev.getString(ev.eval(args[1])); s != "" && IsSafe(s.String()) {
+func (ev *Evaluator) visitHTML(args []sx.Object, env *environment) sx.Object {
+	if s := getString(ev.eval(args[1], env), env); s != "" && IsSafe(s.String()) {
 		return sx.Nil().Cons(s).Cons(ev.symNoEscape)
 	}
 	return nil
 }
 
-func (ev *evaluator) visitBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
+func (ev *Evaluator) visitBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
 	if data == "" {
 		return sx.Nil()
 	}
@@ -738,32 +693,38 @@ func (ev *evaluator) visitBLOB(description *sx.Pair, syntax, data sx.String) sx.
 	case api.ValueSyntaxSVG:
 		return sx.Nil().Cons(sx.Nil().Cons(data).Cons(ev.symNoEscape)).Cons(ev.symP)
 	default:
-		imgAttr := sx.Nil().Cons(sx.Cons(ev.make("src"), sx.String("data:image/"+syntax.String()+";base64,"+data.String())))
+		imgAttr := sx.Nil().Cons(sx.Cons(ev.Make("src"), sx.String("data:image/"+syntax.String()+";base64,"+data.String())))
 		var sb strings.Builder
-		ev.flattenText(&sb, description)
+		flattenText(&sb, description)
 		if d := sb.String(); d != "" {
-			imgAttr = imgAttr.Cons(sx.Cons(ev.make("alt"), sx.String(d)))
+			imgAttr = imgAttr.Cons(sx.Cons(ev.Make("alt"), sx.String(d)))
 		}
-		return sx.Nil().Cons(sx.Nil().Cons(imgAttr.Cons(ev.symAttr)).Cons(ev.make("img"))).Cons(ev.symP)
+		return sx.Nil().Cons(sx.Nil().Cons(imgAttr.Cons(ev.symAttr)).Cons(ev.Make("img"))).Cons(ev.symP)
 	}
 }
 
-func (ev *evaluator) flattenText(sb *strings.Builder, lst *sx.Pair) {
+func flattenText(sb *strings.Builder, lst *sx.Pair) {
 	for elem := lst; elem != nil; elem = elem.Tail() {
 		switch obj := elem.Car().(type) {
 		case sx.String:
 			sb.WriteString(obj.String())
 		case *sx.Pair:
-			ev.flattenText(sb, obj)
+			flattenText(sb, obj)
 		}
 	}
 }
 
-func (ev *evaluator) evalList(args []sx.Object) sx.Object { return ev.evalSlice(args) }
-func noopFn([]sx.Object) sx.Object                        { return sx.Nil() }
+func (ev *Evaluator) evalList(args []sx.Object, env *environment) sx.Object {
+	return ev.evalSlice(args, env)
+}
+func noopFn([]sx.Object, *environment) sx.Object { return sx.Nil() }
 
-func (ev *evaluator) eval(obj sx.Object) sx.Object {
-	if ev.err != nil {
+type environment struct {
+	err error
+}
+
+func (ev *Evaluator) eval(obj sx.Object, env *environment) sx.Object {
+	if env.err != nil {
 		return sx.Nil()
 	}
 	if sx.IsNil(obj) {
@@ -775,13 +736,13 @@ func (ev *evaluator) eval(obj sx.Object) sx.Object {
 	}
 	sym, found := sx.GetSymbol(lst.Car())
 	if !found {
-		ev.err = fmt.Errorf("symbol expected, but got %T/%v", lst.Car(), lst.Car())
+		env.err = fmt.Errorf("symbol expected, but got %T/%v", lst.Car(), lst.Car())
 		return sx.Nil()
 	}
 	name := sym.Name()
 	fn, found := ev.fns[name]
 	if !found {
-		ev.err = fmt.Errorf("symbol %q not bound", name)
+		env.err = fmt.Errorf("symbol %q not bound", name)
 		return sx.Nil()
 	}
 	var args []sx.Object
@@ -795,26 +756,26 @@ func (ev *evaluator) eval(obj sx.Object) sx.Object {
 	}
 	if minArgs, hasMinArgs := ev.minArgs[name]; hasMinArgs {
 		if minArgs > len(args) {
-			ev.err = fmt.Errorf("%v needs at least %d arguments, but got only %d", name, minArgs, len(args))
+			env.err = fmt.Errorf("%v needs at least %d arguments, but got only %d", name, minArgs, len(args))
 			return sx.Nil()
 		}
 	}
 	log.Println("EXEC", sym, args)
-	result := fn(args)
-	if ev.err != nil {
-		log.Println("EERR", ev.err)
+	result := fn(args, env)
+	if env.err != nil {
+		log.Println("EERR", env.err)
 		return sx.Nil()
 	}
 	log.Println("REXE", result)
 	return result
 }
 
-func (ev *evaluator) evalSlice(args []sx.Object) *sx.Pair {
+func (ev *Evaluator) evalSlice(args []sx.Object, env *environment) *sx.Pair {
 	result := sx.Cons(sx.Nil(), sx.Nil())
 	curr := result
 	for _, arg := range args {
-		elem := ev.eval(arg)
-		if ev.err != nil {
+		elem := ev.eval(arg, env)
+		if env.err != nil {
 			return nil
 		}
 		curr = curr.AppendBang(elem)
@@ -822,62 +783,58 @@ func (ev *evaluator) evalSlice(args []sx.Object) *sx.Pair {
 	return result.Tail()
 }
 
-func (ev *evaluator) evalLink(a attrs.Attributes, refValue sx.String, inline []sx.Object) sx.Object {
-	result := ev.evalSlice(inline)
+func (ev *Evaluator) evalLink(a attrs.Attributes, refValue sx.String, inline []sx.Object, env *environment) sx.Object {
+	result := ev.evalSlice(inline, env)
 	if len(inline) == 0 {
 		result = sx.Nil().Cons(refValue)
 	}
-	if ev.tr.noLinks {
+	if ev.noLinks {
 		return result.Cons(ev.symSpan)
 	}
-	return result.Cons(ev.evalAttribute(a)).Cons(ev.symA)
+	return result.Cons(ev.EvaluateAttrbute(a)).Cons(ev.symA)
 }
 
-func (ev *evaluator) evalAttribute(a attrs.Attributes) *sx.Pair { return ev.tr.TransformAttrbute(a) }
-
-func (ev *evaluator) getSymbol(val sx.Object) *sx.Symbol {
-	if ev.err == nil {
+func (ev *Evaluator) getSymbol(val sx.Object, env *environment) *sx.Symbol {
+	if env.err == nil {
 		if sym, ok := sx.GetSymbol(val); ok {
 			return sym
 		}
-		ev.err = fmt.Errorf("%v/%T is not a symbol", val, val)
+		env.err = fmt.Errorf("%v/%T is not a symbol", val, val)
 	}
-	return ev.make("???")
+	return ev.Make("???")
 }
-func (ev *evaluator) getString(val sx.Object) sx.String {
-	if ev.err != nil {
+func getString(val sx.Object, env *environment) sx.String {
+	if env.err != nil {
 		return ""
 	}
 	if s, ok := sx.GetString(val); ok {
 		return s
 	}
-	ev.err = fmt.Errorf("%v/%T is not a string", val, val)
+	env.err = fmt.Errorf("%v/%T is not a string", val, val)
 	return ""
 }
-func (ev *evaluator) getList(val sx.Object) *sx.Pair {
-	if ev.err == nil {
+func getList(val sx.Object, env *environment) *sx.Pair {
+	if env.err == nil {
 		if res, isPair := sx.GetPair(val); isPair {
 			return res
 		}
-		ev.err = fmt.Errorf("%v/%T is not a list", val, val)
+		env.err = fmt.Errorf("%v/%T is not a list", val, val)
 	}
 	return nil
 }
-func (ev *evaluator) getInt64(val sx.Object) int64 {
-	if ev.err != nil {
+func getInt64(val sx.Object, env *environment) int64 {
+	if env.err != nil {
 		return -1017
 	}
 	if num, ok := sx.GetNumber(val); ok {
 		return int64(num.(sx.Int64))
 	}
-	ev.err = fmt.Errorf("%v/%T is not a number", val, val)
+	env.err = fmt.Errorf("%v/%T is not a number", val, val)
 	return -1017
 }
-func (ev *evaluator) getAttributes(arg sx.Object) attrs.Attributes {
-	return sz.GetAttributes(ev.getList(ev.eval(arg)))
+func (ev *Evaluator) getAttributes(arg sx.Object, env *environment) attrs.Attributes {
+	return sz.GetAttributes(getList(ev.eval(arg, env), env))
 }
-
-func (ev *evaluator) make(name string) *sx.Symbol { return ev.sf.MustMake(name) }
 
 var unsafeSnippets = []string{
 	"<script", "</script",
