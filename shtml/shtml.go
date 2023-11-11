@@ -444,7 +444,7 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		return ev.evalVerbatim(a, content)
 	})
-	ev.bind(sz.NameSymVerbatimZettel, 0, noopFn)
+	ev.bind(sz.NameSymVerbatimZettel, 0, nilFn)
 	ev.bind(sz.NameSymBLOB, 3, func(args []sx.Object, env *Environment) sx.Object {
 		return ev.evalBLOB(getList(args[0], env), getString(args[1], env), getString(args[2], env))
 	})
@@ -636,7 +636,18 @@ func (ev *Evaluator) bindInlines() {
 		}
 		return sx.MakeList(ev.Make("img"), ev.EvaluateAttrbute(a))
 	})
-	ev.bind(sz.NameSymEmbedBLOB, 3, noopFn)
+	ev.bind(sz.NameSymEmbedBLOB, 3, func(args []sx.Object, env *Environment) sx.Object {
+		a, syntax, data := ev.getAttributes(args[0], env), getString(args[1], env), getString(args[2], env)
+		summary, hasSummary := a.Get(api.KeySummary)
+		if !hasSummary {
+			summary = ""
+		}
+		return ev.evalBLOB(
+			sx.MakeList(ev.Make(sx.ListName), sx.String(summary)),
+			syntax,
+			data,
+		)
+	})
 
 	ev.bind(sz.NameSymCite, 2, func(args []sx.Object, env *Environment) sx.Object {
 		a := ev.getAttributes(args[0], env)
@@ -732,7 +743,7 @@ func (ev *Evaluator) bindInlines() {
 		return ev.evalLiteral(args, nil, codeSym, env)
 	})
 
-	ev.bind(sz.NameSymLiteralZettel, 0, noopFn)
+	ev.bind(sz.NameSymLiteralZettel, 0, nilFn)
 }
 
 func (ev *Evaluator) makeFormatFn(tag string) EvalFn {
@@ -883,7 +894,7 @@ func flattenText(sb *strings.Builder, lst *sx.Pair) {
 func (ev *Evaluator) evalList(args []sx.Object, env *Environment) sx.Object {
 	return ev.evalSlice(args, env)
 }
-func noopFn([]sx.Object, *Environment) sx.Object { return sx.Nil() }
+func nilFn([]sx.Object, *Environment) sx.Object { return sx.Nil() }
 
 func (ev *Evaluator) eval(obj sx.Object, env *Environment) sx.Object {
 	if env.err != nil {
