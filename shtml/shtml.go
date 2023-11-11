@@ -33,6 +33,7 @@ type Evaluator struct {
 	noLinks       bool // true iff output must not include links
 
 	symAttr     *sx.Symbol
+	symList     *sx.Symbol
 	symNoEscape *sx.Symbol
 	symClass    *sx.Symbol
 	symMeta     *sx.Symbol
@@ -55,6 +56,7 @@ func NewEvaluator(headingOffset int, sf sx.SymbolFactory) *Evaluator {
 		sf:            sf,
 		headingOffset: int64(headingOffset),
 		symAttr:       sf.MustMake(sxhtml.NameSymAttr),
+		symList:       sf.MustMake(sxhtml.NameSymList),
 		symNoEscape:   sf.MustMake(sxhtml.NameSymNoEscape),
 		symClass:      sf.MustMake("class"),
 		symMeta:       sf.MustMake("meta"),
@@ -174,9 +176,10 @@ func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
 
 // Environment where sz objects are evaluated to shtml objects
 type Environment struct {
-	err       error
-	langStack []string
-	endnotes  []endnoteInfo
+	err             error
+	langStack       []string
+	endnotes        []endnoteInfo
+	secondaryQuotes bool
 }
 type endnoteInfo struct {
 	noteID  string    // link id
@@ -190,9 +193,10 @@ func MakeEnvironment(lang string) Environment {
 	langStack := make([]string, 1, 16)
 	langStack[0] = lang
 	return Environment{
-		err:       nil,
-		langStack: langStack,
-		endnotes:  nil,
+		err:             nil,
+		langStack:       langStack,
+		endnotes:        nil,
+		secondaryQuotes: false,
 	}
 }
 
@@ -203,6 +207,7 @@ func (env *Environment) GetError() error { return env.err }
 func (env *Environment) Reset() {
 	env.langStack = env.langStack[0:1]
 	env.endnotes = nil
+	env.secondaryQuotes = false
 }
 
 // PushAttribute adds the current attributes to the environment.
@@ -747,24 +752,37 @@ func (ev *Evaluator) makeFormatFn(tag string) EvalFn {
 	}
 }
 
-var langQuotes = map[string][2]string{
-	api.ValueLangEN: {"&ldquo;", "&rdquo;"},
-	"de":            {"&bdquo;", "&ldquo;"},
-	"fr":            {"&laquo;&nbsp;", "&nbsp;&raquo;"},
+type quoteData struct {
+	primLeft, primRight string
+	secLeft, secRight   string
+	nbsp                bool
 }
 
-func getQuotes(lang string) (string, string) {
+var langQuotes = map[string]quoteData{
+	"":              {"&quot;", "&quot;", "&quot;", "&quot;", false},
+	api.ValueLangEN: {"&ldquo;", "&rdquo;", "&lsquo;", "&rsquo;", false},
+	"de":            {"&bdquo;", "&ldquo;", "&sbquo;", "&lsquo;", false},
+	"fr":            {"&laquo;", "&raquo;", "&lsaquo;", "&rsaquo;", true},
+}
+
+func getQuoteData(lang string) quoteData {
 	langFields := strings.FieldsFunc(lang, func(r rune) bool { return r == '-' || r == '_' })
 	for len(langFields) > 0 {
 		langSup := strings.Join(langFields, "-")
 		quotes, ok := langQuotes[langSup]
 		if ok {
-			return quotes[0], quotes[1]
+			return quotes
 		}
 		langFields = langFields[0 : len(langFields)-1]
 	}
-	const entityQuot = "&quot;"
-	return entityQuot, entityQuot
+	return langQuotes[""]
+}
+
+func getQuotes(data *quoteData, env *Environment) (string, string) {
+	if env.secondaryQuotes {
+		return data.secLeft, data.secRight
+	}
+	return data.primLeft, data.primRight
 }
 
 func (ev *Evaluator) evalQuote(args []sx.Object, env *Environment) sx.Object {
@@ -775,20 +793,28 @@ func (ev *Evaluator) evalQuote(args []sx.Object, env *Environment) sx.Object {
 	if val, hasClass := a.Get(""); hasClass {
 		a = a.Remove("").AddClass(val)
 	}
-	openingQ, closingQ := getQuotes(env.getLanguage())
+	quotes := getQuoteData(env.getLanguage())
+	leftQ, rightQ := getQuotes(&quotes, env)
+	env.secondaryQuotes = !env.secondaryQuotes
 
 	res := ev.evalSlice(args[1:], env)
 	lastPair := res.LastPair()
 	if lastPair.IsNil() {
-		res = sx.Cons(sx.MakeList(ev.symNoEscape, sx.String(openingQ), sx.String(closingQ)), sx.Nil())
+		res = sx.Cons(sx.MakeList(ev.symNoEscape, sx.String(leftQ), sx.String(rightQ)), sx.Nil())
 	} else {
-		lastPair.AppendBang(sx.MakeList(ev.symNoEscape, sx.String(closingQ)))
-		res = res.Cons(sx.MakeList(ev.symNoEscape, sx.String(openingQ)))
+		if quotes.nbsp {
+			lastPair.AppendBang(sx.MakeList(ev.symNoEscape, sx.String("&nbsp;"), sx.String(rightQ)))
+			res = res.Cons(sx.MakeList(ev.symNoEscape, sx.String(leftQ), sx.String("&nbsp;")))
+		} else {
+			lastPair.AppendBang(sx.MakeList(ev.symNoEscape, sx.String(rightQ)))
+			res = res.Cons(sx.MakeList(ev.symNoEscape, sx.String(leftQ)))
+		}
 	}
 	if len(a) > 0 {
 		res = res.Cons(ev.EvaluateAttrbute(a))
+		return res.Cons(ev.symSpan)
 	}
-	return res.Cons(ev.symSpan)
+	return res.Cons(ev.symList)
 }
 
 var visibleReplacer = strings.NewReplacer(" ", "\u2423")
