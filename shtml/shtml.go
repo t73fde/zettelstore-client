@@ -629,10 +629,12 @@ func (ev *Evaluator) bindInlines() {
 		}
 		a := ev.getAttributes(args[0], env)
 		a = a.Set("src", getString(ref.Tail().Car(), env).String())
-		var sb strings.Builder
-		flattenText(&sb, ref.Tail().Tail().Tail())
-		if d := sb.String(); d != "" {
-			a = a.Set("alt", d)
+		if len(args) > 3 {
+			var sb strings.Builder
+			flattenText(&sb, sx.MakeList(args[3:]...))
+			if d := sb.String(); d != "" {
+				a = a.Set("alt", d)
+			}
 		}
 		return sx.MakeList(ev.Make("img"), ev.EvaluateAttrbute(a))
 	})
@@ -885,6 +887,11 @@ func flattenText(sb *strings.Builder, lst *sx.Pair) {
 		switch obj := elem.Car().(type) {
 		case sx.String:
 			sb.WriteString(obj.String())
+		case *sx.Symbol:
+			if obj.Name() == sz.NameSymSpace {
+				sb.WriteByte(' ')
+				break
+			}
 		case *sx.Pair:
 			flattenText(sb, obj)
 		}
