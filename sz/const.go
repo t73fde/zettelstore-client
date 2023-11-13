@@ -34,6 +34,7 @@ const (
 	NameSymFormatEmph      = "FORMAT-EMPH"
 	NameSymFormatDelete    = "FORMAT-DELETE"
 	NameSymFormatInsert    = "FORMAT-INSERT"
+	NameSymFormatMark      = "FORMAT-MARK"
 	NameSymFormatQuote     = "FORMAT-QUOTE"
 	NameSymFormatSpan      = "FORMAT-SPAN"
 	NameSymFormatSub       = "FORMAT-SUB"
@@ -128,6 +129,7 @@ type ZettelSymbols struct {
 	SymFormatEmph      *sx.Symbol
 	SymFormatDelete    *sx.Symbol
 	SymFormatInsert    *sx.Symbol
+	SymFormatMark      *sx.Symbol
 	SymFormatQuote     *sx.Symbol
 	SymFormatSpan      *sx.Symbol
 	SymFormatSub       *sx.Symbol
@@ -223,6 +225,7 @@ func (zs *ZettelSymbols) InitializeZettelSymbols(sf sx.SymbolFactory) {
 	zs.SymFormatEmph = sf.MustMake(NameSymFormatEmph)
 	zs.SymFormatDelete = sf.MustMake(NameSymFormatDelete)
 	zs.SymFormatInsert = sf.MustMake(NameSymFormatInsert)
+	zs.SymFormatMark = sf.MustMake(NameSymFormatMark)
 	zs.SymFormatQuote = sf.MustMake(NameSymFormatQuote)
 	zs.SymFormatSpan = sf.MustMake(NameSymFormatSpan)
 	zs.SymFormatSub = sf.MustMake(NameSymFormatSub)

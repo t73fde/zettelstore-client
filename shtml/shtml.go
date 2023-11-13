@@ -711,6 +711,7 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.NameSymFormatDelete, 1, ev.makeFormatFn("del"))
 	ev.bind(sz.NameSymFormatEmph, 1, ev.makeFormatFn("em"))
 	ev.bind(sz.NameSymFormatInsert, 1, ev.makeFormatFn("ins"))
+	ev.bind(sz.NameSymFormatMark, 1, ev.makeFormatFn("mark"))
 	ev.bind(sz.NameSymFormatQuote, 1, ev.evalQuote)
 	ev.bind(sz.NameSymFormatSpan, 1, ev.makeFormatFn("span"))
 	ev.bind(sz.NameSymFormatStrong, 1, ev.makeFormatFn("strong"))
