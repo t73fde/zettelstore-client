@@ -176,10 +176,10 @@ func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
 
 // Environment where sz objects are evaluated to shtml objects
 type Environment struct {
-	err             error
-	langStack       []string
-	endnotes        []endnoteInfo
-	secondaryQuotes bool
+	err          error
+	langStack    []string
+	endnotes     []endnoteInfo
+	quoteNesting uint
 }
 type endnoteInfo struct {
 	noteID  string    // link id
@@ -193,10 +193,10 @@ func MakeEnvironment(lang string) Environment {
 	langStack := make([]string, 1, 16)
 	langStack[0] = lang
 	return Environment{
-		err:             nil,
-		langStack:       langStack,
-		endnotes:        nil,
-		secondaryQuotes: false,
+		err:          nil,
+		langStack:    langStack,
+		endnotes:     nil,
+		quoteNesting: 0,
 	}
 }
 
@@ -207,7 +207,7 @@ func (env *Environment) GetError() error { return env.err }
 func (env *Environment) Reset() {
 	env.langStack = env.langStack[0:1]
 	env.endnotes = nil
-	env.secondaryQuotes = false
+	env.quoteNesting = 0
 }
 
 // PushAttribute adds the current attributes to the environment.
@@ -793,10 +793,10 @@ func getQuoteData(lang string) quoteData {
 }
 
 func getQuotes(data *quoteData, env *Environment) (string, string) {
-	if env.secondaryQuotes {
-		return data.secLeft, data.secRight
+	if env.quoteNesting%2 == 0 {
+		return data.primLeft, data.primRight
 	}
-	return data.primLeft, data.primRight
+	return data.secLeft, data.secRight
 }
 
 func (ev *Evaluator) evalQuote(args []sx.Object, env *Environment) sx.Object {
@@ -809,9 +809,11 @@ func (ev *Evaluator) evalQuote(args []sx.Object, env *Environment) sx.Object {
 	}
 	quotes := getQuoteData(env.getLanguage())
 	leftQ, rightQ := getQuotes(&quotes, env)
-	env.secondaryQuotes = !env.secondaryQuotes
 
+	env.quoteNesting++
 	res := ev.evalSlice(args[1:], env)
+	env.quoteNesting--
+
 	lastPair := res.LastPair()
 	if lastPair.IsNil() {
 		res = sx.Cons(sx.MakeList(ev.symNoEscape, sx.String(leftQ), sx.String(rightQ)), sx.Nil())
