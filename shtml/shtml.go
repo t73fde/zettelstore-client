@@ -20,6 +20,7 @@ import (
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/attrs"
 	"zettelstore.de/client.fossil/sz"
+	"zettelstore.de/client.fossil/text"
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxhtml"
 )
@@ -296,6 +297,12 @@ func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.NameSymTypeIDSet, 2, evalMetaSet)
 	ev.bind(sz.NameSymTypeTagSet, 2, evalMetaSet)
 	ev.bind(sz.NameSymTypeWordSet, 2, evalMetaSet)
+	ev.bind(sz.NameSymTypeZettelmarkup, 2, func(args []sx.Object, env *Environment) sx.Object {
+		a := make(attrs.Attributes, 2).
+			Set("name", ev.getSymbol(ev.eval(args[0], env), env).String()).
+			Set("content", text.EvaluateInlineString(getList(args[1], env)))
+		return ev.EvaluateMeta(a)
+	})
 }
 
 // EvaluateMeta returns HTML meta object for an attribute.
