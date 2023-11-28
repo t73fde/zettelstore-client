@@ -435,10 +435,21 @@ func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregat
 //
 // This method only works if c.AllowRedirect(true) was called.
 func (c *Client) TagZettel(ctx context.Context, tag string) (api.ZettelID, error) {
+	return c.fetchTagOrRoleZettel(ctx, api.QueryKeyTag, tag)
+}
+
+// RoleZettel returns the tag zettel of a given tag.
+//
+// This method only works if c.AllowRedirect(true) was called.
+func (c *Client) RoleZettel(ctx context.Context, role string) (api.ZettelID, error) {
+	return c.fetchTagOrRoleZettel(ctx, api.QueryKeyRole, role)
+}
+
+func (c *Client) fetchTagOrRoleZettel(ctx context.Context, key, val string) (api.ZettelID, error) {
 	if c.client.CheckRedirect == nil {
 		panic("client does not allow to track redirect")
 	}
-	ub := c.newURLBuilder('z').AppendKVQuery(api.QueryKeyTag, tag)
+	ub := c.newURLBuilder('z').AppendKVQuery(key, val)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return api.InvalidZID, err

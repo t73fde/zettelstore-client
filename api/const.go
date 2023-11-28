@@ -128,6 +128,7 @@ const (
 	ValueLangEN            = "en"
 	ValueRoleConfiguration = "configuration"
 	ValueRoleTag           = "tag"
+	ValueRoleRole          = "role"
 	ValueRoleZettel        = "zettel"
 	ValueSyntaxCSS         = "css"
 	ValueSyntaxDraw        = "draw"
@@ -169,6 +170,7 @@ const (
 	QueryKeyPart      = "part"
 	QueryKeyPhrase    = "phrase"
 	QueryKeyQuery     = "q"
+	QueryKeyRole      = "role"
 	QueryKeySeed      = "_seed"
 	QueryKeyTag       = "tag"
 )
