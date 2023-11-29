@@ -58,6 +58,7 @@ const (
 	// Range 90000...99999 is reserved for zettel templates
 	ZidTOCNewTemplate    = ZettelID("00000000090000")
 	ZidTemplateNewZettel = ZettelID("00000000090001")
+	ZidTemplateNewRole   = ZettelID("00000000090004")
 	ZidTemplateNewTag    = ZettelID("00000000090003")
 	ZidTemplateNewUser   = ZettelID("00000000090002")
 
