@@ -55,6 +55,12 @@ const (
 	// Other sxn code zettel are in the range 50000..59999
 	ZidSxnPrelude = ZettelID("00000000059900")
 
+	// Predefined Zettelmarkup zettel are in the range 60000..69999
+	ZidRoleZettelZettel        = ZettelID("00000000060010")
+	ZidRoleConfigurationZettel = ZettelID("00000000060020")
+	ZidRoleRoleZettel          = ZettelID("00000000060030")
+	ZidRoleTagZettel           = ZettelID("00000000060040")
+
 	// Range 90000...99999 is reserved for zettel templates
 	ZidTOCNewTemplate    = ZettelID("00000000090000")
 	ZidTemplateNewZettel = ZettelID("00000000090001")
