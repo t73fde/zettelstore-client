@@ -1,16 +1,24 @@
 <title>Change Log</title>
 
+<a name="0_17"></a>
+<h2>Changes for Version 0.17.0 (pending)</h2>
+
 <a name="0_16"></a>
-<h2>Changes for Version 0.16.0 (pending)</h2>
+<h2>Changes for Version 0.16.0 (2023-11-30)</h2>
+  *  Refactor shtml transformator to support evaluating the language tree of a
+     zettel AST. Its API has been changes, since evaluation is now top-down,
+     where previous transformation was bottom.up.
+  *  Add API call to retrieve role zettel.
+  *  Added constants for role zettel and to mark text within zettelmarkup.
 
 <a name="0_15"></a>
 <h2>Changes for Version 0.15.0 (2023-10-26)</h2>
-  * Tag zettel: API, constant values
-  * Refactorings b/c Sx
+  *  Tag zettel: API, constant values
+  *  Refactorings b/c Sx
 
 <a name="0_14"></a>
 <h2>Changes for Version 0.14.0 (2023-09-23)</h2>
-  * Remove support for JSON encoding
+  *  Remove support for JSON encoding
 
 <a name="0_13"></a>
 <h2>Changes for Version 0.13.0 (2023-08-07)</h2>
