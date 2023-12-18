@@ -125,7 +125,8 @@ func statusToError(resp *http.Response) error {
 	}
 }
 
-func (c *Client) newURLBuilder(key byte) *api.URLBuilder {
+// NewURLBuilder creates a new URL builder for the client with the given key.
+func (c *Client) NewURLBuilder(key byte) *api.URLBuilder {
 	return api.NewURLBuilder(c.base, key)
 }
 func (*Client) newRequest(ctx context.Context, method string, ub *api.URLBuilder, body io.Reader) (*http.Request, error) {
@@ -212,7 +213,7 @@ func (c *Client) updateToken(ctx context.Context) error {
 // Authenticate sets a new token by sending user name and password.
 func (c *Client) Authenticate(ctx context.Context) error {
 	authData := url.Values{"username": {c.username}, "password": {c.password}}
-	req, err := c.newRequest(ctx, http.MethodPost, c.newURLBuilder('a'), strings.NewReader(authData.Encode()))
+	req, err := c.newRequest(ctx, http.MethodPost, c.NewURLBuilder('a'), strings.NewReader(authData.Encode()))
 	if err != nil {
 		return err
 	}
@@ -222,7 +223,7 @@ func (c *Client) Authenticate(ctx context.Context) error {
 
 // RefreshToken updates the access token
 func (c *Client) RefreshToken(ctx context.Context) error {
-	req, err := c.newRequest(ctx, http.MethodPut, c.newURLBuilder('a'), nil)
+	req, err := c.newRequest(ctx, http.MethodPut, c.NewURLBuilder('a'), nil)
 	if err != nil {
 		return err
 	}
@@ -231,7 +232,7 @@ func (c *Client) RefreshToken(ctx context.Context) error {
 
 // CreateZettel creates a new zettel and returns its URL.
 func (c *Client) CreateZettel(ctx context.Context, data []byte) (api.ZettelID, error) {
-	ub := c.newURLBuilder('z')
+	ub := c.NewURLBuilder('z')
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, bytes.NewBuffer(data), nil)
 	if err != nil {
 		return api.InvalidZID, err
@@ -256,7 +257,7 @@ func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelData) (api
 	if _, err := sx.Print(&buf, sexp.EncodeZettel(data)); err != nil {
 		return api.InvalidZID, err
 	}
-	ub := c.newURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
+	ub := c.NewURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, &buf, nil)
 	if err != nil {
 		return api.InvalidZID, err
@@ -277,7 +278,7 @@ var bsLF = []byte{'\n'}
 
 // QueryZettel returns a list of all Zettel.
 func (c *Client) QueryZettel(ctx context.Context, query string) ([][]byte, error) {
-	ub := c.newURLBuilder('z').AppendQuery(query)
+	ub := c.NewURLBuilder('z').AppendQuery(query)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return nil, err
@@ -303,7 +304,7 @@ func (c *Client) QueryZettel(ctx context.Context, query string) ([][]byte, error
 
 // QueryZettelData returns a list of zettel metadata.
 func (c *Client) QueryZettelData(ctx context.Context, query string) (string, string, []api.ZidMetaRights, error) {
-	ub := c.newURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingData).AppendQuery(query)
+	ub := c.NewURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingData).AppendQuery(query)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return "", "", nil, err
@@ -449,7 +450,7 @@ func (c *Client) fetchTagOrRoleZettel(ctx context.Context, key, val string) (api
 	if c.client.CheckRedirect == nil {
 		panic("client does not allow to track redirect")
 	}
-	ub := c.newURLBuilder('z').AppendKVQuery(key, val)
+	ub := c.NewURLBuilder('z').AppendKVQuery(key, val)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
 	if err != nil {
 		return api.InvalidZID, err
@@ -476,7 +477,7 @@ func (c *Client) fetchTagOrRoleZettel(ctx context.Context, key, val string) (api
 
 // GetZettel returns a zettel as a string.
 func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) ([]byte, error) {
-	ub := c.newURLBuilder('z').SetZid(zid)
+	ub := c.NewURLBuilder('z').SetZid(zid)
 	if part != "" && part != api.PartContent {
 		ub.AppendKVQuery(api.QueryKeyPart, part)
 	}
@@ -498,7 +499,7 @@ func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) (
 
 // GetZettelData returns a zettel as a struct of its parts.
 func (c *Client) GetZettelData(ctx context.Context, zid api.ZettelID) (api.ZettelData, error) {
-	ub := c.newURLBuilder('z').SetZid(zid)
+	ub := c.NewURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartZettel)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
@@ -527,7 +528,7 @@ func (c *Client) GetEvaluatedZettel(ctx context.Context, zid api.ZettelID, enc a
 }
 
 func (c *Client) getZettelString(ctx context.Context, zid api.ZettelID, enc api.EncodingEnum, parseOnly bool) ([]byte, error) {
-	ub := c.newURLBuilder('z').SetZid(zid)
+	ub := c.NewURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, enc.String())
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartContent)
 	if parseOnly {
@@ -558,7 +559,7 @@ func (c *Client) GetEvaluatedSz(ctx context.Context, zid api.ZettelID, part stri
 }
 
 func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parseOnly bool, sf sx.SymbolFactory) (sx.Object, error) {
-	ub := c.newURLBuilder('z').SetZid(zid)
+	ub := c.NewURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingSz)
 	if part != "" {
 		ub.AppendKVQuery(api.QueryKeyPart, part)
@@ -579,7 +580,7 @@ func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parse
 
 // GetMetaData returns the metadata of a zettel.
 func (c *Client) GetMetaData(ctx context.Context, zid api.ZettelID) (api.MetaRights, error) {
-	ub := c.newURLBuilder('z').SetZid(zid)
+	ub := c.NewURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartMeta)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
@@ -621,7 +622,7 @@ func (c *Client) GetMetaData(ctx context.Context, zid api.ZettelID) (api.MetaRig
 
 // UpdateZettel updates an existing zettel.
 func (c *Client) UpdateZettel(ctx context.Context, zid api.ZettelID, data []byte) error {
-	ub := c.newURLBuilder('z').SetZid(zid)
+	ub := c.NewURLBuilder('z').SetZid(zid)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPut, ub, bytes.NewBuffer(data), nil)
 	if err != nil {
 		return err
@@ -639,7 +640,7 @@ func (c *Client) UpdateZettelData(ctx context.Context, zid api.ZettelID, data ap
 	if _, err := sx.Print(&buf, sexp.EncodeZettel(data)); err != nil {
 		return err
 	}
-	ub := c.newURLBuilder('z').SetZid(zid).AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
+	ub := c.NewURLBuilder('z').SetZid(zid).AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPut, ub, &buf, nil)
 	if err != nil {
 		return err
@@ -653,9 +654,9 @@ func (c *Client) UpdateZettelData(ctx context.Context, zid api.ZettelID, data ap
 
 // RenameZettel renames a zettel.
 func (c *Client) RenameZettel(ctx context.Context, oldZid, newZid api.ZettelID) error {
-	ub := c.newURLBuilder('z').SetZid(oldZid)
+	ub := c.NewURLBuilder('z').SetZid(oldZid)
 	h := http.Header{
-		api.HeaderDestination: {c.newURLBuilder('z').SetZid(newZid).String()},
+		api.HeaderDestination: {c.NewURLBuilder('z').SetZid(newZid).String()},
 	}
 	resp, err := c.buildAndExecuteRequest(ctx, api.MethodMove, ub, nil, h)
 	if err != nil {
@@ -670,7 +671,7 @@ func (c *Client) RenameZettel(ctx context.Context, oldZid, newZid api.ZettelID) 
 
 // DeleteZettel deletes a zettel with the given identifier.
 func (c *Client) DeleteZettel(ctx context.Context, zid api.ZettelID) error {
-	ub := c.newURLBuilder('z').SetZid(zid)
+	ub := c.NewURLBuilder('z').SetZid(zid)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodDelete, ub, nil, nil)
 	if err != nil {
 		return err
@@ -684,7 +685,7 @@ func (c *Client) DeleteZettel(ctx context.Context, zid api.ZettelID) error {
 
 // ExecuteCommand will execute a given command at the Zettelstore.
 func (c *Client) ExecuteCommand(ctx context.Context, command api.Command) error {
-	ub := c.newURLBuilder('x').AppendKVQuery(api.QueryKeyCommand, string(command))
+	ub := c.NewURLBuilder('x').AppendKVQuery(api.QueryKeyCommand, string(command))
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, nil, nil)
 	if err != nil {
 		return err
@@ -698,7 +699,7 @@ func (c *Client) ExecuteCommand(ctx context.Context, command api.Command) error 
 
 // GetVersionInfo returns version information..
 func (c *Client) GetVersionInfo(ctx context.Context) (VersionInfo, error) {
-	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, c.newURLBuilder('x'), nil, nil)
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, c.NewURLBuilder('x'), nil, nil)
 	if err != nil {
 		return VersionInfo{}, err
 	}
@@ -729,4 +730,22 @@ type VersionInfo struct {
 	Patch int
 	Info  string
 	Hash  string
+}
+
+// Get executes a GET request to the given URL and returns the read data.
+func (c *Client) Get(ctx context.Context, ub *api.URLBuilder) ([]byte, error) {
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	switch resp.StatusCode {
+	case http.StatusOK:
+	case http.StatusNoContent:
+		return nil, nil
+	default:
+		return nil, statusToError(resp)
+	}
+	data, err := io.ReadAll(resp.Body)
+	return data, err
 }
