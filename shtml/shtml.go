@@ -382,7 +382,7 @@ func (ev *Evaluator) bindBlocks() {
 		currResult := result
 		for _, elem := range args {
 			if quote, isPair := sx.GetPair(ev.Eval(elem, env)); isPair {
-				currResult = currResult.AppendBang(quote.Cons(ev.symP))
+				currResult = currResult.AppendBang(quote.Cons(ev.symList))
 			}
 		}
 		return result
