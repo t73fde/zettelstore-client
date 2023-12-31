@@ -2,4 +2,4 @@ module zettelstore.de/client.fossil
 
 go 1.21
 
-require zettelstore.de/sx.fossil v0.0.0-20231217191800-0bafdfd0ef92
+require zettelstore.de/sx.fossil v0.0.0-20231231141844-fe1bf9abf4e7
