@@ -6,6 +6,9 @@
 // Zettelstore client is licensed under the latest version of the EUPL
 // (European Union Public License). Please see file LICENSE.txt for your rights
 // and obligations under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2021-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 // Package client provides a client for accessing the Zettelstore via its API.
@@ -549,16 +552,16 @@ func (c *Client) getZettelString(ctx context.Context, zid api.ZettelID, enc api.
 }
 
 // GetParsedSz returns an parsed zettel as a Sexpr-decoded data structure.
-func (c *Client) GetParsedSz(ctx context.Context, zid api.ZettelID, part string, sf sx.SymbolFactory) (sx.Object, error) {
-	return c.getSz(ctx, zid, part, true, sf)
+func (c *Client) GetParsedSz(ctx context.Context, zid api.ZettelID, part string) (sx.Object, error) {
+	return c.getSz(ctx, zid, part, true)
 }
 
 // GetEvaluatedSz returns an evaluated zettel as a Sexpr-decoded data structure.
-func (c *Client) GetEvaluatedSz(ctx context.Context, zid api.ZettelID, part string, sf sx.SymbolFactory) (sx.Object, error) {
-	return c.getSz(ctx, zid, part, false, sf)
+func (c *Client) GetEvaluatedSz(ctx context.Context, zid api.ZettelID, part string) (sx.Object, error) {
+	return c.getSz(ctx, zid, part, false)
 }
 
-func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parseOnly bool, sf sx.SymbolFactory) (sx.Object, error) {
+func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parseOnly bool) (sx.Object, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingSz)
 	if part != "" {
@@ -575,7 +578,7 @@ func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parse
 	if resp.StatusCode != http.StatusOK {
 		return nil, statusToError(resp)
 	}
-	return sxreader.MakeReader(bufio.NewReaderSize(resp.Body, 8), sxreader.WithSymbolFactory(sf)).Read()
+	return sxreader.MakeReader(bufio.NewReaderSize(resp.Body, 8)).Read()
 }
 
 // GetMetaData returns the metadata of a zettel.

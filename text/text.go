@@ -6,6 +6,9 @@
 // Zettelstore client is licensed under the latest version of the EUPL
 // (European Union Public License). Please see file LICENSE.txt for your rights
 // and obligations under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 // Package text provides types, constants and function to work with text output.
@@ -20,28 +23,12 @@ import (
 
 // Encoder is the structure to hold relevant data to execute the encoding.
 type Encoder struct {
-	sf sx.SymbolFactory
 	sb strings.Builder
-
-	symText  *sx.Symbol
-	symSpace *sx.Symbol
-	symSoft  *sx.Symbol
-	symHard  *sx.Symbol
-	symQuote *sx.Symbol
 }
 
-func NewEncoder(sf sx.SymbolFactory) *Encoder {
-	if sf == nil {
-		return nil
-	}
+func NewEncoder() *Encoder {
 	enc := &Encoder{
-		sf:       sf,
-		sb:       strings.Builder{},
-		symText:  sf.MustMake(sz.NameSymText),
-		symSpace: sf.MustMake(sz.NameSymSpace),
-		symSoft:  sf.MustMake(sz.NameSymSoft),
-		symHard:  sf.MustMake(sz.NameSymHard),
-		symQuote: sf.MustMake(sx.QuoteName),
+		sb: strings.Builder{},
 	}
 	return enc
 }
@@ -55,10 +42,7 @@ func (enc *Encoder) Encode(lst *sx.Pair) string {
 
 // EvaluateInlineString returns the text content of the given inline list as a string.
 func EvaluateInlineString(lst *sx.Pair) string {
-	if sf := sx.FindSymbolFactory(lst); sf != nil {
-		return NewEncoder(sf).Encode(lst)
-	}
-	return ""
+	return NewEncoder().Encode(lst)
 }
 
 func (enc *Encoder) executeList(lst *sx.Pair) {
@@ -75,7 +59,7 @@ func (enc *Encoder) execute(obj sx.Object) {
 	if sx.IsNil(sym) {
 		return
 	}
-	if sym.IsEqual(enc.symText) {
+	if sym.IsEqual(sz.SymText) {
 		args := cmd.Tail()
 		if args == nil {
 			return
@@ -83,11 +67,11 @@ func (enc *Encoder) execute(obj sx.Object) {
 		if val, isString := sx.GetString(args.Car()); isString {
 			enc.sb.WriteString(val.String())
 		}
-	} else if sym.IsEqual(enc.symSpace) || sym.IsEqual(enc.symSoft) {
+	} else if sym.IsEqual(sz.SymSpace) || sym.IsEqual(sz.SymSoft) {
 		enc.sb.WriteByte(' ')
-	} else if sym.IsEqual(enc.symHard) {
+	} else if sym.IsEqual(sz.SymHard) {
 		enc.sb.WriteByte('\n')
-	} else if !sym.IsEqual(enc.symQuote) {
+	} else if !sym.IsEqual(sx.SymbolQuote) {
 		enc.executeList(cmd.Tail())
 	}
 }

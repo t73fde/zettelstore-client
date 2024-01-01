@@ -6,6 +6,9 @@
 // Zettelstore client is licensed under the latest version of the EUPL
 // (European Union Public License). Please see file LICENSE.txt for your rights
 // and obligations under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package client_test
@@ -19,8 +22,6 @@ import (
 
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/client"
-	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil"
 )
 
 func TestZettelList(t *testing.T) {
@@ -47,10 +48,7 @@ func TestGetProtectedZettel(t *testing.T) {
 
 func TestGetSzZettel(t *testing.T) {
 	c := getClient()
-	sf := sx.MakeMappedFactory(1024)
-	var zetSyms sz.ZettelSymbols
-	zetSyms.InitializeZettelSymbols(sf)
-	value, err := c.GetEvaluatedSz(context.Background(), api.ZidDefaultHome, api.PartContent, sf)
+	value, err := c.GetEvaluatedSz(context.Background(), api.ZidDefaultHome, api.PartContent)
 	if err != nil {
 		t.Error(err)
 		return

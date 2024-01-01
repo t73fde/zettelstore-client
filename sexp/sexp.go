@@ -6,6 +6,9 @@
 // Zettelstore client is licensed under the latest version of the EUPL
 // (European Union Public License). Please see file LICENSE.txt for your rights
 // and obligations under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2023-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 // Package sexp contains helper function to work with s-expression in an alien
@@ -23,13 +26,12 @@ import (
 
 // EncodeZettel transforms zettel data into a sx object.
 func EncodeZettel(zettel api.ZettelData) sx.Object {
-	sf := sx.MakeMappedFactory(1024)
 	return sx.MakeList(
-		sf.MustMake("zettel"),
-		meta2sz(zettel.Meta, sf),
-		sx.MakeList(sf.MustMake("rights"), sx.Int64(int64(zettel.Rights))),
-		sx.MakeList(sf.MustMake("encoding"), sx.String(zettel.Encoding)),
-		sx.MakeList(sf.MustMake("content"), sx.String(zettel.Content)),
+		sx.Symbol("zettel"),
+		meta2sz(zettel.Meta),
+		sx.MakeList(sx.Symbol("rights"), sx.Int64(int64(zettel.Rights))),
+		sx.MakeList(sx.Symbol("encoding"), sx.String(zettel.Encoding)),
+		sx.MakeList(sx.Symbol("content"), sx.String(zettel.Content)),
 	)
 }
 
@@ -78,16 +80,15 @@ func ParseZettel(obj sx.Object) (api.ZettelData, error) {
 
 // EncodeMetaRights translates metadata/rights into a sx object.
 func EncodeMetaRights(mr api.MetaRights) *sx.Pair {
-	sf := sx.MakeMappedFactory(1024)
 	return sx.MakeList(
-		sf.MustMake("list"),
-		meta2sz(mr.Meta, sf),
-		sx.MakeList(sf.MustMake("rights"), sx.Int64(int64(mr.Rights))),
+		sx.SymbolList,
+		meta2sz(mr.Meta),
+		sx.MakeList(sx.Symbol("rights"), sx.Int64(int64(mr.Rights))),
 	)
 }
 
-func meta2sz(m api.ZettelMeta, sf sx.SymbolFactory) sx.Object {
-	result := sx.Nil().Cons(sf.MustMake("meta"))
+func meta2sz(m api.ZettelMeta) sx.Object {
+	result := sx.Nil().Cons(sx.Symbol("meta"))
 	curr := result
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -95,7 +96,7 @@ func meta2sz(m api.ZettelMeta, sf sx.SymbolFactory) sx.Object {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		val := sx.MakeList(sf.MustMake(k), sx.String(m[k]))
+		val := sx.MakeList(sx.Symbol(k), sx.String(m[k]))
 		curr = curr.AppendBang(val)
 	}
 	return result
@@ -112,7 +113,7 @@ func ParseMeta(pair *sx.Pair) (api.ZettelMeta, error) {
 		if err != nil {
 			return nil, err
 		}
-		res[mVals[0].(*sx.Symbol).Name()] = mVals[1].(sx.String).String()
+		res[mVals[0].(sx.Symbol).Name()] = mVals[1].(sx.String).String()
 	}
 	return res, nil
 }
