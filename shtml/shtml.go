@@ -236,7 +236,7 @@ func (ev *Evaluator) bindMetadata() {
 	evalMetaString := func(args []sx.Object, env *Environment) sx.Object {
 		a := make(attrs.Attributes, 2).
 			Set("name", string(ev.getSymbol(ev.Eval(args[0], env), env))).
-			Set("content", getString(args[1], env).String())
+			Set("content", string(getString(args[1], env)))
 		return ev.EvaluateMeta(a)
 	}
 	ev.bind(sz.SymTypeCredential, 2, evalMetaString)
@@ -253,7 +253,7 @@ func (ev *Evaluator) bindMetadata() {
 		lst := ev.Eval(args[1], env)
 		for elem := getList(lst, env); elem != nil; elem = elem.Tail() {
 			sb.WriteByte(' ')
-			sb.WriteString(getString(elem.Car(), env).String())
+			sb.WriteString(string(getString(elem.Car(), env)))
 		}
 		s := sb.String()
 		if len(s) > 0 {
@@ -269,7 +269,7 @@ func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.SymTypeWordSet, 2, evalMetaSet)
 	ev.bind(sz.SymTypeZettelmarkup, 2, func(args []sx.Object, env *Environment) sx.Object {
 		a := make(attrs.Attributes, 2).
-			Set("name", ev.getSymbol(ev.Eval(args[0], env), env).String()).
+			Set("name", string(ev.getSymbol(ev.Eval(args[0], env), env))).
 			Set("content", text.EvaluateInlineString(getList(args[1], env)))
 		return ev.EvaluateMeta(a)
 	})
@@ -297,7 +297,7 @@ func (ev *Evaluator) bindBlocks() {
 		a := ev.GetAttributes(args[1], env)
 		env.pushAttributes(a)
 		defer env.popAttributes()
-		if fragment := getString(args[3], env).String(); fragment != "" {
+		if fragment := string(getString(args[3], env)); fragment != "" {
 			a = a.Set("id", ev.unique+fragment)
 		}
 
@@ -399,8 +399,7 @@ func (ev *Evaluator) bindBlocks() {
 		if ev.GetAttributes(args[0], env).HasDefault() {
 			if len(args) > 1 {
 				if s := getString(args[1], env); s != "" {
-					t := sx.String(s.String())
-					return sx.Nil().Cons(t).Cons(sxhtml.SymBlockComment)
+					return sx.Nil().Cons(s).Cons(sxhtml.SymBlockComment)
 				}
 			}
 		}
@@ -417,7 +416,7 @@ func (ev *Evaluator) bindBlocks() {
 		a := ev.GetAttributes(args[0], env)
 		content := getString(args[1], env)
 		if a.HasDefault() {
-			content = sx.String(visibleReplacer.Replace(content.String()))
+			content = sx.String(visibleReplacer.Replace(string(content)))
 		}
 		return ev.evalVerbatim(a, content)
 	})
@@ -436,7 +435,7 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		if refValue := getString(ref.Tail().Car(), env); refValue != "" {
 			if refSym, isRefSym := sx.GetSymbol(refKind); isRefSym && refSym.IsEqual(sz.SymRefStateExternal) {
-				a := ev.GetAttributes(args[0], env).Set("src", refValue.String()).AddClass("external")
+				a := ev.GetAttributes(args[0], env).Set("src", string(refValue)).AddClass("external")
 				return sx.Nil().Cons(sx.Nil().Cons(ev.EvaluateAttrbute(a)).Cons(SymIMG)).Cons(SymP)
 			}
 			return sx.MakeList(
@@ -555,7 +554,7 @@ func (ev *Evaluator) bindInlines() {
 		env.pushAttributes(a)
 		defer env.popAttributes()
 		refValue := getString(args[1], env)
-		return ev.evalLink(a.Set("href", refValue.String()), refValue, args[2:], env)
+		return ev.evalLink(a.Set("href", string(refValue)), refValue, args[2:], env)
 	}
 	ev.bind(sz.SymLinkZettel, 2, evalHREF)
 	ev.bind(sz.SymLinkSelf, 2, evalHREF)
@@ -574,7 +573,7 @@ func (ev *Evaluator) bindInlines() {
 		env.pushAttributes(a)
 		defer env.popAttributes()
 		refValue := getString(args[1], env)
-		query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(refValue.String())
+		query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(string(refValue))
 		return ev.evalLink(a.Set("href", query), refValue, args[2:], env)
 	})
 	ev.bind(sz.SymLinkExternal, 2, func(args []sx.Object, env *Environment) sx.Object {
@@ -582,7 +581,7 @@ func (ev *Evaluator) bindInlines() {
 		env.pushAttributes(a)
 		defer env.popAttributes()
 		refValue := getString(args[1], env)
-		return ev.evalLink(a.Set("href", refValue.String()).AddClass("external"), refValue, args[2:], env)
+		return ev.evalLink(a.Set("href", string(refValue)).AddClass("external"), refValue, args[2:], env)
 	})
 
 	ev.bind(sz.SymEmbed, 3, func(args []sx.Object, env *Environment) sx.Object {
@@ -592,7 +591,7 @@ func (ev *Evaluator) bindInlines() {
 			embedAttr := sx.MakeList(
 				sxhtml.SymAttr,
 				sx.Cons(SymAttrType, sx.String("image/svg+xml")),
-				sx.Cons(SymAttrSrc, sx.String("/"+getString(ref.Tail(), env).String()+".svg")),
+				sx.Cons(SymAttrSrc, sx.String("/"+string(getString(ref.Tail(), env))+".svg")),
 			)
 			return sx.MakeList(
 				SymFIGURE,
@@ -603,7 +602,7 @@ func (ev *Evaluator) bindInlines() {
 			)
 		}
 		a := ev.GetAttributes(args[0], env)
-		a = a.Set("src", getString(ref.Tail().Car(), env).String())
+		a = a.Set("src", string(getString(ref.Tail().Car(), env)))
 		if len(args) > 3 {
 			var sb strings.Builder
 			flattenText(&sb, sx.MakeList(args[3:]...))
@@ -649,7 +648,7 @@ func (ev *Evaluator) bindInlines() {
 		result := ev.evalSlice(args[3:], env)
 		if !ev.noLinks {
 			if fragment := getString(args[2], env); fragment != "" {
-				a := attrs.Attributes{"id": fragment.String() + ev.unique}
+				a := attrs.Attributes{"id": string(fragment) + ev.unique}
 				return result.Cons(ev.EvaluateAttrbute(a)).Cons(SymA)
 			}
 		}
@@ -811,7 +810,7 @@ func (ev *Evaluator) evalLiteral(args []sx.Object, a attrs.Attributes, sym sx.Sy
 		a = ev.GetAttributes(args[0], env)
 	}
 	a = setProgLang(a)
-	literal := getString(args[1], env).String()
+	literal := string(getString(args[1], env))
 	if a.HasDefault() {
 		a = a.RemoveDefault()
 		literal = visibleReplacer.Replace(literal)
@@ -830,7 +829,7 @@ func setProgLang(a attrs.Attributes) attrs.Attributes {
 }
 
 func (ev *Evaluator) evalHTML(args []sx.Object, env *Environment) sx.Object {
-	if s := getString(ev.Eval(args[1], env), env); s != "" && IsSafe(s.String()) {
+	if s := getString(ev.Eval(args[1], env), env); s != "" && IsSafe(string(s)) {
 		return sx.Nil().Cons(s).Cons(sxhtml.SymNoEscape)
 	}
 	return nil
@@ -846,7 +845,7 @@ func (ev *Evaluator) evalBLOB(description *sx.Pair, syntax, data sx.String) sx.O
 	case api.ValueSyntaxSVG:
 		return sx.Nil().Cons(sx.Nil().Cons(data).Cons(sxhtml.SymNoEscape)).Cons(SymP)
 	default:
-		imgAttr := sx.Nil().Cons(sx.Cons(SymAttrSrc, sx.String("data:image/"+syntax.String()+";base64,"+data.String())))
+		imgAttr := sx.Nil().Cons(sx.Cons(SymAttrSrc, sx.String("data:image/"+string(syntax)+";base64,"+string(data))))
 		var sb strings.Builder
 		flattenText(&sb, description)
 		if d := sb.String(); d != "" {
@@ -860,7 +859,7 @@ func flattenText(sb *strings.Builder, lst *sx.Pair) {
 	for elem := lst; elem != nil; elem = elem.Tail() {
 		switch obj := elem.Car().(type) {
 		case sx.String:
-			sb.WriteString(obj.String())
+			sb.WriteString(string(obj))
 		case sx.Symbol:
 			if obj.IsEqual(sz.SymSpace) {
 				sb.WriteByte(' ')

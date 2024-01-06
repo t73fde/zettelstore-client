@@ -33,9 +33,20 @@ func GetAttributes(seq *sx.Pair) (result attrs.Attributes) {
 		if !val.IsAtom() {
 			continue
 		}
-		result = result.Set(key.String(), val.String())
+		result = result.Set(goString(key), goString(val))
 	}
 	return result
+}
+
+func goString(obj sx.Object) string {
+	switch o := obj.(type) {
+	case sx.String:
+		return string(o)
+	case sx.Symbol:
+		return string(o)
+	default:
+		return obj.String()
+	}
 }
 
 // GetMetaContent returns the metadata and the content of a sz encoded zettel.

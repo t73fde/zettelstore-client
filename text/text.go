@@ -65,7 +65,7 @@ func (enc *Encoder) execute(obj sx.Object) {
 			return
 		}
 		if val, isString := sx.GetString(args.Car()); isString {
-			enc.sb.WriteString(val.String())
+			enc.sb.WriteString(string(val))
 		}
 	} else if sym.IsEqual(sz.SymSpace) || sym.IsEqual(sz.SymSoft) {
 		enc.sb.WriteByte(' ')
