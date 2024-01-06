@@ -100,7 +100,7 @@ func makeMetaValue(mnode *sx.Pair) (MetaValue, bool) {
 		return result, false
 	}
 	quoteSym, isSymbol := sx.GetSymbol(keyList.Car())
-	if !isSymbol || quoteSym.Name() != "quote" {
+	if !isSymbol || quoteSym != "quote" {
 		return result, false
 	}
 	keySym, isSymbol := sx.GetSymbol(keyList.Tail().Car())
@@ -111,8 +111,8 @@ func makeMetaValue(mnode *sx.Pair) (MetaValue, bool) {
 	if !isPair {
 		return result, false
 	}
-	result.Type = typeSym.Name()
-	result.Key = keySym.Name()
+	result.Type = string(typeSym)
+	result.Key = string(keySym)
 	result.Value = valPair.Car()
 	return result, true
 }

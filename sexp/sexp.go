@@ -113,7 +113,7 @@ func ParseMeta(pair *sx.Pair) (api.ZettelMeta, error) {
 		if err != nil {
 			return nil, err
 		}
-		res[mVals[0].(sx.Symbol).Name()] = mVals[1].(sx.String).String()
+		res[string(mVals[0].(sx.Symbol))] = mVals[1].(sx.String).String()
 	}
 	return res, nil
 }
@@ -197,7 +197,7 @@ func CheckSymbol(obj sx.Object, name string) error {
 	if !isSymbol {
 		return fmt.Errorf("object %v/%T is not a symbol", obj, obj)
 	}
-	if got := sym.Name(); got != name {
+	if got := string(sym); got != name {
 		return fmt.Errorf("symbol %q expected, but got: %q", name, got)
 	}
 	return nil

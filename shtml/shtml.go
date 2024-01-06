@@ -235,7 +235,7 @@ func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.SymMeta, 0, ev.evalList)
 	evalMetaString := func(args []sx.Object, env *Environment) sx.Object {
 		a := make(attrs.Attributes, 2).
-			Set("name", ev.getSymbol(ev.Eval(args[0], env), env).Name()).
+			Set("name", string(ev.getSymbol(ev.Eval(args[0], env), env))).
 			Set("content", getString(args[1], env).String())
 		return ev.EvaluateMeta(a)
 	}
@@ -260,7 +260,7 @@ func (ev *Evaluator) bindMetadata() {
 			s = s[1:]
 		}
 		a := make(attrs.Attributes, 2).
-			Set("name", ev.getSymbol(ev.Eval(args[0], env), env).Name()).
+			Set("name", string(ev.getSymbol(ev.Eval(args[0], env), env))).
 			Set("content", s)
 		return ev.EvaluateMeta(a)
 	}
