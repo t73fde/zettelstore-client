@@ -193,12 +193,12 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	token := vals[1].(sx.String).String()
+	token := string(vals[1].(sx.String))
 	if len(token) < 4 {
 		return fmt.Errorf("no valid token found: %q", token)
 	}
 	c.token = token
-	c.tokenType = vals[0].(sx.String).String()
+	c.tokenType = string(vals[0].(sx.String))
 	c.expires = time.Now().Add(time.Duration(vals[2].(sx.Int64)*9/10) * time.Second)
 	return nil
 }
@@ -338,7 +338,18 @@ func (c *Client) QueryZettelData(ctx context.Context, query string) (string, str
 		return "", "", nil, err
 	}
 	metaList, err := parseMetaList(vals[3].(*sx.Pair))
-	return qVals[1].String(), hVals[1].String(), metaList, err
+	return goString(qVals[1]), goString(hVals[1]), metaList, err
+}
+
+func goString(obj sx.Object) string {
+	switch o := obj.(type) {
+	case sx.String:
+		return string(o)
+	case sx.Symbol:
+		return string(o)
+	default:
+		return obj.String()
+	}
 }
 
 func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
@@ -718,8 +729,8 @@ func (c *Client) GetVersionInfo(ctx context.Context) (VersionInfo, error) {
 				Major: int(vals[0].(sx.Int64)),
 				Minor: int(vals[1].(sx.Int64)),
 				Patch: int(vals[2].(sx.Int64)),
-				Info:  vals[3].(sx.String).String(),
-				Hash:  vals[4].(sx.String).String(),
+				Info:  string(vals[3].(sx.String)),
+				Hash:  string(vals[4].(sx.String)),
 			}, nil
 		}
 	}

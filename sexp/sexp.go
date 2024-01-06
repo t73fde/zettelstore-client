@@ -73,8 +73,8 @@ func ParseZettel(obj sx.Object) (api.ZettelData, error) {
 	return api.ZettelData{
 		Meta:     meta,
 		Rights:   rights,
-		Encoding: encVals[1].(sx.String).String(),
-		Content:  contentVals[1].(sx.String).String(),
+		Encoding: string(encVals[1].(sx.String)),
+		Content:  string(contentVals[1].(sx.String)),
 	}, nil
 }
 
@@ -113,7 +113,7 @@ func ParseMeta(pair *sx.Pair) (api.ZettelMeta, error) {
 		if err != nil {
 			return nil, err
 		}
-		res[string(mVals[0].(sx.Symbol))] = mVals[1].(sx.String).String()
+		res[string(mVals[0].(sx.Symbol))] = string(mVals[1].(sx.String))
 	}
 	return res, nil
 }
