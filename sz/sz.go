@@ -130,7 +130,7 @@ func makeMetaValue(mnode *sx.Pair) (MetaValue, bool) {
 
 func (m Meta) GetString(key string) string {
 	if v, found := m[key]; found {
-		return v.Value.String()
+		return goString(v.Value)
 	}
 	return ""
 }
