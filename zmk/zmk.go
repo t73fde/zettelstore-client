@@ -24,20 +24,18 @@ import (
 )
 
 func ParseBlocks(inp *input.Input) *sx.Pair {
-	parser := &zmkP{inp: inp}
+	parser := zmkP{inp: inp}
 	bs := parser.parseBlockSlice()
 	bs = postProcess(bs)
 	return bs
 }
 
 func ParseInlines(inp *input.Input) *sx.Pair {
-	parser := &zmkP{inp: inp}
+	parser := zmkP{inp: inp}
 	is := parser.parseInlineSlice()
 	is = postProcess(is)
 	return is
 }
-
-type ast struct{}
 
 type zmkP struct {
 	inp *input.Input // Input stream

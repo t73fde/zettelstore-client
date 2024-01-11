@@ -56,11 +56,11 @@ func checkTcs(t *testing.T, tcs TestCases) {
 func TestEOL(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"", ""},
-		{"\n", ""},
-		{"\r", ""},
-		{"\r\n", ""},
-		{"\n\n", ""},
+		{"", "(BLOCK)"},
+		{"\n", "(BLOCK)"},
+		{"\r", "(BLOCK)"},
+		{"\r\n", "(BLOCK)"},
+		{"\n\n", "(BLOCK)"},
 	})
 }
 
