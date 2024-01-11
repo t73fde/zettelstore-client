@@ -303,3 +303,6 @@ const (
 	SearchOperatorGreater    = ">"
 	SearchOperatorNotGreater = "!>"
 )
+
+// QueryPrefix is the prefix that denotes a query expression within a reference.
+const QueryPrefix = "query:"
