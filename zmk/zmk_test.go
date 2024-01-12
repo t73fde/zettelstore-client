@@ -67,52 +67,52 @@ func TestEOL(t *testing.T) {
 func TestText(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"abcd", "(PARA abcd)"},
-		{"ab cd", "(PARA ab SP cd)"},
-		{"abcd ", "(PARA abcd)"},
-		{" abcd", "(PARA abcd)"},
-		{"\\", "(PARA \\)"},
-		{"\\\n", ""},
-		{"\\\ndef", "(PARA HB def)"},
-		{"\\\r", ""},
-		{"\\\rdef", "(PARA HB def)"},
-		{"\\\r\n", ""},
-		{"\\\r\ndef", "(PARA HB def)"},
-		{"\\a", "(PARA a)"},
-		{"\\aa", "(PARA aa)"},
-		{"a\\a", "(PARA aa)"},
-		{"\\+", "(PARA +)"},
-		{"\\ ", "(PARA \u00a0)"},
-		{"http://a, http://b", "(PARA http://a, SP http://b)"},
+		{"abcd", "(BLOCK (PARA (TEXT \"abcd\")))"},
+		{"ab cd", "(BLOCK (PARA (TEXT \"ab\") (SPACE) (TEXT \"cd\")))"},
+		{"abcd ", "(BLOCK (PARA (TEXT \"abcd\")))"},
+		{" abcd", "(BLOCK (PARA (TEXT \"abcd\")))"},
+		{"\\", "(BLOCK (PARA (TEXT \"\\\\\")))"},
+		{"\\\n", "(BLOCK)"},
+		{"\\\ndef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
+		{"\\\r", "(BLOCK)"},
+		{"\\\rdef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
+		{"\\\r\n", "(BLOCK)"},
+		{"\\\r\ndef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
+		{"\\a", "(BLOCK (PARA (TEXT \"a\")))"},
+		{"\\aa", "(BLOCK (PARA (TEXT \"aa\")))"},
+		{"a\\a", "(BLOCK (PARA (TEXT \"aa\")))"},
+		{"\\+", "(BLOCK (PARA (TEXT \"+\")))"},
+		{"\\ ", "(BLOCK (PARA (TEXT \"\u00a0\")))"},
+		{"http://a, http://b", "(BLOCK (PARA (TEXT \"http://a,\") (SPACE) (TEXT \"http://b\")))"},
 	})
 }
 
 func TestSpace(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{" ", ""},
-		{"\t", ""},
-		{"  ", ""},
+		{" ", "(BLOCK)"},
+		{"\t", "(BLOCK)"},
+		{"  ", "(BLOCK)"},
 	})
 }
 
 func TestSoftBreak(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"x\ny", "(PARA x SB y)"},
-		{"z\n", "(PARA z)"},
-		{" \n ", ""},
-		{" \n", ""},
+		{"x\ny", "(BLOCK (PARA (TEXT \"x\") (SOFT) (TEXT \"y\")))"},
+		{"z\n", "(BLOCK (PARA (TEXT \"z\")))"},
+		{" \n ", "(BLOCK)"},
+		{" \n", "(BLOCK)"},
 	})
 }
 
 func TestHardBreak(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"x  \ny", "(PARA x HB y)"},
-		{"z  \n", "(PARA z)"},
-		{"   \n ", ""},
-		{"   \n", ""},
+		{"x  \ny", "(BLOCK (PARA (TEXT \"x\") (HARD) (TEXT \"y\")))"},
+		{"z  \n", "(BLOCK (PARA (TEXT \"z\")))"},
+		{"   \n ", "(BLOCK)"},
+		{"   \n", "(BLOCK)"},
 	})
 }
 

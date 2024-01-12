@@ -105,7 +105,7 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 	// 	lastPara.Inlines = append(lastPara.Inlines, pn.Inlines...)
 	// 	return nil, true
 	// }
-	return pn, false
+	return pn, true
 }
 
 // func startsWithSpaceSoftBreak(pn *ast.ParaNode) bool {
@@ -145,23 +145,23 @@ func (cp *zmkP) parseColon() (*sx.Pair, bool) {
 
 // parsePara parses paragraphed inline material.
 func (cp *zmkP) parsePara() *sx.Pair {
-	// ins := ast.InlineSlice{}
-	// for {
-	// 	in := cp.parseInline()
-	// 	if in == nil {
-	// 		return &ast.ParaNode{Inlines: ins}
-	// 	}
-	// 	ins = append(ins, in)
-	// 	if _, ok := in.(*ast.BreakNode); ok {
-	// 		ch := cp.inp.Ch
-	// 		switch ch {
-	// 		// Must contain all cases from above switch in parseBlock.
-	// 		case input.EOS, '\n', '\r', '@', '`', runeModGrave, '%', '~', '$', '"', '<', '=', '-', '*', '#', '>', ';', ':', ' ', '|', '{':
-	// 			return &ast.ParaNode{Inlines: ins}
-	// 		}
-	// 	}
-	// }
-	return nil
+	var ins []sx.Object
+	for {
+		in := cp.parseInline()
+		if in == nil {
+			return sx.MakeList(ins...).Cons(sz.SymPara)
+		}
+		ins = append(ins, in)
+		sym := in.Car()
+		if sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard) {
+			ch := cp.inp.Ch
+			switch ch {
+			// Must contain all cases from above switch in parseBlock.
+			case input.EOS, '\n', '\r', '@', '`', runeModGrave, '%', '~', '$', '"', '<', '=', '-', '*', '#', '>', ';', ':', ' ', '|', '{':
+				return sx.MakeList(ins...).Cons(sz.SymPara)
+			}
+		}
+	}
 }
 
 // countDelim read from input until a non-delimiter is found and returns number of delimiter chars.
