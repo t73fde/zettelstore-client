@@ -395,28 +395,27 @@ func (cp *zmkP) parseMark() (*sx.Pair /**ast.MarkNode*/, bool) {
 }
 
 func (cp *zmkP) parseComment() (res *sx.Pair /**ast.LiteralNode*/, success bool) {
-	// inp := cp.inp
-	// inp.Next()
-	// if inp.Ch != '%' {
-	// 	return nil, false
-	// }
-	// for inp.Ch == '%' {
-	// 	inp.Next()
-	// }
-	// attrs := cp.parseInlineAttributes()
-	// cp.skipSpace()
-	// pos := inp.Pos
-	// for {
-	// 	if input.IsEOLEOS(inp.Ch) {
-	// 		return &ast.LiteralNode{
-	// 			Kind:    ast.LiteralComment,
-	// 			Attrs:   attrs,
-	// 			Content: append([]byte(nil), inp.Src[pos:inp.Pos]...),
-	// 		}, true
-	// 	}
-	// 	inp.Next()
-	// }
-	return nil, false
+	inp := cp.inp
+	inp.Next()
+	if inp.Ch != '%' {
+		return nil, false
+	}
+	for inp.Ch == '%' {
+		inp.Next()
+	}
+	attrs := cp.parseInlineAttributes()
+	cp.skipSpace()
+	pos := inp.Pos
+	for {
+		if input.IsEOLEOS(inp.Ch) {
+			return sx.MakeList(
+				sz.SymLiteralComment,
+				attrs,
+				sx.String(inp.Src[pos:inp.Pos]),
+			), true
+		}
+		inp.Next()
+	}
 }
 
 var mapRuneFormat = map[rune]sx.Symbol{

@@ -36,9 +36,10 @@ func postProcess(lst *sx.Pair) *sx.Pair {
 }
 
 var ignoreMap = map[sx.Symbol]struct{}{
-	sz.SymSpace: {},
-	sz.SymSoft:  {},
-	sz.SymHard:  {},
+	sz.SymLiteralComment: {},
+	sz.SymSpace:          {},
+	sz.SymSoft:           {},
+	sz.SymHard:           {},
 }
 
 var symMap map[sx.Symbol]func(*sx.Pair) *sx.Pair
@@ -103,24 +104,6 @@ func postProcessInlineList(lst *sx.Pair) *sx.Pair {
 		}
 
 		curr = curr.AppendBang(elem)
-		// if curr == result {
-		// 	// TODO: add only space at front in verse mode
-		// 	// TODO: (SPACE) (SOFT) -> (HARD)
-
-		// 	if elemSym.IsEqual(sz.SymSoft) {
-		// 		continue
-		// 	}
-		// 	curr = curr.AppendBang(elem)
-		// 	continue
-		// }
-		// tail := node.Tail()
-		// if tail == nil {
-		// 	if elemSym.IsEqual(sz.SymSoft) {
-		// 		// Ignore (SOFT) at end of paragraph
-		// 		continue
-		// 	}
-		// }
-		// curr = curr.AppendBang(elem)
 	}
 
 	result := sx.Cons(lst.Car(), sx.Nil())

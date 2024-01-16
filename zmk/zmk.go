@@ -15,12 +15,13 @@
 package zmk
 
 import (
+	"slices"
 	"strings"
 	"unicode"
 
-	"zettelstore.de/client.fossil/attrs"
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 func ParseBlocks(inp *input.Input) *sx.Pair {
@@ -62,7 +63,31 @@ func (cp *zmkP) clearStacked() {
 	// cp.descrl = nil
 }
 
-func (cp *zmkP) parseNormalAttribute(attrs map[string]string) bool {
+type attrMap map[string]string
+
+func (attrs attrMap) updateAttrs(key, val string) {
+	if prevVal := attrs[key]; len(prevVal) > 0 {
+		attrs[key] = prevVal + " " + val
+	} else {
+		attrs[key] = val
+	}
+}
+
+func (attrs attrMap) asPairAssoc() *sx.Pair {
+	names := make([]string, 0, len(attrs))
+	for n := range attrs {
+		names = append(names, n)
+	}
+	slices.Sort(names)
+	var assoc *sx.Pair = nil
+	for i := len(names) - 1; i >= 0; i-- {
+		n := names[i]
+		assoc = assoc.Cons(sx.Cons(sx.String(n), sx.String(attrs[n])))
+	}
+	return sx.MakeList(sxhtml.SymAttr, assoc)
+}
+
+func (cp *zmkP) parseNormalAttribute(attrs attrMap) bool {
 	inp := cp.inp
 	posK := inp.Pos
 	for isNameRune(inp.Ch) {
@@ -79,7 +104,7 @@ func (cp *zmkP) parseNormalAttribute(attrs map[string]string) bool {
 	return cp.parseAttributeValue(key, attrs)
 }
 
-func (cp *zmkP) parseAttributeValue(key string, attrs map[string]string) bool {
+func (cp *zmkP) parseAttributeValue(key string, attrs attrMap) bool {
 	inp := cp.inp
 	inp.Next()
 	if inp.Ch == '"' {
@@ -91,14 +116,14 @@ func (cp *zmkP) parseAttributeValue(key string, attrs map[string]string) bool {
 		case input.EOS:
 			return false
 		case '\n', '\r', ' ', '}':
-			updateAttrs(attrs, key, string(inp.Src[posV:inp.Pos]))
+			attrs.updateAttrs(key, string(inp.Src[posV:inp.Pos]))
 			return true
 		}
 		inp.Next()
 	}
 }
 
-func (cp *zmkP) parseQuotedAttributeValue(key string, attrs map[string]string) bool {
+func (cp *zmkP) parseQuotedAttributeValue(key string, attrs attrMap) bool {
 	inp := cp.inp
 	inp.Next()
 	var sb strings.Builder
@@ -107,7 +132,7 @@ func (cp *zmkP) parseQuotedAttributeValue(key string, attrs map[string]string) b
 		case input.EOS:
 			return false
 		case '"':
-			updateAttrs(attrs, key, sb.String())
+			attrs.updateAttrs(key, sb.String())
 			inp.Next()
 			return true
 		case '\\':
@@ -125,22 +150,14 @@ func (cp *zmkP) parseQuotedAttributeValue(key string, attrs map[string]string) b
 
 }
 
-func updateAttrs(attrs map[string]string, key, val string) {
-	if prevVal := attrs[key]; len(prevVal) > 0 {
-		attrs[key] = prevVal + " " + val
-	} else {
-		attrs[key] = val
-	}
-}
-
-func (cp *zmkP) parseBlockAttributes() attrs.Attributes {
+func (cp *zmkP) parseBlockAttributes() *sx.Pair {
 	inp := cp.inp
 	pos := inp.Pos
 	for isNameRune(inp.Ch) {
 		inp.Next()
 	}
 	if pos < inp.Pos {
-		return attrs.Attributes{"": string(inp.Src[pos:inp.Pos])}
+		return attrMap{"": string(inp.Src[pos:inp.Pos])}.asPairAssoc()
 	}
 
 	// No immediate name: skip spaces
@@ -148,7 +165,7 @@ func (cp *zmkP) parseBlockAttributes() attrs.Attributes {
 	return cp.parseInlineAttributes()
 }
 
-func (cp *zmkP) parseInlineAttributes() attrs.Attributes {
+func (cp *zmkP) parseInlineAttributes() *sx.Pair {
 	inp := cp.inp
 	pos := inp.Pos
 	if attrs, success := cp.doParseAttributes(); success {
@@ -159,21 +176,21 @@ func (cp *zmkP) parseInlineAttributes() attrs.Attributes {
 }
 
 // doParseAttributes reads attributes.
-func (cp *zmkP) doParseAttributes() (res attrs.Attributes, success bool) {
+func (cp *zmkP) doParseAttributes() (res *sx.Pair, success bool) {
 	inp := cp.inp
 	if inp.Ch != '{' {
 		return nil, false
 	}
 	inp.Next()
-	a := attrs.Attributes{}
+	a := attrMap{}
 	if !cp.parseAttributeValues(a) {
 		return nil, false
 	}
 	inp.Next()
-	return a, true
+	return a.asPairAssoc(), true
 }
 
-func (cp *zmkP) parseAttributeValues(a attrs.Attributes) bool {
+func (cp *zmkP) parseAttributeValues(a attrMap) bool {
 	inp := cp.inp
 	for {
 		cp.skipSpaceLine()
@@ -191,7 +208,7 @@ func (cp *zmkP) parseAttributeValues(a attrs.Attributes) bool {
 			if posC == inp.Pos {
 				return false
 			}
-			updateAttrs(a, "class", string(inp.Src[posC:inp.Pos]))
+			a.updateAttrs("class", string(inp.Src[posC:inp.Pos]))
 		case '=':
 			delete(a, "")
 			if !cp.parseAttributeValue("", a) {
