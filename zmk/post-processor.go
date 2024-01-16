@@ -65,6 +65,11 @@ func postProcessBlockList(lst *sx.Pair) *sx.Pair {
 		}
 		curr = curr.AppendBang(elem)
 	}
+
+	if curr == result {
+		// Empty block
+		return nil
+	}
 	return result
 }
 
@@ -131,7 +136,7 @@ func postProcessInlineList(lst *sx.Pair) *sx.Pair {
 	}
 
 	if curr == result {
-		// Empty paragraph
+		// Empty inline
 		return nil
 	}
 	return result

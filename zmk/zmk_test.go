@@ -56,11 +56,11 @@ func checkTcs(t *testing.T, tcs TestCases) {
 func TestEOL(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"", "(BLOCK)"},
-		{"\n", "(BLOCK)"},
-		{"\r", "(BLOCK)"},
-		{"\r\n", "(BLOCK)"},
-		{"\n\n", "(BLOCK)"},
+		{"", "()"},
+		{"\n", "()"},
+		{"\r", "()"},
+		{"\r\n", "()"},
+		{"\n\n", "()"},
 	})
 }
 
@@ -72,11 +72,11 @@ func TestText(t *testing.T) {
 		{"abcd ", "(BLOCK (PARA (TEXT \"abcd\")))"},
 		{" abcd", "(BLOCK (PARA (TEXT \"abcd\")))"},
 		{"\\", "(BLOCK (PARA (TEXT \"\\\\\")))"},
-		{"\\\n", "(BLOCK)"},
+		{"\\\n", "()"},
 		{"\\\ndef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
-		{"\\\r", "(BLOCK)"},
+		{"\\\r", "()"},
 		{"\\\rdef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
-		{"\\\r\n", "(BLOCK)"},
+		{"\\\r\n", "()"},
 		{"\\\r\ndef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
 		{"\\a", "(BLOCK (PARA (TEXT \"a\")))"},
 		{"\\aa", "(BLOCK (PARA (TEXT \"aa\")))"},
@@ -90,9 +90,9 @@ func TestText(t *testing.T) {
 func TestSpace(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{" ", "(BLOCK)"},
-		{"\t", "(BLOCK)"},
-		{"  ", "(BLOCK)"},
+		{" ", "()"},
+		{"\t", "()"},
+		{"  ", "()"},
 	})
 }
 
@@ -101,8 +101,8 @@ func TestSoftBreak(t *testing.T) {
 	checkTcs(t, TestCases{
 		{"x\ny", "(BLOCK (PARA (TEXT \"x\") (SOFT) (TEXT \"y\")))"},
 		{"z\n", "(BLOCK (PARA (TEXT \"z\")))"},
-		{" \n ", "(BLOCK)"},
-		{" \n", "(BLOCK)"},
+		{" \n ", "()"},
+		{" \n", "()"},
 	})
 }
 
@@ -111,8 +111,8 @@ func TestHardBreak(t *testing.T) {
 	checkTcs(t, TestCases{
 		{"x  \ny", "(BLOCK (PARA (TEXT \"x\") (HARD) (TEXT \"y\")))"},
 		{"z  \n", "(BLOCK (PARA (TEXT \"z\")))"},
-		{"   \n ", "(BLOCK)"},
-		{"   \n", "(BLOCK)"},
+		{"   \n ", "()"},
+		{"   \n", "()"},
 	})
 }
 
@@ -755,6 +755,6 @@ func xTestInlineAttr(t *testing.T) {
 func TestTemp(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"", "(BLOCK)"},
+		{"", "()"},
 	})
 }
