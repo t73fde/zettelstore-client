@@ -94,6 +94,10 @@ func (cp *zmkP) parseInline() *sx.Pair {
 }
 
 func (cp *zmkP) parseText() *sx.Pair {
+	return sx.MakeList(sz.SymText, cp.parseString())
+}
+
+func (cp *zmkP) parseString() sx.String {
 	inp := cp.inp
 	pos := inp.Pos
 	if inp.Ch == '\\' {
@@ -106,7 +110,7 @@ func (cp *zmkP) parseText() *sx.Pair {
 		// The following case must contain all runes that occur in parseInline!
 		// Plus the closing brackets ] and } and ) and the middle |
 		case input.EOS, '\n', '\r', ' ', '\t', '[', ']', '{', '}', '(', ')', '|', '%', '_', '*', '>', '~', '^', ',', '"', '#', ':', '\'', '@', '`', runeModGrave, '$', '=', '\\', '-', '&':
-			return sx.MakeList(sz.SymText, sx.String(string(inp.Src[pos:inp.Pos])))
+			return sx.String(string(inp.Src[pos:inp.Pos]))
 		}
 	}
 }
@@ -119,22 +123,22 @@ func (cp *zmkP) parseBackslash() *sx.Pair {
 		inp.EatEOL()
 		return sx.MakeList(sz.SymHard)
 	default:
-		return cp.parseBackslashRest()
+		return sx.MakeList(sz.SymText, cp.parseBackslashRest())
 	}
 }
 
-func (cp *zmkP) parseBackslashRest() *sx.Pair {
+func (cp *zmkP) parseBackslashRest() sx.String {
 	inp := cp.inp
 	if input.IsEOLEOS(inp.Ch) {
-		return sx.MakeList(sz.SymText, sx.String("\\"))
+		return sx.String("\\")
 	}
 	if inp.Ch == ' ' {
 		inp.Next()
-		return sx.MakeList(sz.SymText, sx.String("\u00a0"))
+		return sx.String("\u00a0")
 	}
 	pos := inp.Pos
 	inp.Next()
-	return sx.MakeList(sz.SymText, sx.String(string(inp.Src[pos:inp.Pos])))
+	return sx.String(string(inp.Src[pos:inp.Pos]))
 }
 
 func (cp *zmkP) parseSpace() *sx.Pair {
@@ -503,12 +507,8 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 			sb.WriteRune(fch)
 			inp.Next()
 		} else {
-			tn := cp.parseText()
-			if sz.SymText.IsEqual(tn.Car()) {
-				if s, isString := sx.GetString(tn.Tail().Car()); isString {
-					sb.WriteString(string(s))
-				}
-			}
+			s := cp.parseString()
+			sb.WriteString(string(s))
 		}
 	}
 }
