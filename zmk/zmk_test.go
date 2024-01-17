@@ -398,6 +398,11 @@ func TestLiteral(t *testing.T) {
 		{"''``''``", "(BLOCK (PARA (LITERAL-INPUT () \"``\") (TEXT \"``\")))"},
 		{"''\\'''", "(BLOCK (PARA (LITERAL-INPUT () \"'\")))"},
 	})
+	checkTcs(t, TestCases{
+		{"@@HTML@@{=html}", "(BLOCK (PARA (LITERAL-HTML () \"HTML\")))"},
+		{"@@HTML@@{=html lang=en}", "(BLOCK (PARA (LITERAL-HTML (@ ((\"lang\" . \"en\"))) \"HTML\")))"},
+		{"@@HTML@@{=html,lang=en}", "(BLOCK (PARA (LITERAL-HTML (@ ((\"lang\" . \"en\"))) \"HTML\")))"},
+	})
 }
 
 func xTestLiteralMath(t *testing.T) {

@@ -21,6 +21,7 @@ import (
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 // parseInlineSlice parses a sequence of Inlines until EOS.
@@ -515,10 +516,16 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 
 func createLiteralNode(sym sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
 	if sym == sz.SymLiteralZettel {
-		if assoc := attrs.Assoc(sx.String("")); assoc != nil {
-			if val, isString := sx.GetString(assoc.Cdr()); isString && val == api.ValueSyntaxHTML {
+		assoc := attrs.Tail().Head()
+		if p := assoc.Assoc(sx.String("")); p != nil {
+			if val, isString := sx.GetString(p.Cdr()); isString && val == api.ValueSyntaxHTML {
 				sym = sz.SymLiteralHTML
-				// TODO: remove "" from attrs
+				// remove "" from attrs
+				if assoc = assoc.RemoveAssoc(sx.String("")); assoc == nil {
+					attrs = nil
+				} else {
+					attrs = sx.MakeList(sxhtml.SymAttr, assoc)
+				}
 			}
 		}
 	}

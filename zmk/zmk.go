@@ -115,7 +115,7 @@ func (cp *zmkP) parseAttributeValue(key string, attrs attrMap) bool {
 		switch inp.Ch {
 		case input.EOS:
 			return false
-		case '\n', '\r', ' ', '}':
+		case '\n', '\r', ' ', ',', '}':
 			attrs.updateAttrs(key, string(inp.Src[posV:inp.Pos]))
 			return true
 		}
