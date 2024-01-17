@@ -37,6 +37,10 @@ func postProcess(lst *sx.Pair) *sx.Pair {
 
 var ignoreMap = map[sx.Symbol]struct{}{
 	sz.SymLiteralComment: {},
+	sz.SymLiteralInput:   {},
+	sz.SymLiteralProg:    {},
+	sz.SymLiteralOutput:  {},
+	sz.SymLiteralZettel:  {},
 	sz.SymSpace:          {},
 	sz.SymSoft:           {},
 	sz.SymHard:           {},

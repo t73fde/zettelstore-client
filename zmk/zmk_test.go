@@ -365,32 +365,38 @@ func TestFormat(t *testing.T) {
 	})
 }
 
-func xTestLiteral(t *testing.T) {
+func TestLiteral(t *testing.T) {
+	symMap := symbolMap{
+		"@": sz.SymLiteralZettel,
+		"`": sz.SymLiteralProg,
+		"'": sz.SymLiteralInput,
+		"=": sz.SymLiteralOutput,
+	}
 	t.Parallel()
 	for _, ch := range []string{"@", "`", "'", "="} {
-		checkTcs(t, replace(ch, nil, TestCases{
-			{"$", "(PARA $)"},
-			{"$$", "(PARA $$)"},
-			{"$$$", "(PARA $$$)"},
-			{"$$$$", "(PARA {$})"},
-			{"$$a$$", "(PARA {$ a})"},
-			{"$$a$$$", "(PARA {$ a} $)"},
-			{"$$$a$$", "(PARA {$ $a})"},
-			{"$$$a$$$", "(PARA {$ $a} $)"},
-			{"$\\$", "(PARA $$)"},
-			{"$\\$$", "(PARA $$$)"},
-			{"$$\\$", "(PARA $$$)"},
-			{"$$a\\$$", "(PARA $$a$$)"},
-			{"$$a$\\$", "(PARA $$a$$)"},
-			{"$$a\\$$$", "(PARA {$ a$})"},
-			{"$$a$${go}", "(PARA {$ a}[ATTR go])"},
+		checkTcs(t, replace(ch, symMap, TestCases{
+			{"$", "(BLOCK (PARA (TEXT \"$\")))"},
+			{"$$", "(BLOCK (PARA (TEXT \"$$\")))"},
+			{"$$$", "(BLOCK (PARA (TEXT \"$$$\")))"},
+			{"$$$$", "(BLOCK (PARA ($% () \"\")))"},
+			{"$$a$$", "(BLOCK (PARA ($% () \"a\")))"},
+			{"$$a$$$", "(BLOCK (PARA ($% () \"a\") (TEXT \"$\")))"},
+			{"$$$a$$", "(BLOCK (PARA ($% () \"$a\")))"},
+			{"$$$a$$$", "(BLOCK (PARA ($% () \"$a\") (TEXT \"$\")))"},
+			{"$\\$", "(BLOCK (PARA (TEXT \"$$\")))"},
+			{"$\\$$", "(BLOCK (PARA (TEXT \"$$$\")))"},
+			{"$$\\$", "(BLOCK (PARA (TEXT \"$$$\")))"},
+			{"$$a\\$$", "(BLOCK (PARA (TEXT \"$$a$$\")))"},
+			{"$$a$\\$", "(BLOCK (PARA (TEXT \"$$a$$\")))"},
+			{"$$a\\$$$", "(BLOCK (PARA ($% () \"a$\")))"},
+			{"$$a$${go}", "(BLOCK (PARA ($% (@ ((\"go\" . \"\"))) \"a\")))"},
 		}))
 	}
 	checkTcs(t, TestCases{
-		{"''````''", "(PARA {' ````})"},
-		{"''``a``''", "(PARA {' ``a``})"},
-		{"''``''``", "(PARA {' ``} ``)"},
-		{"''\\'''", "(PARA {' '})"},
+		{"''````''", "(BLOCK (PARA (LITERAL-INPUT () \"````\")))"},
+		{"''``a``''", "(BLOCK (PARA (LITERAL-INPUT () \"``a``\")))"},
+		{"''``''``", "(BLOCK (PARA (LITERAL-INPUT () \"``\") (TEXT \"``\")))"},
+		{"''\\'''", "(BLOCK (PARA (LITERAL-INPUT () \"'\")))"},
 	})
 }
 

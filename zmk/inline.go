@@ -15,6 +15,7 @@ package zmk
 
 import (
 	"fmt"
+	"strings"
 
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/input"
@@ -476,52 +477,53 @@ var mapRuneLiteral = map[rune]sx.Symbol{
 	// No '$': ast.LiteralMath, because paring literal math is a little different
 }
 
-func (cp *zmkP) parseLiteral() (res *sx.Pair /*ast.InlineNode*/, success bool) {
-	// inp := cp.inp
-	// fch := inp.Ch
-	// kind, ok := mapRuneLiteral[fch]
-	// if !ok {
-	// 	panic(fmt.Sprintf("%q is not a formatting char", fch))
-	// }
-	// inp.Next() // read 2nd formatting character
-	// if inp.Ch != fch {
-	// 	return nil, false
-	// }
-	// inp.Next()
-	// var buf bytes.Buffer
-	// for {
-	// 	if inp.Ch == input.EOS {
-	// 		return nil, false
-	// 	}
-	// 	if inp.Ch == fch {
-	// 		if inp.Peek() == fch {
-	// 			inp.Next()
-	// 			inp.Next()
-	// 			return createLiteralNode(kind, cp.parseInlineAttributes(), buf.Bytes()), true
-	// 		}
-	// 		buf.WriteRune(fch)
-	// 		inp.Next()
-	// 	} else {
-	// 		tn := cp.parseText()
-	// 		buf.WriteString(tn.Text)
-	// 	}
-	// }
-	return nil, false
+func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
+	inp := cp.inp
+	fch := inp.Ch
+	symLiteral, ok := mapRuneLiteral[fch]
+	if !ok {
+		panic(fmt.Sprintf("%q is not a formatting char", fch))
+	}
+	inp.Next() // read 2nd formatting character
+	if inp.Ch != fch {
+		return nil, false
+	}
+	inp.Next()
+	var sb strings.Builder
+	for {
+		if inp.Ch == input.EOS {
+			return nil, false
+		}
+		if inp.Ch == fch {
+			if inp.Peek() == fch {
+				inp.Next()
+				inp.Next()
+				return createLiteralNode(symLiteral, cp.parseInlineAttributes(), sb.String()), true
+			}
+			sb.WriteRune(fch)
+			inp.Next()
+		} else {
+			tn := cp.parseText()
+			if sz.SymText.IsEqual(tn.Car()) {
+				if s, isString := sx.GetString(tn.Tail().Car()); isString {
+					sb.WriteString(string(s))
+				}
+			}
+		}
+	}
 }
 
-// func createLiteralNode(kind ast.LiteralKind, a attrs.Attributes, content []byte) *ast.LiteralNode {
-// 	if kind == ast.LiteralZettel {
-// 		if val, found := a.Get(""); found && val == api.ValueSyntaxHTML {
-// 			kind = ast.LiteralHTML
-// 			a = a.Remove("")
-// 		}
-// 	}
-// 	return &ast.LiteralNode{
-// 		Kind:    kind,
-// 		Attrs:   a,
-// 		Content: content,
-// 	}
-// }
+func createLiteralNode(sym sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
+	if sym == sz.SymLiteralZettel {
+		if assoc := attrs.Assoc(sx.String("")); assoc != nil {
+			if val, isString := sx.GetString(assoc.Cdr()); isString && val == api.ValueSyntaxHTML {
+				sym = sz.SymLiteralHTML
+				// TODO: remove "" from attrs
+			}
+		}
+	}
+	return sx.MakeList(sym, attrs, sx.String(content))
+}
 
 func (cp *zmkP) parseLiteralMath() (res *sx.Pair /*ast.InlineNode*/, success bool) {
 	// inp := cp.inp
