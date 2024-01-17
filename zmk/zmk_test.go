@@ -20,18 +20,28 @@ import (
 	"testing"
 
 	"zettelstore.de/client.fossil/input"
+	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/client.fossil/zmk"
+	"zettelstore.de/sx.fossil"
 )
 
 type TestCase struct{ source, want string }
 type TestCases []TestCase
+type symbolMap map[string]sx.Symbol
 
-func replace(s string, tcs TestCases) TestCases {
+func replace(s string, sm symbolMap, tcs TestCases) TestCases {
+	var sym string
+	if len(sm) > 0 {
+		sym = string(sm[s])
+	}
 	var testCases TestCases
-
 	for _, tc := range tcs {
 		source := strings.ReplaceAll(tc.source, "$", s)
-		want := strings.ReplaceAll(tc.want, "$", s)
+		want := tc.want
+		if sym != "" {
+			want = strings.ReplaceAll(want, "$%", sym)
+		}
+		want = strings.ReplaceAll(want, "$", s)
 		testCases = append(testCases, TestCase{source, want})
 	}
 	return testCases
@@ -288,45 +298,77 @@ func TestComment(t *testing.T) {
 	})
 }
 
-func xTestFormat(t *testing.T) {
+func TestFormat(t *testing.T) {
+	symMap := symbolMap{
+		"_": sz.SymFormatEmph,
+		"*": sz.SymFormatStrong,
+		">": sz.SymFormatInsert,
+		"~": sz.SymFormatDelete,
+		"^": sz.SymFormatSuper,
+		",": sz.SymFormatSub,
+		"#": sz.SymFormatMark,
+		":": sz.SymFormatSpan,
+	}
 	t.Parallel()
 	// Not for Insert / '>', because collision with quoted list
-	for _, ch := range []string{"_", "*", "~", "^", ",", "\"", "#", ":"} {
-		checkTcs(t, replace(ch, TestCases{
-			{"$", "(PARA $)"},
-			{"$$", "(PARA $$)"},
-			{"$$$", "(PARA $$$)"},
-			{"$$$$", "(PARA {$})"},
+	// Not for Quote / '"', because escaped representation.
+	for _, ch := range []string{"_", "*", "~", "^", ",", "#", ":"} {
+		checkTcs(t, replace(ch, symMap, TestCases{
+			{"$", "(BLOCK (PARA (TEXT \"$\")))"},
+			{"$$", "(BLOCK (PARA (TEXT \"$$\")))"},
+			{"$$$", "(BLOCK (PARA (TEXT \"$$$\")))"},
+			{"$$$$", "(BLOCK (PARA ($% ())))"},
 		}))
 	}
-	for _, ch := range []string{"_", "*", ">", "~", "^", ",", "\"", "#", ":"} {
-		checkTcs(t, replace(ch, TestCases{
-			{"$$a$$", "(PARA {$ a})"},
-			{"$$a$$$", "(PARA {$ a} $)"},
-			{"$$$a$$", "(PARA {$ $a})"},
-			{"$$$a$$$", "(PARA {$ $a} $)"},
-			{"$\\$", "(PARA $$)"},
-			{"$\\$$", "(PARA $$$)"},
-			{"$$\\$", "(PARA $$$)"},
-			{"$$a\\$$", "(PARA $$a$$)"},
-			{"$$a$\\$", "(PARA $$a$$)"},
-			{"$$a\\$$$", "(PARA {$ a$})"},
-			{"$$a\na$$", "(PARA {$ a SB a})"},
-			{"$$a\n\na$$", "(PARA $$a)(PARA a$$)"},
-			{"$$a$${go}", "(PARA {$ a}[ATTR go])"},
+	// Not for Quote / '"', because escaped representation.
+	for _, ch := range []string{"_", "*", ">", "~", "^", ",", "#", ":"} {
+		checkTcs(t, replace(ch, symMap, TestCases{
+			{"$$a$$", "(BLOCK (PARA ($% () (TEXT \"a\"))))"},
+			{"$$a$$$", "(BLOCK (PARA ($% () (TEXT \"a\")) (TEXT \"$\")))"},
+			{"$$$a$$", "(BLOCK (PARA ($% () (TEXT \"$a\"))))"},
+			{"$$$a$$$", "(BLOCK (PARA ($% () (TEXT \"$a\")) (TEXT \"$\")))"},
+			{"$\\$", "(BLOCK (PARA (TEXT \"$$\")))"},
+			{"$\\$$", "(BLOCK (PARA (TEXT \"$$$\")))"},
+			{"$$\\$", "(BLOCK (PARA (TEXT \"$$$\")))"},
+			{"$$a\\$$", "(BLOCK (PARA (TEXT \"$$a$$\")))"},
+			{"$$a$\\$", "(BLOCK (PARA (TEXT \"$$a$$\")))"},
+			{"$$a\\$$$", "(BLOCK (PARA ($% () (TEXT \"a$\"))))"},
+			{"$$a\na$$", "(BLOCK (PARA ($% () (TEXT \"a\") (SOFT) (TEXT \"a\"))))"},
+			{"$$a\n\na$$", "(BLOCK (PARA (TEXT \"$$a\")) (PARA (TEXT \"a$$\")))"},
+			{"$$a$${go}", "(BLOCK (PARA ($% (@ ((\"go\" . \"\"))) (TEXT \"a\"))))"},
 		}))
 	}
+	checkTcs(t, replace(`"`, symbolMap{`"`: sz.SymFormatQuote}, TestCases{
+		{"$", "(BLOCK (PARA (TEXT \"\\\"\")))"},
+		{"$$", "(BLOCK (PARA (TEXT \"\\\"\\\"\")))"},
+		{"$$$", "(BLOCK (PARA (TEXT \"\\\"\\\"\\\"\")))"},
+		{"$$$$", "(BLOCK (PARA ($% ())))"},
+
+		{"$$a$$", "(BLOCK (PARA ($% () (TEXT \"a\"))))"},
+		{"$$a$$$", "(BLOCK (PARA ($% () (TEXT \"a\")) (TEXT \"\\\"\")))"},
+		{"$$$a$$", "(BLOCK (PARA ($% () (TEXT \"\\\"a\"))))"},
+		{"$$$a$$$", "(BLOCK (PARA ($% () (TEXT \"\\\"a\")) (TEXT \"\\\"\")))"},
+		{"$\\$", "(BLOCK (PARA (TEXT \"\\\"\\\"\")))"},
+		{"$\\$$", "(BLOCK (PARA (TEXT \"\\\"\\\"\\\"\")))"},
+		{"$$\\$", "(BLOCK (PARA (TEXT \"\\\"\\\"\\\"\")))"},
+		{"$$a\\$$", "(BLOCK (PARA (TEXT \"\\\"\\\"a\\\"\\\"\")))"},
+		{"$$a$\\$", "(BLOCK (PARA (TEXT \"\\\"\\\"a\\\"\\\"\")))"},
+		{"$$a\\$$$", "(BLOCK (PARA ($% () (TEXT \"a\\\"\"))))"},
+		{"$$a\na$$", "(BLOCK (PARA ($% () (TEXT \"a\") (SOFT) (TEXT \"a\"))))"},
+		{"$$a\n\na$$", "(BLOCK (PARA (TEXT \"\\\"\\\"a\")) (PARA (TEXT \"a\\\"\\\"\")))"},
+		{"$$a$${go}", "(BLOCK (PARA ($% (@ ((\"go\" . \"\"))) (TEXT \"a\"))))"},
+	}))
 	checkTcs(t, TestCases{
-		{"__****__", "(PARA {_ {*}})"},
-		{"__**a**__", "(PARA {_ {* a}})"},
-		{"__**__**", "(PARA __ {* __})"},
+		{"__****__", "(BLOCK (PARA (FORMAT-EMPH () (FORMAT-STRONG ()))))"},
+		{"__**a**__", "(BLOCK (PARA (FORMAT-EMPH () (FORMAT-STRONG () (TEXT \"a\")))))"},
+		{"__**__**", "(BLOCK (PARA (TEXT \"__\") (FORMAT-STRONG () (TEXT \"__\"))))"},
 	})
 }
 
 func xTestLiteral(t *testing.T) {
 	t.Parallel()
 	for _, ch := range []string{"@", "`", "'", "="} {
-		checkTcs(t, replace(ch, TestCases{
+		checkTcs(t, replace(ch, nil, TestCases{
 			{"$", "(PARA $)"},
 			{"$$", "(PARA $$)"},
 			{"$$$", "(PARA $$$)"},
@@ -506,7 +548,7 @@ func xTestQuoteRegion(t *testing.T) {
 
 func xTestVerseRegion(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, replace("\"", TestCases{
+	checkTcs(t, replace("\"", nil, TestCases{
 		{"$$$\n$$$", "(VERSE)"},
 		{"$$$\nabc\n$$$", "(VERSE (PARA abc))"},
 		{"$$$\nabc\n$$$$", "(VERSE (PARA abc))"},
@@ -570,7 +612,7 @@ func xTestList(t *testing.T) {
 	t.Parallel()
 	// No ">" in the following, because quotation lists may have empty items.
 	for _, ch := range []string{"*", "#"} {
-		checkTcs(t, replace(ch, TestCases{
+		checkTcs(t, replace(ch, nil, TestCases{
 			{"$", "(PARA $)"},
 			{"$$", "(PARA $$)"},
 			{"$$$", "(PARA $$$)"},
@@ -705,7 +747,7 @@ func xTestBlockAttr(t *testing.T) {
 		{":::  {  go  }  \n:::", "(SPAN)[ATTR go]"},
 		{":::  {  .go  }  \n:::", "(SPAN)[ATTR class=go]"},
 	})
-	checkTcs(t, replace("\"", TestCases{
+	checkTcs(t, replace("\"", nil, TestCases{
 		{":::{py=3}\n:::", "(SPAN)[ATTR py=3]"},
 		{":::{py=$2 3$}\n:::", "(SPAN)[ATTR py=$2 3$]"},
 		{":::{py=$2\\$3$}\n:::", "(SPAN)[ATTR py=2$3]"},
@@ -739,7 +781,7 @@ func xTestInlineAttr(t *testing.T) {
 		{"::a::{  \n go \n .py\n\n}", "(PARA {: a}[ATTR class=py go])"},
 		{"::a::{\ngo\n}", "(PARA {: a}[ATTR go])"},
 	})
-	checkTcs(t, replace("\"", TestCases{
+	checkTcs(t, replace("\"", nil, TestCases{
 		{"::a::{py=3}", "(PARA {: a}[ATTR py=3])"},
 		{"::a::{py=$2 3$}", "(PARA {: a}[ATTR py=$2 3$])"},
 		{"::a::{py=$2\\$3$}", "(PARA {: a}[ATTR py=2$3])"},

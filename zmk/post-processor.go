@@ -46,9 +46,19 @@ var symMap map[sx.Symbol]func(*sx.Pair) *sx.Pair
 
 func init() {
 	symMap = map[sx.Symbol]func(*sx.Pair) *sx.Pair{
-		sz.SymBlock: postProcessBlockList,
-		sz.SymPara:  postProcessInlineList,
-		sz.SymText:  postProcessText,
+		sz.SymBlock:        postProcessBlockList,
+		sz.SymPara:         postProcessInlineList,
+		sz.SymInline:       postProcessInlineList,
+		sz.SymText:         postProcessText,
+		sz.SymFormatDelete: postProcessFormat,
+		sz.SymFormatEmph:   postProcessFormat,
+		sz.SymFormatInsert: postProcessFormat,
+		sz.SymFormatMark:   postProcessFormat,
+		sz.SymFormatQuote:  postProcessFormat,
+		sz.SymFormatStrong: postProcessFormat,
+		sz.SymFormatSpan:   postProcessFormat,
+		sz.SymFormatSub:    postProcessFormat,
+		sz.SymFormatSuper:  postProcessFormat,
 	}
 }
 
@@ -149,4 +159,16 @@ func postProcessText(txt *sx.Pair) *sx.Pair {
 		}
 	}
 	return nil
+}
+
+func postProcessFormat(fn *sx.Pair) *sx.Pair {
+	symFormat := fn.Car()
+	next := fn.Tail() // Attrs
+	attrs := next.Car()
+	next = next.Tail() // Possible inlines
+	if next == nil {
+		return fn
+	}
+	inlines := postProcess(next.Cons(sz.SymInline))
+	return inlines.Tail().Cons(attrs).Cons(symFormat)
 }

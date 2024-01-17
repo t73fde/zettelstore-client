@@ -14,6 +14,8 @@
 package zmk
 
 import (
+	"fmt"
+
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/client.fossil/sz"
@@ -394,7 +396,7 @@ func (cp *zmkP) parseMark() (*sx.Pair /**ast.MarkNode*/, bool) {
 	// Evtl. muss es ein PreMark-Symbol geben
 }
 
-func (cp *zmkP) parseComment() (res *sx.Pair /**ast.LiteralNode*/, success bool) {
+func (cp *zmkP) parseComment() (res *sx.Pair, success bool) {
 	inp := cp.inp
 	inp.Next()
 	if inp.Ch != '%' {
@@ -430,39 +432,39 @@ var mapRuneFormat = map[rune]sx.Symbol{
 	':': sz.SymFormatSpan,
 }
 
-func (cp *zmkP) parseFormat() (res *sx.Pair /*ast.InlineNode*/, success bool) {
-	// inp := cp.inp
-	// fch := inp.Ch
-	// kind, ok := mapRuneFormat[fch]
-	// if !ok {
-	// 	panic(fmt.Sprintf("%q is not a formatting char", fch))
-	// }
-	// inp.Next() // read 2nd formatting character
-	// if inp.Ch != fch {
-	// 	return nil, false
-	// }
-	// inp.Next()
-	// fn := &ast.FormatNode{Kind: kind, Inlines: nil}
-	// for {
-	// 	if inp.Ch == input.EOS {
-	// 		return nil, false
-	// 	}
-	// 	if inp.Ch == fch {
-	// 		inp.Next()
-	// 		if inp.Ch == fch {
-	// 			inp.Next()
-	// 			fn.Attrs = cp.parseInlineAttributes()
-	// 			return fn, true
-	// 		}
-	// 		fn.Inlines = append(fn.Inlines, &ast.TextNode{Text: string(fch)})
-	// 	} else if in := cp.parseInline(); in != nil {
-	// 		if _, ok = in.(*ast.BreakNode); ok && input.IsEOLEOS(inp.Ch) {
-	// 			return nil, false
-	// 		}
-	// 		fn.Inlines = append(fn.Inlines, in)
-	// 	}
-	// }
-	return nil, false
+func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
+	inp := cp.inp
+	fch := inp.Ch
+	symFormat, ok := mapRuneFormat[fch]
+	if !ok {
+		panic(fmt.Sprintf("%q is not a formatting char", fch))
+	}
+	inp.Next() // read 2nd formatting character
+	if inp.Ch != fch {
+		return nil, false
+	}
+	inp.Next()
+	var inlines []sx.Object
+	for {
+		if inp.Ch == input.EOS {
+			return nil, false
+		}
+		if inp.Ch == fch {
+			inp.Next()
+			if inp.Ch == fch {
+				inp.Next()
+				attrs := cp.parseInlineAttributes()
+				fn := sx.MakeList(inlines...).Cons(attrs).Cons(symFormat)
+				return fn, true
+			}
+			inlines = append(inlines, sx.MakeList(sz.SymText, sx.String(fch)))
+		} else if in := cp.parseInline(); in != nil {
+			if sym := in.Car(); (sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard)) && input.IsEOLEOS(inp.Ch) {
+				return nil, false
+			}
+			inlines = append(inlines, in)
+		}
+	}
 }
 
 var mapRuneLiteral = map[rune]sx.Symbol{

@@ -152,8 +152,7 @@ func (cp *zmkP) parsePara() *sx.Pair {
 			return sx.MakeList(ins...).Cons(sz.SymPara)
 		}
 		ins = append(ins, in)
-		sym := in.Car()
-		if sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard) {
+		if sym := in.Car(); sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard) {
 			ch := cp.inp.Ch
 			switch ch {
 			// Must contain all cases from above switch in parseBlock.
