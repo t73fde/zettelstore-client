@@ -437,35 +437,35 @@ func xTestMixFormatCode(t *testing.T) {
 	})
 }
 
-func xTestNDash(t *testing.T) {
+func TestNDash(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"--", "(PARA \u2013)"},
-		{"a--b", "(PARA a\u2013b)"},
+		{"--", "(BLOCK (PARA (TEXT \"\u2013\")))"},
+		{"a--b", "(BLOCK (PARA (TEXT \"a\u2013b\")))"},
 	})
 }
 
-func xTestEntity(t *testing.T) {
+func TestEntity(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"&", "(PARA &)"},
-		{"&;", "(PARA &;)"},
-		{"&#;", "(PARA &#;)"},
-		{"&#1a;", "(PARA &#1a;)"},
-		{"&#x;", "(PARA &#x;)"},
-		{"&#x0z;", "(PARA &#x0z;)"},
-		{"&1;", "(PARA &1;)"},
-		{"&#9;", "(PARA &#9;)"}, // No numeric entities below space are not allowed.
-		{"&#x1f;", "(PARA &#x1f;)"},
+		{"&", "(BLOCK (PARA (TEXT \"&\")))"},
+		{"&;", "(BLOCK (PARA (TEXT \"&;\")))"},
+		{"&#;", "(BLOCK (PARA (TEXT \"&#;\")))"},
+		{"&#1a;", "(BLOCK (PARA (TEXT \"&#1a;\")))"},
+		{"&#x;", "(BLOCK (PARA (TEXT \"&#x;\")))"},
+		{"&#x0z;", "(BLOCK (PARA (TEXT \"&#x0z;\")))"},
+		{"&1;", "(BLOCK (PARA (TEXT \"&1;\")))"},
+		{"&#9;", "(BLOCK (PARA (TEXT \"&#9;\")))"}, // Numeric entities below space are not allowed.
+		{"&#x1f;", "(BLOCK (PARA (TEXT \"&#x1f;\")))"},
 
 		// Good cases
-		{"&lt;", "(PARA <)"},
-		{"&#48;", "(PARA 0)"},
-		{"&#x4A;", "(PARA J)"},
-		{"&#X4a;", "(PARA J)"},
-		{"&hellip;", "(PARA \u2026)"},
-		{"&nbsp;", "(PARA \u00a0)"},
-		{"E: &amp;,&#63;;&#x63;.", "(PARA E: SP &,?;c.)"},
+		{"&lt;", "(BLOCK (PARA (TEXT \"<\")))"},
+		{"&#48;", "(BLOCK (PARA (TEXT \"0\")))"},
+		{"&#x4A;", "(BLOCK (PARA (TEXT \"J\")))"},
+		{"&#X4a;", "(BLOCK (PARA (TEXT \"J\")))"},
+		{"&hellip;", "(BLOCK (PARA (TEXT \"\u2026\")))"},
+		{"&nbsp;", "(BLOCK (PARA (TEXT \"\u00a0\")))"},
+		{"E: &amp;,&#63;;&#x63;.", "(BLOCK (PARA (TEXT \"E:\") (SPACE) (TEXT \"&,?;c.\")))"},
 	})
 }
 
