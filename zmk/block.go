@@ -98,25 +98,29 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 	}
 	inp.SetPos(pos)
 	cp.clearStacked()
-	pn := cp.parsePara()
-	// if startsWithSpaceSoftBreak(pn) {
-	// 	pn.Inlines = pn.Inlines[2:]
-	// } else if lastPara != nil {
-	// 	lastPara.Inlines = append(lastPara.Inlines, pn.Inlines...)
-	// 	return nil, true
-	// }
-	return pn, true
+	ins := cp.parsePara()
+	if startsWithSpaceSoftBreak(ins) {
+		ins = ins[2:]
+	} else if lastPara != nil {
+		lastPair := lastPara.LastPair()
+		lastPair.ExtendBang(sx.MakeList(ins...))
+		return nil, true
+	}
+	return sx.MakeList(ins...).Cons(sz.SymPara), false
 }
 
-// func startsWithSpaceSoftBreak(pn *ast.ParaNode) bool {
-// 	ins := pn.Inlines
-// 	if len(ins) < 2 {
-// 		return false
-// 	}
-// 	_, isSpace := ins[0].(*ast.SpaceNode)
-// 	_, isBreak := ins[1].(*ast.BreakNode)
-// 	return isSpace && isBreak
-// }
+func startsWithSpaceSoftBreak(ins []sx.Object) bool {
+	if len(ins) < 2 {
+		return false
+	}
+	pair0, isPair0 := sx.GetPair(ins[0])
+	pair1, isPair1 := sx.GetPair(ins[0])
+	if !isPair0 || !isPair1 {
+		return false
+	}
+	car1 := pair1.Car()
+	return pair0.Car().IsEqual(sz.SymSpace) && (car1.IsEqual(sz.SymSoft) || car1.IsEqual(sz.SymHard))
+}
 
 func (cp *zmkP) cleanupListsAfterEOL() {
 	// for _, l := range cp.lists {
@@ -143,21 +147,20 @@ func (cp *zmkP) parseColon() (*sx.Pair, bool) {
 	return cp.parseDefDescr()
 }
 
-// parsePara parses paragraphed inline material.
-func (cp *zmkP) parsePara() *sx.Pair {
-	var ins []sx.Object
+// parsePara parses paragraphed inline material as a slice of sx.Object.
+func (cp *zmkP) parsePara() (result []sx.Object) {
 	for {
 		in := cp.parseInline()
 		if in == nil {
-			return sx.MakeList(ins...).Cons(sz.SymPara)
+			return result
 		}
-		ins = append(ins, in)
+		result = append(result, in)
 		if sym := in.Car(); sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard) {
 			ch := cp.inp.Ch
 			switch ch {
 			// Must contain all cases from above switch in parseBlock.
 			case input.EOS, '\n', '\r', '@', '`', runeModGrave, '%', '~', '$', '"', '<', '=', '-', '*', '#', '>', ';', ':', ' ', '|', '{':
-				return sx.MakeList(ins...).Cons(sz.SymPara)
+				return result
 			}
 		}
 	}

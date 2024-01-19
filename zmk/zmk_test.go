@@ -426,14 +426,17 @@ func TestLiteralMath(t *testing.T) {
 	})
 }
 
-func xTestMixFormatCode(t *testing.T) {
+func TestMixFormatCode(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"__abc__\n**def**", "(PARA {_ abc} SB {* def})"},
-		{"''abc''\n==def==", "(PARA {' abc} SB {= def})"},
-		{"__abc__\n==def==", "(PARA {_ abc} SB {= def})"},
-		{"__abc__\n``def``", "(PARA {_ abc} SB {` def})"},
-		{"\"\"ghi\"\"\n::abc::\n``def``\n", "(PARA {\" ghi} SB {: abc} SB {` def})"},
+		{"__abc__\n**def**", "(BLOCK (PARA (FORMAT-EMPH () (TEXT \"abc\")) (SOFT) (FORMAT-STRONG () (TEXT \"def\"))))"},
+		{"''abc''\n==def==", "(BLOCK (PARA (LITERAL-INPUT () \"abc\") (SOFT) (LITERAL-OUTPUT () \"def\")))"},
+		{"__abc__\n==def==", "(BLOCK (PARA (FORMAT-EMPH () (TEXT \"abc\")) (SOFT) (LITERAL-OUTPUT () \"def\")))"},
+		{"__abc__\n``def``", "(BLOCK (PARA (FORMAT-EMPH () (TEXT \"abc\")) (SOFT) (LITERAL-CODE () \"def\")))"},
+		{
+			"\"\"ghi\"\"\n::abc::\n``def``\n",
+			"(BLOCK (PARA (FORMAT-QUOTE () (TEXT \"ghi\")) (SOFT) (FORMAT-SPAN () (TEXT \"abc\")) (SOFT) (LITERAL-CODE () \"def\")))",
+		},
 	})
 }
 

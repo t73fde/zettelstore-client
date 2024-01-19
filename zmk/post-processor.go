@@ -90,9 +90,12 @@ func postProcessBlockList(lst *sx.Pair) *sx.Pair {
 }
 
 func postProcessInlineList(lst *sx.Pair) *sx.Pair {
-	temp := sx.Cons(lst.Car(), sx.Nil())
-	curr := temp
-	// 1st phase: process all childs and merge some elements
+	length := lst.Length() - 1
+	if length < 0 {
+		return nil
+	}
+	vector := make([]*sx.Pair, 0, length)
+	// 1st phase: process all childs, ignore SPACE at start, and merge some elements
 	for node := lst.Tail(); node != nil; node = node.Tail() {
 		elem, isPair := sx.GetPair(node.Car())
 		if isPair {
@@ -101,14 +104,17 @@ func postProcessInlineList(lst *sx.Pair) *sx.Pair {
 		if elem == nil {
 			continue
 		}
-		if curr == temp {
-			// The 1st element is always moved.
-			curr = curr.AppendBang(elem)
+		elemSym := elem.Car()
+		if len(vector) == 0 {
+			// The 1st element is always moved, except for a SPACE
+			if elemSym.IsEqual(sz.SymSpace) {
+				continue
+			}
+			vector = append(vector, elem)
 			continue
 		}
-		last := curr.Head()
+		last := vector[len(vector)-1]
 		lastSym := last.Car()
-		elemSym := elem.Car()
 
 		if lastSym.IsEqual(sz.SymText) && elemSym.IsEqual(sz.SymText) {
 			// Merge two TEXT elements into one
@@ -120,40 +126,34 @@ func postProcessInlineList(lst *sx.Pair) *sx.Pair {
 
 		if lastSym.IsEqual(sz.SymSpace) && elemSym.IsEqual(sz.SymSoft) {
 			// Merge (SPACE) (SOFT) to (HARD)
-			curr.SetCar(sx.Cons(sz.SymHard, sx.Nil()))
+			vector[len(vector)-1] = sx.Cons(sz.SymHard, sx.Nil())
 			continue
 		}
 
-		curr = curr.AppendBang(elem)
+		vector = append(vector, elem)
+	}
+	if len(vector) == 0 {
+		return nil
+	}
+
+	// 2nd phase: remove (SOFT), (HARD), (SPACE) at the end
+	lastPos := len(vector) - 1
+	for lastPos >= 0 {
+		elem := vector[lastPos]
+		elemSym := elem.Car()
+		if !elemSym.IsEqual(sz.SymSpace) && !elemSym.IsEqual(sz.SymSoft) && !elemSym.IsEqual(sz.SymHard) {
+			break
+		}
+		lastPos--
+	}
+	if lastPos < 0 {
+		return nil
 	}
 
 	result := sx.Cons(lst.Car(), sx.Nil())
-	curr = result
-	// 2nd phase: remove (SPACE) at the start, and (SOFT), (HARD), (SPACE) at the end
-	for node := temp.Tail(); node != nil; node = node.Tail() {
-		elem := node.Head()
-		elemSym := elem.Car()
-		if curr == result {
-			// We are at the start
-			if elemSym.IsEqual(sz.SymSpace) {
-				continue
-			}
-		}
-		if node.Tail() != nil {
-			// Not at the end, continue
-			curr = curr.AppendBang(elem)
-			continue
-		}
-		if elemSym.IsEqual(sz.SymSpace) || elemSym.IsEqual(sz.SymSoft) || elemSym.IsEqual(sz.SymHard) {
-			break
-		}
-		curr = curr.AppendBang(elem)
-		break
-	}
-
-	if curr == result {
-		// Empty inline
-		return nil
+	curr := result
+	for i := 0; i <= lastPos; i++ {
+		curr = curr.AppendBang(vector[i])
 	}
 	return result
 }
