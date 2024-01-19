@@ -405,24 +405,24 @@ func TestLiteral(t *testing.T) {
 	})
 }
 
-func xTestLiteralMath(t *testing.T) {
+func TestLiteralMath(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"$", "(PARA $)"},
-		{"$$", "(PARA $$)"},
-		{"$$$", "(PARA $$$)"},
-		{"$$$$", "(PARA {$})"},
-		{"$$a$$", "(PARA {$ a})"},
-		{"$$a$$$", "(PARA {$ a} $)"},
-		{"$$$a$$", "(PARA {$ $a})"},
-		{"$$$a$$$", "(PARA {$ $a} $)"},
-		{`$\$`, "(PARA $$)"},
-		{`$\$$`, "(PARA $$$)"},
-		{`$$\$`, "(PARA $$$)"},
-		{`$$a\$$`, `(PARA {$ a\})`},
-		{`$$a$\$`, "(PARA $$a$$)"},
-		{`$$a\$$$`, `(PARA {$ a\} $)`},
-		{"$$a$${go}", "(PARA {$ a}[ATTR go])"},
+		{"$", "(BLOCK (PARA (TEXT \"$\")))"},
+		{"$$", "(BLOCK (PARA (TEXT \"$$\")))"},
+		{"$$$", "(BLOCK (PARA (TEXT \"$$$\")))"},
+		{"$$$$", "(BLOCK (PARA (LITERAL-MATH () \"\")))"},
+		{"$$a$$", "(BLOCK (PARA (LITERAL-MATH () \"a\")))"},
+		{"$$a$$$", "(BLOCK (PARA (LITERAL-MATH () \"a\") (TEXT \"$\")))"},
+		{"$$$a$$", "(BLOCK (PARA (LITERAL-MATH () \"$a\")))"},
+		{"$$$a$$$", "(BLOCK (PARA (LITERAL-MATH () \"$a\") (TEXT \"$\")))"},
+		{`$\$`, "(BLOCK (PARA (TEXT \"$$\")))"},
+		{`$\$$`, "(BLOCK (PARA (TEXT \"$$$\")))"},
+		{`$$\$`, "(BLOCK (PARA (TEXT \"$$$\")))"},
+		{`$$a\$$`, "(BLOCK (PARA (LITERAL-MATH () \"a\\\\\")))"},
+		{`$$a$\$`, "(BLOCK (PARA (TEXT \"$$a$$\")))"},
+		{`$$a\$$$`, "(BLOCK (PARA (LITERAL-MATH () \"a\\\\\") (TEXT \"$\")))"},
+		{"$$a$${go}", "(BLOCK (PARA (LITERAL-MATH (@ ((\"go\" . \"\"))) \"a\")))"},
 	})
 }
 

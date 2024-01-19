@@ -533,31 +533,26 @@ func createLiteralNode(sym sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
 }
 
 func (cp *zmkP) parseLiteralMath() (res *sx.Pair /*ast.InlineNode*/, success bool) {
-	// inp := cp.inp
-	// inp.Next() // read 2nd formatting character
-	// if inp.Ch != '$' {
-	// 	return nil, false
-	// }
-	// inp.Next()
-	// pos := inp.Pos
-	// for {
-	// 	if inp.Ch == input.EOS {
-	// 		return nil, false
-	// 	}
-	// 	if inp.Ch == '$' && inp.Peek() == '$' {
-	// 		content := append([]byte{}, inp.Src[pos:inp.Pos]...)
-	// 		inp.Next()
-	// 		inp.Next()
-	// 		fn := &ast.LiteralNode{
-	// 			Kind:    ast.LiteralMath,
-	// 			Attrs:   cp.parseInlineAttributes(),
-	// 			Content: content,
-	// 		}
-	// 		return fn, true
-	// 	}
-	// 	inp.Next()
-	// }
-	return nil, false
+	inp := cp.inp
+	inp.Next() // read 2nd formatting character
+	if inp.Ch != '$' {
+		return nil, false
+	}
+	inp.Next()
+	pos := inp.Pos
+	for {
+		if inp.Ch == input.EOS {
+			return nil, false
+		}
+		if inp.Ch == '$' && inp.Peek() == '$' {
+			content := append([]byte{}, inp.Src[pos:inp.Pos]...)
+			inp.Next()
+			inp.Next()
+			fn := sx.MakeList(sz.SymLiteralMath, cp.parseInlineAttributes(), sx.String(content))
+			return fn, true
+		}
+		inp.Next()
+	}
 }
 
 func (cp *zmkP) parseNdash() (res *sx.Pair, success bool) {

@@ -39,6 +39,7 @@ var ignoreMap = map[sx.Symbol]struct{}{
 	sz.SymLiteralComment: {},
 	sz.SymLiteralHTML:    {},
 	sz.SymLiteralInput:   {},
+	sz.SymLiteralMath:    {},
 	sz.SymLiteralProg:    {},
 	sz.SymLiteralOutput:  {},
 	sz.SymLiteralZettel:  {},
