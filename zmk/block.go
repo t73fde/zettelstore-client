@@ -14,6 +14,8 @@
 package zmk
 
 import (
+	"fmt"
+
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil"
@@ -177,173 +179,193 @@ func (cp *zmkP) countDelim(delim rune) int {
 }
 
 // parseVerbatim parses a verbatim block.
-func (cp *zmkP) parseVerbatim() (rn *sx.Pair /**ast.VerbatimNode*/, success bool) {
-	// inp := cp.inp
-	// fch := inp.Ch
-	// cnt := cp.countDelim(fch)
-	// if cnt < 3 {
-	// 	return nil, false
-	// }
-	// attrs := cp.parseBlockAttributes()
-	// inp.SkipToEOL()
-	// if inp.Ch == input.EOS {
-	// 	return nil, false
-	// }
-	// var kind sx.Symbol
-	// switch fch {
-	// case '@':
-	// 	kind = sz.SymVerbatimZettel
-	// case '`', runeModGrave:
-	// 	kind = sz.SymVerbatimProg
-	// case '%':
-	// 	kind = sz.SymVerbatimComment
-	// case '~':
-	// 	kind = sz.SymVerbatimEval
-	// case '$':
-	// 	kind = sz.SymVerbatimMath
-	// default:
-	// 	panic(fmt.Sprintf("%q is not a verbatim char", fch))
-	// }
-	// rn = &ast.VerbatimNode{Kind: kind, Attrs: attrs, Content: make([]byte, 0, 512)}
-	// for {
-	// 	inp.EatEOL()
-	// 	posL := inp.Pos
-	// 	switch inp.Ch {
-	// 	case fch:
-	// 		if cp.countDelim(fch) >= cnt {
-	// 			inp.SkipToEOL()
-	// 			return rn, true
-	// 		}
-	// 		inp.SetPos(posL)
-	// 	case input.EOS:
-	// 		return nil, false
-	// 	}
-	// 	inp.SkipToEOL()
-	// 	if len(rn.Content) > 0 {
-	// 		rn.Content = append(rn.Content, '\n')
-	// 	}
-	// 	rn.Content = append(rn.Content, inp.Src[posL:inp.Pos]...)
-	// }
-	return nil, false
-}
-
-var runeRegion = map[rune]sx.Symbol{
-	':': sz.SymRegionBlock,
-	'<': sz.SymRegionQuote,
-	'"': sz.SymRegionVerse,
+func (cp *zmkP) parseVerbatim() (rn *sx.Pair, success bool) {
+	inp := cp.inp
+	fch := inp.Ch
+	cnt := cp.countDelim(fch)
+	if cnt < 3 {
+		return nil, false
+	}
+	attrs := cp.parseBlockAttributes()
+	inp.SkipToEOL()
+	if inp.Ch == input.EOS {
+		return nil, false
+	}
+	var sym sx.Symbol
+	switch fch {
+	case '@':
+		sym = sz.SymVerbatimZettel
+	case '`', runeModGrave:
+		sym = sz.SymVerbatimProg
+	case '%':
+		sym = sz.SymVerbatimComment
+	case '~':
+		sym = sz.SymVerbatimEval
+	case '$':
+		sym = sz.SymVerbatimMath
+	default:
+		panic(fmt.Sprintf("%q is not a verbatim char", fch))
+	}
+	content := make([]byte, 0, 512)
+	for {
+		inp.EatEOL()
+		posL := inp.Pos
+		switch inp.Ch {
+		case fch:
+			if cp.countDelim(fch) >= cnt {
+				inp.SkipToEOL()
+				rn = sx.MakeList(sym, attrs, sx.String(content))
+				return rn, true
+			}
+			inp.SetPos(posL)
+		case input.EOS:
+			return nil, false
+		}
+		inp.SkipToEOL()
+		if len(content) > 0 {
+			content = append(content, '\n')
+		}
+		content = append(content, inp.Src[posL:inp.Pos]...)
+	}
 }
 
 // parseRegion parses a block region.
-func (cp *zmkP) parseRegion() (rn *sx.Pair /**ast.RegionNode*/, success bool) {
-	// inp := cp.inp
-	// fch := inp.Ch
-	// kind, ok := runeRegion[fch]
-	// if !ok {
-	// 	panic(fmt.Sprintf("%q is not a region char", fch))
-	// }
-	// cnt := cp.countDelim(fch)
-	// if cnt < 3 {
-	// 	return nil, false
-	// }
-	// attrs := cp.parseBlockAttributes()
-	// inp.SkipToEOL()
-	// if inp.Ch == input.EOS {
-	// 	return nil, false
-	// }
-	// rn = &ast.RegionNode{
-	// 	Kind:    kind,
-	// 	Attrs:   attrs,
-	// 	Blocks:  nil,
-	// 	Inlines: nil,
-	// }
-	// var lastPara *ast.ParaNode
-	// inp.EatEOL()
-	// for {
-	// 	posL := inp.Pos
-	// 	switch inp.Ch {
-	// 	case fch:
-	// 		if cp.countDelim(fch) >= cnt {
-	// 			cp.parseRegionLastLine(rn)
-	// 			return rn, true
-	// 		}
-	// 		inp.SetPos(posL)
-	// 	case input.EOS:
-	// 		return nil, false
-	// 	}
-	// 	bn, cont := cp.parseBlock(lastPara)
-	// 	if bn != nil {
-	// 		rn.Blocks = append(rn.Blocks, bn)
-	// 	}
-	// 	if !cont {
-	// 		lastPara, _ = bn.(*ast.ParaNode)
-	// 	}
-	// }
-	return nil, false
+func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
+	inp := cp.inp
+	fch := inp.Ch
+	cnt := cp.countDelim(fch)
+	if cnt < 3 {
+		return nil, false
+	}
+
+	var sym sx.Symbol
+	oldInVerse := cp.inVerse
+	defer func() { cp.inVerse = oldInVerse }()
+	switch fch {
+	case ':':
+		sym = sz.SymRegionBlock
+	case '<':
+		sym = sz.SymRegionQuote
+	case '"':
+		sym = sz.SymRegionVerse
+		cp.inVerse = true
+	default:
+		panic(fmt.Sprintf("%q is not a region char", fch))
+	}
+	attrs := cp.parseBlockAttributes()
+	inp.SkipToEOL()
+	if inp.Ch == input.EOS {
+		return nil, false
+	}
+	symBlocks := sx.Cons(sz.SymBlock, nil)
+	curr := symBlocks
+	var lastPara *sx.Pair
+	inp.EatEOL()
+	for {
+		posL := inp.Pos
+		switch inp.Ch {
+		case fch:
+			if cp.countDelim(fch) >= cnt {
+				ins := cp.parseRegionLastLine()
+				rn = ins.Cons(symBlocks).Cons(attrs).Cons(sym)
+				return rn, true
+			}
+			inp.SetPos(posL)
+		case input.EOS:
+			return nil, false
+		}
+		bn, cont := cp.parseBlock(lastPara)
+		if bn != nil {
+			curr = curr.AppendBang(bn)
+		}
+		if !cont {
+			lastPara = bn
+		}
+	}
 }
 
-// func (cp *zmkP) parseRegionLastLine(rn *ast.RegionNode) {
-// 	cp.clearStacked() // remove any lists defined in the region
-// 	cp.skipSpace()
-// 	for {
-// 		switch cp.inp.Ch {
-// 		case input.EOS, '\n', '\r':
-// 			return
-// 		}
-// 		in := cp.parseInline()
-// 		if in == nil {
-// 			return
-// 		}
-// 		rn.Inlines = append(rn.Inlines, in)
-// 	}
-// }
+// parseRegionLastLine parses the last line of a region and returns its inline text.
+func (cp *zmkP) parseRegionLastLine() *sx.Pair {
+	cp.clearStacked() // remove any lists defined in the region
+	cp.skipSpace()
+	var result, curr *sx.Pair
+	for {
+		switch cp.inp.Ch {
+		case input.EOS, '\n', '\r':
+			return result
+		}
+		in := cp.parseInline()
+		if in == nil {
+			return result
+		}
+		if result == nil {
+			result = sx.Cons(in, nil)
+			curr = result
+		} else {
+			curr = curr.AppendBang(in)
+		}
+	}
+}
 
 // parseHeading parses a head line.
-func (cp *zmkP) parseHeading() (hn *sx.Pair /**ast.HeadingNode*/, success bool) {
-	// inp := cp.inp
-	// delims := cp.countDelim(inp.Ch)
-	// if delims < 3 {
-	// 	return nil, false
-	// }
-	// if inp.Ch != ' ' {
-	// 	return nil, false
-	// }
-	// inp.Next()
-	// cp.skipSpace()
-	// if delims > 7 {
-	// 	delims = 7
-	// }
-	// hn = &ast.HeadingNode{Level: delims - 2, Inlines: nil}
-	// for {
-	// 	if input.IsEOLEOS(inp.Ch) {
-	// 		return hn, true
-	// 	}
-	// 	in := cp.parseInline()
-	// 	if in == nil {
-	// 		return hn, true
-	// 	}
-	// 	hn.Inlines = append(hn.Inlines, in)
-	// 	if inp.Ch == '{' && inp.Peek() != '{' {
-	// 		attrs := cp.parseBlockAttributes()
-	// 		hn.Attrs = attrs
-	// 		inp.SkipToEOL()
-	// 		return hn, true
-	// 	}
-	// }
-	return nil, false
+func (cp *zmkP) parseHeading() (hn *sx.Pair, success bool) {
+	inp := cp.inp
+	delims := cp.countDelim(inp.Ch)
+	if delims < 3 {
+		return nil, false
+	}
+	if inp.Ch != ' ' {
+		return nil, false
+	}
+	inp.Next()
+	cp.skipSpace()
+	if delims > 7 {
+		delims = 7
+	}
+	level := int64(delims - 2)
+	var attrs *sx.Pair
+	var text, curr *sx.Pair
+	for {
+		if input.IsEOLEOS(inp.Ch) {
+			return createHeading(level, attrs, text), true
+		}
+		in := cp.parseInline()
+		if in == nil {
+			return createHeading(level, attrs, text), true
+		}
+		if text == nil {
+			text = sx.Cons(in, nil)
+			curr = text
+		} else {
+			curr = curr.AppendBang(in)
+		}
+		if inp.Ch == '{' && inp.Peek() != '{' {
+			attrs = cp.parseBlockAttributes()
+			inp.SkipToEOL()
+			return createHeading(level, attrs, text), true
+		}
+	}
+}
+func createHeading(level int64, attrs, text *sx.Pair) *sx.Pair {
+	return text.
+		Cons(sx.String("")). // Fragment
+		Cons(sx.String("")). // Slug
+		Cons(attrs).
+		Cons(sx.Int64(level)).
+		Cons(sz.SymHeading)
 }
 
 // parseHRule parses a horizontal rule.
-func (cp *zmkP) parseHRule() (hn *sx.Pair /**ast.HRuleNode*/, success bool) {
-	// inp := cp.inp
-	//
-	//	if cp.countDelim(inp.Ch) < 3 {
-	//		return nil, false
-	//	}
-	//
-	// attrs := cp.parseBlockAttributes()
-	// inp.SkipToEOL()
-	// return &ast.HRuleNode{Attrs: attrs}, true
-	return nil, false
+func (cp *zmkP) parseHRule() (hn *sx.Pair, success bool) {
+	inp := cp.inp
+
+	if cp.countDelim(inp.Ch) < 3 {
+		return nil, false
+	}
+
+	attrs := cp.parseBlockAttributes()
+	inp.SkipToEOL()
+	return sx.MakeList(sz.SymThematic, attrs), true
 }
 
 var mapRuneNestedList = map[rune]sx.Symbol{

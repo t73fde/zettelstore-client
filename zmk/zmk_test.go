@@ -473,153 +473,157 @@ func TestEntity(t *testing.T) {
 	})
 }
 
-func xTestVerbatimZettel(t *testing.T) {
+func TestVerbatimZettel(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"@@@\n@@@", "(ZETTEL)"},
-		{"@@@\nabc\n@@@", "(ZETTEL\nabc)"},
-		{"@@@@def\nabc\n@@@@", "(ZETTEL\nabc)[ATTR =def]"},
+		{"@@@\n@@@", "()"},
+		{"@@@\nabc\n@@@", "(BLOCK (VERBATIM-ZETTEL () \"abc\"))"},
+		{"@@@@def\nabc\n@@@@", "(BLOCK (VERBATIM-ZETTEL ((\"\" . \"def\")) \"abc\"))"},
 	})
 }
 
-func xTestVerbatimCode(t *testing.T) {
+func TestVerbatimCode(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"```\n```", "(PROG)"},
-		{"```\nabc\n```", "(PROG\nabc)"},
-		{"```\nabc\n````", "(PROG\nabc)"},
-		{"````\nabc\n````", "(PROG\nabc)"},
-		{"````\nabc\n```\n````", "(PROG\nabc\n```)"},
-		{"````go\nabc\n````", "(PROG\nabc)[ATTR =go]"},
+		{"```\n```", "()"},
+		{"```\nabc\n```", "(BLOCK (VERBATIM-CODE () \"abc\"))"},
+		{"```\nabc\n````", "(BLOCK (VERBATIM-CODE () \"abc\"))"},
+		{"````\nabc\n````", "(BLOCK (VERBATIM-CODE () \"abc\"))"},
+		{"````\nabc\n```\n````", "(BLOCK (VERBATIM-CODE () \"abc\\n```\"))"},
+		{"````go\nabc\n````", "(BLOCK (VERBATIM-CODE ((\"\" . \"go\")) \"abc\"))"},
 	})
 }
 
-func xTestVerbatimEval(t *testing.T) {
+func TestVerbatimEval(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"~~~\n~~~", "(EVAL)"},
-		{"~~~\nabc\n~~~", "(EVAL\nabc)"},
-		{"~~~\nabc\n~~~~", "(EVAL\nabc)"},
-		{"~~~~\nabc\n~~~~", "(EVAL\nabc)"},
-		{"~~~~\nabc\n~~~\n~~~~", "(EVAL\nabc\n~~~)"},
-		{"~~~~go\nabc\n~~~~", "(EVAL\nabc)[ATTR =go]"},
+		{"~~~\n~~~", "()"},
+		{"~~~\nabc\n~~~", "(BLOCK (VERBATIM-EVAL () \"abc\"))"},
+		{"~~~\nabc\n~~~~", "(BLOCK (VERBATIM-EVAL () \"abc\"))"},
+		{"~~~~\nabc\n~~~~", "(BLOCK (VERBATIM-EVAL () \"abc\"))"},
+		{"~~~~\nabc\n~~~\n~~~~", "(BLOCK (VERBATIM-EVAL () \"abc\\n~~~\"))"},
+		{"~~~~go\nabc\n~~~~", "(BLOCK (VERBATIM-EVAL ((\"\" . \"go\")) \"abc\"))"},
 	})
 }
 
-func xTestVerbatimMath(t *testing.T) {
+func TestVerbatimMath(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"$$$\n$$$", "(MATH)"},
-		{"$$$\nabc\n$$$", "(MATH\nabc)"},
-		{"$$$\nabc\n$$$$", "(MATH\nabc)"},
-		{"$$$$\nabc\n$$$$", "(MATH\nabc)"},
-		{"$$$$\nabc\n$$$\n$$$$", "(MATH\nabc\n$$$)"},
-		{"$$$$go\nabc\n$$$$", "(MATH\nabc)[ATTR =go]"},
+		{"$$$\n$$$", "()"},
+		{"$$$\nabc\n$$$", "(BLOCK (VERBATIM-MATH () \"abc\"))"},
+		{"$$$\nabc\n$$$$", "(BLOCK (VERBATIM-MATH () \"abc\"))"},
+		{"$$$$\nabc\n$$$$", "(BLOCK (VERBATIM-MATH () \"abc\"))"},
+		{"$$$$\nabc\n$$$\n$$$$", "(BLOCK (VERBATIM-MATH () \"abc\\n$$$\"))"},
+		{"$$$$go\nabc\n$$$$", "(BLOCK (VERBATIM-MATH ((\"\" . \"go\")) \"abc\"))"},
 	})
 }
 
-func xTestVerbatimComment(t *testing.T) {
+func TestVerbatimComment(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"%%%\n%%%", "(COMMENT)"},
-		{"%%%\nabc\n%%%", "(COMMENT\nabc)"},
-		{"%%%%go\nabc\n%%%%", "(COMMENT\nabc)[ATTR =go]"},
+		{"%%%\n%%%", "()"},
+		{"%%%\nabc\n%%%", "(BLOCK (VERBATIM-COMMENT () \"abc\"))"},
+		{"%%%%go\nabc\n%%%%", "(BLOCK (VERBATIM-COMMENT ((\"\" . \"go\")) \"abc\"))"},
 	})
 }
 
-func xTestPara(t *testing.T) {
+func TestPara(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"a\n\nb", "(PARA a)(PARA b)"},
-		{"a\n \nb", "(PARA a)(PARA b)"},
+		{"a\n\nb", "(BLOCK (PARA (TEXT \"a\")) (PARA (TEXT \"b\")))"},
+		{"a\n \nb", "(BLOCK (PARA (TEXT \"a\") (SOFT) (HARD) (TEXT \"b\")))"},
 	})
 }
 
-func xTestSpanRegion(t *testing.T) {
+func TestSpanRegion(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{":::\n:::", "(SPAN)"},
-		{":::\nabc\n:::", "(SPAN (PARA abc))"},
-		{":::\nabc\n::::", "(SPAN (PARA abc))"},
-		{"::::\nabc\n::::", "(SPAN (PARA abc))"},
-		{"::::\nabc\n:::\ndef\n:::\n::::", "(SPAN (PARA abc)(SPAN (PARA def)))"},
-		{":::{go}\n:::", "(SPAN)[ATTR go]"},
-		{":::\nabc\n::: def ", "(SPAN (PARA abc) (LINE def))"},
+		{":::\n:::", "()"},
+		{":::\nabc\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"abc\")))))"},
+		{":::\nabc\n::::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"abc\")))))"},
+		{"::::\nabc\n::::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"abc\")))))"},
+		{"::::\nabc\n:::\ndef\n:::\n::::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"abc\")) (REGION-BLOCK () (BLOCK (PARA (TEXT \"def\")))))))"},
+		{":::{go}\n:::a", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) () (TEXT \"a\")))"},
+		{":::\nabc\n::: def ", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"abc\"))) (TEXT \"def\")))"},
 	})
 }
 
-func xTestQuoteRegion(t *testing.T) {
+func TestQuoteRegion(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"<<<\n<<<", "(QUOTE)"},
-		{"<<<\nabc\n<<<", "(QUOTE (PARA abc))"},
-		{"<<<\nabc\n<<<<", "(QUOTE (PARA abc))"},
-		{"<<<<\nabc\n<<<<", "(QUOTE (PARA abc))"},
-		{"<<<<\nabc\n<<<\ndef\n<<<\n<<<<", "(QUOTE (PARA abc)(QUOTE (PARA def)))"},
-		{"<<<go\n<<<", "(QUOTE)[ATTR =go]"},
-		{"<<<\nabc\n<<< def ", "(QUOTE (PARA abc) (LINE def))"},
+		{"<<<\n<<<", "()"},
+		{"<<<\nabc\n<<<", "(BLOCK (REGION-QUOTE () (BLOCK (PARA (TEXT \"abc\")))))"},
+		{"<<<\nabc\n<<<<", "(BLOCK (REGION-QUOTE () (BLOCK (PARA (TEXT \"abc\")))))"},
+		{"<<<<\nabc\n<<<<", "(BLOCK (REGION-QUOTE () (BLOCK (PARA (TEXT \"abc\")))))"},
+		{"<<<<\nabc\n<<<\ndef\n<<<\n<<<<", "(BLOCK (REGION-QUOTE () (BLOCK (PARA (TEXT \"abc\")) (REGION-QUOTE () (BLOCK (PARA (TEXT \"def\")))))))"},
+		{"<<<go\n<<< a", "(BLOCK (REGION-QUOTE ((\"\" . \"go\")) () (TEXT \"a\")))"},
+		{"<<<\nabc\n<<< def ", "(BLOCK (REGION-QUOTE () (BLOCK (PARA (TEXT \"abc\"))) (TEXT \"def\")))"},
 	})
 }
 
-func xTestVerseRegion(t *testing.T) {
+func TestVerseRegion(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, replace("\"", nil, TestCases{
-		{"$$$\n$$$", "(VERSE)"},
-		{"$$$\nabc\n$$$", "(VERSE (PARA abc))"},
-		{"$$$\nabc\n$$$$", "(VERSE (PARA abc))"},
-		{"$$$$\nabc\n$$$$", "(VERSE (PARA abc))"},
-		{"$$$\nabc\ndef\n$$$", "(VERSE (PARA abc HB def))"},
-		{"$$$$\nabc\n$$$\ndef\n$$$\n$$$$", "(VERSE (PARA abc)(VERSE (PARA def)))"},
-		{"$$$go\n$$$", "(VERSE)[ATTR =go]"},
-		{"$$$\nabc\n$$$ def ", "(VERSE (PARA abc) (LINE def))"},
+		{"$$$\n$$$", "()"},
+		{"$$$\nabc\n$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\")))))"},
+		{"$$$\nabc\n$$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\")))))"},
+		{"$$$$\nabc\n$$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\")))))"},
+		{"$$$\nabc\ndef\n$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\") (HARD) (TEXT \"def\")))))"},
+		{"$$$$\nabc\n$$$\ndef\n$$$\n$$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\")) (REGION-VERSE () (BLOCK (PARA (TEXT \"def\")))))))"},
+		{"$$$go\n$$$x", "(BLOCK (REGION-VERSE ((\"\" . \"go\")) () (TEXT \"x\")))"},
+		{"$$$\nabc\n$$$ def ", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\"))) (TEXT \"def\")))"},
+		{"$$$\n space \n$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (SPACE \"\u00a0\") (TEXT \"space\")))))"},
+		{"$$$\n  spaces  \n$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (SPACE \"\u00a0\u00a0\") (TEXT \"spaces\")))))"},
+		{"$$$\n  spaces  \n space  \n$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (SPACE \"\u00a0\u00a0\") (TEXT \"spaces\") (SPACE \"\u00a0\u00a0\") (HARD) (SPACE \"\u00a0\") (TEXT \"space\")))))"},
 	}))
 }
 
-func xTestHeading(t *testing.T) {
+func TestHeading(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"=h", "(PARA =h)"},
-		{"= h", "(PARA = SP h)"},
-		{"==h", "(PARA ==h)"},
-		{"== h", "(PARA == SP h)"},
-		{"===h", "(PARA ===h)"},
-		{"=== h", "(H1 h #h)"},
-		{"===  h", "(H1 h #h)"},
-		{"==== h", "(H2 h #h)"},
-		{"===== h", "(H3 h #h)"},
-		{"====== h", "(H4 h #h)"},
-		{"======= h", "(H5 h #h)"},
-		{"======== h", "(H5 h #h)"},
-		{"=", "(PARA =)"},
-		{"=== h=__=a__", "(H1 h= {_ =a} #h-a)"},
-		{"=\n", "(PARA =)"},
-		{"a=", "(PARA a=)"},
-		{" =", "(PARA =)"},
-		{"=== h\na", "(H1 h #h)(PARA a)"},
-		{"=== h i {-}", "(H1 h SP i #h-i)[ATTR -]"},
-		{"=== h {{a}}", "(H1 h SP (EMBED a) #h)"},
-		{"=== h{{a}}", "(H1 h (EMBED a) #h)"},
-		{"=== {{a}}", "(H1 (EMBED a))"},
-		{"=== h {{a}}{-}", "(H1 h SP (EMBED a)[ATTR -] #h)"},
-		{"=== h {{a}} {-}", "(H1 h SP (EMBED a) #h)[ATTR -]"},
-		{"=== h {-}{{a}}", "(H1 h #h)[ATTR -]"},
-		{"=== h{id=abc}", "(H1 h #h)[ATTR id=abc]"},
-		{"=== h\n=== h", "(H1 h #h)(H1 h #h-1)"},
+		{"=h", "(BLOCK (PARA (TEXT \"=h\")))"},
+		{"= h", "(BLOCK (PARA (TEXT \"=\") (SPACE) (TEXT \"h\")))"},
+		{"==h", "(BLOCK (PARA (TEXT \"==h\")))"},
+		{"== h", "(BLOCK (PARA (TEXT \"==\") (SPACE) (TEXT \"h\")))"},
+		{"===h", "(BLOCK (PARA (TEXT \"===h\")))"},
+		{"===", "(BLOCK (PARA (TEXT \"===\")))"},
+		{"=== h", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\")))"},
+		{"===  h", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\")))"},
+		{"==== h", "(BLOCK (HEADING 2 () \"\" \"\" (TEXT \"h\")))"},
+		{"===== h", "(BLOCK (HEADING 3 () \"\" \"\" (TEXT \"h\")))"},
+		{"====== h", "(BLOCK (HEADING 4 () \"\" \"\" (TEXT \"h\")))"},
+		{"======= h", "(BLOCK (HEADING 5 () \"\" \"\" (TEXT \"h\")))"},
+		{"======== h", "(BLOCK (HEADING 5 () \"\" \"\" (TEXT \"h\")))"},
+		{"=", "(BLOCK (PARA (TEXT \"=\")))"},
+		{"=== h=__=a__", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h=\") (FORMAT-EMPH () (TEXT \"=a\"))))"},
+		{"=\n", "(BLOCK (PARA (TEXT \"=\")))"},
+		{"a=", "(BLOCK (PARA (TEXT \"a=\")))"},
+		{" =", "(BLOCK (PARA (TEXT \"=\")))"},
+		{"=== h\na", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\")) (PARA (TEXT \"a\")))"},
+		{"=== h i {-}", "(BLOCK (HEADING 1 ((\"-\" . \"\")) \"\" \"\" (TEXT \"h\") (SPACE) (TEXT \"i\")))"},
+		{"=== h {{a}}", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\") (SPACE) (EMBED () \"a\")))"},
+		{"=== h{{a}}", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\") (EMBED () \"a\")))"},
+		{"=== {{a}}", "(BLOCK (HEADING 1 () \"\" \"\" (EMBED () \"a\")))"},
+		{"=== h {{a}}{-}", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\") (SPACE) (EMBED ((\"-\" . \"\")) \"a\")))"},
+		{"=== h {{a}} {-}", "(BLOCK (HEADING 1 ((\"-\" . \"\")) \"\" \"\" (TEXT \"h\") (SPACE) (EMBED () \"a\")))"},
+		{"=== h {-}{{a}}", "(BLOCK (HEADING 1 ((\"-\" . \"\")) \"\" \"\" (TEXT \"h\")))"},
+		{"=== h{id=abc}", "(BLOCK (HEADING 1 ((\"id\" . \"abc\")) \"\" \"\" (TEXT \"h\")))"},
+		{"=== h\n=== h", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\")) (HEADING 1 () \"\" \"\" (TEXT \"h\")))"},
 	})
 }
 
-func xTestHRule(t *testing.T) {
+func TestHRule(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"-", "(PARA -)"},
-		{"---", "(HR)"},
-		{"----", "(HR)"},
-		{"---A", "(HR)[ATTR =A]"},
-		{"---A-", "(HR)[ATTR =A-]"},
-		{"-1", "(PARA -1)"},
-		{"2-1", "(PARA 2-1)"},
-		{"---  {  go  }  ", "(HR)[ATTR go]"},
-		{"---  {  .go  }  ", "(HR)[ATTR class=go]"},
+		{"-", "(BLOCK (PARA (TEXT \"-\")))"},
+		{"---", "(BLOCK (THEMATIC ()))"},
+		{"----", "(BLOCK (THEMATIC ()))"},
+		{"---A", "(BLOCK (THEMATIC ((\"\" . \"A\"))))"},
+		{"---A-", "(BLOCK (THEMATIC ((\"\" . \"A-\"))))"},
+		{"-1", "(BLOCK (PARA (TEXT \"-1\")))"},
+		{"2-1", "(BLOCK (PARA (TEXT \"2-1\")))"},
+		{"---  {  go  }  ", "(BLOCK (THEMATIC ((\"go\" . \"\"))))"},
+		{"---  {  .go  }  ", "(BLOCK (THEMATIC ((\"class\" . \"go\"))))"},
 	})
 }
 

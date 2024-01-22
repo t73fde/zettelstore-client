@@ -18,7 +18,9 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-func postProcess(lst *sx.Pair) *sx.Pair {
+const symInVerse = sx.Symbol("in-verse")
+
+func postProcess(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	if lst == nil {
 		return nil
 	}
@@ -27,7 +29,7 @@ func postProcess(lst *sx.Pair) *sx.Pair {
 		panic(lst)
 	}
 	if fn, found := symMap[sym]; found {
-		return fn(lst)
+		return fn(lst, env)
 	}
 	if _, found := ignoreMap[sym]; found {
 		return lst
@@ -35,12 +37,12 @@ func postProcess(lst *sx.Pair) *sx.Pair {
 	panic(lst)
 }
 
-func postProcessList(lst *sx.Pair) *sx.Pair {
+func postProcessList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	var result, curr *sx.Pair
 	for node := lst; node != nil; node = node.Tail() {
 		elem, isPair := sx.GetPair(node.Car())
 		if isPair {
-			elem = postProcess(elem)
+			elem = postProcess(elem, env)
 		}
 		if elem == nil {
 			continue
@@ -56,6 +58,8 @@ func postProcessList(lst *sx.Pair) *sx.Pair {
 }
 
 var ignoreMap = map[sx.Symbol]struct{}{
+	sz.SymThematic: {},
+
 	sz.SymLiteralComment: {},
 	sz.SymLiteralHTML:    {},
 	sz.SymLiteralInput:   {},
@@ -64,18 +68,28 @@ var ignoreMap = map[sx.Symbol]struct{}{
 	sz.SymLiteralOutput:  {},
 	sz.SymLiteralZettel:  {},
 	sz.SymSpace:          {},
-	sz.SymSoft:           {},
 	sz.SymHard:           {},
 }
 
-var symMap map[sx.Symbol]func(*sx.Pair) *sx.Pair
+var symMap map[sx.Symbol]func(*sx.Pair, *sx.Pair) *sx.Pair
 
 func init() {
-	symMap = map[sx.Symbol]func(*sx.Pair) *sx.Pair{
-		sz.SymBlock:        postProcessBlockList,
-		sz.SymPara:         postProcessInlineList,
+	symMap = map[sx.Symbol]func(*sx.Pair, *sx.Pair) *sx.Pair{
+		sz.SymBlock:           postProcessBlockList,
+		sz.SymPara:            postProcessInlineList,
+		sz.SymRegionBlock:     postProcessRegion,
+		sz.SymRegionQuote:     postProcessRegion,
+		sz.SymRegionVerse:     postProcessRegionVerse,
+		sz.SymVerbatimComment: postProcessVerbatim,
+		sz.SymVerbatimEval:    postProcessVerbatim,
+		sz.SymVerbatimMath:    postProcessVerbatim,
+		sz.SymVerbatimProg:    postProcessVerbatim,
+		sz.SymVerbatimZettel:  postProcessVerbatim,
+		sz.SymHeading:         postProcessHeading,
+
 		sz.SymInline:       postProcessInlineList,
 		sz.SymText:         postProcessText,
+		sz.SymSoft:         postProcessSoft,
 		sz.SymEndnote:      postProcessEndnote,
 		sz.SymMark:         postProcessMark,
 		sz.SymLinkBased:    postProcessInlines4,
@@ -101,41 +115,82 @@ func init() {
 	}
 }
 
-func postProcessBlockList(lst *sx.Pair) *sx.Pair {
-	result := postProcessList(lst.Tail())
+func postProcessBlockList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
+	result := postProcessList(lst.Tail(), env)
 	if result == nil {
 		return nil
 	}
 	return result.Cons(lst.Car())
 }
 
-func postProcessInlineList(lst *sx.Pair) *sx.Pair {
+func postProcessInlineList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	sym := lst.Car()
-	if rest := postProcessInlines(lst.Tail()); rest != nil {
+	if rest := postProcessInlines(lst.Tail(), env); rest != nil {
 		return rest.Cons(sym)
 	}
 	return nil
 }
 
-func postProcessInlines(lst *sx.Pair) *sx.Pair {
+func postProcessRegion(rn *sx.Pair, env *sx.Pair) *sx.Pair {
+	sym := rn.Car()
+	next := rn.Tail()
+	attrs := next.Car()
+	next = next.Tail()
+	blocks := postProcess(next.Head(), env)
+	text := postProcessInlines(next.Tail(), env)
+	if blocks == nil && text == nil {
+		return nil
+	}
+	return text.Cons(blocks).Cons(attrs).Cons(sym)
+}
+
+func postProcessRegionVerse(rn *sx.Pair, env *sx.Pair) *sx.Pair {
+	return postProcessRegion(rn, env.Cons(sx.Cons(symInVerse, nil)))
+}
+
+func postProcessVerbatim(verb *sx.Pair, env *sx.Pair) *sx.Pair {
+	if content, isString := sx.GetString(verb.Tail().Tail().Car()); isString && content != "" {
+		return verb
+	}
+	return nil
+}
+
+func postProcessHeading(hn *sx.Pair, env *sx.Pair) *sx.Pair {
+	sym := hn.Car()
+	next := hn.Tail()
+	level := next.Car()
+	next = next.Tail()
+	attrs := next.Car()
+	next = next.Tail()
+	slug := next.Car()
+	next = next.Tail()
+	fragment := next.Car()
+	if text := postProcessInlines(next.Tail(), env); text != nil {
+		return text.Cons(fragment).Cons(slug).Cons(attrs).Cons(level).Cons(sym)
+	}
+	return nil
+}
+
+func postProcessInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	length := lst.Length()
 	if length < 0 {
 		return nil
 	}
+	inVerse := env.Assoc(symInVerse)
 	vector := make([]*sx.Pair, 0, length)
 	// 1st phase: process all childs, ignore SPACE at start, and merge some elements
 	for node := lst; node != nil; node = node.Tail() {
 		elem, isPair := sx.GetPair(node.Car())
 		if isPair {
-			elem = postProcess(elem)
+			elem = postProcess(elem, env)
 		}
 		if elem == nil {
 			continue
 		}
 		elemSym := elem.Car()
 		if len(vector) == 0 {
-			// The 1st element is always moved, except for a SPACE
-			if elemSym.IsEqual(sz.SymSpace) {
+			// The 1st element is always moved, except for a SPACE outside a verse block
+			if inVerse == nil && elemSym.IsEqual(sz.SymSpace) {
 				continue
 			}
 			vector = append(vector, elem)
@@ -186,7 +241,7 @@ func postProcessInlines(lst *sx.Pair) *sx.Pair {
 	return result
 }
 
-func postProcessText(txt *sx.Pair) *sx.Pair {
+func postProcessText(txt *sx.Pair, env *sx.Pair) *sx.Pair {
 	if tail := txt.Tail(); tail != nil {
 		if content, isString := sx.GetString(tail.Car()); isString && content != "" {
 			return txt
@@ -195,17 +250,24 @@ func postProcessText(txt *sx.Pair) *sx.Pair {
 	return nil
 }
 
-func postProcessEndnote(en *sx.Pair) *sx.Pair {
+func postProcessSoft(sn *sx.Pair, env *sx.Pair) *sx.Pair {
+	if env.Assoc(symInVerse) == nil {
+		return sn
+	}
+	return sx.Cons(sz.SymHard, nil)
+}
+
+func postProcessEndnote(en *sx.Pair, env *sx.Pair) *sx.Pair {
 	sym := en.Car()
 	next := en.Tail()
 	attrs := next.Car()
-	if text := postProcessInlines(next.Tail()); text != nil {
+	if text := postProcessInlines(next.Tail(), env); text != nil {
 		return text.Cons(attrs).Cons(sym)
 	}
 	return sx.MakeList(sym, attrs)
 }
 
-func postProcessMark(en *sx.Pair) *sx.Pair {
+func postProcessMark(en *sx.Pair, env *sx.Pair) *sx.Pair {
 	sym := en.Car()
 	next := en.Tail()
 	mark := next.Car()
@@ -213,21 +275,21 @@ func postProcessMark(en *sx.Pair) *sx.Pair {
 	slug := next.Car()
 	next = next.Tail()
 	fragment := next.Car()
-	text := postProcessInlines(next.Tail())
+	text := postProcessInlines(next.Tail(), env)
 	return text.Cons(fragment).Cons(slug).Cons(mark).Cons(sym)
 }
 
-func postProcessInlines4(ln *sx.Pair) *sx.Pair {
+func postProcessInlines4(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 	sym := ln.Car()
 	next := ln.Tail()
 	attrs := next.Car()
 	next = next.Tail()
 	val3 := next.Car()
-	text := postProcessInlines(next.Tail())
+	text := postProcessInlines(next.Tail(), env)
 	return text.Cons(val3).Cons(attrs).Cons(sym)
 }
 
-func postProcessFormat(fn *sx.Pair) *sx.Pair {
+func postProcessFormat(fn *sx.Pair, env *sx.Pair) *sx.Pair {
 	symFormat := fn.Car()
 	next := fn.Tail() // Attrs
 	attrs := next.Car()
@@ -235,6 +297,6 @@ func postProcessFormat(fn *sx.Pair) *sx.Pair {
 	if next == nil {
 		return fn
 	}
-	inlines := postProcessInlines(next)
+	inlines := postProcessInlines(next, env)
 	return inlines.Cons(attrs).Cons(symFormat)
 }

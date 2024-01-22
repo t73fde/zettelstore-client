@@ -26,14 +26,14 @@ import (
 func ParseBlocks(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
 	bs := parser.parseBlockSlice()
-	bs = postProcess(bs)
+	bs = postProcess(bs, nil)
 	return bs
 }
 
 func ParseInlines(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
 	is := parser.parseInlineSlice()
-	is = postProcess(is)
+	is = postProcess(is, nil)
 	return is
 }
 

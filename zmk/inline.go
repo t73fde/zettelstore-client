@@ -16,6 +16,7 @@ package zmk
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/input"
@@ -150,7 +151,9 @@ func (cp *zmkP) parseSpace() *sx.Pair {
 		case ' ', '\t':
 		default:
 			if cp.inVerse {
-				return sx.MakeList(sz.SymSpace, sx.String(string(inp.Src[pos:inp.Pos])))
+				spaces := utf8.RuneCount(inp.Src[pos:inp.Pos])
+				s := strings.Repeat("\u00a0", spaces)
+				return sx.MakeList(sz.SymSpace, sx.String(s))
 			}
 			return sx.MakeList(sz.SymSpace)
 		}
