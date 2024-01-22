@@ -425,7 +425,7 @@ func (ev *Evaluator) bindBlocks() {
 		return ev.evalBLOB(getList(args[0], env), getString(args[1], env), getString(args[2], env))
 	})
 	ev.bind(sz.SymTransclude, 2, func(args []sx.Object, env *Environment) sx.Object {
-		ref, isPair := sx.GetPair(ev.Eval(args[1], env))
+		ref, isPair := sx.GetPair(args[1])
 		if !isPair {
 			return sx.Nil()
 		}
@@ -585,7 +585,7 @@ func (ev *Evaluator) bindInlines() {
 	})
 
 	ev.bind(sz.SymEmbed, 3, func(args []sx.Object, env *Environment) sx.Object {
-		ref := getList(ev.Eval(args[1], env), env)
+		ref := getList(args[1], env)
 		syntax := getString(args[2], env)
 		if syntax == api.ValueSyntaxSVG {
 			embedAttr := sx.MakeList(
