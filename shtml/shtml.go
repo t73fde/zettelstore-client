@@ -47,7 +47,6 @@ func NewEvaluator(headingOffset int) *Evaluator {
 		fns:     make(map[sx.Symbol]EvalFn, 128),
 		minArgs: make(map[sx.Symbol]int, 128),
 	}
-	ev.bindCommon()
 	ev.bindMetadata()
 	ev.bindBlocks()
 	ev.bindInlines()
@@ -226,16 +225,11 @@ func (ev *Evaluator) Rebind(sym sx.Symbol, fn EvalFn) {
 	ev.fns[sym] = fn
 }
 
-func (ev *Evaluator) bindCommon() {
-	ev.bind(sx.SymbolList, 0, ev.evalList)
-	ev.bind(sx.SymbolQuote, 1, func(args []sx.Object, _ *Environment) sx.Object { return args[0] })
-}
-
 func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.SymMeta, 0, ev.evalList)
 	evalMetaString := func(args []sx.Object, env *Environment) sx.Object {
 		a := make(attrs.Attributes, 2).
-			Set("name", string(ev.getSymbol(ev.Eval(args[0], env), env))).
+			Set("name", string(ev.getSymbol(args[0], env))).
 			Set("content", string(getString(args[1], env)))
 		return ev.EvaluateMeta(a)
 	}
@@ -250,8 +244,7 @@ func (ev *Evaluator) bindMetadata() {
 
 	evalMetaSet := func(args []sx.Object, env *Environment) sx.Object {
 		var sb strings.Builder
-		lst := ev.Eval(args[1], env)
-		for elem := getList(lst, env); elem != nil; elem = elem.Tail() {
+		for elem := getList(args[1], env); elem != nil; elem = elem.Tail() {
 			sb.WriteByte(' ')
 			sb.WriteString(string(getString(elem.Car(), env)))
 		}
@@ -260,7 +253,7 @@ func (ev *Evaluator) bindMetadata() {
 			s = s[1:]
 		}
 		a := make(attrs.Attributes, 2).
-			Set("name", string(ev.getSymbol(ev.Eval(args[0], env), env))).
+			Set("name", string(ev.getSymbol(args[0], env))).
 			Set("content", s)
 		return ev.EvaluateMeta(a)
 	}
@@ -269,7 +262,7 @@ func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.SymTypeWordSet, 2, evalMetaSet)
 	ev.bind(sz.SymTypeZettelmarkup, 2, func(args []sx.Object, env *Environment) sx.Object {
 		a := make(attrs.Attributes, 2).
-			Set("name", string(ev.getSymbol(ev.Eval(args[0], env), env))).
+			Set("name", string(ev.getSymbol(args[0], env))).
 			Set("content", text.EvaluateInlineString(getList(args[1], env)))
 		return ev.EvaluateMeta(a)
 	})
@@ -312,7 +305,7 @@ func (ev *Evaluator) bindBlocks() {
 	ev.bind(sz.SymThematic, 0, func(args []sx.Object, env *Environment) sx.Object {
 		result := sx.Nil()
 		if len(args) > 0 {
-			if attrList := getList(ev.Eval(args[0], env), env); attrList != nil {
+			if attrList := getList(args[0], env); attrList != nil {
 				result = result.Cons(ev.EvaluateAttrbute(sz.GetAttributes(attrList)))
 			}
 		}
@@ -361,8 +354,8 @@ func (ev *Evaluator) bindBlocks() {
 
 	ev.bind(sz.SymTable, 1, func(args []sx.Object, env *Environment) sx.Object {
 		thead := sx.Nil()
-		if header := getList(ev.Eval(args[0], env), env); !sx.IsNil(header) {
-			thead = sx.Nil().Cons(ev.evalTableRow(header)).Cons(symTHEAD)
+		if header := getList(args[0], env); !sx.IsNil(header) {
+			thead = sx.Nil().Cons(ev.evalTableRow(header, env)).Cons(symTHEAD)
 		}
 
 		tbody := sx.Nil()
@@ -370,7 +363,7 @@ func (ev *Evaluator) bindBlocks() {
 			tbody = sx.Nil().Cons(symTBODY)
 			curBody := tbody
 			for _, row := range args[1:] {
-				curBody = curBody.AppendBang(ev.evalTableRow(getList(ev.Eval(row, env), env)))
+				curBody = curBody.AppendBang(ev.evalTableRow(getList(row, env), env))
 			}
 		}
 
@@ -465,14 +458,14 @@ func (ev *Evaluator) makeListFn(sym sx.Symbol) EvalFn {
 	}
 }
 
-func (ev *Evaluator) evalTableRow(pairs *sx.Pair) *sx.Pair {
+func (ev *Evaluator) evalTableRow(pairs *sx.Pair, env *Environment) *sx.Pair {
 	row := sx.Nil().Cons(symTR)
 	if pairs == nil {
 		return nil
 	}
 	curRow := row
 	for pair := pairs; pair != nil; pair = pair.Tail() {
-		curRow = curRow.AppendBang(pair.Car())
+		curRow = curRow.AppendBang(ev.Eval(pair.Car(), env))
 	}
 	return row
 }
@@ -672,7 +665,7 @@ func (ev *Evaluator) bindInlines() {
 		noteNum := strconv.Itoa(len(env.endnotes) + 1)
 		noteID := ev.unique + noteNum
 		env.endnotes = append(env.endnotes, endnoteInfo{
-			noteID: noteID, noteAST: ev.Eval(text, env), noteHx: nil, attrs: attrPlist})
+			noteID: noteID, noteAST: text, noteHx: nil, attrs: attrPlist})
 		hrefAttr := sx.Nil().Cons(sx.Cons(SymAttrRole, sx.String("doc-noteref"))).
 			Cons(sx.Cons(SymAttrHref, sx.String("#fn:"+noteID))).
 			Cons(sx.Cons(SymAttrClass, sx.String("zs-noteref"))).
@@ -986,7 +979,7 @@ func getInt64(val sx.Object, env *Environment) int64 {
 // GetAttributes evaluates the given arg in the given environment and returns
 // the contained attributes.
 func (ev *Evaluator) GetAttributes(arg sx.Object, env *Environment) attrs.Attributes {
-	return sz.GetAttributes(getList(ev.Eval(arg, env), env))
+	return sz.GetAttributes(getList(arg, env))
 }
 
 var unsafeSnippets = []string{
