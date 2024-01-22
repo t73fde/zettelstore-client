@@ -96,13 +96,20 @@ func (ev *Evaluator) Evaluate(lst *sx.Pair, env *Environment) (*sx.Pair, error) 
 			continue
 		}
 
-		objHx := ev.Eval(env.endnotes[i].noteAST, env)
+		noteAST := env.endnotes[i].noteAST
+		noteHx := sx.Nil()
+		curr := noteHx
+		for _, inline := range noteAST {
+			inl := ev.Eval(inline, env)
+			if noteHx == nil {
+				noteHx = sx.Cons(inl, nil)
+				curr = noteHx
+			} else {
+				curr = curr.AppendBang(inl)
+			}
+		}
 		if env.err != nil {
 			break
-		}
-		noteHx, isHx := sx.GetPair(objHx)
-		if !isHx {
-			return nil, fmt.Errorf("endnote evaluation does not result in pair, but %T/%v", objHx, objHx)
 		}
 		env.endnotes[i].noteHx = noteHx
 	}
@@ -152,10 +159,10 @@ type Environment struct {
 	quoteNesting uint
 }
 type endnoteInfo struct {
-	noteID  string    // link id
-	noteAST sx.Object // Endnote as AST
-	attrs   *sx.Pair  // attrs a-list
-	noteHx  *sx.Pair  // Endnote as SxHTML
+	noteID  string      // link id
+	noteAST []sx.Object // Endnote as list of AST inline elements
+	attrs   *sx.Pair    // attrs a-list
+	noteHx  *sx.Pair    // Endnote as SxHTML
 }
 
 // MakeEnvironment builds a new evaluation environment.
@@ -658,14 +665,10 @@ func (ev *Evaluator) bindInlines() {
 			}
 		}
 
-		text, isPair := sx.GetPair(args[1])
-		if !isPair {
-			return sx.Nil()
-		}
 		noteNum := strconv.Itoa(len(env.endnotes) + 1)
 		noteID := ev.unique + noteNum
 		env.endnotes = append(env.endnotes, endnoteInfo{
-			noteID: noteID, noteAST: text, noteHx: nil, attrs: attrPlist})
+			noteID: noteID, noteAST: args[1:], noteHx: nil, attrs: attrPlist})
 		hrefAttr := sx.Nil().Cons(sx.Cons(SymAttrRole, sx.String("doc-noteref"))).
 			Cons(sx.Cons(SymAttrHref, sx.String("#fn:"+noteID))).
 			Cons(sx.Cons(SymAttrClass, sx.String("zs-noteref"))).
