@@ -57,7 +57,7 @@ func (cp *zmkP) parseInline() *sx.Pair {
 			inp.Next()
 			switch inp.Ch {
 			case '[':
-				in, success = cp.parseLink()
+				in, success = cp.parseLinkEmbed('[', ']', true)
 			case '@':
 				in, success = cp.parseCite()
 			case '^':
@@ -68,7 +68,7 @@ func (cp *zmkP) parseInline() *sx.Pair {
 		case '{':
 			inp.Next()
 			if inp.Ch == '{' {
-				in, success = cp.parseEmbed()
+				in, success = cp.parseLinkEmbed('{', '}', false)
 			}
 		case '%':
 			in, success = cp.parseComment()
@@ -162,17 +162,20 @@ func (cp *zmkP) parseSoftBreak() *sx.Pair {
 	return sx.MakeList(sz.SymSoft)
 }
 
-func (cp *zmkP) parseLink() (*sx.Pair /**ast.LinkNode*/, bool) {
-	// if ref, is, ok := cp.parseReference('[', ']'); ok {
-	// 	attrs := cp.parseInlineAttributes()
-	// 	if len(ref) > 0 {
-	// 		return &ast.LinkNode{
-	// 			Ref:     ast.ParseReference(ref),
-	// 			Inlines: is,
-	// 			Attrs:   attrs,
-	// 		}, true
-	// 	}
-	// }
+func (cp *zmkP) parseLinkEmbed(openCh, closeCh rune, forLink bool) (*sx.Pair, bool) {
+	if refString, text, ok := cp.parseReference(openCh, closeCh); ok {
+		attrs := cp.parseInlineAttributes()
+		if len(refString) > 0 {
+			ref := ParseReference(refString)
+			refSym, _ := sx.GetSymbol(ref.Car())
+			sym := sz.MapRefStateToLinkEmbed(refSym, forLink)
+			ln := text.
+				Cons(ref.Tail().Car()). // reference value
+				Cons(attrs).
+				Cons(sym)
+			return ln, true
+		}
+	}
 	return nil, false
 }
 
@@ -180,58 +183,59 @@ func hasQueryPrefix(src []byte) bool {
 	return len(src) > len(api.QueryPrefix) && string(src[:len(api.QueryPrefix)]) == api.QueryPrefix
 }
 
-// func (cp *zmkP) parseReference(openCh, closeCh rune) (ref string, is ast.InlineSlice, _ bool) {
-// 	inp := cp.inp
-// 	inp.Next()
-// 	cp.skipSpace()
-// 	if inp.Ch == openCh {
-// 		// Additional opening chars result in a fail
-// 		return "", nil, false
-// 	}
-// 	pos := inp.Pos
-// 	if !hasQueryPrefix(inp.Src[pos:]) {
-// 		hasSpace, ok := cp.readReferenceToSep(closeCh)
-// 		if !ok {
-// 			return "", nil, false
-// 		}
-// 		if inp.Ch == '|' { // First part must be inline text
-// 			if pos == inp.Pos { // [[| or {{|
-// 				return "", nil, false
-// 			}
-// 			cp.inp = input.NewInput(inp.Src[pos:inp.Pos])
-// 			for {
-// 				in := cp.parseInline()
-// 				if in == nil {
-// 					break
-// 				}
-// 				is = append(is, in)
-// 			}
-// 			cp.inp = inp
-// 			inp.Next()
-// 		} else {
-// 			if hasSpace {
-// 				return "", nil, false
-// 			}
-// 			inp.SetPos(pos)
-// 		}
-// 	}
+func (cp *zmkP) parseReference(openCh, closeCh rune) (ref string, text *sx.Pair, _ bool) {
+	inp := cp.inp
+	inp.Next()
+	cp.skipSpace()
+	if inp.Ch == openCh {
+		// Additional opening chars result in a fail
+		return "", nil, false
+	}
+	var is []sx.Object
+	pos := inp.Pos
+	if !hasQueryPrefix(inp.Src[pos:]) {
+		hasSpace, ok := cp.readReferenceToSep(closeCh)
+		if !ok {
+			return "", nil, false
+		}
+		if inp.Ch == '|' { // First part must be inline text
+			if pos == inp.Pos { // [[| or {{|
+				return "", nil, false
+			}
+			cp.inp = input.NewInput(inp.Src[pos:inp.Pos])
+			for {
+				in := cp.parseInline()
+				if in == nil {
+					break
+				}
+				is = append(is, in)
+			}
+			cp.inp = inp
+			inp.Next()
+		} else {
+			if hasSpace {
+				return "", nil, false
+			}
+			inp.SetPos(pos)
+		}
+	}
 
-// 	cp.skipSpace()
-// 	pos = inp.Pos
-// 	if !cp.readReferenceToClose(closeCh) {
-// 		return "", nil, false
-// 	}
-// 	ref = strings.TrimSpace(string(inp.Src[pos:inp.Pos]))
-// 	inp.Next()
-// 	if inp.Ch != closeCh {
-// 		return "", nil, false
-// 	}
-// 	inp.Next()
-// 	if len(is) == 0 {
-// 		return ref, nil, true
-// 	}
-// 	return ref, is, true
-// }
+	cp.skipSpace()
+	pos = inp.Pos
+	if !cp.readReferenceToClose(closeCh) {
+		return "", nil, false
+	}
+	ref = strings.TrimSpace(string(inp.Src[pos:inp.Pos]))
+	inp.Next()
+	if inp.Ch != closeCh {
+		return "", nil, false
+	}
+	inp.Next()
+	if len(is) == 0 {
+		return ref, nil, true
+	}
+	return ref, sx.MakeList(is...), true
+}
 
 func (cp *zmkP) readReferenceToSep(closeCh rune) (bool, bool) {
 	hasSpace := false
@@ -293,50 +297,36 @@ func (cp *zmkP) readReferenceToClose(closeCh rune) bool {
 	}
 }
 
-func (cp *zmkP) parseCite() (*sx.Pair /**ast.CiteNode*/, bool) {
-	// 	inp := cp.inp
-	// 	inp.Next()
-	// 	switch inp.Ch {
-	// 	case ' ', ',', '|', ']', '\n', '\r':
-	// 		return nil, false
-	// 	}
-	// 	pos := inp.Pos
-	// loop:
-	// 	for {
-	// 		switch inp.Ch {
-	// 		case input.EOS:
-	// 			return nil, false
-	// 		case ' ', ',', '|', ']', '\n', '\r':
-	// 			break loop
-	// 		}
-	// 		inp.Next()
-	// 	}
-	// 	posL := inp.Pos
-	// 	switch inp.Ch {
-	// 	case ' ', ',', '|':
-	// 		inp.Next()
-	// 	}
-	// 	ins, ok := cp.parseLinkLikeRest()
-	// 	if !ok {
-	// 		return nil, false
-	// 	}
-	// 	attrs := cp.parseInlineAttributes()
-	return nil, false //&ast.CiteNode{Key: string(inp.Src[pos:posL]), Inlines: ins, Attrs: attrs}, true
-}
-
-func (cp *zmkP) parseEmbed() (*sx.Pair /*ast.InlineNode*/, bool) {
-	// if ref, ins, ok := cp.parseReference('{', '}'); ok {
-	// 	attrs := cp.parseInlineAttributes()
-	// 	if len(ref) > 0 {
-	// 		r := ast.ParseReference(ref)
-	// 		return &ast.EmbedRefNode{
-	// 			Ref:     r,
-	// 			Inlines: ins,
-	// 			Attrs:   attrs,
-	// 		}, true
-	// 	}
-	// }
-	return nil, false
+func (cp *zmkP) parseCite() (*sx.Pair, bool) {
+	inp := cp.inp
+	inp.Next()
+	switch inp.Ch {
+	case ' ', ',', '|', ']', '\n', '\r':
+		return nil, false
+	}
+	pos := inp.Pos
+loop:
+	for {
+		switch inp.Ch {
+		case input.EOS:
+			return nil, false
+		case ' ', ',', '|', ']', '\n', '\r':
+			break loop
+		}
+		inp.Next()
+	}
+	posL := inp.Pos
+	switch inp.Ch {
+	case ' ', ',', '|':
+		inp.Next()
+	}
+	ins, ok := cp.parseLinkLikeRest()
+	if !ok {
+		return nil, false
+	}
+	attrs := cp.parseInlineAttributes()
+	cn := ins.Cons(sx.String(inp.Src[pos:posL])).Cons(attrs).Cons(sz.SymCite)
+	return cn, true
 }
 
 func (cp *zmkP) parseEndnote() (*sx.Pair, bool) {

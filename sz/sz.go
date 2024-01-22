@@ -143,3 +143,27 @@ func (m Meta) GetPair(key string) *sx.Pair {
 	}
 	return nil
 }
+
+// MapRefStateToLinkEmbed maps a reference state symbol to a link symbol or to
+// an embed symbol, depending on 'forLink'.
+func MapRefStateToLinkEmbed(symRefState sx.Symbol, forLink bool) sx.Symbol {
+	if !forLink {
+		return SymEmbed
+	}
+	if sym, found := mapRefStateLink[symRefState]; found {
+		return sym
+	}
+	return SymLinkInvalid
+}
+
+var mapRefStateLink = map[sx.Symbol]sx.Symbol{
+	SymRefStateInvalid:  SymLinkInvalid,
+	SymRefStateZettel:   SymLinkZettel,
+	SymRefStateSelf:     SymLinkSelf,
+	SymRefStateFound:    SymLinkFound,
+	SymRefStateBroken:   SymLinkBroken,
+	SymRefStateHosted:   SymLinkHosted,
+	SymRefStateBased:    SymLinkBased,
+	SymRefStateQuery:    SymLinkQuery,
+	SymRefStateExternal: SymLinkExternal,
+}

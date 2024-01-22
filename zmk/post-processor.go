@@ -78,6 +78,17 @@ func init() {
 		sz.SymText:         postProcessText,
 		sz.SymEndnote:      postProcessEndnote,
 		sz.SymMark:         postProcessMark,
+		sz.SymLinkBased:    postProcessInlines4,
+		sz.SymLinkBroken:   postProcessInlines4,
+		sz.SymLinkExternal: postProcessInlines4,
+		sz.SymLinkFound:    postProcessInlines4,
+		sz.SymLinkHosted:   postProcessInlines4,
+		sz.SymLinkInvalid:  postProcessInlines4,
+		sz.SymLinkQuery:    postProcessInlines4,
+		sz.SymLinkSelf:     postProcessInlines4,
+		sz.SymLinkZettel:   postProcessInlines4,
+		sz.SymEmbed:        postProcessInlines4,
+		sz.SymCite:         postProcessInlines4,
 		sz.SymFormatDelete: postProcessFormat,
 		sz.SymFormatEmph:   postProcessFormat,
 		sz.SymFormatInsert: postProcessFormat,
@@ -202,10 +213,18 @@ func postProcessMark(en *sx.Pair) *sx.Pair {
 	slug := next.Car()
 	next = next.Tail()
 	fragment := next.Car()
-	if text := postProcessInlines(next.Tail()); text != nil {
-		return text.Cons(fragment).Cons(slug).Cons(mark).Cons(sym)
-	}
-	return sx.MakeList(sym, mark, slug, fragment)
+	text := postProcessInlines(next.Tail())
+	return text.Cons(fragment).Cons(slug).Cons(mark).Cons(sym)
+}
+
+func postProcessInlines4(ln *sx.Pair) *sx.Pair {
+	sym := ln.Car()
+	next := ln.Tail()
+	attrs := next.Car()
+	next = next.Tail()
+	val3 := next.Car()
+	text := postProcessInlines(next.Tail())
+	return text.Cons(val3).Cons(attrs).Cons(sym)
 }
 
 func postProcessFormat(fn *sx.Pair) *sx.Pair {
@@ -216,6 +235,6 @@ func postProcessFormat(fn *sx.Pair) *sx.Pair {
 	if next == nil {
 		return fn
 	}
-	inlines := postProcess(next.Cons(sz.SymInline))
-	return inlines.Tail().Cons(attrs).Cons(symFormat)
+	inlines := postProcessInlines(next)
+	return inlines.Cons(attrs).Cons(symFormat)
 }
