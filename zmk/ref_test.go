@@ -25,8 +25,9 @@ func TestParseReference(t *testing.T) {
 		err  bool
 		exp  string
 	}{
-		// {"", true, ""},
-		{"123", false, "(quote (EXTERNAL \"123\"))"},
+		{"", true, ""},
+		{"12345678901234", false, "(ZETTEL \"12345678901234\")"},
+		{"123", false, "(EXTERNAL \"123\")"},
 		{",://", true, ""},
 	}
 

@@ -54,7 +54,7 @@ func ParseReference(s string) *sx.Pair {
 	return makePairRef(sz.SymRefStateExternal, s)
 }
 func makePairRef(sym sx.Symbol, val string) *sx.Pair {
-	return sx.MakeList(sx.SymbolQuote, sx.MakeList(sym, sx.String(val)))
+	return sx.MakeList(sym, sx.String(val))
 }
 
 func invalidReference(s string) bool { return s == "" || s == "00000000000000" }
@@ -81,12 +81,12 @@ func localState(path string) (sx.Symbol, bool) {
 
 // ReferenceIsValid returns true if reference is valid
 func ReferenceIsValid(ref *sx.Pair) bool {
-	return !referenceGetState(ref).IsEqual(sz.SymRefStateInvalid)
+	return !ref.Car().IsEqual(sz.SymRefStateInvalid)
 }
 
 // ReferenceIsZettel returns true if it is a reference to a local zettel.
 func ReferenceIsZettel(ref *sx.Pair) bool {
-	state := referenceGetState(ref)
+	state := ref.Car()
 	return state.IsEqual(sz.SymRefStateZettel) ||
 		state.IsEqual(sz.SymRefStateSelf) ||
 		state.IsEqual(sz.SymRefStateFound) ||
@@ -95,19 +95,12 @@ func ReferenceIsZettel(ref *sx.Pair) bool {
 
 // ReferenceIsLocal returns true if reference is local
 func ReferenceIsLocal(ref *sx.Pair) bool {
-	state := referenceGetState(ref)
+	state := ref.Car()
 	return state.IsEqual(sz.SymRefStateHosted) ||
 		state.IsEqual(sz.SymRefStateBased)
 }
 
 // ReferenceIsExternal returns true if it is a reference to external material.
 func ReferenceIsExternal(ref *sx.Pair) bool {
-	return referenceGetState(ref).IsEqual(sz.SymRefStateExternal)
-}
-
-func referenceGetState(ref *sx.Pair) sx.Object {
-	if ref == nil || !ref.Car().IsEqual(sx.SymbolQuote) {
-		return nil
-	}
-	return ref.Tail().Head().Car()
+	return ref.Car().IsEqual(sz.SymRefStateExternal)
 }
