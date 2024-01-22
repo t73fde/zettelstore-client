@@ -21,7 +21,6 @@ import (
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 // parseInlineSlice parses a sequence of Inlines until EOS.
@@ -62,7 +61,7 @@ func (cp *zmkP) parseInline() *sx.Pair {
 			case '@':
 				in, success = cp.parseCite()
 			case '^':
-				in, success = cp.parseFootnote()
+				in, success = cp.parseEndnote()
 			case '!':
 				in, success = cp.parseMark()
 			}
@@ -325,39 +324,6 @@ func (cp *zmkP) parseCite() (*sx.Pair /**ast.CiteNode*/, bool) {
 	return nil, false //&ast.CiteNode{Key: string(inp.Src[pos:posL]), Inlines: ins, Attrs: attrs}, true
 }
 
-func (cp *zmkP) parseFootnote() (*sx.Pair /**ast.FootnoteNode*/, bool) {
-	// cp.inp.Next()
-	// ins, ok := cp.parseLinkLikeRest()
-	// if !ok {
-	// 	return nil, false
-	// }
-	// attrs := cp.parseInlineAttributes()
-	// return &ast.FootnoteNode{Inlines: ins, Attrs: attrs}, true
-	return nil, false
-}
-
-func (cp *zmkP) parseLinkLikeRest() (*sx.Pair /*ast.InlineSlice*/, bool) {
-	// cp.skipSpace()
-	// ins := ast.InlineSlice{}
-	// inp := cp.inp
-	// for inp.Ch != ']' {
-	// 	in := cp.parseInline()
-	// 	if in == nil {
-	// 		return nil, false
-	// 	}
-	// 	ins = append(ins, in)
-	// 	if _, ok := in.(*ast.BreakNode); ok && input.IsEOLEOS(inp.Ch) {
-	// 		return nil, false
-	// 	}
-	// }
-	// inp.Next()
-	// if len(ins) == 0 {
-	// 	return nil, true
-	// }
-	// return ins, true
-	return nil, false
-}
-
 func (cp *zmkP) parseEmbed() (*sx.Pair /*ast.InlineNode*/, bool) {
 	// if ref, ins, ok := cp.parseReference('{', '}'); ok {
 	// 	attrs := cp.parseInlineAttributes()
@@ -373,33 +339,67 @@ func (cp *zmkP) parseEmbed() (*sx.Pair /*ast.InlineNode*/, bool) {
 	return nil, false
 }
 
-func (cp *zmkP) parseMark() (*sx.Pair /**ast.MarkNode*/, bool) {
-	// inp := cp.inp
-	// inp.Next()
-	// pos := inp.Pos
-	// for inp.Ch != '|' && inp.Ch != ']' {
-	// 	if !isNameRune(inp.Ch) {
-	// 		return nil, false
-	// 	}
-	// 	inp.Next()
-	// }
-	// mark := inp.Src[pos:inp.Pos]
-	// ins := ast.InlineSlice{}
-	// if inp.Ch == '|' {
-	// 	inp.Next()
-	// 	var ok bool
-	// 	ins, ok = cp.parseLinkLikeRest()
-	// 	if !ok {
-	// 		return nil, false
-	// 	}
-	// } else {
-	// 	inp.Next()
-	// }
-	// mn := &ast.MarkNode{Mark: string(mark), Inlines: ins}
-	// return mn, true
-	return nil, false
+func (cp *zmkP) parseEndnote() (*sx.Pair, bool) {
+	cp.inp.Next()
+	ins, ok := cp.parseLinkLikeRest()
+	if !ok {
+		return nil, false
+	}
+	attrs := cp.parseInlineAttributes()
+	return ins.Cons(attrs).Cons(sz.SymEndnote), true
+}
+
+func (cp *zmkP) parseMark() (*sx.Pair, bool) {
+	inp := cp.inp
+	inp.Next()
+	pos := inp.Pos
+	for inp.Ch != '|' && inp.Ch != ']' {
+		if !isNameRune(inp.Ch) {
+			return nil, false
+		}
+		inp.Next()
+	}
+	mark := inp.Src[pos:inp.Pos]
+	var ins *sx.Pair
+	if inp.Ch == '|' {
+		inp.Next()
+		var ok bool
+		ins, ok = cp.parseLinkLikeRest()
+		if !ok {
+			return nil, false
+		}
+	} else {
+		inp.Next()
+	}
+	mn := ins.
+		Cons(sx.String("")). // Fragment
+		Cons(sx.String("")). // Slug
+		Cons(sx.String(mark)).
+		Cons(sz.SymMark)
+	return mn, true
 	// Problematisch ist, dass hier noch nicht mn.Fragment und mn.Slug gesetzt werden.
 	// Evtl. muss es ein PreMark-Symbol geben
+}
+
+func (cp *zmkP) parseLinkLikeRest() (*sx.Pair, bool) {
+	cp.skipSpace()
+	var ins []sx.Object
+	inp := cp.inp
+	for inp.Ch != ']' {
+		in := cp.parseInline()
+		if in == nil {
+			return nil, false
+		}
+		ins = append(ins, in)
+		if sym := in.Car(); input.IsEOLEOS(inp.Ch) && (sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard)) {
+			return nil, false
+		}
+	}
+	inp.Next()
+	if len(ins) == 0 {
+		return nil, true
+	}
+	return sx.MakeList(ins...), true
 }
 
 func (cp *zmkP) parseComment() (res *sx.Pair, success bool) {
@@ -516,16 +516,10 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 
 func createLiteralNode(sym sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
 	if sym == sz.SymLiteralZettel {
-		assoc := attrs.Tail().Head()
-		if p := assoc.Assoc(sx.String("")); p != nil {
+		if p := attrs.Assoc(sx.String("")); p != nil {
 			if val, isString := sx.GetString(p.Cdr()); isString && val == api.ValueSyntaxHTML {
 				sym = sz.SymLiteralHTML
-				// remove "" from attrs
-				if assoc = assoc.RemoveAssoc(sx.String("")); assoc == nil {
-					attrs = nil
-				} else {
-					attrs = sx.MakeList(sxhtml.SymAttr, assoc)
-				}
+				attrs = attrs.RemoveAssoc(sx.String(""))
 			}
 		}
 	}

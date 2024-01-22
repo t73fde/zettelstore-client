@@ -35,6 +35,26 @@ func postProcess(lst *sx.Pair) *sx.Pair {
 	panic(lst)
 }
 
+func postProcessList(lst *sx.Pair) *sx.Pair {
+	var result, curr *sx.Pair
+	for node := lst; node != nil; node = node.Tail() {
+		elem, isPair := sx.GetPair(node.Car())
+		if isPair {
+			elem = postProcess(elem)
+		}
+		if elem == nil {
+			continue
+		}
+		if result == nil {
+			result = sx.Cons(elem, nil)
+			curr = result
+		} else {
+			curr = curr.AppendBang(elem)
+		}
+	}
+	return result
+}
+
 var ignoreMap = map[sx.Symbol]struct{}{
 	sz.SymLiteralComment: {},
 	sz.SymLiteralHTML:    {},
@@ -56,6 +76,8 @@ func init() {
 		sz.SymPara:         postProcessInlineList,
 		sz.SymInline:       postProcessInlineList,
 		sz.SymText:         postProcessText,
+		sz.SymEndnote:      postProcessEndnote,
+		sz.SymMark:         postProcessMark,
 		sz.SymFormatDelete: postProcessFormat,
 		sz.SymFormatEmph:   postProcessFormat,
 		sz.SymFormatInsert: postProcessFormat,
@@ -69,34 +91,29 @@ func init() {
 }
 
 func postProcessBlockList(lst *sx.Pair) *sx.Pair {
-	result := sx.Cons(lst.Car(), sx.Nil())
-	curr := result
-	for node := lst.Tail(); node != nil; node = node.Tail() {
-		elem, isPair := sx.GetPair(node.Car())
-		if isPair {
-			elem = postProcess(elem)
-		}
-		if elem == nil {
-			continue
-		}
-		curr = curr.AppendBang(elem)
-	}
-
-	if curr == result {
-		// Empty block
+	result := postProcessList(lst.Tail())
+	if result == nil {
 		return nil
 	}
-	return result
+	return result.Cons(lst.Car())
 }
 
 func postProcessInlineList(lst *sx.Pair) *sx.Pair {
-	length := lst.Length() - 1
+	sym := lst.Car()
+	if rest := postProcessInlines(lst.Tail()); rest != nil {
+		return rest.Cons(sym)
+	}
+	return nil
+}
+
+func postProcessInlines(lst *sx.Pair) *sx.Pair {
+	length := lst.Length()
 	if length < 0 {
 		return nil
 	}
 	vector := make([]*sx.Pair, 0, length)
 	// 1st phase: process all childs, ignore SPACE at start, and merge some elements
-	for node := lst.Tail(); node != nil; node = node.Tail() {
+	for node := lst; node != nil; node = node.Tail() {
 		elem, isPair := sx.GetPair(node.Car())
 		if isPair {
 			elem = postProcess(elem)
@@ -150,9 +167,9 @@ func postProcessInlineList(lst *sx.Pair) *sx.Pair {
 		return nil
 	}
 
-	result := sx.Cons(lst.Car(), sx.Nil())
+	result := sx.Cons(vector[0], nil)
 	curr := result
-	for i := 0; i <= lastPos; i++ {
+	for i := 1; i <= lastPos; i++ {
 		curr = curr.AppendBang(vector[i])
 	}
 	return result
@@ -165,6 +182,30 @@ func postProcessText(txt *sx.Pair) *sx.Pair {
 		}
 	}
 	return nil
+}
+
+func postProcessEndnote(en *sx.Pair) *sx.Pair {
+	sym := en.Car()
+	next := en.Tail()
+	attrs := next.Car()
+	if text := postProcessInlines(next.Tail()); text != nil {
+		return text.Cons(attrs).Cons(sym)
+	}
+	return sx.MakeList(sym, attrs)
+}
+
+func postProcessMark(en *sx.Pair) *sx.Pair {
+	sym := en.Car()
+	next := en.Tail()
+	mark := next.Car()
+	next = next.Tail()
+	slug := next.Car()
+	next = next.Tail()
+	fragment := next.Car()
+	if text := postProcessInlines(next.Tail()); text != nil {
+		return text.Cons(fragment).Cons(slug).Cons(mark).Cons(sym)
+	}
+	return sx.MakeList(sym, mark, slug, fragment)
 }
 
 func postProcessFormat(fn *sx.Pair) *sx.Pair {

@@ -21,7 +21,6 @@ import (
 
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 func ParseBlocks(inp *input.Input) *sx.Pair {
@@ -84,7 +83,7 @@ func (attrs attrMap) asPairAssoc() *sx.Pair {
 		n := names[i]
 		assoc = assoc.Cons(sx.Cons(sx.String(n), sx.String(attrs[n])))
 	}
-	return sx.MakeList(sxhtml.SymAttr, assoc)
+	return assoc
 }
 
 func (cp *zmkP) parseNormalAttribute(attrs attrMap) bool {
