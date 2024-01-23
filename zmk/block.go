@@ -54,15 +54,15 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 			cp.clearStacked()
 			bn, success = cp.parseHRule()
 		case '*', '#', '>':
-			// cp.table = nil
+			cp.lastRow = nil
 			// cp.descrl = nil
 			bn, success = cp.parseNestedList()
 		case ';':
 			// cp.lists = nil
-			// cp.table = nil
+			cp.lastRow = nil
 			bn, success = cp.parseDefTerm()
 		case ' ':
-			// cp.table = nil
+			cp.lastRow = nil
 			bn, success = nil, cp.parseIndent()
 		case '|':
 			// cp.lists = nil
@@ -505,7 +505,7 @@ func (cp *zmkP) parseDefDescr() (res *sx.Pair /*ast.BlockNode*/, success bool) {
 	//	}
 	//
 	// cp.lists = nil
-	// cp.table = nil
+	// cp.lastRow = nil
 	// descrl.Descriptions[defPos].Descriptions = append(descrl.Descriptions[defPos].Descriptions, ast.DescriptionSlice{pn})
 	// return nil, true
 	return nil, false
@@ -610,54 +610,68 @@ func (cp *zmkP) parseLinePara() *sx.Pair /**ast.ParaNode*/ {
 }
 
 // parseRow parse one table row.
-func (cp *zmkP) parseRow() *sx.Pair /*ast.BlockNode*/ {
-	// inp := cp.inp
-	// if inp.Peek() == '%' {
-	// 	inp.SkipToEOL()
-	// 	return nil
-	// }
-	// row := ast.TableRow{}
-	// for {
-	// 	inp.Next()
-	// 	cell := cp.parseCell()
-	// 	if cell != nil {
-	// 		row = append(row, cell)
-	// 	}
-	// 	switch inp.Ch {
-	// 	case '\n', '\r':
-	// 		inp.EatEOL()
-	// 		fallthrough
-	// 	case input.EOS:
-	// 		// add to table
-	// 		if cp.table == nil {
-	// 			cp.table = &ast.TableNode{Rows: []ast.TableRow{row}}
-	// 			return cp.table
-	// 		}
-	// 		cp.table.Rows = append(cp.table.Rows, row)
-	// 		return nil
-	// 	}
-	// 	// inp.Ch must be '|'
-	// }
-	return sx.Nil()
+func (cp *zmkP) parseRow() *sx.Pair {
+	inp := cp.inp
+	if inp.Peek() == '%' {
+		inp.SkipToEOL()
+		return nil
+	}
+	var row, curr *sx.Pair
+	for {
+		inp.Next()
+		cell := cp.parseCell()
+		if cell != nil {
+			if row == nil {
+				row = sx.Cons(cell, nil)
+				curr = row
+			} else {
+				curr = curr.AppendBang(cell)
+			}
+		}
+		switch inp.Ch {
+		case '\n', '\r':
+			inp.EatEOL()
+			fallthrough
+		case input.EOS:
+			// add to table
+			if cp.lastRow == nil {
+				if row == nil {
+					return nil
+				}
+				cp.lastRow = sx.Cons(row, nil)
+				return cp.lastRow.Cons(nil).Cons(sz.SymTable)
+			}
+			cp.lastRow = cp.lastRow.AppendBang(row)
+			return nil
+		}
+		// inp.Ch must be '|'
+	}
 }
 
-// // parseCell parses one single cell of a table row.
-// func (cp *zmkP) parseCell() *ast.TableCell {
-// 	inp := cp.inp
-// 	var l ast.InlineSlice
-// 	for {
-// 		if input.IsEOLEOS(inp.Ch) {
-// 			if len(l) == 0 {
-// 				return nil
-// 			}
-// 			return &ast.TableCell{Inlines: l}
-// 		}
-// 		if inp.Ch == '|' {
-// 			return &ast.TableCell{Inlines: l}
-// 		}
-// 		l = append(l, cp.parseInline())
-// 	}
-// }
+// parseCell parses one single cell of a table row.
+func (cp *zmkP) parseCell() *sx.Pair {
+	inp := cp.inp
+	var result, curr *sx.Pair
+	for {
+		if input.IsEOLEOS(inp.Ch) {
+			if result == nil {
+				return nil
+			}
+			return result.Cons(sz.SymCell)
+		}
+		if inp.Ch == '|' {
+			return result.Cons(sz.SymCell)
+		}
+
+		in := cp.parseInline()
+		if result == nil {
+			result = sx.Cons(in, nil)
+			curr = result
+		} else {
+			curr = curr.AppendBang(in)
+		}
+	}
+}
 
 // parseTransclusion parses '{' '{' '{' ZID '}' '}' '}'
 func (cp *zmkP) parseTransclusion() (*sx.Pair /*ast.BlockNode*/, bool) {

@@ -68,7 +68,7 @@ func ParseInlines(inp *input.Input) *sx.Pair {
 type zmkP struct {
 	inp *input.Input // Input stream
 	// lists        []*ast.NestedListNode    // Stack of lists
-	// table        *ast.TableNode           // Current table
+	lastRow *sx.Pair // Last row of table, or nil if not in table.
 	// descrl       *ast.DescriptionListNode // Current description list
 	nestingLevel int // Count nesting of block and inline elements
 
@@ -86,7 +86,7 @@ const maxNestingLevel = 50
 // clearStacked removes all multi-line nodes from parser.
 func (cp *zmkP) clearStacked() {
 	// cp.lists = nil
-	// cp.table = nil
+	cp.lastRow = nil
 	// cp.descrl = nil
 }
 

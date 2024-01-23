@@ -87,6 +87,7 @@ func init() {
 		sz.SymVerbatimProg:    postProcessVerbatim,
 		sz.SymVerbatimZettel:  postProcessVerbatim,
 		sz.SymHeading:         postProcessHeading,
+		sz.SymTable:           postProcessTable,
 
 		sz.SymInline:       postProcessInlineList,
 		sz.SymText:         postProcessText,
@@ -172,12 +173,69 @@ func postProcessHeading(hn *sx.Pair, env *sx.Pair) *sx.Pair {
 	return nil
 }
 
-func postProcessInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
-	length := lst.Length()
-	if length < 0 {
+func postProcessTable(tbl *sx.Pair, env *sx.Pair) *sx.Pair {
+	sym := tbl.Car()
+	next := tbl.Tail()
+	header := next.Car()
+	if header != nil {
+		// Already post-processed
+		return tbl
+	}
+	rows, width := postProcessRows(next.Tail(), env)
+	if rows == nil {
+		// Header and row are nil -> no table
 		return nil
 	}
-	inVerse := env.Assoc(symInVerse)
+	align := make([]sx.Symbol, width)
+	for i := 0; i < width; i++ {
+		align[i] = sz.SymCell // Default alignment
+	}
+	return rows.Cons(nil).Cons(sym)
+}
+
+func postProcessRows(rows *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
+	maxWidth := 0
+	var result, curr *sx.Pair
+	for node := rows; node != nil; node = node.Tail() {
+		row := node.Head()
+		row, width := postProcessCells(row, env)
+		if maxWidth < width {
+			maxWidth = width
+		}
+		if result == nil {
+			result = sx.Cons(row, nil)
+			curr = result
+		} else {
+			curr = curr.AppendBang(row)
+		}
+	}
+	return result, maxWidth
+}
+
+func postProcessCells(cells *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
+	width := 0
+	var result, curr *sx.Pair
+	for node := cells; node != nil; node = node.Tail() {
+		cell := node.Head()
+		ins := postProcessInlines(cell.Tail(), env)
+		newCell := ins.Cons(cell.Car())
+		if result == nil {
+			result = sx.Cons(newCell, nil)
+			curr = result
+		} else {
+			curr = curr.AppendBang(newCell)
+		}
+		width++
+	}
+	return result, width
+}
+
+func postProcessInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
+	length := lst.Length()
+	if length <= 0 {
+		return nil
+	}
+	inVerse := env.Assoc(symInVerse) != nil
 	vector := make([]*sx.Pair, 0, length)
 	// 1st phase: process all childs, ignore SPACE at start, and merge some elements
 	for node := lst; node != nil; node = node.Tail() {
@@ -191,7 +249,7 @@ func postProcessInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 		elemSym := elem.Car()
 		if len(vector) == 0 {
 			// The 1st element is always moved, except for a SPACE outside a verse block
-			if inVerse == nil && elemSym.IsEqual(sz.SymSpace) {
+			if !inVerse && elemSym.IsEqual(sz.SymSpace) {
 				continue
 			}
 			vector = append(vector, elem)

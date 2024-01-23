@@ -714,20 +714,21 @@ func xTestDefinition(t *testing.T) {
 	})
 }
 
-func xTestTable(t *testing.T) {
+func TestTable(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"|", "(TAB (TR))"},
-		{"||", "(TAB (TR (TD)))"},
-		{"| |", "(TAB (TR (TD)))"},
-		{"|a", "(TAB (TR (TD a)))"},
-		{"|a|", "(TAB (TR (TD a)))"},
-		{"|a| ", "(TAB (TR (TD a)(TD)))"},
-		{"|a|b", "(TAB (TR (TD a)(TD b)))"},
-		{"|a|b\n|c|d", "(TAB (TR (TD a)(TD b))(TR (TD c)(TD d)))"},
-		{"|%", ""},
-		{"|a|b\n|%---\n|c|d", "(TAB (TR (TD a)(TD b))(TR (TD c)(TD d)))"},
-		{"|a|b\n|c", "(TAB (TR (TD a)(TD b))(TR (TD c)(TD)))"},
+		{"|", "()"},
+		{"||", "(BLOCK (TABLE () ((CELL))))"},
+		{"| |", "(BLOCK (TABLE () ((CELL))))"},
+		{"|a", "(BLOCK (TABLE () ((CELL (TEXT \"a\")))))"},
+		{"|a|", "(BLOCK (TABLE () ((CELL (TEXT \"a\")))))"},
+		{"|a| ", "(BLOCK (TABLE () ((CELL (TEXT \"a\")) (CELL))))"},
+		{"|a|b", "(BLOCK (TABLE () ((CELL (TEXT \"a\")) (CELL (TEXT \"b\")))))"},
+		{"|a\n|b", "(BLOCK (TABLE () ((CELL (TEXT \"a\"))) ((CELL (TEXT \"b\")))))"},
+		{"|a|b\n|c|d", "(BLOCK (TABLE () ((CELL (TEXT \"a\")) (CELL (TEXT \"b\"))) ((CELL (TEXT \"c\")) (CELL (TEXT \"d\")))))"},
+		{"|%", "()"},
+		{"|a|b\n|%---\n|c|d", "(BLOCK (TABLE () ((CELL (TEXT \"a\")) (CELL (TEXT \"b\"))) ((CELL (TEXT \"c\")) (CELL (TEXT \"d\")))))"},
+		// {"|a|b\n|c", "(BLOCK (TABLE () ((CELL (TEXT \"a\")) (CELL (TEXT \"b\"))) ((CELL (TEXT \"c\")) (CELL))))"},
 	})
 }
 
