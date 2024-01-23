@@ -678,50 +678,49 @@ func (cp *zmkP) parseRow() *sx.Pair /*ast.BlockNode*/ {
 
 // parseTransclusion parses '{' '{' '{' ZID '}' '}' '}'
 func (cp *zmkP) parseTransclusion() (*sx.Pair /*ast.BlockNode*/, bool) {
-	//	if cp.countDelim('{') != 3 {
-	//		return nil, false
-	//	}
-	//	inp := cp.inp
-	//	posA, posE := inp.Pos, 0
-	//
-	// loop:
-	//
-	//	for {
-	//		switch inp.Ch {
-	//		case input.EOS:
-	//			return nil, false
-	//		case '\n', '\r', ' ', '\t':
-	//			if !hasQueryPrefix(inp.Src[posA:]) {
-	//				return nil, false
-	//			}
-	//		case '\\':
-	//			inp.Next()
-	//			switch inp.Ch {
-	//			case input.EOS, '\n', '\r':
-	//				return nil, false
-	//			}
-	//		case '}':
-	//			posE = inp.Pos
-	//			if posA >= posE {
-	//				return nil, false
-	//			}
-	//			inp.Next()
-	//			if inp.Ch != '}' {
-	//				continue
-	//			}
-	//			inp.Next()
-	//			if inp.Ch != '}' {
-	//				continue
-	//			}
-	//			break loop
-	//		}
-	//		inp.Next()
-	//	}
-	//	inp.Next() // consume last '}'
-	//	a := cp.parseBlockAttributes()
-	//	inp.SkipToEOL()
-	//	refText := string(inp.Src[posA:posE])
-	//	ref := ast.ParseReference(refText)
-	//	return &ast.TranscludeNode{Attrs: a, Ref: ref}, true
-	return nil, false
+	if cp.countDelim('{') != 3 {
+		return nil, false
+	}
+	inp := cp.inp
+	posA, posE := inp.Pos, 0
+
+loop:
+
+	for {
+		switch inp.Ch {
+		case input.EOS:
+			return nil, false
+		case '\n', '\r', ' ', '\t':
+			if !hasQueryPrefix(inp.Src[posA:]) {
+				return nil, false
+			}
+		case '\\':
+			inp.Next()
+			switch inp.Ch {
+			case input.EOS, '\n', '\r':
+				return nil, false
+			}
+		case '}':
+			posE = inp.Pos
+			if posA >= posE {
+				return nil, false
+			}
+			inp.Next()
+			if inp.Ch != '}' {
+				continue
+			}
+			inp.Next()
+			if inp.Ch != '}' {
+				continue
+			}
+			break loop
+		}
+		inp.Next()
+	}
+	inp.Next() // consume last '}'
+	a := cp.parseBlockAttributes()
+	inp.SkipToEOL()
+	refText := string(inp.Src[posA:posE])
+	ref := ParseReference(refText)
+	return sx.MakeList(sz.SymTransclude, a, ref), true
 }

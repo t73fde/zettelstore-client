@@ -731,52 +731,52 @@ func xTestTable(t *testing.T) {
 	})
 }
 
-func xTestTransclude(t *testing.T) {
+func TestTransclude(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"{{{a}}}", "(TRANSCLUDE a)"},
-		{"{{{a}}}b", "(TRANSCLUDE a)[ATTR =b]"},
-		{"{{{a}}}}", "(TRANSCLUDE a)"},
-		{"{{{a\\}}}}", "(TRANSCLUDE a%5C%7D)"},
-		{"{{{a\\}}}}b", "(TRANSCLUDE a%5C%7D)[ATTR =b]"},
-		{"{{{a}}", "(PARA { (EMBED a))"},
-		{"{{{a}}}{go=b}", "(TRANSCLUDE a)[ATTR go=b]"},
+		{"{{{a}}}", "(BLOCK (TRANSCLUDE () (EXTERNAL \"a\")))"},
+		{"{{{a}}}b", "(BLOCK (TRANSCLUDE ((\"\" . \"b\")) (EXTERNAL \"a\")))"},
+		{"{{{a}}}}", "(BLOCK (TRANSCLUDE () (EXTERNAL \"a\")))"},
+		{"{{{a\\}}}}", "(BLOCK (TRANSCLUDE () (EXTERNAL \"a\\\\}\")))"},
+		{"{{{a\\}}}}b", "(BLOCK (TRANSCLUDE ((\"\" . \"b\")) (EXTERNAL \"a\\\\}\")))"},
+		{"{{{a}}", "(BLOCK (PARA (TEXT \"{\") (EMBED () \"a\")))"},
+		{"{{{a}}}{go=b}", "(BLOCK (TRANSCLUDE ((\"go\" . \"b\")) (EXTERNAL \"a\")))"},
 	})
 }
 
-func xTestBlockAttr(t *testing.T) {
+func TestBlockAttr(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{":::go\n:::", "(SPAN)[ATTR =go]"},
-		{":::go=\n:::", "(SPAN)[ATTR =go]"},
-		{":::{}\n:::", "(SPAN)"},
-		{":::{ }\n:::", "(SPAN)"},
-		{":::{.go}\n:::", "(SPAN)[ATTR class=go]"},
-		{":::{=go}\n:::", "(SPAN)[ATTR =go]"},
-		{":::{go}\n:::", "(SPAN)[ATTR go]"},
-		{":::{go=py}\n:::", "(SPAN)[ATTR go=py]"},
-		{":::{.go=py}\n:::", "(SPAN)"},
-		{":::{go=}\n:::", "(SPAN)[ATTR go]"},
-		{":::{.go=}\n:::", "(SPAN)"},
-		{":::{go py}\n:::", "(SPAN)[ATTR go py]"},
-		{":::{go\npy}\n:::", "(SPAN)[ATTR go py]"},
-		{":::{.go py}\n:::", "(SPAN)[ATTR class=go py]"},
-		{":::{go .py}\n:::", "(SPAN)[ATTR class=py go]"},
-		{":::{.go py=3}\n:::", "(SPAN)[ATTR class=go py=3]"},
-		{":::  {  go  }  \n:::", "(SPAN)[ATTR go]"},
-		{":::  {  .go  }  \n:::", "(SPAN)[ATTR class=go]"},
+		{":::go\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::go=\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{}\na\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{ }\na\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{.go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{=go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{go=py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"py\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{.go=py}\na\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{go=}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{.go=}\na\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{go py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\") (\"py\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{go\npy}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\") (\"py\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{.go py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\") (\"py\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{go .py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"py\") (\"go\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{.go py=3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\") (\"py\" . \"3\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::  {  go  }  \na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::  {  .go  }  \na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
 	})
 	checkTcs(t, replace("\"", nil, TestCases{
-		{":::{py=3}\n:::", "(SPAN)[ATTR py=3]"},
-		{":::{py=$2 3$}\n:::", "(SPAN)[ATTR py=$2 3$]"},
-		{":::{py=$2\\$3$}\n:::", "(SPAN)[ATTR py=2$3]"},
-		{":::{py=2$3}\n:::", "(SPAN)[ATTR py=2$3]"},
-		{":::{py=$2\n3$}\n:::", "(SPAN)[ATTR py=$2\n3$]"},
-		{":::{py=$2 3}\n:::", "(SPAN)"},
-		{":::{py=2 py=3}\n:::", "(SPAN)[ATTR py=$2 3$]"},
-		{":::{.go .py}\n:::", "(SPAN)[ATTR class=$go py$]"},
-		{":::{go go}\n:::", "(SPAN)[ATTR go]"},
-		{":::{=py =go}\n:::", "(SPAN)[ATTR =go]"},
+		{":::{py=3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"3\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{py=$2 3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2 3\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{py=$2\\$3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2\\\"3\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{py=2$3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2\\\"3\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{py=$2\n3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2\\n3\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{py=$2 3}\na\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{py=2 py=3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2 3\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{.go .py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go py\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{go go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{=py =go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
 	}))
 }
 
