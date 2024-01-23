@@ -520,8 +520,10 @@ func (ev *Evaluator) makeRegionFn(sym sx.Symbol, genericToClass bool) EvalFn {
 		}
 		result = result.Cons(sym)
 		currResult := result.LastPair()
-		if region, isPair := sx.GetPair(ev.Eval(args[1], env)); isPair {
-			currResult = currResult.ExtendBang(region)
+		if region, isPair := sx.GetPair(args[1]); isPair {
+			if evalRegion := ev.evalPairList(region, env); evalRegion != nil {
+				currResult = currResult.ExtendBang(evalRegion)
+			}
 		}
 		if len(args) > 2 {
 			if cite, _ := ev.EvaluateList(args[2:], env); cite != nil {
@@ -945,6 +947,23 @@ func (ev *Evaluator) evalSlice(args []sx.Object, env *Environment) *sx.Pair {
 		curr = curr.AppendBang(elem)
 	}
 	return result.Tail()
+}
+
+func (ev *Evaluator) evalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
+	var result, curr *sx.Pair
+	for node := pair; node != nil; node = node.Tail() {
+		elem := ev.Eval(node.Car(), env)
+		if result == nil {
+			result = sx.Cons(elem, nil)
+			curr = result
+		} else {
+			curr = curr.AppendBang(elem)
+		}
+	}
+	if env.err == nil {
+		return result
+	}
+	return nil
 }
 
 func (ev *Evaluator) evalLink(a attrs.Attributes, refValue sx.String, inline []sx.Object, env *Environment) sx.Object {
