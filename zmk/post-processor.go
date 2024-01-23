@@ -149,7 +149,7 @@ func postProcessRegionVerse(rn *sx.Pair, env *sx.Pair) *sx.Pair {
 	return postProcessRegion(rn, env.Cons(sx.Cons(symInVerse, nil)))
 }
 
-func postProcessVerbatim(verb *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessVerbatim(verb *sx.Pair, _ *sx.Pair) *sx.Pair {
 	if content, isString := sx.GetString(verb.Tail().Tail().Car()); isString && content != "" {
 		return verb
 	}
@@ -242,7 +242,7 @@ func postProcessInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	return result
 }
 
-func postProcessText(txt *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessText(txt *sx.Pair, _ *sx.Pair) *sx.Pair {
 	if tail := txt.Tail(); tail != nil {
 		if content, isString := sx.GetString(tail.Car()); isString && content != "" {
 			return txt
