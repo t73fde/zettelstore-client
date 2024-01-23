@@ -24,20 +24,6 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// parseInlineSlice parses a sequence of Inlines until EOS.
-func (cp *zmkP) parseInlineSlice() *sx.Pair {
-	var ins []sx.Object
-	inp := cp.inp
-	for inp.Ch != input.EOS {
-		in := cp.parseInline()
-		if in == nil {
-			break
-		}
-		ins = append(ins, in)
-	}
-	return sx.MakeList(ins...).Cons(sz.SymBlock)
-}
-
 func (cp *zmkP) parseInline() *sx.Pair {
 	inp := cp.inp
 	pos := inp.Pos

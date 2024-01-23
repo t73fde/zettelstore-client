@@ -137,7 +137,7 @@ func postProcessRegion(rn *sx.Pair, env *sx.Pair) *sx.Pair {
 	next := rn.Tail()
 	attrs := next.Car()
 	next = next.Tail()
-	blocks := postProcess(next.Head(), env)
+	blocks := postProcessList(next.Head(), env)
 	text := postProcessInlines(next.Tail(), env)
 	if blocks == nil && text == nil {
 		return nil

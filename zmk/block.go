@@ -21,27 +21,6 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-// parseBlockSlice parses a sequence of blocks.
-func (cp *zmkP) parseBlockSlice() *sx.Pair {
-	inp := cp.inp
-	var lastPara *sx.Pair
-	var bs []sx.Object
-
-	for inp.Ch != input.EOS {
-		bn, cont := cp.parseBlock(lastPara)
-		if bn != nil {
-			bs = append(bs, bn)
-		}
-		if !cont {
-			lastPara = bn
-		}
-	}
-	if cp.nestingLevel != 0 {
-		panic("Nesting level was not decremented")
-	}
-	return sx.MakeList(bs...).Cons(sz.SymBlock)
-}
-
 // parseBlock parses one block.
 func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 	inp := cp.inp
@@ -257,8 +236,7 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 	if inp.Ch == input.EOS {
 		return nil, false
 	}
-	symBlocks := sx.Cons(sz.SymBlock, nil)
-	curr := symBlocks
+	var symBlocks, curr *sx.Pair
 	var lastPara *sx.Pair
 	inp.EatEOL()
 	for {
@@ -276,7 +254,12 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 		}
 		bn, cont := cp.parseBlock(lastPara)
 		if bn != nil {
-			curr = curr.AppendBang(bn)
+			if symBlocks == nil {
+				symBlocks = sx.Cons(bn, nil)
+				curr = symBlocks
+			} else {
+				curr = curr.AppendBang(bn)
+			}
 		}
 		if !cont {
 			lastPara = bn

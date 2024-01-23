@@ -20,21 +20,49 @@ import (
 	"unicode"
 
 	"zettelstore.de/client.fossil/input"
+	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil"
 )
 
 func ParseBlocks(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
-	bs := parser.parseBlockSlice()
-	bs = postProcess(bs, nil)
-	return bs
+
+	var lastPara *sx.Pair
+	var blks []sx.Object
+	for inp.Ch != input.EOS {
+		bn, cont := parser.parseBlock(lastPara)
+		if bn != nil {
+			blks = append(blks, bn)
+		}
+		if !cont {
+			lastPara = bn
+		}
+	}
+	if parser.nestingLevel != 0 {
+		panic("Nesting level was not decremented")
+	}
+
+	if bs := postProcessList(sx.MakeList(blks...), nil); bs != nil {
+		return bs.Cons(sz.SymBlock)
+	}
+	return nil
 }
 
 func ParseInlines(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
-	is := parser.parseInlineSlice()
-	is = postProcess(is, nil)
-	return is
+	var ins []sx.Object
+	for inp.Ch != input.EOS {
+		in := parser.parseInline()
+		if in == nil {
+			break
+		}
+		ins = append(ins, in)
+	}
+
+	if is := postProcess(sx.MakeList(ins...), nil); is != nil {
+		return is.Cons(sz.SymInline)
+	}
+	return nil
 }
 
 type zmkP struct {

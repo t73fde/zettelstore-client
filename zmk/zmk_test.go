@@ -539,12 +539,12 @@ func TestSpanRegion(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
 		{":::\n:::", "()"},
-		{":::\nabc\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"abc\")))))"},
-		{":::\nabc\n::::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"abc\")))))"},
-		{"::::\nabc\n::::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"abc\")))))"},
-		{"::::\nabc\n:::\ndef\n:::\n::::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"abc\")) (REGION-BLOCK () (BLOCK (PARA (TEXT \"def\")))))))"},
+		{":::\nabc\n:::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"abc\")))))"},
+		{":::\nabc\n::::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"abc\")))))"},
+		{"::::\nabc\n::::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"abc\")))))"},
+		{"::::\nabc\n:::\ndef\n:::\n::::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"abc\")) (REGION-BLOCK () ((PARA (TEXT \"def\")))))))"},
 		{":::{go}\n:::a", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) () (TEXT \"a\")))"},
-		{":::\nabc\n::: def ", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"abc\"))) (TEXT \"def\")))"},
+		{":::\nabc\n::: def ", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"abc\"))) (TEXT \"def\")))"},
 	})
 }
 
@@ -552,12 +552,12 @@ func TestQuoteRegion(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
 		{"<<<\n<<<", "()"},
-		{"<<<\nabc\n<<<", "(BLOCK (REGION-QUOTE () (BLOCK (PARA (TEXT \"abc\")))))"},
-		{"<<<\nabc\n<<<<", "(BLOCK (REGION-QUOTE () (BLOCK (PARA (TEXT \"abc\")))))"},
-		{"<<<<\nabc\n<<<<", "(BLOCK (REGION-QUOTE () (BLOCK (PARA (TEXT \"abc\")))))"},
-		{"<<<<\nabc\n<<<\ndef\n<<<\n<<<<", "(BLOCK (REGION-QUOTE () (BLOCK (PARA (TEXT \"abc\")) (REGION-QUOTE () (BLOCK (PARA (TEXT \"def\")))))))"},
+		{"<<<\nabc\n<<<", "(BLOCK (REGION-QUOTE () ((PARA (TEXT \"abc\")))))"},
+		{"<<<\nabc\n<<<<", "(BLOCK (REGION-QUOTE () ((PARA (TEXT \"abc\")))))"},
+		{"<<<<\nabc\n<<<<", "(BLOCK (REGION-QUOTE () ((PARA (TEXT \"abc\")))))"},
+		{"<<<<\nabc\n<<<\ndef\n<<<\n<<<<", "(BLOCK (REGION-QUOTE () ((PARA (TEXT \"abc\")) (REGION-QUOTE () ((PARA (TEXT \"def\")))))))"},
 		{"<<<go\n<<< a", "(BLOCK (REGION-QUOTE ((\"\" . \"go\")) () (TEXT \"a\")))"},
-		{"<<<\nabc\n<<< def ", "(BLOCK (REGION-QUOTE () (BLOCK (PARA (TEXT \"abc\"))) (TEXT \"def\")))"},
+		{"<<<\nabc\n<<< def ", "(BLOCK (REGION-QUOTE () ((PARA (TEXT \"abc\"))) (TEXT \"def\")))"},
 	})
 }
 
@@ -565,16 +565,16 @@ func TestVerseRegion(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, replace("\"", nil, TestCases{
 		{"$$$\n$$$", "()"},
-		{"$$$\nabc\n$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\")))))"},
-		{"$$$\nabc\n$$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\")))))"},
-		{"$$$$\nabc\n$$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\")))))"},
-		{"$$$\nabc\ndef\n$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\") (HARD) (TEXT \"def\")))))"},
-		{"$$$$\nabc\n$$$\ndef\n$$$\n$$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\")) (REGION-VERSE () (BLOCK (PARA (TEXT \"def\")))))))"},
+		{"$$$\nabc\n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\")))))"},
+		{"$$$\nabc\n$$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\")))))"},
+		{"$$$$\nabc\n$$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\")))))"},
+		{"$$$\nabc\ndef\n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\") (HARD) (TEXT \"def\")))))"},
+		{"$$$$\nabc\n$$$\ndef\n$$$\n$$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\")) (REGION-VERSE () ((PARA (TEXT \"def\")))))))"},
 		{"$$$go\n$$$x", "(BLOCK (REGION-VERSE ((\"\" . \"go\")) () (TEXT \"x\")))"},
-		{"$$$\nabc\n$$$ def ", "(BLOCK (REGION-VERSE () (BLOCK (PARA (TEXT \"abc\"))) (TEXT \"def\")))"},
-		{"$$$\n space \n$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (SPACE \"\u00a0\") (TEXT \"space\")))))"},
-		{"$$$\n  spaces  \n$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (SPACE \"\u00a0\u00a0\") (TEXT \"spaces\")))))"},
-		{"$$$\n  spaces  \n space  \n$$$", "(BLOCK (REGION-VERSE () (BLOCK (PARA (SPACE \"\u00a0\u00a0\") (TEXT \"spaces\") (SPACE \"\u00a0\u00a0\") (HARD) (SPACE \"\u00a0\") (TEXT \"space\")))))"},
+		{"$$$\nabc\n$$$ def ", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\"))) (TEXT \"def\")))"},
+		{"$$$\n space \n$$$", "(BLOCK (REGION-VERSE () ((PARA (SPACE \"\u00a0\") (TEXT \"space\")))))"},
+		{"$$$\n  spaces  \n$$$", "(BLOCK (REGION-VERSE () ((PARA (SPACE \"\u00a0\u00a0\") (TEXT \"spaces\")))))"},
+		{"$$$\n  spaces  \n space  \n$$$", "(BLOCK (REGION-VERSE () ((PARA (SPACE \"\u00a0\u00a0\") (TEXT \"spaces\") (SPACE \"\u00a0\u00a0\") (HARD) (SPACE \"\u00a0\") (TEXT \"space\")))))"},
 	}))
 }
 
@@ -747,36 +747,36 @@ func TestTransclude(t *testing.T) {
 func TestBlockAttr(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{":::go\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::go=\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{}\na\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{ }\na\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{.go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{=go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{go=py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"py\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{.go=py}\na\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{go=}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{.go=}\na\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{go py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\") (\"py\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{go\npy}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\") (\"py\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{.go py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\") (\"py\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{go .py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"py\") (\"go\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{.go py=3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\") (\"py\" . \"3\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::  {  go  }  \na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::  {  .go  }  \na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::go\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) ((PARA (TEXT \"a\")))))"},
+		{":::go=\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) ((PARA (TEXT \"a\")))))"},
+		{":::{}\na\n:::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"a\")))))"},
+		{":::{ }\na\n:::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"a\")))))"},
+		{":::{.go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\")) ((PARA (TEXT \"a\")))))"},
+		{":::{=go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) ((PARA (TEXT \"a\")))))"},
+		{":::{go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) ((PARA (TEXT \"a\")))))"},
+		{":::{go=py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"py\")) ((PARA (TEXT \"a\")))))"},
+		{":::{.go=py}\na\n:::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"a\")))))"},
+		{":::{go=}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) ((PARA (TEXT \"a\")))))"},
+		{":::{.go=}\na\n:::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"a\")))))"},
+		{":::{go py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\") (\"py\" . \"\")) ((PARA (TEXT \"a\")))))"},
+		{":::{go\npy}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\") (\"py\" . \"\")) ((PARA (TEXT \"a\")))))"},
+		{":::{.go py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\") (\"py\" . \"\")) ((PARA (TEXT \"a\")))))"},
+		{":::{go .py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"py\") (\"go\" . \"\")) ((PARA (TEXT \"a\")))))"},
+		{":::{.go py=3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\") (\"py\" . \"3\")) ((PARA (TEXT \"a\")))))"},
+		{":::  {  go  }  \na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) ((PARA (TEXT \"a\")))))"},
+		{":::  {  .go  }  \na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\")) ((PARA (TEXT \"a\")))))"},
 	})
 	checkTcs(t, replace("\"", nil, TestCases{
-		{":::{py=3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"3\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{py=$2 3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2 3\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{py=$2\\$3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2\\\"3\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{py=2$3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2\\\"3\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{py=$2\n3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2\\n3\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{py=$2 3}\na\n:::", "(BLOCK (REGION-BLOCK () (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{py=2 py=3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2 3\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{.go .py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go py\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{go go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) (BLOCK (PARA (TEXT \"a\")))))"},
-		{":::{=py =go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) (BLOCK (PARA (TEXT \"a\")))))"},
+		{":::{py=3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"3\")) ((PARA (TEXT \"a\")))))"},
+		{":::{py=$2 3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2 3\")) ((PARA (TEXT \"a\")))))"},
+		{":::{py=$2\\$3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2\\\"3\")) ((PARA (TEXT \"a\")))))"},
+		{":::{py=2$3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2\\\"3\")) ((PARA (TEXT \"a\")))))"},
+		{":::{py=$2\n3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2\\n3\")) ((PARA (TEXT \"a\")))))"},
+		{":::{py=$2 3}\na\n:::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"a\")))))"},
+		{":::{py=2 py=3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2 3\")) ((PARA (TEXT \"a\")))))"},
+		{":::{.go .py}\na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go py\")) ((PARA (TEXT \"a\")))))"},
+		{":::{go go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) ((PARA (TEXT \"a\")))))"},
+		{":::{=py =go}\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) ((PARA (TEXT \"a\")))))"},
 	}))
 }
 
