@@ -14,6 +14,8 @@
 package zmk
 
 import (
+	"strings"
+
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil"
 )
@@ -186,11 +188,8 @@ func postProcessTable(tbl *sx.Pair, env *sx.Pair) *sx.Pair {
 		// Header and row are nil -> no table
 		return nil
 	}
-	align := make([]sx.Symbol, width)
-	for i := 0; i < width; i++ {
-		align[i] = sz.SymCell // Default alignment
-	}
-	return rows.Cons(nil).Cons(sym)
+	header, rows, _ = splitTableHeader(rows, width)
+	return rows.Cons(header).Cons(sym)
 }
 
 func postProcessRows(rows *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
@@ -228,6 +227,86 @@ func postProcessCells(cells *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
 		width++
 	}
 	return result, width
+}
+
+func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, align []sx.Symbol) {
+	align = make([]sx.Symbol, width)
+
+	foundHeader := false
+
+	var lastCellNode *sx.Pair
+	var cellCount int
+
+	// assert: rows != nil (checked in postProcessTable)
+	for node := rows.Head(); node != nil; node = node.Tail() {
+		lastCellNode = node
+		cellCount++
+		cell := node.Head()
+		cellTail := cell.Tail()
+		if cellTail == nil {
+			continue
+		}
+
+		// elem is first cell inline element
+		elem := cellTail.Head()
+		if elem.Car().IsEqual(sz.SymText) {
+			if s, isString := sx.GetString(elem.Tail().Car()); isString {
+				if strings.HasPrefix(string(s), "=") {
+					foundHeader = true
+					elem.SetCdr(sx.Cons(sx.String(strings.TrimPrefix(string(s), "=")), nil))
+				}
+			}
+		}
+
+		// move to the last cell inline element
+		for {
+			next := elem.Tail()
+			if next == nil {
+				break
+			}
+			elem = next
+		}
+
+		if elem.Car().IsEqual(sz.SymText) {
+			if s, isString := sx.GetString(elem.Tail().Car()); isString && s != "" {
+				cellAlign := getCellAlignment(s[len(s)-1])
+				if cellAlign != sz.SymCell {
+					elem.SetCdr(s[0 : len(s)-1])
+				}
+				align[cellCount-1] = cellAlign
+			}
+		}
+	}
+
+	if !foundHeader {
+		for i := 0; i < width; i++ {
+			align[i] = sz.SymCell // Default alignment
+		}
+		return nil, rows, align
+	}
+
+	for cellCount < width {
+		lastCellNode = lastCellNode.AppendBang(sx.Cons(sz.SymCell, nil))
+	}
+	for i := 0; i < width; i++ {
+		if align[i] == "" {
+			align[i] = sz.SymCell // Default alignment
+		}
+	}
+	return rows.Head(), rows.Tail(), align
+}
+
+func getCellAlignment(ch byte) sx.Symbol {
+	switch ch {
+	case ':':
+		return sz.SymCellCenter
+	case '<':
+		return sz.SymCellLeft
+	case '>':
+		return sz.SymCellRight
+	default:
+		return sz.SymCell
+	}
 }
 
 func postProcessInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {

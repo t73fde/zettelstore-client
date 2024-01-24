@@ -727,6 +727,8 @@ func TestTable(t *testing.T) {
 		{"|a\n|b", "(BLOCK (TABLE () ((CELL (TEXT \"a\"))) ((CELL (TEXT \"b\")))))"},
 		{"|a|b\n|c|d", "(BLOCK (TABLE () ((CELL (TEXT \"a\")) (CELL (TEXT \"b\"))) ((CELL (TEXT \"c\")) (CELL (TEXT \"d\")))))"},
 		{"|%", "()"},
+		{"|=a", "(BLOCK (TABLE ((CELL (TEXT \"a\")))))"},
+		{"|=a\n|b", "(BLOCK (TABLE ((CELL (TEXT \"a\"))) ((CELL (TEXT \"b\")))))"},
 		{"|a|b\n|%---\n|c|d", "(BLOCK (TABLE () ((CELL (TEXT \"a\")) (CELL (TEXT \"b\"))) ((CELL (TEXT \"c\")) (CELL (TEXT \"d\")))))"},
 		// {"|a|b\n|c", "(BLOCK (TABLE () ((CELL (TEXT \"a\")) (CELL (TEXT \"b\"))) ((CELL (TEXT \"c\")) (CELL))))"},
 	})
