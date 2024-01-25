@@ -627,50 +627,50 @@ func TestHRule(t *testing.T) {
 	})
 }
 
-func xTestList(t *testing.T) {
+func TestList(t *testing.T) {
 	t.Parallel()
 	// No ">" in the following, because quotation lists may have empty items.
 	for _, ch := range []string{"*", "#"} {
 		checkTcs(t, replace(ch, nil, TestCases{
-			{"$", "(PARA $)"},
-			{"$$", "(PARA $$)"},
-			{"$$$", "(PARA $$$)"},
-			{"$ ", "(PARA $)"},
-			{"$$ ", "(PARA $$)"},
-			{"$$$ ", "(PARA $$$)"},
+			{"$", "(BLOCK (PARA (TEXT \"$\")))"},
+			{"$$", "(BLOCK (PARA (TEXT \"$$\")))"},
+			{"$$$", "(BLOCK (PARA (TEXT \"$$$\")))"},
+			{"$ ", "(BLOCK (PARA (TEXT \"$\")))"},
+			{"$$ ", "(BLOCK (PARA (TEXT \"$$\")))"},
+			{"$$$ ", "(BLOCK (PARA (TEXT \"$$$\")))"},
 		}))
 	}
 	checkTcs(t, TestCases{
-		{"* abc", "(UL {(PARA abc)})"},
-		{"** abc", "(UL {(UL {(PARA abc)})})"},
-		{"*** abc", "(UL {(UL {(UL {(PARA abc)})})})"},
-		{"**** abc", "(UL {(UL {(UL {(UL {(PARA abc)})})})})"},
-		{"** abc\n**** def", "(UL {(UL {(PARA abc)(UL {(UL {(PARA def)})})})})"},
-		{"* abc\ndef", "(UL {(PARA abc)})(PARA def)"},
-		{"* abc\n def", "(UL {(PARA abc)})(PARA def)"},
-		{"* abc\n* def", "(UL {(PARA abc)} {(PARA def)})"},
-		{"* abc\n  def", "(UL {(PARA abc SB def)})"},
-		{"* abc\n   def", "(UL {(PARA abc SB def)})"},
-		{"* abc\n\ndef", "(UL {(PARA abc)})(PARA def)"},
-		{"* abc\n\n def", "(UL {(PARA abc)})(PARA def)"},
-		{"* abc\n\n  def", "(UL {(PARA abc)(PARA def)})"},
-		{"* abc\n\n   def", "(UL {(PARA abc)(PARA def)})"},
-		{"* abc\n** def", "(UL {(PARA abc)(UL {(PARA def)})})"},
-		{"* abc\n** def\n* ghi", "(UL {(PARA abc)(UL {(PARA def)})} {(PARA ghi)})"},
-		{"* abc\n\n  def\n* ghi", "(UL {(PARA abc)(PARA def)} {(PARA ghi)})"},
-		{"* abc\n** def\n   ghi\n  jkl", "(UL {(PARA abc)(UL {(PARA def SB ghi)})(PARA jkl)})"},
+		{"* abc", "(BLOCK (UNORDERED (INLINE (TEXT \"abc\"))))"},
+		// {"** abc", "(UL {(UL {(PARA abc)})})"},
+		// {"*** abc", "(UL {(UL {(UL {(PARA abc)})})})"},
+		// {"**** abc", "(UL {(UL {(UL {(UL {(PARA abc)})})})})"},
+		// {"** abc\n**** def", "(UL {(UL {(PARA abc)(UL {(UL {(PARA def)})})})})"},
+		// {"* abc\ndef", "(UL {(PARA abc)})(PARA def)"},
+		// {"* abc\n def", "(UL {(PARA abc)})(PARA def)"},
+		// {"* abc\n* def", "(UL {(PARA abc)} {(PARA def)})"},
+		// {"* abc\n  def", "(UL {(PARA abc SB def)})"},
+		// {"* abc\n   def", "(UL {(PARA abc SB def)})"},
+		// {"* abc\n\ndef", "(UL {(PARA abc)})(PARA def)"},
+		// {"* abc\n\n def", "(UL {(PARA abc)})(PARA def)"},
+		// {"* abc\n\n  def", "(UL {(PARA abc)(PARA def)})"},
+		// {"* abc\n\n   def", "(UL {(PARA abc)(PARA def)})"},
+		// {"* abc\n** def", "(UL {(PARA abc)(UL {(PARA def)})})"},
+		// {"* abc\n** def\n* ghi", "(UL {(PARA abc)(UL {(PARA def)})} {(PARA ghi)})"},
+		// {"* abc\n\n  def\n* ghi", "(UL {(PARA abc)(PARA def)} {(PARA ghi)})"},
+		// {"* abc\n** def\n   ghi\n  jkl", "(UL {(PARA abc)(UL {(PARA def SB ghi)})(PARA jkl)})"},
 
-		// A list does not last beyond a region
-		{":::\n# abc\n:::\n# def", "(SPAN (OL {(PARA abc)}))(OL {(PARA def)})"},
+		// // A list does not last beyond a region
+		{":::\n# abc\n:::\n# def", "(BLOCK (REGION-BLOCK () ((ORDERED (INLINE (TEXT \"abc\"))))) (ORDERED (INLINE (TEXT \"def\"))))"},
 
-		// A HRule creates a new list
-		{"* abc\n---\n* def", "(UL {(PARA abc)})(HR)(UL {(PARA def)})"},
+		// // A HRule creates a new list
+		{"* abc\n---\n* def", "(BLOCK (UNORDERED (INLINE (TEXT \"abc\"))) (THEMATIC ()) (UNORDERED (INLINE (TEXT \"def\"))))"},
 
-		// Changing list type adds a new list
-		{"* abc\n# def", "(UL {(PARA abc)})(OL {(PARA def)})"},
+		// // Changing list type adds a new list
+		{"* abc\n# def", "(BLOCK (UNORDERED (INLINE (TEXT \"abc\"))) (ORDERED (INLINE (TEXT \"def\"))))"},
 
-		// Quotation lists may have empty items
-		{">", "(QL {})"},
+		// // Quotation lists may have empty items
+		// {">", "(QL {})"},
 	})
 }
 
@@ -683,11 +683,11 @@ func xTestQuoteList(t *testing.T) {
 	})
 }
 
-func xTestEnumAfterPara(t *testing.T) {
+func TestEnumAfterPara(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"abc\n* def", "(PARA abc)(UL {(PARA def)})"},
-		{"abc\n*def", "(PARA abc SB *def)"},
+		{"abc\n* def", "(BLOCK (PARA (TEXT \"abc\")) (UNORDERED (INLINE (TEXT \"def\"))))"},
+		{"abc\n*def", "(BLOCK (PARA (TEXT \"abc\") (SOFT) (TEXT \"*def\")))"},
 	})
 }
 

@@ -37,7 +37,7 @@ func postProcess(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	panic(lst)
 }
 
-func postProcessList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	var result, curr *sx.Pair
 	for node := lst; node != nil; node = node.Tail() {
 		elem, isPair := sx.GetPair(node.Car())
@@ -87,6 +87,8 @@ func init() {
 		sz.SymVerbatimProg:    postProcessVerbatim,
 		sz.SymVerbatimZettel:  postProcessVerbatim,
 		sz.SymHeading:         postProcessHeading,
+		sz.SymListOrdered:     postProcessList,
+		sz.SymListUnordered:   postProcessList,
 		sz.SymTable:           postProcessTable,
 
 		sz.SymInline:       postProcessInlineList,
@@ -118,7 +120,7 @@ func init() {
 }
 
 func postProcessBlockList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
-	result := postProcessList(lst.Tail(), env)
+	result := postProcessPairList(lst.Tail(), env)
 	if result == nil {
 		return nil
 	}
@@ -138,7 +140,7 @@ func postProcessRegion(rn *sx.Pair, env *sx.Pair) *sx.Pair {
 	next := rn.Tail()
 	attrs := next.Car()
 	next = next.Tail()
-	blocks := postProcessList(next.Head(), env)
+	blocks := postProcessPairList(next.Head(), env)
 	text := postProcessInlines(next.Tail(), env)
 	if blocks == nil && text == nil {
 		return nil
@@ -171,6 +173,35 @@ func postProcessHeading(hn *sx.Pair, env *sx.Pair) *sx.Pair {
 		return text.Cons(fragment).Cons(slug).Cons(attrs).Cons(level).Cons(sym)
 	}
 	return nil
+}
+
+func postProcessList(ln *sx.Pair, env *sx.Pair) *sx.Pair {
+	result := sx.Cons(ln.Car(), nil)
+	curr := result
+	for node := ln.Tail(); node != nil; node = node.Tail() {
+		elem := postProcessListElement(node.Head(), env)
+		curr = curr.AppendBang(elem)
+	}
+	return result
+}
+
+func postProcessListElement(en *sx.Pair, env *sx.Pair) *sx.Pair {
+	en = postProcess(en, env)
+	if !en.Car().IsEqual(sz.SymBlock) {
+		return en
+	}
+	bl := en.Tail()
+	if bl.Tail() != nil {
+		// More than one element
+		return en
+	}
+	pn := bl.Head()
+	if !pn.Car().IsEqual(sz.SymPara) {
+		// More than one element or not a paragraph
+		return en
+	}
+
+	return pn.Tail().Cons(sz.SymInline)
 }
 
 func postProcessTable(tbl *sx.Pair, env *sx.Pair) *sx.Pair {

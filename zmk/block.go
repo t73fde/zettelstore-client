@@ -58,14 +58,14 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 			// cp.descrl = nil
 			bn, success = cp.parseNestedList()
 		case ';':
-			// cp.lists = nil
+			cp.lists = nil
 			cp.lastRow = nil
 			bn, success = cp.parseDefTerm()
 		case ' ':
 			cp.lastRow = nil
 			bn, success = nil, cp.parseIndent()
 		case '|':
-			// cp.lists = nil
+			cp.lists = nil
 			// cp.descrl = nil
 			bn, success = cp.parseRow(), true
 		case '{':
@@ -351,94 +351,95 @@ func (cp *zmkP) parseHRule() (hn *sx.Pair, success bool) {
 	return sx.MakeList(sz.SymThematic, attrs), true
 }
 
-var mapRuneNestedList = map[rune]sx.Symbol{
-	'*': sz.SymListUnordered,
-	'#': sz.SymListOrdered,
-	'>': sz.SymListQuote,
-}
-
 // parseNestedList parses a list.
 func (cp *zmkP) parseNestedList() (res *sx.Pair /*ast.BlockNode*/, success bool) {
-	// inp := cp.inp
-	// kinds := cp.parseNestedListKinds()
-	// if kinds == nil {
-	// 	return nil, false
-	// }
-	// cp.skipSpace()
-	// if kinds[len(kinds)-1] != ast.NestedListQuote && input.IsEOLEOS(inp.Ch) {
-	// 	return nil, false
-	// }
+	inp := cp.inp
+	kinds := cp.parseNestedListKinds()
+	if kinds == nil {
+		return nil, false
+	}
+	cp.skipSpace()
+	if kinds[len(kinds)-1] != sz.SymListQuote && input.IsEOLEOS(inp.Ch) {
+		return nil, false
+	}
 
-	// if len(kinds) < len(cp.lists) {
-	// 	cp.lists = cp.lists[:len(kinds)]
-	// }
-	// ln, newLnCount := cp.buildNestedList(kinds)
-	// pn := cp.parseLinePara()
-	// if pn == nil {
-	// 	pn = &ast.ParaNode{}
-	// }
-	// ln.Items = append(ln.Items, ast.ItemSlice{pn})
-	// return cp.cleanupParsedNestedList(newLnCount)
-	return nil, false
+	if len(kinds) < len(cp.lists) {
+		cp.lists = cp.lists[:len(kinds)]
+	}
+	ln, newLnCount := cp.buildNestedList(kinds)
+	pn := cp.parseLinePara()
+	bn := sx.Cons(sz.SymBlock, nil)
+	if pn != nil {
+		bn.AppendBang(pn.Cons(sz.SymPara))
+	}
+	lastItemPair := ln.LastPair()
+	lastItemPair.AppendBang(bn)
+	return cp.cleanupParsedNestedList(newLnCount)
 }
 
-// func (cp *zmkP) parseNestedListKinds() []ast.NestedListKind {
-// 	inp := cp.inp
-// 	codes := make([]ast.NestedListKind, 0, 4)
-// 	for {
-// 		code, ok := mapRuneNestedList[inp.Ch]
-// 		if !ok {
-// 			panic(fmt.Sprintf("%q is not a region char", inp.Ch))
-// 		}
-// 		codes = append(codes, code)
-// 		inp.Next()
-// 		switch inp.Ch {
-// 		case '*', '#', '>':
-// 		case ' ', input.EOS, '\n', '\r':
-// 			return codes
-// 		default:
-// 			return nil
-// 		}
-// 	}
-// }
+func (cp *zmkP) parseNestedListKinds() (result []sx.Symbol) {
+	inp := cp.inp
+	for {
+		var sym sx.Symbol
+		switch inp.Ch {
+		case '*':
+			sym = sz.SymListUnordered
+		case '#':
+			sym = sz.SymListOrdered
+		case '>':
+			sym = sz.SymListQuote
+		default:
+			panic(fmt.Sprintf("%q is not a region char", inp.Ch))
+		}
+		result = append(result, sym)
+		inp.Next()
+		switch inp.Ch {
+		case '*', '#', '>':
+		case ' ', input.EOS, '\n', '\r':
+			return result
+		default:
+			return nil
+		}
+	}
+}
 
-// func (cp *zmkP) buildNestedList(kinds []ast.NestedListKind) (ln *ast.NestedListNode, newLnCount int) {
-// 	for i, kind := range kinds {
-// 		if i < len(cp.lists) {
-// 			if cp.lists[i].Kind != kind {
-// 				ln = &ast.NestedListNode{Kind: kind}
-// 				newLnCount++
-// 				cp.lists[i] = ln
-// 				cp.lists = cp.lists[:i+1]
-// 			} else {
-// 				ln = cp.lists[i]
-// 			}
-// 		} else {
-// 			ln = &ast.NestedListNode{Kind: kind}
-// 			newLnCount++
-// 			cp.lists = append(cp.lists, ln)
-// 		}
-// 	}
-// 	return ln, newLnCount
-// }
+func (cp *zmkP) buildNestedList(kinds []sx.Symbol) (ln *sx.Pair, newLnCount int) {
+	for i, kind := range kinds {
+		if i < len(cp.lists) {
+			if !cp.lists[i].Car().IsEqual(kind) {
+				ln = sx.Cons(kind, nil)
+				newLnCount++
+				cp.lists[i] = ln
+				cp.lists = cp.lists[:i+1]
+			} else {
+				ln = cp.lists[i]
+			}
+		} else {
+			ln = sx.Cons(kind, nil)
+			newLnCount++
+			cp.lists = append(cp.lists, ln)
+		}
+	}
+	return ln, newLnCount
+}
 
-// func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (res ast.BlockNode, success bool) {
-// 	listDepth := len(cp.lists)
-// 	for i := 0; i < newLnCount; i++ {
-// 		childPos := listDepth - i - 1
-// 		parentPos := childPos - 1
-// 		if parentPos < 0 {
-// 			return cp.lists[0], true
-// 		}
-// 		if prevItems := cp.lists[parentPos].Items; len(prevItems) > 0 {
-// 			lastItem := len(prevItems) - 1
-// 			prevItems[lastItem] = append(prevItems[lastItem], cp.lists[childPos])
-// 		} else {
-// 			cp.lists[parentPos].Items = []ast.ItemSlice{{cp.lists[childPos]}}
-// 		}
-// 	}
-// 	return nil, true
-// }
+func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (res *sx.Pair /*ast.BlockNode*/, success bool) {
+	listDepth := len(cp.lists)
+	for i := 0; i < newLnCount; i++ {
+		childPos := listDepth - i - 1
+		parentPos := childPos - 1
+		if parentPos < 0 {
+			return cp.lists[0], true
+		}
+		// 	if prevItems := cp.lists[parentPos].Items; len(prevItems) > 0 {
+		// 		lastItem := len(prevItems) - 1
+		// 		prevItems[lastItem] = append(prevItems[lastItem], cp.lists[childPos])
+		// 	} else {
+		// 		cp.lists[parentPos].Items = []ast.ItemSlice{{cp.lists[childPos]}}
+		// 	}
+	}
+	return nil, true
+}
 
 // parseDefTerm parses a term of a definition list.
 func (cp *zmkP) parseDefTerm() (res *sx.Pair /*ast.BlockNode*/, success bool) {
@@ -592,21 +593,20 @@ func (cp *zmkP) parseIndentForDescription(cnt int) bool {
 
 // parseLinePara parses one line of inline material.
 func (cp *zmkP) parseLinePara() *sx.Pair /**ast.ParaNode*/ {
-	// ins := ast.InlineSlice{}
-	// for {
-	// 	in := cp.parseInline()
-	// 	if in == nil {
-	// 		if len(ins) == 0 {
-	// 			return nil
-	// 		}
-	// 		return &ast.ParaNode{Inlines: ins}
-	// 	}
-	// 	ins = append(ins, in)
-	// 	if _, ok := in.(*ast.BreakNode); ok {
-	// 		return &ast.ParaNode{Inlines: ins}
-	// 	}
-	// }
-	return nil
+	ins := []sx.Object{}
+	for {
+		in := cp.parseInline()
+		if in == nil {
+			if len(ins) == 0 {
+				return nil
+			}
+			return sx.MakeList(ins...)
+		}
+		ins = append(ins, in)
+		if sym := in.Car(); sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard) {
+			return sx.MakeList(ins...)
+		}
+	}
 }
 
 // parseRow parse one table row.

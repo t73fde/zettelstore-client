@@ -42,7 +42,7 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 		panic("Nesting level was not decremented")
 	}
 
-	if bs := postProcessList(sx.MakeList(blks...), nil); bs != nil {
+	if bs := postProcessPairList(sx.MakeList(blks...), nil); bs != nil {
 		return bs.Cons(sz.SymBlock)
 	}
 	return nil
@@ -66,13 +66,13 @@ func ParseInlines(inp *input.Input) *sx.Pair {
 }
 
 type zmkP struct {
-	inp *input.Input // Input stream
-	// lists        []*ast.NestedListNode    // Stack of lists
-	lastRow *sx.Pair // Last row of table, or nil if not in table.
+	inp     *input.Input // Input stream
+	lists   []*sx.Pair   // Stack of lists
+	lastRow *sx.Pair     // Last row of table, or nil if not in table.
 	// descrl       *ast.DescriptionListNode // Current description list
 	nestingLevel int // Count nesting of block and inline elements
 
-	inVerse bool
+	inVerse bool // Currently in a vers region?
 }
 
 // runeModGrave is Unicode code point U+02CB (715) called "MODIFIER LETTER
@@ -85,7 +85,7 @@ const maxNestingLevel = 50
 
 // clearStacked removes all multi-line nodes from parser.
 func (cp *zmkP) clearStacked() {
-	// cp.lists = nil
+	cp.lists = nil
 	cp.lastRow = nil
 	// cp.descrl = nil
 }
