@@ -14,8 +14,6 @@
 package zmk
 
 import (
-	"strings"
-
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil"
 )
@@ -178,7 +176,7 @@ func postProcessHeading(hn *sx.Pair, env *sx.Pair) *sx.Pair {
 func postProcessTable(tbl *sx.Pair, env *sx.Pair) *sx.Pair {
 	sym := tbl.Car()
 	next := tbl.Tail()
-	header := next.Car()
+	header := next.Head()
 	if header != nil {
 		// Already post-processed
 		return tbl
@@ -188,7 +186,11 @@ func postProcessTable(tbl *sx.Pair, env *sx.Pair) *sx.Pair {
 		// Header and row are nil -> no table
 		return nil
 	}
-	header, rows, _ = splitTableHeader(rows, width)
+	header, rows, align := splitTableHeader(rows, width)
+	alignRow(header, align)
+	for node := rows; node != nil; node = node.Tail() {
+		alignRow(node.Head(), align)
+	}
 	return rows.Cons(header).Cons(sym)
 }
 
@@ -233,13 +235,10 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 	align = make([]sx.Symbol, width)
 
 	foundHeader := false
-
-	var lastCellNode *sx.Pair
-	var cellCount int
+	cellCount := 0
 
 	// assert: rows != nil (checked in postProcessTable)
 	for node := rows.Head(); node != nil; node = node.Tail() {
-		lastCellNode = node
 		cellCount++
 		cell := node.Head()
 		cellTail := cell.Tail()
@@ -250,30 +249,32 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 		// elem is first cell inline element
 		elem := cellTail.Head()
 		if elem.Car().IsEqual(sz.SymText) {
-			if s, isString := sx.GetString(elem.Tail().Car()); isString {
-				if strings.HasPrefix(string(s), "=") {
+			if s, isString := sx.GetString(elem.Tail().Car()); isString && s != "" {
+				if s[0] == '=' {
 					foundHeader = true
-					elem.SetCdr(sx.Cons(sx.String(strings.TrimPrefix(string(s), "=")), nil))
+					elem.SetCdr(sx.Cons(s[1:], nil))
 				}
 			}
 		}
 
 		// move to the last cell inline element
 		for {
-			next := elem.Tail()
+			next := cellTail.Tail()
 			if next == nil {
 				break
 			}
-			elem = next
+			cellTail = next
 		}
 
+		elem = cellTail.Head()
 		if elem.Car().IsEqual(sz.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s != "" {
 				cellAlign := getCellAlignment(s[len(s)-1])
 				if cellAlign != sz.SymCell {
-					elem.SetCdr(s[0 : len(s)-1])
+					elem.SetCdr(sx.Cons(s[0:len(s)-1], nil))
 				}
 				align[cellCount-1] = cellAlign
+				cell.SetCar(cellAlign)
 			}
 		}
 	}
@@ -285,15 +286,47 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 		return nil, rows, align
 	}
 
-	for cellCount < width {
-		lastCellNode = lastCellNode.AppendBang(sx.Cons(sz.SymCell, nil))
-	}
 	for i := 0; i < width; i++ {
 		if align[i] == "" {
 			align[i] = sz.SymCell // Default alignment
 		}
 	}
 	return rows.Head(), rows.Tail(), align
+}
+
+func alignRow(row *sx.Pair, align []sx.Symbol) {
+	if row == nil {
+		return
+	}
+	var lastCellNode *sx.Pair
+	cellCount := 0
+	for node := row; node != nil; node = node.Tail() {
+		lastCellNode = node
+		cell := node.Head()
+		cell.SetCar(align[cellCount])
+		cellCount++
+		cellTail := cell.Tail()
+		if cellTail == nil {
+			continue
+		}
+
+		// elem is first cell inline element
+		elem := cellTail.Head()
+		if elem.Car().IsEqual(sz.SymText) {
+			if s, isString := sx.GetString(elem.Tail().Car()); isString && s != "" {
+				cellAlign := getCellAlignment(s[0])
+				if cellAlign != sz.SymCell {
+					elem.SetCdr(sx.Cons(s[1:], nil))
+					cell.SetCar(cellAlign)
+				}
+			}
+		}
+	}
+
+	for cellCount < len(align) {
+		lastCellNode = lastCellNode.AppendBang(sx.Cons(align[cellCount], nil))
+		cellCount++
+	}
 }
 
 func getCellAlignment(ch byte) sx.Symbol {
