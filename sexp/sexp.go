@@ -135,7 +135,7 @@ func ParseRights(obj sx.Object) (api.ZettelRights, error) {
 }
 
 // ParseList parses the given object as a proper list, based on a type specification.
-func ParseList(obj sx.Object, spec string) ([]sx.Object, error) {
+func ParseList(obj sx.Object, spec string) (sx.Vector, error) {
 	pair, isPair := sx.GetPair(obj)
 	if !isPair {
 		return nil, fmt.Errorf("not a list: %T/%v", obj, obj)
@@ -147,7 +147,7 @@ func ParseList(obj sx.Object, spec string) ([]sx.Object, error) {
 		return nil, ErrElementsMissing
 	}
 
-	result := make([]sx.Object, 0, len(spec))
+	result := make(sx.Vector, 0, len(spec))
 	node, i := pair, 0
 	for ; node != nil; i++ {
 		if i >= len(spec) {
