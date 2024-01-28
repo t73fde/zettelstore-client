@@ -180,7 +180,7 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (ref string, text *sx.Pair,
 		// Additional opening chars result in a fail
 		return "", nil, false
 	}
-	var is []sx.Object
+	var is sx.Vector
 	pos := inp.Pos
 	if !hasQueryPrefix(inp.Src[pos:]) {
 		hasSpace, ok := cp.readReferenceToSep(closeCh)
@@ -362,7 +362,7 @@ func (cp *zmkP) parseMark() (*sx.Pair, bool) {
 
 func (cp *zmkP) parseLinkLikeRest() (*sx.Pair, bool) {
 	cp.skipSpace()
-	var ins []sx.Object
+	var ins sx.Vector
 	inp := cp.inp
 	for inp.Ch != ']' {
 		in := cp.parseInline()
@@ -429,7 +429,7 @@ func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
 		return nil, false
 	}
 	inp.Next()
-	var inlines []sx.Object
+	var inlines sx.Vector
 	for {
 		if inp.Ch == input.EOS {
 			return nil, false

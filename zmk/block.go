@@ -90,7 +90,7 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 	return sx.MakeList(ins...).Cons(sz.SymPara), false
 }
 
-func startsWithSpaceSoftBreak(ins []sx.Object) bool {
+func startsWithSpaceSoftBreak(ins sx.Vector) bool {
 	if len(ins) < 2 {
 		return false
 	}
@@ -129,7 +129,7 @@ func (cp *zmkP) parseColon() (*sx.Pair, bool) {
 }
 
 // parsePara parses paragraphed inline material as a slice of sx.Object.
-func (cp *zmkP) parsePara() (result []sx.Object) {
+func (cp *zmkP) parsePara() (result sx.Vector) {
 	for {
 		in := cp.parseInline()
 		if in == nil {
@@ -593,7 +593,7 @@ func (cp *zmkP) parseIndentForDescription(cnt int) bool {
 
 // parseLinePara parses one line of inline material.
 func (cp *zmkP) parseLinePara() *sx.Pair /**ast.ParaNode*/ {
-	ins := []sx.Object{}
+	ins := sx.Vector{}
 	for {
 		in := cp.parseInline()
 		if in == nil {

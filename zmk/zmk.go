@@ -28,7 +28,7 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
 
 	var lastPara *sx.Pair
-	var blks []sx.Object
+	var blks sx.Vector
 	for inp.Ch != input.EOS {
 		bn, cont := parser.parseBlock(lastPara)
 		if bn != nil {
@@ -50,7 +50,7 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 
 func ParseInlines(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
-	var ins []sx.Object
+	var ins sx.Vector
 	for inp.Ch != input.EOS {
 		in := parser.parseInline()
 		if in == nil {
