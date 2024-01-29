@@ -133,8 +133,7 @@ func (cp *zmkP) parseNormalAttribute(attrs attrMap) bool {
 
 func (cp *zmkP) parseAttributeValue(key string, attrs attrMap) bool {
 	inp := cp.inp
-	inp.Next()
-	if inp.Ch == '"' {
+	if inp.Next() == '"' {
 		return cp.parseQuotedAttributeValue(key, attrs)
 	}
 	posV := inp.Pos
@@ -163,8 +162,7 @@ func (cp *zmkP) parseQuotedAttributeValue(key string, attrs attrMap) bool {
 			inp.Next()
 			return true
 		case '\\':
-			inp.Next()
-			switch inp.Ch {
+			switch inp.Next() {
 			case input.EOS, '\n', '\r':
 				return false
 			}
