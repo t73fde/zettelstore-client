@@ -55,7 +55,7 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 			bn, success = cp.parseHRule()
 		case '*', '#', '>':
 			cp.lastRow = nil
-			// cp.descrl = nil
+			cp.descrl = nil
 			bn, success = cp.parseNestedList()
 		case ';':
 			cp.lists = nil
@@ -66,7 +66,7 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 			bn, success = nil, cp.parseIndent()
 		case '|':
 			cp.lists = nil
-			// cp.descrl = nil
+			cp.descrl = nil
 			bn, success = cp.parseRow(), true
 		case '{':
 			cp.clearStacked()
@@ -436,13 +436,12 @@ func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (res *sx.Pair, success b
 
 // parseDefTerm parses a term of a definition list.
 func (cp *zmkP) parseDefTerm() (res *sx.Pair /*ast.BlockNode*/, success bool) {
-	// inp := cp.inp
-	// inp.Next()
-	// if inp.Ch != ' ' {
-	// 	return nil, false
-	// }
-	// inp.Next()
-	// cp.skipSpace()
+	inp := cp.inp
+	if inp.Next() != ' ' {
+		return nil, false
+	}
+	inp.Next()
+	cp.skipSpace()
 	// descrl := cp.descrl
 	// if descrl == nil {
 	// 	descrl = &ast.DescriptionListNode{}
@@ -471,33 +470,27 @@ func (cp *zmkP) parseDefTerm() (res *sx.Pair /*ast.BlockNode*/, success bool) {
 
 // parseDefDescr parses a description of a definition list.
 func (cp *zmkP) parseDefDescr() (res *sx.Pair /*ast.BlockNode*/, success bool) {
-	// inp := cp.inp
-	// inp.Next()
-	//
-	//	if inp.Ch != ' ' {
-	//		return nil, false
-	//	}
-	//
-	// inp.Next()
-	// cp.skipSpace()
+	inp := cp.inp
+	if inp.Next() != ' ' {
+		return nil, false
+	}
+	inp.Next()
+	cp.skipSpace()
 	// descrl := cp.descrl
-	//
-	//	if descrl == nil || len(descrl.Descriptions) == 0 {
-	//		return nil, false
-	//	}
-	//
+	// if descrl == nil || len(descrl.Descriptions) == 0 {
+	// 	return nil, false
+	// }
+
 	// defPos := len(descrl.Descriptions) - 1
-	//
-	//	if len(descrl.Descriptions[defPos].Term) == 0 {
-	//		return nil, false
-	//	}
-	//
+	// if len(descrl.Descriptions[defPos].Term) == 0 {
+	// 	return nil, false
+	// }
+
 	// pn := cp.parseLinePara()
-	//
-	//	if pn == nil {
-	//		return nil, false
-	//	}
-	//
+	// if len(pn) == 0 {
+	// 	return nil, false
+	// }
+
 	// cp.lists = nil
 	// cp.lastRow = nil
 	// descrl.Descriptions[defPos].Descriptions = append(descrl.Descriptions[defPos].Descriptions, ast.DescriptionSlice{pn})
@@ -518,9 +511,9 @@ func (cp *zmkP) parseIndent() bool {
 	if cp.lists != nil {
 		return cp.parseIndentForList(cnt)
 	}
-	// if cp.descrl != nil {
-	// 	return cp.parseIndentForDescription(cnt)
-	// }
+	if cp.descrl != nil {
+		return cp.parseIndentForDescription(cnt)
+	}
 	return false
 }
 

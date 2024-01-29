@@ -691,26 +691,26 @@ func TestEnumAfterPara(t *testing.T) {
 	})
 }
 
-func xTestDefinition(t *testing.T) {
+func TestDefinition(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{";", "(PARA ;)"},
-		{"; ", "(PARA ;)"},
-		{"; abc", "(DL (DT abc))"},
-		{"; abc\ndef", "(DL (DT abc))(PARA def)"},
-		{"; abc\n def", "(DL (DT abc))(PARA def)"},
-		{"; abc\n  def", "(DL (DT abc SB def))"},
-		{":", "(PARA :)"},
-		{": ", "(PARA :)"},
-		{": abc", "(PARA : SP abc)"},
-		{"; abc\n: def", "(DL (DT abc) (DD (PARA def)))"},
-		{"; abc\n: def\nghi", "(DL (DT abc) (DD (PARA def)))(PARA ghi)"},
-		{"; abc\n: def\n ghi", "(DL (DT abc) (DD (PARA def)))(PARA ghi)"},
-		{"; abc\n: def\n  ghi", "(DL (DT abc) (DD (PARA def SB ghi)))"},
-		{"; abc\n: def\n\n  ghi", "(DL (DT abc) (DD (PARA def)(PARA ghi)))"},
-		{"; abc\n:", "(DL (DT abc))(PARA :)"},
-		{"; abc\n: def\n: ghi", "(DL (DT abc) (DD (PARA def)) (DD (PARA ghi)))"},
-		{"; abc\n: def\n; ghi\n: jkl", "(DL (DT abc) (DD (PARA def)) (DT ghi) (DD (PARA jkl)))"},
+		{";", "(BLOCK (PARA (TEXT \";\")))"},
+		{"; ", "(BLOCK (PARA (TEXT \";\")))"},
+		// {"; abc", "(DL (DT abc))"},
+		// {"; abc\ndef", "(DL (DT abc))(PARA def)"},
+		// {"; abc\n def", "(DL (DT abc))(PARA def)"},
+		// {"; abc\n  def", "(DL (DT abc SB def))"},
+		{":", "(BLOCK (PARA (TEXT \":\")))"},
+		{": ", "(BLOCK (PARA (TEXT \":\")))"},
+		{": abc", "(BLOCK (PARA (TEXT \":\") (SPACE) (TEXT \"abc\")))"},
+		// {"; abc\n: def", "(DL (DT abc) (DD (PARA def)))"},
+		// {"; abc\n: def\nghi", "(DL (DT abc) (DD (PARA def)))(PARA ghi)"},
+		// {"; abc\n: def\n ghi", "(DL (DT abc) (DD (PARA def)))(PARA ghi)"},
+		// {"; abc\n: def\n  ghi", "(DL (DT abc) (DD (PARA def SB ghi)))"},
+		// {"; abc\n: def\n\n  ghi", "(DL (DT abc) (DD (PARA def)(PARA ghi)))"},
+		// {"; abc\n:", "(DL (DT abc))(PARA :)"},
+		// {"; abc\n: def\n: ghi", "(DL (DT abc) (DD (PARA def)) (DD (PARA ghi)))"},
+		// {"; abc\n: def\n; ghi\n: jkl", "(DL (DT abc) (DD (PARA def)) (DT ghi) (DD (PARA jkl)))"},
 	})
 }
 

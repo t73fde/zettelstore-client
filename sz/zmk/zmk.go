@@ -70,11 +70,11 @@ func ParseInlines(inp *input.Input) *sx.Pair {
 }
 
 type zmkP struct {
-	inp     *input.Input // Input stream
-	lists   []*sx.Pair   // Stack of lists
-	lastRow *sx.Pair     // Last row of table, or nil if not in table.
-	// descrl       *ast.DescriptionListNode // Current description list
-	nestingLevel int // Count nesting of block and inline elements
+	inp          *input.Input // Input stream
+	lists        []*sx.Pair   // Stack of lists
+	lastRow      *sx.Pair     // Last row of table, or nil if not in table.
+	descrl       *sx.Pair     // Current description list
+	nestingLevel int          // Count nesting of block and inline elements
 
 	inVerse bool // Currently in a vers region?
 }
@@ -91,7 +91,7 @@ const maxNestingLevel = 50
 func (cp *zmkP) clearStacked() {
 	cp.lists = nil
 	cp.lastRow = nil
-	// cp.descrl = nil
+	cp.descrl = nil
 }
 
 type attrMap map[string]string
