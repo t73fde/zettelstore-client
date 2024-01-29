@@ -8,6 +8,7 @@
 // and obligations under this license.
 //-----------------------------------------------------------------------------
 
+// Package sz contains zettel data handling as sx expressions.
 package sz
 
 import (
