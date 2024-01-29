@@ -149,10 +149,11 @@ func (cp *zmkP) parsePara() (result sx.Vector) {
 
 // countDelim read from input until a non-delimiter is found and returns number of delimiter chars.
 func (cp *zmkP) countDelim(delim rune) int {
+	inp := cp.inp
 	cnt := 0
-	for cp.inp.Ch == delim {
+	for inp.Ch == delim {
 		cnt++
-		cp.inp.Next()
+		inp.Next()
 	}
 	return cnt
 }
@@ -392,8 +393,7 @@ func (cp *zmkP) parseNestedListKinds() (result []sx.Symbol) {
 			panic(fmt.Sprintf("%q is not a region char", inp.Ch))
 		}
 		result = append(result, sym)
-		inp.Next()
-		switch inp.Ch {
+		switch inp.Next() {
 		case '*', '#', '>':
 		case ' ', input.EOS, '\n', '\r':
 			return result
@@ -692,8 +692,7 @@ loop:
 				return nil, false
 			}
 		case '\\':
-			inp.Next()
-			switch inp.Ch {
+			switch inp.Next() {
 			case input.EOS, '\n', '\r':
 				return nil, false
 			}
@@ -702,12 +701,10 @@ loop:
 			if posA >= posE {
 				return nil, false
 			}
-			inp.Next()
-			if inp.Ch != '}' {
+			if inp.Next() != '}' {
 				continue
 			}
-			inp.Next()
-			if inp.Ch != '}' {
+			if inp.Next() != '}' {
 				continue
 			}
 			break loop

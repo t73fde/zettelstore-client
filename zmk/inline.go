@@ -41,8 +41,7 @@ func (cp *zmkP) parseInline() *sx.Pair {
 		case ' ', '\t':
 			return cp.parseSpace()
 		case '[':
-			inp.Next()
-			switch inp.Ch {
+			switch inp.Next() {
 			case '[':
 				in, success = cp.parseLinkEmbed('[', ']', true)
 			case '@':
@@ -53,8 +52,7 @@ func (cp *zmkP) parseInline() *sx.Pair {
 				in, success = cp.parseMark()
 			}
 		case '{':
-			inp.Next()
-			if inp.Ch == '{' {
+			if inp.Next() == '{' {
 				in, success = cp.parseLinkEmbed('{', '}', false)
 			}
 		case '%':
@@ -92,8 +90,7 @@ func (cp *zmkP) parseString() sx.String {
 		return cp.parseBackslashRest()
 	}
 	for {
-		inp.Next()
-		switch inp.Ch {
+		switch inp.Next() {
 		// The following case must contain all runes that occur in parseInline!
 		// Plus the closing brackets ] and } and ) and the middle |
 		case input.EOS, '\n', '\r', ' ', '\t', '[', ']', '{', '}', '(', ')', '|', '%', '_', '*', '>', '~', '^', ',', '"', '#', ':', '\'', '@', '`', runeModGrave, '$', '=', '\\', '-', '&':
@@ -104,8 +101,7 @@ func (cp *zmkP) parseString() sx.String {
 
 func (cp *zmkP) parseBackslash() *sx.Pair {
 	inp := cp.inp
-	inp.Next()
-	switch inp.Ch {
+	switch inp.Next() {
 	case '\n', '\r':
 		inp.EatEOL()
 		return sx.MakeList(sz.SymHard)
@@ -132,8 +128,7 @@ func (cp *zmkP) parseSpace() *sx.Pair {
 	inp := cp.inp
 	pos := inp.Pos
 	for {
-		inp.Next()
-		switch inp.Ch {
+		switch inp.Next() {
 		case ' ', '\t':
 		default:
 			if cp.inVerse {
@@ -215,8 +210,7 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (ref string, text *sx.Pair,
 		return "", nil, false
 	}
 	ref = strings.TrimSpace(string(inp.Src[pos:inp.Pos]))
-	inp.Next()
-	if inp.Ch != closeCh {
+	if inp.Next() != closeCh {
 		return "", nil, false
 	}
 	inp.Next()
@@ -238,22 +232,19 @@ func (cp *zmkP) readReferenceToSep(closeCh rune) (bool, bool) {
 		case '|':
 			return hasSpace, true
 		case '\\':
-			inp.Next()
-			switch inp.Ch {
+			switch inp.Next() {
 			case input.EOS:
 				return false, false
 			case '\n', '\r':
 				hasSpace = true
 			}
 		case '%':
-			inp.Next()
-			if inp.Ch == '%' {
+			if inp.Next() == '%' {
 				inp.SkipToEOL()
 			}
 			continue
 		case closeCh:
-			inp.Next()
-			if inp.Ch == closeCh {
+			if inp.Next() == closeCh {
 				return hasSpace, true
 			}
 			continue
@@ -274,8 +265,7 @@ func (cp *zmkP) readReferenceToClose(closeCh rune) bool {
 				return false
 			}
 		case '\\':
-			inp.Next()
-			switch inp.Ch {
+			switch inp.Next() {
 			case input.EOS, '\n', '\r':
 				return false
 			}
@@ -288,8 +278,7 @@ func (cp *zmkP) readReferenceToClose(closeCh rune) bool {
 
 func (cp *zmkP) parseCite() (*sx.Pair, bool) {
 	inp := cp.inp
-	inp.Next()
-	switch inp.Ch {
+	switch inp.Next() {
 	case ' ', ',', '|', ']', '\n', '\r':
 		return nil, false
 	}
@@ -383,8 +372,7 @@ func (cp *zmkP) parseLinkLikeRest() (*sx.Pair, bool) {
 
 func (cp *zmkP) parseComment() (res *sx.Pair, success bool) {
 	inp := cp.inp
-	inp.Next()
-	if inp.Ch != '%' {
+	if inp.Next() != '%' {
 		return nil, false
 	}
 	for inp.Ch == '%' {
@@ -424,8 +412,8 @@ func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
 	if !ok {
 		panic(fmt.Sprintf("%q is not a formatting char", fch))
 	}
-	inp.Next() // read 2nd formatting character
-	if inp.Ch != fch {
+	// read 2nd formatting character
+	if inp.Next() != fch {
 		return nil, false
 	}
 	inp.Next()
@@ -435,8 +423,7 @@ func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
 			return nil, false
 		}
 		if inp.Ch == fch {
-			inp.Next()
-			if inp.Ch == fch {
+			if inp.Next() == fch {
 				inp.Next()
 				attrs := cp.parseInlineAttributes()
 				fn := sx.MakeList(inlines...).Cons(attrs).Cons(symFormat)
@@ -468,8 +455,8 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 	if !ok {
 		panic(fmt.Sprintf("%q is not a formatting char", fch))
 	}
-	inp.Next() // read 2nd formatting character
-	if inp.Ch != fch {
+	// read 2nd formatting character
+	if inp.Next() != fch {
 		return nil, false
 	}
 	inp.Next()
@@ -507,8 +494,8 @@ func createLiteralNode(sym sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
 
 func (cp *zmkP) parseLiteralMath() (res *sx.Pair /*ast.InlineNode*/, success bool) {
 	inp := cp.inp
-	inp.Next() // read 2nd formatting character
-	if inp.Ch != '$' {
+	// read 2nd formatting character
+	if inp.Next() != '$' {
 		return nil, false
 	}
 	inp.Next()
