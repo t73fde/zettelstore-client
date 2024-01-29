@@ -103,12 +103,15 @@ func startsWithSpaceSoftBreak(ins sx.Vector) bool {
 	return pair0.Car().IsEqual(sz.SymSpace) && sz.IsBreakSym(car1)
 }
 
+const symSeparator = sx.Symbol("sEpArAtOr")
+
 func (cp *zmkP) cleanupListsAfterEOL() {
-	// for _, l := range cp.lists {
-	// 	if lits := len(l.Items); lits > 0 {
-	// 		l.Items[lits-1] = append(l.Items[lits-1], &nullItemNode{})
-	// 	}
-	// }
+	for _, l := range cp.lists {
+		l.LastPair().Head().LastPair().AppendBang(sx.Cons(symSeparator, nil))
+		// if lits := len(l.Items); lits > 0 {
+		// 	l.Items[lits-1] = append(l.Items[lits-1], &nullItemNode{})
+		// }
+	}
 	// if cp.descrl != nil {
 	// 	defPos := len(cp.descrl.Descriptions) - 1
 	// 	if ldds := len(cp.descrl.Descriptions[defPos].Descriptions); ldds > 0 {
@@ -327,7 +330,6 @@ func createHeading(level int64, attrs, text *sx.Pair) *sx.Pair {
 // parseHRule parses a horizontal rule.
 func (cp *zmkP) parseHRule() (hn *sx.Pair, success bool) {
 	inp := cp.inp
-
 	if cp.countDelim(inp.Ch) < 3 {
 		return nil, false
 	}
@@ -338,14 +340,13 @@ func (cp *zmkP) parseHRule() (hn *sx.Pair, success bool) {
 }
 
 // parseNestedList parses a list.
-func (cp *zmkP) parseNestedList() (res *sx.Pair /*ast.BlockNode*/, success bool) {
-	inp := cp.inp
+func (cp *zmkP) parseNestedList() (res *sx.Pair, success bool) {
 	kinds := cp.parseNestedListKinds()
-	if kinds == nil {
+	if len(kinds) == 0 {
 		return nil, false
 	}
 	cp.skipSpace()
-	if kinds[len(kinds)-1] != sz.SymListQuote && input.IsEOLEOS(inp.Ch) {
+	if kinds[len(kinds)-1] != sz.SymListQuote && input.IsEOLEOS(cp.inp.Ch) {
 		return nil, false
 	}
 
@@ -355,7 +356,7 @@ func (cp *zmkP) parseNestedList() (res *sx.Pair /*ast.BlockNode*/, success bool)
 	ln, newLnCount := cp.buildNestedList(kinds)
 	pv := cp.parseLinePara()
 	bn := sx.Cons(sz.SymBlock, nil)
-	if pv != nil {
+	if len(pv) != 0 {
 		bn.AppendBang(sx.MakeList(pv...).Cons(sz.SymPara))
 	}
 	lastItemPair := ln.LastPair()
@@ -409,20 +410,26 @@ func (cp *zmkP) buildNestedList(kinds []sx.Symbol) (ln *sx.Pair, newLnCount int)
 	return ln, newLnCount
 }
 
-func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (res *sx.Pair /*ast.BlockNode*/, success bool) {
-	listDepth := len(cp.lists)
+func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (res *sx.Pair, success bool) {
+	childPos := len(cp.lists) - 1
+	parentPos := childPos - 1
 	for i := 0; i < newLnCount; i++ {
-		childPos := listDepth - i - 1
-		parentPos := childPos - 1
 		if parentPos < 0 {
 			return cp.lists[0], true
 		}
-		// 	if prevItems := cp.lists[parentPos].Items; len(prevItems) > 0 {
-		// 		lastItem := len(prevItems) - 1
-		// 		prevItems[lastItem] = append(prevItems[lastItem], cp.lists[childPos])
-		// 	} else {
-		// 		cp.lists[parentPos].Items = []ast.ItemSlice{{cp.lists[childPos]}}
-		// 	}
+		parentLn := cp.lists[parentPos]
+		childLn := cp.lists[childPos]
+		if firstParent := parentLn.Tail(); firstParent != nil {
+			// Add list to last item of the parent list
+			lastParent := firstParent.LastPair()
+			lastParent.Head().LastPair().AppendBang(childLn)
+		} else {
+			// Set list to first child of parent.
+			childBlock := sx.MakeList(sz.SymBlock, cp.lists[childPos])
+			parentLn.LastPair().AppendBang(childBlock)
+		}
+		childPos--
+		parentPos--
 	}
 	return nil, true
 }
@@ -500,18 +507,17 @@ func (cp *zmkP) parseDefDescr() (res *sx.Pair /*ast.BlockNode*/, success bool) {
 
 // parseIndent parses initial spaces to continue a list.
 func (cp *zmkP) parseIndent() bool {
-	// inp := cp.inp
-	// cnt := 0
-	// for {
-	// 	inp.Next()
-	// 	if inp.Ch != ' ' {
-	// 		break
-	// 	}
-	// 	cnt++
-	// }
-	// if cp.lists != nil {
-	// 	return cp.parseIndentForList(cnt)
-	// }
+	inp := cp.inp
+	cnt := 0
+	for {
+		if inp.Next() != ' ' {
+			break
+		}
+		cnt++
+	}
+	if cp.lists != nil {
+		return cp.parseIndentForList(cnt)
+	}
 	// if cp.descrl != nil {
 	// 	return cp.parseIndentForDescription(cnt)
 	// }
@@ -519,26 +525,26 @@ func (cp *zmkP) parseIndent() bool {
 }
 
 func (cp *zmkP) parseIndentForList(cnt int) bool {
-	// if len(cp.lists) < cnt {
-	// 	cnt = len(cp.lists)
-	// }
-	// cp.lists = cp.lists[:cnt]
-	// if cnt == 0 {
-	// 	return false
-	// }
-	// ln := cp.lists[cnt-1]
-	// pn := cp.parseLinePara()
-	// if pn == nil {
-	// 	pn = &ast.ParaNode{}
-	// }
-	// lbn := ln.Items[len(ln.Items)-1]
-	// if lpn, ok := lbn[len(lbn)-1].(*ast.ParaNode); ok {
-	// 	lpn.Inlines = append(lpn.Inlines, pn.Inlines...)
-	// } else {
-	// 	ln.Items[len(ln.Items)-1] = append(ln.Items[len(ln.Items)-1], pn)
-	// }
-	// return true
-	return false
+	if len(cp.lists) < cnt {
+		cnt = len(cp.lists)
+	}
+	cp.lists = cp.lists[:cnt]
+	if cnt == 0 {
+		return false
+	}
+	pv := cp.parseLinePara()
+	if len(pv) == 0 {
+		return false
+	}
+	ln := cp.lists[cnt-1]
+	lbn := ln.LastPair().Head()
+	lpn := lbn.LastPair().Head()
+	if lpn.Car().IsEqual(sz.SymPara) {
+		lpn.LastPair().SetCdr(sx.MakeList(pv...))
+	} else {
+		lbn.LastPair().AppendBang(sx.MakeList(pv...).Cons(sz.SymPara))
+	}
+	return true
 }
 
 func (cp *zmkP) parseIndentForDescription(cnt int) bool {

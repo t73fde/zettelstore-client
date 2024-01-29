@@ -85,8 +85,9 @@ func init() {
 		sz.SymVerbatimProg:    postProcessVerbatim,
 		sz.SymVerbatimZettel:  postProcessVerbatim,
 		sz.SymHeading:         postProcessHeading,
-		sz.SymListOrdered:     postProcessList,
-		sz.SymListUnordered:   postProcessList,
+		sz.SymListOrdered:     postProcessItemList,
+		sz.SymListUnordered:   postProcessItemList,
+		sz.SymListQuote:       postProcessQuoteList,
 		sz.SymTable:           postProcessTable,
 
 		sz.SymInline:       postProcessInlineList,
@@ -114,8 +115,12 @@ func init() {
 		sz.SymFormatSpan:   postProcessFormat,
 		sz.SymFormatSub:    postProcessFormat,
 		sz.SymFormatSuper:  postProcessFormat,
+
+		symSeparator: ignoreProcess,
 	}
 }
+
+func ignoreProcess(*sx.Pair, *sx.Pair) *sx.Pair { return nil }
 
 func postProcessBlockList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	result := postProcessPairList(lst.Tail(), env)
@@ -173,34 +178,26 @@ func postProcessHeading(hn *sx.Pair, env *sx.Pair) *sx.Pair {
 	return nil
 }
 
-func postProcessList(ln *sx.Pair, env *sx.Pair) *sx.Pair {
-	result := sx.Cons(ln.Car(), nil)
-	curr := result
-	for node := ln.Tail(); node != nil; node = node.Tail() {
-		if elem := postProcessListElement(node.Car(), env); elem != nil {
-			curr = curr.AppendBang(elem)
-		}
+func postProcessItemList(ln *sx.Pair, env *sx.Pair) *sx.Pair {
+	elems := postProcessListElems(ln, env)
+	if elems == nil {
+		return nil
 	}
-	return result
+	return elems.Cons(ln.Car())
 }
 
-func postProcessListElement(en sx.Object, env *sx.Pair) *sx.Pair {
-	lst := postProcess(en, env)
-	if lst == nil || !lst.Car().IsEqual(sz.SymBlock) {
-		return lst
+func postProcessQuoteList(ln *sx.Pair, env *sx.Pair) *sx.Pair {
+	elems := postProcessListElems(ln, env)
+	return elems.Cons(ln.Car())
+}
+func postProcessListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
+	var pList pairBuilder
+	for node := ln.Tail(); node != nil; node = node.Tail() {
+		if elem := postProcess(node.Car(), env); elem != nil {
+			pList.appendBang(elem)
+		}
 	}
-	bl := lst.Tail()
-	if bl.Tail() != nil {
-		// More than one element
-		return lst
-	}
-	pn := bl.Head()
-	if !pn.Car().IsEqual(sz.SymPara) {
-		// More than one element or not a paragraph
-		return lst
-	}
-
-	return pn.Tail().Cons(sz.SymInline)
+	return pList.result
 }
 
 func postProcessTable(tbl *sx.Pair, env *sx.Pair) *sx.Pair {

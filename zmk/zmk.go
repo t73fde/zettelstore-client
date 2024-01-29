@@ -28,21 +28,25 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
 
 	var lastPara *sx.Pair
-	var blks sx.Vector
+	var blkBuild pairBuilder
 	for inp.Ch != input.EOS {
 		bn, cont := parser.parseBlock(lastPara)
 		if bn != nil {
-			blks = append(blks, bn)
+			blkBuild.appendBang(bn)
 		}
 		if !cont {
-			lastPara = bn
+			if bn.Car().IsEqual(sz.SymPara) {
+				lastPara = bn
+			} else {
+				lastPara = nil
+			}
 		}
 	}
 	if parser.nestingLevel != 0 {
 		panic("Nesting level was not decremented")
 	}
 
-	if bs := postProcessPairList(sx.MakeList(blks...), nil); bs != nil {
+	if bs := postProcessPairList(blkBuild.result, nil); bs != nil {
 		return bs.Cons(sz.SymBlock)
 	}
 	return nil
