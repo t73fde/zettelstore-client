@@ -17,7 +17,7 @@ import (
 	"testing"
 
 	"zettelstore.de/client.fossil/input"
-	"zettelstore.de/client.fossil/zmk"
+	"zettelstore.de/client.fossil/sz/zmk"
 )
 
 func FuzzParseBlocks(f *testing.F) {

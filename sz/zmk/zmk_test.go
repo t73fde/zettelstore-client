@@ -21,7 +21,7 @@ import (
 
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/client.fossil/zmk"
+	"zettelstore.de/client.fossil/sz/zmk"
 	"zettelstore.de/sx.fossil"
 )
 
