@@ -100,7 +100,7 @@ func startsWithSpaceSoftBreak(ins sx.Vector) bool {
 		return false
 	}
 	car1 := pair1.Car()
-	return pair0.Car().IsEqual(sz.SymSpace) && (car1.IsEqual(sz.SymSoft) || car1.IsEqual(sz.SymHard))
+	return pair0.Car().IsEqual(sz.SymSpace) && sz.IsBreakSym(car1)
 }
 
 func (cp *zmkP) cleanupListsAfterEOL() {
@@ -136,7 +136,7 @@ func (cp *zmkP) parsePara() (result sx.Vector) {
 			return result
 		}
 		result = append(result, in)
-		if sym := in.Car(); sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard) {
+		if sz.IsBreakSym(in.Car()) {
 			ch := cp.inp.Ch
 			switch ch {
 			// Must contain all cases from above switch in parseBlock.
@@ -353,18 +353,19 @@ func (cp *zmkP) parseNestedList() (res *sx.Pair /*ast.BlockNode*/, success bool)
 		cp.lists = cp.lists[:len(kinds)]
 	}
 	ln, newLnCount := cp.buildNestedList(kinds)
-	pn := cp.parseLinePara()
+	pv := cp.parseLinePara()
 	bn := sx.Cons(sz.SymBlock, nil)
-	if pn != nil {
-		bn.AppendBang(pn.Cons(sz.SymPara))
+	if pv != nil {
+		bn.AppendBang(sx.MakeList(pv...).Cons(sz.SymPara))
 	}
 	lastItemPair := ln.LastPair()
 	lastItemPair.AppendBang(bn)
 	return cp.cleanupParsedNestedList(newLnCount)
 }
 
-func (cp *zmkP) parseNestedListKinds() (result []sx.Symbol) {
+func (cp *zmkP) parseNestedListKinds() []sx.Symbol {
 	inp := cp.inp
+	result := make([]sx.Symbol, 0, 8)
 	for {
 		var sym sx.Symbol
 		switch inp.Ch {
@@ -577,19 +578,16 @@ func (cp *zmkP) parseIndentForDescription(cnt int) bool {
 }
 
 // parseLinePara parses one line of inline material.
-func (cp *zmkP) parseLinePara() *sx.Pair /**ast.ParaNode*/ {
-	ins := sx.Vector{}
+func (cp *zmkP) parseLinePara() sx.Vector {
+	var ins sx.Vector
 	for {
 		in := cp.parseInline()
 		if in == nil {
-			if len(ins) == 0 {
-				return nil
-			}
-			return sx.MakeList(ins...)
+			return ins
 		}
 		ins = append(ins, in)
-		if sym := in.Car(); sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard) {
-			return sx.MakeList(ins...)
+		if sz.IsBreakSym(in.Car()) {
+			return ins
 		}
 	}
 }
@@ -650,7 +648,7 @@ func (cp *zmkP) parseCell() *sx.Pair {
 }
 
 // parseTransclusion parses '{' '{' '{' ZID '}' '}' '}'
-func (cp *zmkP) parseTransclusion() (*sx.Pair /*ast.BlockNode*/, bool) {
+func (cp *zmkP) parseTransclusion() (*sx.Pair, bool) {
 	if cp.countDelim('{') != 3 {
 		return nil, false
 	}

@@ -167,3 +167,8 @@ var mapRefStateLink = map[sx.Symbol]sx.Symbol{
 	SymRefStateQuery:    SymLinkQuery,
 	SymRefStateExternal: SymLinkExternal,
 }
+
+// IsBreakSym return true if the object is either a soft or a hard break symbol.
+func IsBreakSym(obj sx.Object) bool {
+	return SymSoft.IsEqual(obj) || SymHard.IsEqual(obj)
+}

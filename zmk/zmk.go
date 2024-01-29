@@ -59,7 +59,7 @@ func ParseInlines(inp *input.Input) *sx.Pair {
 		ins = append(ins, in)
 	}
 
-	if is := postProcess(sx.MakeList(ins...), nil); is != nil {
+	if is := postProcess(ins, nil); is != nil {
 		return is.Cons(sz.SymInline)
 	}
 	return nil

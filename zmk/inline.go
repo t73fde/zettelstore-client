@@ -359,7 +359,7 @@ func (cp *zmkP) parseLinkLikeRest() (*sx.Pair, bool) {
 			return nil, false
 		}
 		ins = append(ins, in)
-		if sym := in.Car(); input.IsEOLEOS(inp.Ch) && (sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard)) {
+		if input.IsEOLEOS(inp.Ch) && sz.IsBreakSym(in.Car()) {
 			return nil, false
 		}
 	}
@@ -431,7 +431,7 @@ func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
 			}
 			inlines = append(inlines, sx.MakeList(sz.SymText, sx.String(fch)))
 		} else if in := cp.parseInline(); in != nil {
-			if sym := in.Car(); (sym.IsEqual(sz.SymSoft) || sym.IsEqual(sz.SymHard)) && input.IsEOLEOS(inp.Ch) {
+			if input.IsEOLEOS(inp.Ch) && sz.IsBreakSym(in.Car()) {
 				return nil, false
 			}
 			inlines = append(inlines, in)
@@ -492,7 +492,7 @@ func createLiteralNode(sym sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
 	return sx.MakeList(sym, attrs, sx.String(content))
 }
 
-func (cp *zmkP) parseLiteralMath() (res *sx.Pair /*ast.InlineNode*/, success bool) {
+func (cp *zmkP) parseLiteralMath() (res *sx.Pair, success bool) {
 	inp := cp.inp
 	// read 2nd formatting character
 	if inp.Next() != '$' {

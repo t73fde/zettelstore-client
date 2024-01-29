@@ -20,9 +20,17 @@ import (
 
 const symInVerse = sx.Symbol("in-verse")
 
-func postProcess(lst *sx.Pair, env *sx.Pair) *sx.Pair {
-	if lst == nil {
+func postProcess(obj sx.Object, env *sx.Pair) *sx.Pair {
+	if sx.IsNil(obj) {
 		return nil
+	}
+	lst, isPair := sx.GetPair(obj)
+	if !isPair {
+		v, isVector := sx.GetVector(obj)
+		if !isVector {
+			return nil
+		}
+		lst = sx.MakeList(v)
 	}
 	sym, isSym := sx.GetSymbol(lst.Car())
 	if !isSym {
@@ -38,23 +46,13 @@ func postProcess(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 }
 
 func postProcessPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
-	var result, curr *sx.Pair
+	var pList pairBuilder
 	for node := lst; node != nil; node = node.Tail() {
-		elem, isPair := sx.GetPair(node.Car())
-		if isPair {
-			elem = postProcess(elem, env)
-		}
-		if elem == nil {
-			continue
-		}
-		if result == nil {
-			result = sx.Cons(elem, nil)
-			curr = result
-		} else {
-			curr = curr.AppendBang(elem)
+		if elem := postProcess(node.Car(), env); elem != nil {
+			pList.appendBang(elem)
 		}
 	}
-	return result
+	return pList.result
 }
 
 var ignoreMap = map[sx.Symbol]struct{}{
@@ -179,26 +177,27 @@ func postProcessList(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 	result := sx.Cons(ln.Car(), nil)
 	curr := result
 	for node := ln.Tail(); node != nil; node = node.Tail() {
-		elem := postProcessListElement(node.Head(), env)
-		curr = curr.AppendBang(elem)
+		if elem := postProcessListElement(node.Car(), env); elem != nil {
+			curr = curr.AppendBang(elem)
+		}
 	}
 	return result
 }
 
-func postProcessListElement(en *sx.Pair, env *sx.Pair) *sx.Pair {
-	en = postProcess(en, env)
-	if !en.Car().IsEqual(sz.SymBlock) {
-		return en
+func postProcessListElement(en sx.Object, env *sx.Pair) *sx.Pair {
+	lst := postProcess(en, env)
+	if lst == nil || !lst.Car().IsEqual(sz.SymBlock) {
+		return lst
 	}
-	bl := en.Tail()
+	bl := lst.Tail()
 	if bl.Tail() != nil {
 		// More than one element
-		return en
+		return lst
 	}
 	pn := bl.Head()
 	if !pn.Car().IsEqual(sz.SymPara) {
 		// More than one element or not a paragraph
-		return en
+		return lst
 	}
 
 	return pn.Tail().Cons(sz.SymInline)
@@ -372,10 +371,7 @@ func postProcessInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	vector := make([]*sx.Pair, 0, length)
 	// 1st phase: process all childs, ignore SPACE at start, and merge some elements
 	for node := lst; node != nil; node = node.Tail() {
-		elem, isPair := sx.GetPair(node.Car())
-		if isPair {
-			elem = postProcess(elem, env)
-		}
+		elem := postProcess(node.Car(), env)
 		if elem == nil {
 			continue
 		}
@@ -416,7 +412,7 @@ func postProcessInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	for lastPos >= 0 {
 		elem := vector[lastPos]
 		elemSym := elem.Car()
-		if !elemSym.IsEqual(sz.SymSpace) && !elemSym.IsEqual(sz.SymSoft) && !elemSym.IsEqual(sz.SymHard) {
+		if !elemSym.IsEqual(sz.SymSpace) && !sz.IsBreakSym(elemSym) {
 			break
 		}
 		lastPos--
