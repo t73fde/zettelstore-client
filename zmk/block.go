@@ -237,7 +237,7 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 	if inp.Ch == input.EOS {
 		return nil, false
 	}
-	var symBlocks, curr *sx.Pair
+	var blocksBuilder pairBuilder
 	var lastPara *sx.Pair
 	inp.EatEOL()
 	for {
@@ -246,7 +246,7 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 		case fch:
 			if cp.countDelim(fch) >= cnt {
 				ins := cp.parseRegionLastLine()
-				rn = ins.Cons(symBlocks).Cons(attrs).Cons(sym)
+				rn = ins.Cons(blocksBuilder.result).Cons(attrs).Cons(sym)
 				return rn, true
 			}
 			inp.SetPos(posL)
@@ -255,12 +255,7 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 		}
 		bn, cont := cp.parseBlock(lastPara)
 		if bn != nil {
-			if symBlocks == nil {
-				symBlocks = sx.Cons(bn, nil)
-				curr = symBlocks
-			} else {
-				curr = curr.AppendBang(bn)
-			}
+			blocksBuilder.appendBang(bn)
 		}
 		if !cont {
 			lastPara = bn
@@ -272,22 +267,17 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 func (cp *zmkP) parseRegionLastLine() *sx.Pair {
 	cp.clearStacked() // remove any lists defined in the region
 	cp.skipSpace()
-	var result, curr *sx.Pair
+	var region pairBuilder
 	for {
 		switch cp.inp.Ch {
 		case input.EOS, '\n', '\r':
-			return result
+			return region.result
 		}
 		in := cp.parseInline()
 		if in == nil {
-			return result
+			return region.result
 		}
-		if result == nil {
-			result = sx.Cons(in, nil)
-			curr = result
-		} else {
-			curr = curr.AppendBang(in)
-		}
+		region.appendBang(in)
 	}
 }
 
@@ -308,25 +298,20 @@ func (cp *zmkP) parseHeading() (hn *sx.Pair, success bool) {
 	}
 	level := int64(delims - 2)
 	var attrs *sx.Pair
-	var text, curr *sx.Pair
+	var text pairBuilder
 	for {
 		if input.IsEOLEOS(inp.Ch) {
-			return createHeading(level, attrs, text), true
+			return createHeading(level, attrs, text.result), true
 		}
 		in := cp.parseInline()
 		if in == nil {
-			return createHeading(level, attrs, text), true
+			return createHeading(level, attrs, text.result), true
 		}
-		if text == nil {
-			text = sx.Cons(in, nil)
-			curr = text
-		} else {
-			curr = curr.AppendBang(in)
-		}
+		text.appendBang(in)
 		if inp.Ch == '{' && inp.Peek() != '{' {
 			attrs = cp.parseBlockAttributes()
 			inp.SkipToEOL()
-			return createHeading(level, attrs, text), true
+			return createHeading(level, attrs, text.result), true
 		}
 	}
 }
@@ -616,17 +601,13 @@ func (cp *zmkP) parseRow() *sx.Pair {
 		inp.SkipToEOL()
 		return nil
 	}
-	var row, curr *sx.Pair
+	//var row, curr *sx.Pair
+	var row pairBuilder
 	for {
 		inp.Next()
 		cell := cp.parseCell()
 		if cell != nil {
-			if row == nil {
-				row = sx.Cons(cell, nil)
-				curr = row
-			} else {
-				curr = curr.AppendBang(cell)
-			}
+			row.appendBang(cell)
 		}
 		switch inp.Ch {
 		case '\n', '\r':
@@ -635,13 +616,13 @@ func (cp *zmkP) parseRow() *sx.Pair {
 		case input.EOS:
 			// add to table
 			if cp.lastRow == nil {
-				if row == nil {
+				if row.result == nil {
 					return nil
 				}
-				cp.lastRow = sx.Cons(row, nil)
+				cp.lastRow = sx.Cons(row.result, nil)
 				return cp.lastRow.Cons(nil).Cons(sz.SymTable)
 			}
-			cp.lastRow = cp.lastRow.AppendBang(row)
+			cp.lastRow = cp.lastRow.AppendBang(row.result)
 			return nil
 		}
 		// inp.Ch must be '|'
@@ -651,25 +632,20 @@ func (cp *zmkP) parseRow() *sx.Pair {
 // parseCell parses one single cell of a table row.
 func (cp *zmkP) parseCell() *sx.Pair {
 	inp := cp.inp
-	var result, curr *sx.Pair
+	var cell pairBuilder
 	for {
 		if input.IsEOLEOS(inp.Ch) {
-			if result == nil {
+			if cell.result == nil {
 				return nil
 			}
-			return result.Cons(sz.SymCell)
+			return cell.result.Cons(sz.SymCell)
 		}
 		if inp.Ch == '|' {
-			return result.Cons(sz.SymCell)
+			return cell.result.Cons(sz.SymCell)
 		}
 
 		in := cp.parseInline()
-		if result == nil {
-			result = sx.Cons(in, nil)
-			curr = result
-		} else {
-			curr = curr.AppendBang(in)
-		}
+		cell.appendBang(in)
 	}
 }
 

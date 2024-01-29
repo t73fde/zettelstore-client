@@ -227,39 +227,29 @@ func postProcessTable(tbl *sx.Pair, env *sx.Pair) *sx.Pair {
 
 func postProcessRows(rows *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
 	maxWidth := 0
-	var result, curr *sx.Pair
+	var pRows pairBuilder
 	for node := rows; node != nil; node = node.Tail() {
 		row := node.Head()
 		row, width := postProcessCells(row, env)
 		if maxWidth < width {
 			maxWidth = width
 		}
-		if result == nil {
-			result = sx.Cons(row, nil)
-			curr = result
-		} else {
-			curr = curr.AppendBang(row)
-		}
+		pRows.appendBang(row)
 	}
-	return result, maxWidth
+	return pRows.result, maxWidth
 }
 
 func postProcessCells(cells *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
 	width := 0
-	var result, curr *sx.Pair
+	var pCells pairBuilder
 	for node := cells; node != nil; node = node.Tail() {
 		cell := node.Head()
 		ins := postProcessInlines(cell.Tail(), env)
 		newCell := ins.Cons(cell.Car())
-		if result == nil {
-			result = sx.Cons(newCell, nil)
-			curr = result
-		} else {
-			curr = curr.AppendBang(newCell)
-		}
+		pCells.appendBang(newCell)
 		width++
 	}
-	return result, width
+	return pCells.result, width
 }
 
 func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, align []sx.Symbol) {

@@ -279,3 +279,17 @@ func (cp *zmkP) skipSpace() {
 func isNameRune(ch rune) bool {
 	return unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '-' || ch == '_'
 }
+
+type pairBuilder struct {
+	result  *sx.Pair
+	current *sx.Pair
+}
+
+func (pb *pairBuilder) appendBang(obj sx.Object) {
+	if pb.result == nil {
+		pb.result = sx.Cons(obj, nil)
+		pb.current = pb.result
+		return
+	}
+	pb.current = pb.current.AppendBang(obj)
+}
