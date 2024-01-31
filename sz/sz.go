@@ -78,54 +78,33 @@ func MakeMeta(obj sx.Object) Meta {
 	return nil
 }
 func doMakeMeta(obj sx.Object) Meta {
+	lst, isList := sx.GetPair(obj)
+	if !isList || !lst.Car().IsEqual(SymMeta) {
+		return nil
+	}
 	result := make(map[string]MetaValue)
-	for {
-		if sx.IsNil(obj) {
-			return result
-		}
-		pair, isPair := sx.GetPair(obj)
-		if !isPair {
-			return result
-		}
-		if mv, ok2 := makeMetaValue(pair); ok2 {
+	for node := lst.Tail(); node != nil; node = node.Tail() {
+		if mv, found := makeMetaValue(node.Head()); found {
 			result[mv.Key] = mv
 		}
-		obj = pair.Cdr()
 	}
+	return result
 }
 func makeMetaValue(mnode *sx.Pair) (MetaValue, bool) {
 	var result MetaValue
-	mval, isPair := sx.GetPair(mnode.Car())
-	if !isPair {
-		return result, false
-	}
-	typeSym, isSymbol := sx.GetSymbol(mval.Car())
+	typeSym, isSymbol := sx.GetSymbol(mnode.Car())
 	if !isSymbol {
 		return result, false
 	}
-	keyPair, isPair := sx.GetPair(mval.Cdr())
-	if !isPair {
-		return result, false
-	}
-	keyList, isPair := sx.GetPair(keyPair.Car())
-	if !isPair {
-		return result, false
-	}
-	quoteSym, isSymbol := sx.GetSymbol(keyList.Car())
-	if !isSymbol || quoteSym != "quote" {
-		return result, false
-	}
-	keySym, isSymbol := sx.GetSymbol(keyList.Tail().Car())
+	next := mnode.Tail()
+	keySym, isSymbol := sx.GetSymbol(next.Car())
 	if !isSymbol {
 		return result, false
 	}
-	valPair, isPair := sx.GetPair(keyPair.Cdr())
-	if !isPair {
-		return result, false
-	}
+	next = next.Tail()
 	result.Type = string(typeSym)
 	result.Key = string(keySym)
-	result.Value = valPair.Car()
+	result.Value = next.Car()
 	return result, true
 }
 
