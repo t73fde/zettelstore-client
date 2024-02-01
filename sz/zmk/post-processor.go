@@ -19,6 +19,7 @@ import (
 )
 
 const symInVerse = sx.Symbol("in-verse")
+const symNoBlock = sx.Symbol("no-block")
 
 func postProcess(obj sx.Object, env *sx.Pair) *sx.Pair {
 	if sx.IsNil(obj) {
@@ -125,7 +126,9 @@ func ignoreProcess(*sx.Pair, *sx.Pair) *sx.Pair { return nil }
 func postProcessBlockList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	result := postProcessPairList(lst.Tail(), env)
 	if result == nil {
-		return nil
+		if noBlockPair := env.Assoc(symNoBlock); noBlockPair == nil || sx.IsTrue(noBlockPair.Cdr()) {
+			return nil
+		}
 	}
 	return result.Cons(lst.Car())
 }
@@ -187,9 +190,44 @@ func postProcessItemList(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 }
 
 func postProcessQuoteList(ln *sx.Pair, env *sx.Pair) *sx.Pair {
-	elems := postProcessListElems(ln, env)
-	return elems.Cons(ln.Car())
+	elems := postProcessListElems(ln, env.Cons(sx.Cons(symNoBlock, nil)))
+
+	// Collect multiple paragraph items into one item.
+
+	var newElems pairBuilder
+	var newPara pairBuilder
+
+	addtoParagraph := func() {
+		if result := newPara.result; result != nil {
+			newElems.appendBang(sx.MakeList(sz.SymBlock, result.Cons(sz.SymPara)))
+			newPara.result = nil
+		}
+	}
+	for node := elems; node != nil; node = node.Tail() {
+		item := node.Head()
+		if !item.Car().IsEqual(sz.SymBlock) {
+			continue
+		}
+		itemTail := item.Tail()
+		if itemTail == nil || itemTail.Tail() != nil {
+			addtoParagraph()
+			newElems.appendBang(item)
+			continue
+		}
+		if pn := itemTail.Head(); pn.Car().IsEqual(sz.SymPara) {
+			if newPara.result != nil {
+				newPara.appendBang(sx.Cons(sz.SymSoft, nil))
+			}
+			newPara.extendBang(pn.Tail())
+			continue
+		}
+		addtoParagraph()
+		newElems.appendBang(item)
+	}
+	addtoParagraph()
+	return newElems.result.Cons(ln.Car())
 }
+
 func postProcessListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 	var pList pairBuilder
 	for node := ln.Tail(); node != nil; node = node.Tail() {

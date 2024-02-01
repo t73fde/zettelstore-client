@@ -297,3 +297,15 @@ func (pb *pairBuilder) appendBang(obj sx.Object) {
 	}
 	pb.current = pb.current.AppendBang(obj)
 }
+
+func (pb *pairBuilder) extendBang(lst *sx.Pair) {
+	if lst == nil {
+		return
+	}
+	if pb.result == nil {
+		pb.result = lst
+		pb.current = lst.LastPair()
+		return
+	}
+	pb.current = pb.current.ExtendBang(lst)
+}

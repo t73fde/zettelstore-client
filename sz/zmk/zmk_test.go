@@ -670,7 +670,7 @@ func TestList(t *testing.T) {
 		{"* abc\n# def", "(BLOCK (UNORDERED (BLOCK (PARA (TEXT \"abc\")))) (ORDERED (BLOCK (PARA (TEXT \"def\")))))"},
 
 		// Quotation lists may have empty items
-		{">", "(BLOCK (QUOTATION))"},
+		{">", "(BLOCK (QUOTATION (BLOCK)))"},
 	})
 }
 
@@ -678,8 +678,10 @@ func TestQuoteList(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
 		{"> w1 w2", "(BLOCK (QUOTATION (BLOCK (PARA (TEXT \"w1\") (SPACE) (TEXT \"w2\")))))"},
-		// {"> w1\n> w2", "(QL {(PARA w1 SB w2)})"},
-		// {"> w1\n>\n>w2", "(QL {(PARA w1)} {})(PARA >w2)"},
+		{"> w1\n> w2", "(BLOCK (QUOTATION (BLOCK (PARA (TEXT \"w1\") (SOFT) (TEXT \"w2\")))))"},
+		{"> w1\n>w2", "(BLOCK (QUOTATION (BLOCK (PARA (TEXT \"w1\")))) (PARA (TEXT \">w2\")))"},
+		{"> w1\n>\n>w2", "(BLOCK (QUOTATION (BLOCK (PARA (TEXT \"w1\"))) (BLOCK)) (PARA (TEXT \">w2\")))"},
+		{"> w1\n> \n> w2", "(BLOCK (QUOTATION (BLOCK (PARA (TEXT \"w1\"))) (BLOCK) (BLOCK (PARA (TEXT \"w2\")))))"},
 	})
 }
 
