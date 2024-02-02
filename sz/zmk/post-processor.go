@@ -47,13 +47,13 @@ func postProcess(obj sx.Object, env *sx.Pair) *sx.Pair {
 }
 
 func postProcessPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
-	var pList pairBuilder
+	var pList sx.ListBuilder
 	for node := lst; node != nil; node = node.Tail() {
 		if elem := postProcess(node.Car(), env); elem != nil {
-			pList.appendBang(elem)
+			pList.Add(elem)
 		}
 	}
-	return pList.result
+	return pList.List()
 }
 
 var ignoreMap = map[sx.Symbol]struct{}{
@@ -194,13 +194,12 @@ func postProcessQuoteList(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 
 	// Collect multiple paragraph items into one item.
 
-	var newElems pairBuilder
-	var newPara pairBuilder
+	var newElems sx.ListBuilder
+	var newPara sx.ListBuilder
 
 	addtoParagraph := func() {
-		if result := newPara.result; result != nil {
-			newElems.appendBang(sx.MakeList(sz.SymBlock, result.Cons(sz.SymPara)))
-			newPara.result = nil
+		if !newPara.IsEmpty() {
+			newElems.Add(sx.MakeList(sz.SymBlock, newPara.List().Cons(sz.SymPara)))
 		}
 	}
 	for node := elems; node != nil; node = node.Tail() {
@@ -211,31 +210,31 @@ func postProcessQuoteList(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 		itemTail := item.Tail()
 		if itemTail == nil || itemTail.Tail() != nil {
 			addtoParagraph()
-			newElems.appendBang(item)
+			newElems.Add(item)
 			continue
 		}
 		if pn := itemTail.Head(); pn.Car().IsEqual(sz.SymPara) {
-			if newPara.result != nil {
-				newPara.appendBang(sx.Cons(sz.SymSoft, nil))
+			if !newPara.IsEmpty() {
+				newPara.Add(sx.Cons(sz.SymSoft, nil))
 			}
-			newPara.extendBang(pn.Tail())
+			newPara.ExtendBang(pn.Tail())
 			continue
 		}
 		addtoParagraph()
-		newElems.appendBang(item)
+		newElems.Add(item)
 	}
 	addtoParagraph()
-	return newElems.result.Cons(ln.Car())
+	return newElems.List().Cons(ln.Car())
 }
 
 func postProcessListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
-	var pList pairBuilder
+	var pList sx.ListBuilder
 	for node := ln.Tail(); node != nil; node = node.Tail() {
 		if elem := postProcess(node.Car(), env); elem != nil {
-			pList.appendBang(elem)
+			pList.Add(elem)
 		}
 	}
-	return pList.result
+	return pList.List()
 }
 
 func postProcessTable(tbl *sx.Pair, env *sx.Pair) *sx.Pair {
@@ -261,29 +260,29 @@ func postProcessTable(tbl *sx.Pair, env *sx.Pair) *sx.Pair {
 
 func postProcessRows(rows *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
 	maxWidth := 0
-	var pRows pairBuilder
+	var pRows sx.ListBuilder
 	for node := rows; node != nil; node = node.Tail() {
 		row := node.Head()
 		row, width := postProcessCells(row, env)
 		if maxWidth < width {
 			maxWidth = width
 		}
-		pRows.appendBang(row)
+		pRows.Add(row)
 	}
-	return pRows.result, maxWidth
+	return pRows.List(), maxWidth
 }
 
 func postProcessCells(cells *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
 	width := 0
-	var pCells pairBuilder
+	var pCells sx.ListBuilder
 	for node := cells; node != nil; node = node.Tail() {
 		cell := node.Head()
 		ins := postProcessInlines(cell.Tail(), env)
 		newCell := ins.Cons(cell.Car())
-		pCells.appendBang(newCell)
+		pCells.Add(newCell)
 		width++
 	}
-	return pCells.result, width
+	return pCells.List(), width
 }
 
 func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, align []sx.Symbol) {

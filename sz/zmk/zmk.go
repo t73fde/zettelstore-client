@@ -28,11 +28,11 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
 
 	var lastPara *sx.Pair
-	var blkBuild pairBuilder
+	var blkBuild sx.ListBuilder
 	for inp.Ch != input.EOS {
 		bn, cont := parser.parseBlock(lastPara)
 		if bn != nil {
-			blkBuild.appendBang(bn)
+			blkBuild.Add(bn)
 		}
 		if !cont {
 			if bn.Car().IsEqual(sz.SymPara) {
@@ -46,7 +46,7 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 		panic("Nesting level was not decremented")
 	}
 
-	if bs := postProcessPairList(blkBuild.result, nil); bs != nil {
+	if bs := postProcessPairList(blkBuild.List(), nil); bs != nil {
 		return bs.Cons(sz.SymBlock)
 	}
 	return nil
@@ -282,30 +282,4 @@ func (cp *zmkP) skipSpace() {
 
 func isNameRune(ch rune) bool {
 	return unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '-' || ch == '_'
-}
-
-type pairBuilder struct {
-	result  *sx.Pair
-	current *sx.Pair
-}
-
-func (pb *pairBuilder) appendBang(obj sx.Object) {
-	if pb.result == nil {
-		pb.result = sx.Cons(obj, nil)
-		pb.current = pb.result
-		return
-	}
-	pb.current = pb.current.AppendBang(obj)
-}
-
-func (pb *pairBuilder) extendBang(lst *sx.Pair) {
-	if lst == nil {
-		return
-	}
-	if pb.result == nil {
-		pb.result = lst
-		pb.current = lst.LastPair()
-		return
-	}
-	pb.current = pb.current.ExtendBang(lst)
 }
