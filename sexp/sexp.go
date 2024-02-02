@@ -88,8 +88,8 @@ func EncodeMetaRights(mr api.MetaRights) *sx.Pair {
 }
 
 func meta2sz(m api.ZettelMeta) sx.Object {
-	result := sx.Nil().Cons(sx.Symbol("meta"))
-	curr := result
+	var result sx.ListBuilder
+	result.Add(sx.Symbol("meta"))
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
@@ -97,9 +97,9 @@ func meta2sz(m api.ZettelMeta) sx.Object {
 	sort.Strings(keys)
 	for _, k := range keys {
 		val := sx.MakeList(sx.Symbol(k), sx.String(m[k]))
-		curr = curr.AppendBang(val)
+		result.Add(val)
 	}
-	return result
+	return result.List()
 }
 
 // ParseMeta translates the given list to metadata.
