@@ -105,20 +105,15 @@ func (ev *Evaluator) Evaluate(lst *sx.Pair, env *Environment) (*sx.Pair, error) 
 
 // EvaluateList will evaluate all list elements separately and returns them as a sx.Pair list
 func (ev *Evaluator) EvaluateList(lst sx.Vector, env *Environment) (*sx.Pair, error) {
-	var result, curr *sx.Pair
+	var result sx.ListBuilder
 	for _, elem := range lst {
 		p := ev.Eval(elem, env)
-		if result == nil {
-			result = sx.Cons(p, nil)
-			curr = result
-		} else {
-			curr = curr.AppendBang(p)
-		}
+		result.Add(p)
 	}
 	if err := env.err; err != nil {
 		return nil, err
 	}
-	return result, nil
+	return result.List(), nil
 }
 
 // Endnotes returns a SHTML object with all collected endnotes.
@@ -127,9 +122,9 @@ func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
 		return nil
 	}
 
-	result := sx.Nil().Cons(SymOL)
-
-	currResult := result.AppendBang(sx.Nil().Cons(sx.Cons(SymAttrClass, sx.String("zs-endnotes"))).Cons(sxhtml.SymAttr))
+	var result sx.ListBuilder
+	result.Add(SymOL)
+	result.Add(sx.Nil().Cons(sx.Cons(SymAttrClass, sx.String("zs-endnotes"))).Cons(sxhtml.SymAttr))
 	for i, fni := range env.endnotes {
 		noteNum := strconv.Itoa(i + 1)
 		attrs := fni.attrs.Cons(sx.Cons(SymAttrClass, sx.String("zs-endnote"))).
@@ -146,13 +141,15 @@ func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
 				Cons(sxhtml.SymAttr)).
 			Cons(SymA)
 
-		li := sx.Nil().Cons(SymLI)
-		li.AppendBang(attrs).
-			ExtendBang(fni.noteHx).
-			AppendBang(sx.String(" ")).AppendBang(backref)
-		currResult = currResult.AppendBang(li)
+		var li sx.ListBuilder
+		li.Add(SymLI)
+		li.Add(attrs)
+		li.ExtendBang(fni.noteHx)
+		li.Add(sx.String(" "))
+		li.Add(backref)
+		result.Add(li.List())
 	}
-	return result
+	return result.List()
 }
 
 // Environment where sz objects are evaluated to shtml objects
@@ -329,11 +326,11 @@ func (ev *Evaluator) bindBlocks() {
 		if len(args) == 0 {
 			return sx.Nil()
 		}
-		items := sx.Nil().Cons(symDL)
-		curItem := items
+		var items sx.ListBuilder
+		items.Add(symDL)
 		for pos := 0; pos < len(args); pos++ {
 			term := ev.evalDescriptionTerm(getList(args[pos], env), env)
-			curItem = curItem.AppendBang(term.Cons(symDT))
+			items.Add(term.Cons(symDT))
 			pos++
 			if pos >= len(args) {
 				break
@@ -344,23 +341,23 @@ func (ev *Evaluator) bindBlocks() {
 			}
 			for ddlst := ddBlock; ddlst != nil; ddlst = ddlst.Tail() {
 				dditem := getList(ddlst.Car(), env)
-				curItem = curItem.AppendBang(dditem.Cons(symDD))
+				items.Add(dditem.Cons(symDD))
 			}
 		}
-		return items
+		return items.List()
 	})
 	ev.bind(sz.SymListQuote, 0, func(args sx.Vector, env *Environment) sx.Object {
 		if args == nil {
 			return sx.Nil()
 		}
-		result := sx.Nil().Cons(symBLOCKQUOTE)
-		currResult := result
+		var result sx.ListBuilder
+		result.Add(symBLOCKQUOTE)
 		for _, elem := range args {
 			if quote, isPair := sx.GetPair(ev.Eval(elem, env)); isPair {
-				currResult = currResult.AppendBang(quote.Cons(sxhtml.SymListSplice))
+				result.Add(quote.Cons(sxhtml.SymListSplice))
 			}
 		}
-		return result
+		return result.List()
 	})
 
 	ev.bind(sz.SymTable, 1, func(args sx.Vector, env *Environment) sx.Object {
@@ -369,18 +366,17 @@ func (ev *Evaluator) bindBlocks() {
 			thead = sx.Nil().Cons(ev.evalTableRow(header, env)).Cons(symTHEAD)
 		}
 
-		tbody := sx.Nil()
+		var tbody sx.ListBuilder
 		if len(args) > 1 {
-			tbody = sx.Nil().Cons(symTBODY)
-			curBody := tbody
+			tbody.Add(symTBODY)
 			for _, row := range args[1:] {
-				curBody = curBody.AppendBang(ev.evalTableRow(getList(row, env), env))
+				tbody.Add(ev.evalTableRow(getList(row, env), env))
 			}
 		}
 
 		table := sx.Nil()
-		if tbody != nil {
-			table = table.Cons(tbody)
+		if !tbody.IsEmpty() {
+			table = table.Cons(tbody.List())
 		}
 		if thead != nil {
 			table = table.Cons(thead)
@@ -456,43 +452,38 @@ func (ev *Evaluator) bindBlocks() {
 
 func (ev *Evaluator) makeListFn(sym sx.Symbol) EvalFn {
 	return func(args sx.Vector, env *Environment) sx.Object {
-		result := sx.Nil().Cons(sym)
-		last := result
+		var result sx.ListBuilder
+		result.Add(sym)
 		for _, elem := range args {
 			item := sx.Nil().Cons(SymLI)
 			if res, isPair := sx.GetPair(ev.Eval(elem, env)); isPair {
 				item.ExtendBang(res)
 			}
-			last = last.AppendBang(item)
+			result.Add(item)
 		}
-		return result
+		return result.List()
 	}
 }
 
 func (ev *Evaluator) evalDescriptionTerm(term *sx.Pair, env *Environment) *sx.Pair {
-	var result, curr *sx.Pair
+	var result sx.ListBuilder
 	for node := term; node != nil; node = node.Tail() {
 		elem := ev.Eval(node.Car(), env)
-		if result == nil {
-			result = sx.Cons(elem, nil)
-			curr = result
-		} else {
-			curr = curr.AppendBang(elem)
-		}
+		result.Add(elem)
 	}
-	return result
+	return result.List()
 }
 
 func (ev *Evaluator) evalTableRow(pairs *sx.Pair, env *Environment) *sx.Pair {
-	row := sx.Nil().Cons(symTR)
 	if pairs == nil {
 		return nil
 	}
-	curRow := row
+	var row sx.ListBuilder
+	row.Add(symTR)
 	for pair := pairs; pair != nil; pair = pair.Tail() {
-		curRow = curRow.AppendBang(ev.Eval(pair.Car(), env))
+		row.Add(ev.Eval(pair.Car(), env))
 	}
-	return row
+	return row.List()
 }
 func (ev *Evaluator) makeCellFn(align string) EvalFn {
 	return func(args sx.Vector, env *Environment) sx.Object {
@@ -514,23 +505,22 @@ func (ev *Evaluator) makeRegionFn(sym sx.Symbol, genericToClass bool) EvalFn {
 				a = a.Remove("").AddClass(val)
 			}
 		}
-		result := sx.Nil()
+		var result sx.ListBuilder
+		result.Add(sym)
 		if len(a) > 0 {
-			result = result.Cons(ev.EvaluateAttrbute(a))
+			result.Add(ev.EvaluateAttrbute(a))
 		}
-		result = result.Cons(sym)
-		currResult := result.LastPair()
 		if region, isPair := sx.GetPair(args[1]); isPair {
 			if evalRegion := ev.evalPairList(region, env); evalRegion != nil {
-				currResult = currResult.ExtendBang(evalRegion)
+				result.ExtendBang(evalRegion)
 			}
 		}
 		if len(args) > 2 {
 			if cite, _ := ev.EvaluateList(args[2:], env); cite != nil {
-				currResult.AppendBang(cite.Cons(symCITE))
+				result.Add(cite.Cons(symCITE))
 			}
 		}
-		return result
+		return result.List()
 	}
 }
 
@@ -937,31 +927,25 @@ func (ev *Evaluator) Eval(obj sx.Object, env *Environment) sx.Object {
 }
 
 func (ev *Evaluator) evalSlice(args sx.Vector, env *Environment) *sx.Pair {
-	result := sx.Cons(sx.Nil(), sx.Nil())
-	curr := result
+	var result sx.ListBuilder
 	for _, arg := range args {
 		elem := ev.Eval(arg, env)
-		if env.err != nil {
-			return nil
-		}
-		curr = curr.AppendBang(elem)
+		result.Add(elem)
 	}
-	return result.Tail()
+	if env.err == nil {
+		return result.List()
+	}
+	return nil
 }
 
 func (ev *Evaluator) evalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
-	var result, curr *sx.Pair
+	var result sx.ListBuilder
 	for node := pair; node != nil; node = node.Tail() {
 		elem := ev.Eval(node.Car(), env)
-		if result == nil {
-			result = sx.Cons(elem, nil)
-			curr = result
-		} else {
-			curr = curr.AppendBang(elem)
-		}
+		result.Add(elem)
 	}
 	if env.err == nil {
-		return result
+		return result.List()
 	}
 	return nil
 }
