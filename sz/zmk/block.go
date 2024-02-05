@@ -108,17 +108,12 @@ const symSeparator = sx.Symbol("sEpArAtOr")
 func (cp *zmkP) cleanupListsAfterEOL() {
 	for _, l := range cp.lists {
 		l.LastPair().Head().LastPair().AppendBang(sx.Cons(symSeparator, nil))
-		// if lits := len(l.Items); lits > 0 {
-		// 	l.Items[lits-1] = append(l.Items[lits-1], &nullItemNode{})
-		// }
 	}
-	// if cp.descrl != nil {
-	// 	defPos := len(cp.descrl.Descriptions) - 1
-	// 	if ldds := len(cp.descrl.Descriptions[defPos].Descriptions); ldds > 0 {
-	// 		cp.descrl.Descriptions[defPos].Descriptions[ldds-1] = append(
-	// 			cp.descrl.Descriptions[defPos].Descriptions[ldds-1], &nullDescriptionNode{})
-	// 	}
-	// }
+	if descrl := cp.descrl; descrl != nil {
+		if lastPair, pos := lastPairPos(descrl); pos > 1 && pos%2 == 0 {
+			lastPair.Head().LastPair().AppendBang(sx.Cons(symSeparator, nil))
+		}
+	}
 }
 
 // parseColon determines which element should be parsed.
@@ -435,67 +430,86 @@ func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (res *sx.Pair, success b
 }
 
 // parseDefTerm parses a term of a definition list.
-func (cp *zmkP) parseDefTerm() (res *sx.Pair /*ast.BlockNode*/, success bool) {
+func (cp *zmkP) parseDefTerm() (res *sx.Pair, success bool) {
 	inp := cp.inp
 	if inp.Next() != ' ' {
 		return nil, false
 	}
 	inp.Next()
 	cp.skipSpace()
-	// descrl := cp.descrl
-	// if descrl == nil {
-	// 	descrl = &ast.DescriptionListNode{}
-	// 	cp.descrl = descrl
-	// }
-	// descrl.Descriptions = append(descrl.Descriptions, ast.Description{})
-	// defPos := len(descrl.Descriptions) - 1
-	// if defPos == 0 {
-	// 	res = descrl
-	// }
-	// for {
-	// 	in := cp.parseInline()
-	// 	if in == nil {
-	// 		if len(descrl.Descriptions[defPos].Term) == 0 {
-	// 			return nil, false
-	// 		}
-	// 		return res, true
-	// 	}
-	// 	descrl.Descriptions[defPos].Term = append(descrl.Descriptions[defPos].Term, in)
-	// 	if _, ok := in.(*ast.BreakNode); ok {
-	// 		return res, true
-	// 	}
-	// }
-	return nil, false
+	descrl := cp.descrl
+	if descrl == nil {
+		descrl = sx.Cons(sz.SymDescription, nil)
+		cp.descrl = descrl
+		res = descrl
+	}
+	lastPair, pos := lastPairPos(descrl)
+	for {
+		in := cp.parseInline()
+		if in == nil {
+			if pos%2 == 0 {
+				// lastPair is either the empty description list or the last block of definitions
+				return nil, false
+			}
+			// lastPair is the definition term
+			return res, true
+		}
+		if pos%2 == 0 {
+			// lastPair is either the empty description list or the last block of definitions
+			lastPair = lastPair.AppendBang(sx.Cons(in, nil))
+			pos++
+		} else {
+			// lastPair is the term part and we need to append the inline list just read
+			lastPair.Head().LastPair().AppendBang(in)
+		}
+		if sz.IsBreakSym(in.Car()) {
+			return res, true
+		}
+	}
 }
 
 // parseDefDescr parses a description of a definition list.
-func (cp *zmkP) parseDefDescr() (res *sx.Pair /*ast.BlockNode*/, success bool) {
+func (cp *zmkP) parseDefDescr() (res *sx.Pair, success bool) {
 	inp := cp.inp
 	if inp.Next() != ' ' {
 		return nil, false
 	}
 	inp.Next()
 	cp.skipSpace()
-	// descrl := cp.descrl
-	// if descrl == nil || len(descrl.Descriptions) == 0 {
-	// 	return nil, false
-	// }
+	descrl := cp.descrl
+	lastPair, pos := lastPairPos(descrl)
+	if descrl == nil || pos <= 0 {
+		// No term given
+		return nil, false
+	}
 
-	// defPos := len(descrl.Descriptions) - 1
-	// if len(descrl.Descriptions[defPos].Term) == 0 {
-	// 	return nil, false
-	// }
+	pn := cp.parseLinePara()
+	if len(pn) == 0 {
+		return nil, false
+	}
 
-	// pn := cp.parseLinePara()
-	// if len(pn) == 0 {
-	// 	return nil, false
-	// }
+	newDef := sx.MakeList(sz.SymBlock, sx.MakeList(pn...).Cons(sz.SymPara))
+	if pos%2 == 1 {
+		// Just a term, but no definitions
+		lastPair.AppendBang(sx.MakeList(sz.SymBlock, newDef))
+	} else {
+		// lastPara points a the last definition
+		lastPair.Head().LastPair().AppendBang(newDef)
+	}
+	return nil, true
+}
 
-	// cp.lists = nil
-	// cp.lastRow = nil
-	// descrl.Descriptions[defPos].Descriptions = append(descrl.Descriptions[defPos].Descriptions, ast.DescriptionSlice{pn})
-	// return nil, true
-	return nil, false
+func lastPairPos(p *sx.Pair) (*sx.Pair, int) {
+	cnt := 0
+	for node := p; node != nil; {
+		next := node.Tail()
+		if next == nil {
+			return node, cnt
+		}
+		node = next
+		cnt++
+	}
+	return nil, -1
 }
 
 // parseIndent parses initial spaces to continue a list.
@@ -541,42 +555,41 @@ func (cp *zmkP) parseIndentForList(cnt int) bool {
 }
 
 func (cp *zmkP) parseIndentForDescription(cnt int) bool {
-	// defPos := len(cp.descrl.Descriptions) - 1
-	// if cnt < 1 || defPos < 0 {
-	// 	return false
-	// }
-	// if len(cp.descrl.Descriptions[defPos].Descriptions) == 0 {
-	// 	// Continuation of a definition term
-	// 	for {
-	// 		in := cp.parseInline()
-	// 		if in == nil {
-	// 			return true
-	// 		}
-	// 		cp.descrl.Descriptions[defPos].Term = append(cp.descrl.Descriptions[defPos].Term, in)
-	// 		if _, ok := in.(*ast.BreakNode); ok {
-	// 			return true
-	// 		}
-	// 	}
-	// }
+	descrl := cp.descrl
+	lastPair, pos := lastPairPos(descrl)
+	if cnt < 1 || pos < 1 {
+		return false
+	}
+	if pos%2 == 1 {
+		// Continuation of a definition term
+		for {
+			in := cp.parseInline()
+			if in == nil {
+				return true
+			}
+			lastPair.Head().LastPair().AppendBang(in)
+			if sz.IsBreakSym(in.Car()) {
+				return true
+			}
+		}
+	}
 
-	// // Continuation of a definition description
-	// pn := cp.parseLinePara()
-	// if pn == nil {
-	// 	return false
-	// }
-	// descrPos := len(cp.descrl.Descriptions[defPos].Descriptions) - 1
-	// lbn := cp.descrl.Descriptions[defPos].Descriptions[descrPos]
-	// if lpn, ok := lbn[len(lbn)-1].(*ast.ParaNode); ok {
-	// 	lpn.Inlines = append(lpn.Inlines, pn.Inlines...)
-	// } else {
-	// 	descrPos = len(cp.descrl.Descriptions[defPos].Descriptions) - 1
-	// 	cp.descrl.Descriptions[defPos].Descriptions[descrPos] = append(cp.descrl.Descriptions[defPos].Descriptions[descrPos], pn)
-	// }
-	// return true
-	return false
+	// Continuation of a definition description
+	pn := cp.parseLinePara()
+	if len(pn) == 0 {
+		return false
+	}
+	bn := lastPair.Head()
+	para := bn.LastPair().Head().LastPair().Head()
+	if para.Car().IsEqual(sz.SymPara) {
+		para.LastPair().SetCdr(sx.MakeList(pn...))
+	} else {
+		bn.LastPair().AppendBang(sx.MakeList(pn...).Cons(sz.SymPara))
+	}
+	return true
 }
 
-// parseLinePara parses one line of inline material.
+// parseLinePara parses one paragraph of inline material.
 func (cp *zmkP) parseLinePara() sx.Vector {
 	var ins sx.Vector
 	for {

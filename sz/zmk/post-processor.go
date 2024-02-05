@@ -89,6 +89,7 @@ func init() {
 		sz.SymListOrdered:     postProcessItemList,
 		sz.SymListUnordered:   postProcessItemList,
 		sz.SymListQuote:       postProcessQuoteList,
+		sz.SymDescription:     postProcessDescription,
 		sz.SymTable:           postProcessTable,
 
 		sz.SymInline:       postProcessInlineList,
@@ -235,6 +236,20 @@ func postProcessListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 		}
 	}
 	return pList.List()
+}
+
+func postProcessDescription(dl *sx.Pair, env *sx.Pair) *sx.Pair {
+	var dList sx.ListBuilder
+	isTerm := false
+	for node := dl.Tail(); node != nil; node = node.Tail() {
+		isTerm = !isTerm
+		if isTerm {
+			dList.Add(postProcessInlines(node.Head(), env))
+		} else {
+			dList.Add(postProcess(node.Head(), env))
+		}
+	}
+	return dList.List().Cons(dl.Car())
 }
 
 func postProcessTable(tbl *sx.Pair, env *sx.Pair) *sx.Pair {

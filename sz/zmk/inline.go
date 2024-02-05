@@ -445,7 +445,7 @@ var mapRuneLiteral = map[rune]sx.Symbol{
 	runeModGrave: sz.SymLiteralProg,
 	'\'':         sz.SymLiteralInput,
 	'=':          sz.SymLiteralOutput,
-	// No '$': ast.LiteralMath, because paring literal math is a little different
+	// No '$': sz.SymLiteralMath, because pairing literal math is a little different
 }
 
 func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {

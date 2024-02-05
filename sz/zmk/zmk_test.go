@@ -671,6 +671,9 @@ func TestList(t *testing.T) {
 
 		// Quotation lists may have empty items
 		{">", "(BLOCK (QUOTATION (BLOCK)))"},
+
+		// Empty continuation
+		{"* abc\n  ", "(BLOCK (UNORDERED (BLOCK (PARA (TEXT \"abc\")))))"},
 	})
 }
 
@@ -698,21 +701,27 @@ func TestDefinition(t *testing.T) {
 	checkTcs(t, TestCases{
 		{";", "(BLOCK (PARA (TEXT \";\")))"},
 		{"; ", "(BLOCK (PARA (TEXT \";\")))"},
-		// {"; abc", "(DL (DT abc))"},
-		// {"; abc\ndef", "(DL (DT abc))(PARA def)"},
-		// {"; abc\n def", "(DL (DT abc))(PARA def)"},
-		// {"; abc\n  def", "(DL (DT abc SB def))"},
+		{"; abc", "(BLOCK (DESCRIPTION ((TEXT \"abc\"))))"},
+		{"; abc\ndef", "(BLOCK (DESCRIPTION ((TEXT \"abc\"))) (PARA (TEXT \"def\")))"},
+		{"; abc\n def", "(BLOCK (DESCRIPTION ((TEXT \"abc\"))) (PARA (TEXT \"def\")))"},
+		{"; abc\n  def", "(BLOCK (DESCRIPTION ((TEXT \"abc\") (SOFT) (TEXT \"def\"))))"},
+		{"; abc\n  def\n  ghi", "(BLOCK (DESCRIPTION ((TEXT \"abc\") (SOFT) (TEXT \"def\") (SOFT) (TEXT \"ghi\"))))"},
 		{":", "(BLOCK (PARA (TEXT \":\")))"},
 		{": ", "(BLOCK (PARA (TEXT \":\")))"},
 		{": abc", "(BLOCK (PARA (TEXT \":\") (SPACE) (TEXT \"abc\")))"},
-		// {"; abc\n: def", "(DL (DT abc) (DD (PARA def)))"},
-		// {"; abc\n: def\nghi", "(DL (DT abc) (DD (PARA def)))(PARA ghi)"},
-		// {"; abc\n: def\n ghi", "(DL (DT abc) (DD (PARA def)))(PARA ghi)"},
-		// {"; abc\n: def\n  ghi", "(DL (DT abc) (DD (PARA def SB ghi)))"},
-		// {"; abc\n: def\n\n  ghi", "(DL (DT abc) (DD (PARA def)(PARA ghi)))"},
-		// {"; abc\n:", "(DL (DT abc))(PARA :)"},
-		// {"; abc\n: def\n: ghi", "(DL (DT abc) (DD (PARA def)) (DD (PARA ghi)))"},
-		// {"; abc\n: def\n; ghi\n: jkl", "(DL (DT abc) (DD (PARA def)) (DT ghi) (DD (PARA jkl)))"},
+		{"; abc\n: def", "(BLOCK (DESCRIPTION ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))))))"},
+		{"; abc\n: def\nghi", "(BLOCK (DESCRIPTION ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))))) (PARA (TEXT \"ghi\")))"},
+		{"; abc\n: def\n ghi", "(BLOCK (DESCRIPTION ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))))) (PARA (TEXT \"ghi\")))"},
+		{"; abc\n: def\n  ghi", "(BLOCK (DESCRIPTION ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\") (SOFT) (TEXT \"ghi\"))))))"},
+		{"; abc\n: def\n\n  ghi", "(BLOCK (DESCRIPTION ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))) (PARA (TEXT \"ghi\")))))"},
+		{"; abc\n:", "(BLOCK (DESCRIPTION ((TEXT \"abc\"))) (PARA (TEXT \":\")))"},
+		{"; abc\n: def\n: ghi", "(BLOCK (DESCRIPTION ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))) (BLOCK (PARA (TEXT \"ghi\"))))))"},
+		{"; abc\n: def\n; ghi\n: jkl", "(BLOCK (DESCRIPTION ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\")))) ((TEXT \"ghi\")) (BLOCK (BLOCK (PARA (TEXT \"jkl\"))))))"},
+
+		// Empty description
+		{"; abc\n: ", "(BLOCK (DESCRIPTION ((TEXT \"abc\"))) (PARA (TEXT \":\")))"},
+		// Empty continuation of definition
+		{"; abc\n: def\n  ", "(BLOCK (DESCRIPTION ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))))))"},
 	})
 }
 
