@@ -126,7 +126,7 @@ func (cp *zmkP) parseColon() (*sx.Pair, bool) {
 	return cp.parseDefDescr()
 }
 
-// parsePara parses paragraphed inline material as a slice of sx.Object.
+// parsePara parses paragraphed inline material as a sx.Vector.
 func (cp *zmkP) parsePara() (result sx.Vector) {
 	for {
 		in := cp.parseInline()
@@ -352,7 +352,7 @@ func (cp *zmkP) parseNestedList() (res *sx.Pair, success bool) {
 	pv := cp.parseLinePara()
 	bn := sx.Cons(sz.SymBlock, nil)
 	if len(pv) != 0 {
-		bn.AppendBang(sx.MakeList(pv...).Cons(sz.SymPara))
+		bn.AppendBang(pv.MakeList().Cons(sz.SymPara))
 	}
 	lastItemPair := ln.LastPair()
 	lastItemPair.AppendBang(bn)
@@ -488,7 +488,7 @@ func (cp *zmkP) parseDefDescr() (res *sx.Pair, success bool) {
 		return nil, false
 	}
 
-	newDef := sx.MakeList(sz.SymBlock, sx.MakeList(pn...).Cons(sz.SymPara))
+	newDef := sx.MakeList(sz.SymBlock, pn.MakeList().Cons(sz.SymPara))
 	if pos%2 == 1 {
 		// Just a term, but no definitions
 		lastPair.AppendBang(sx.MakeList(sz.SymBlock, newDef))
@@ -546,10 +546,11 @@ func (cp *zmkP) parseIndentForList(cnt int) bool {
 	ln := cp.lists[cnt-1]
 	lbn := ln.LastPair().Head()
 	lpn := lbn.LastPair().Head()
+	pvList := pv.MakeList()
 	if lpn.Car().IsEqual(sz.SymPara) {
-		lpn.LastPair().SetCdr(sx.MakeList(pv...))
+		lpn.LastPair().SetCdr(pvList)
 	} else {
-		lbn.LastPair().AppendBang(sx.MakeList(pv...).Cons(sz.SymPara))
+		lbn.LastPair().AppendBang(pvList.Cons(sz.SymPara))
 	}
 	return true
 }
@@ -581,10 +582,11 @@ func (cp *zmkP) parseIndentForDescription(cnt int) bool {
 	}
 	bn := lastPair.Head()
 	para := bn.LastPair().Head().LastPair().Head()
+	pnList := pn.MakeList()
 	if para.Car().IsEqual(sz.SymPara) {
-		para.LastPair().SetCdr(sx.MakeList(pn...))
+		para.LastPair().SetCdr(pnList)
 	} else {
-		bn.LastPair().AppendBang(sx.MakeList(pn...).Cons(sz.SymPara))
+		bn.LastPair().AppendBang(pnList.Cons(sz.SymPara))
 	}
 	return true
 }
