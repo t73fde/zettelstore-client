@@ -37,12 +37,13 @@ func GetAttributes(seq *sx.Pair) (result attrs.Attributes) {
 		if !val.IsAtom() {
 			continue
 		}
-		result = result.Set(goValue(key), goValue(val))
+		result = result.Set(GoValue(key), GoValue(val))
 	}
 	return result
 }
 
-func goValue(obj sx.Object) string {
+// GoValue returns the string value of the sx.Object suitable for Go processing.
+func GoValue(obj sx.Object) string {
 	switch o := obj.(type) {
 	case sx.String:
 		return string(o)
@@ -112,7 +113,7 @@ func makeMetaValue(mnode *sx.Pair) (MetaValue, bool) {
 
 func (m Meta) GetString(key string) string {
 	if v, found := m[key]; found {
-		return goValue(v.Value)
+		return GoValue(v.Value)
 	}
 	return ""
 }
