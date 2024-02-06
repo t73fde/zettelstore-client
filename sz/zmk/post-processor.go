@@ -21,17 +21,9 @@ import (
 const symInVerse = sx.Symbol("in-verse")
 const symNoBlock = sx.Symbol("no-block")
 
-func postProcess(obj sx.Object, env *sx.Pair) *sx.Pair {
-	if sx.IsNil(obj) {
+func postProcess(lst *sx.Pair, env *sx.Pair) *sx.Pair {
+	if lst == nil {
 		return nil
-	}
-	lst, isPair := sx.GetPair(obj)
-	if !isPair {
-		v, isVector := sx.GetVector(obj)
-		if !isVector {
-			return nil
-		}
-		lst = sx.MakeList(v)
 	}
 	sym, isSym := sx.GetSymbol(lst.Car())
 	if !isSym {
@@ -49,7 +41,7 @@ func postProcess(obj sx.Object, env *sx.Pair) *sx.Pair {
 func postProcessPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
 	for node := lst; node != nil; node = node.Tail() {
-		if elem := postProcess(node.Car(), env); elem != nil {
+		if elem := postProcess(node.Head(), env); elem != nil {
 			pList.Add(elem)
 		}
 	}
@@ -231,7 +223,7 @@ func postProcessQuoteList(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 func postProcessListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
 	for node := ln.Tail(); node != nil; node = node.Tail() {
-		if elem := postProcess(node.Car(), env); elem != nil {
+		if elem := postProcess(node.Head(), env); elem != nil {
 			pList.Add(elem)
 		}
 	}
@@ -420,7 +412,7 @@ func postProcessInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	vector := make([]*sx.Pair, 0, length)
 	// 1st phase: process all childs, ignore SPACE at start, and merge some elements
 	for node := lst; node != nil; node = node.Tail() {
-		elem := postProcess(node.Car(), env)
+		elem := postProcess(node.Head(), env)
 		if elem == nil {
 			continue
 		}
