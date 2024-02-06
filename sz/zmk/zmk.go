@@ -46,7 +46,8 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 		panic("Nesting level was not decremented")
 	}
 
-	if bs := postProcessPairList(blkBuild.List(), nil); bs != nil {
+	bnl := blkBuild.List()
+	if bs := postProcessPairList(bnl, nil); bs != nil {
 		return bs.Cons(sz.SymBlock)
 	}
 	return nil
@@ -63,7 +64,8 @@ func ParseInlines(inp *input.Input) *sx.Pair {
 		ins = append(ins, in)
 	}
 
-	return postProcess(ins.MakeList().Cons(sz.SymInline), nil)
+	inl := ins.MakeList().Cons(sz.SymInline)
+	return postProcess(inl, nil)
 }
 
 type zmkP struct {
