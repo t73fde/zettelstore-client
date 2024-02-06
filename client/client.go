@@ -29,6 +29,7 @@ import (
 
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/sexp"
+	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxreader"
 )
@@ -338,18 +339,7 @@ func (c *Client) QueryZettelData(ctx context.Context, query string) (string, str
 		return "", "", nil, err
 	}
 	metaList, err := parseMetaList(vals[3].(*sx.Pair))
-	return goString(qVals[1]), goString(hVals[1]), metaList, err
-}
-
-func goString(obj sx.Object) string {
-	switch o := obj.(type) {
-	case sx.String:
-		return string(o)
-	case sx.Symbol:
-		return string(o)
-	default:
-		return obj.String()
-	}
+	return sz.GoValue(qVals[1]), sz.GoValue(hVals[1]), metaList, err
 }
 
 func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
