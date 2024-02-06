@@ -6,6 +6,9 @@
 // Zettelstore client is licensed under the latest version of the EUPL
 // (European Union Public License). Please see file LICENSE.txt for your rights
 // and obligations under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 // Package sz contains zettel data handling as sx expressions.
@@ -34,20 +37,19 @@ func GetAttributes(seq *sx.Pair) (result attrs.Attributes) {
 		if !val.IsAtom() {
 			continue
 		}
-		result = result.Set(goString(key), goString(val))
+		result = result.Set(goValue(key), goValue(val))
 	}
 	return result
 }
 
-func goString(obj sx.Object) string {
+func goValue(obj sx.Object) string {
 	switch o := obj.(type) {
 	case sx.String:
 		return string(o)
 	case sx.Symbol:
 		return string(o)
-	default:
-		return obj.String()
 	}
+	return obj.String()
 }
 
 // GetMetaContent returns the metadata and the content of a sz encoded zettel.
@@ -110,7 +112,7 @@ func makeMetaValue(mnode *sx.Pair) (MetaValue, bool) {
 
 func (m Meta) GetString(key string) string {
 	if v, found := m[key]; found {
-		return goString(v.Value)
+		return goValue(v.Value)
 	}
 	return ""
 }
