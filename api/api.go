@@ -25,7 +25,7 @@ func (zid ZettelID) IsValid() bool {
 	if len(zid) != 14 {
 		return false
 	}
-	for i := 0; i < 14; i++ {
+	for i := range 14 {
 		ch := zid[i]
 		if ch < '0' || '9' < ch {
 			return false

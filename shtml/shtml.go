@@ -90,7 +90,7 @@ func (ev *Evaluator) Evaluate(lst *sx.Pair, env *Environment) (*sx.Pair, error) 
 	}
 
 	for i := 0; i < len(env.endnotes); i++ {
-		// May extend tr.endnotes
+		// May extend tr.endnotes -> do not use for i := range len(...)!!!
 
 		if env.endnotes[i].noteHx != nil {
 			continue
