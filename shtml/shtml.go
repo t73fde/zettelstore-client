@@ -513,7 +513,7 @@ func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) EvalFn {
 			result.Add(ev.EvaluateAttrbute(a))
 		}
 		if region, isPair := sx.GetPair(args[1]); isPair {
-			if evalRegion := ev.evalPairList(region, env); evalRegion != nil {
+			if evalRegion := ev.EvalPairList(region, env); evalRegion != nil {
 				result.ExtendBang(evalRegion)
 			}
 		}
@@ -941,7 +941,8 @@ func (ev *Evaluator) evalSlice(args sx.Vector, env *Environment) *sx.Pair {
 	return nil
 }
 
-func (ev *Evaluator) evalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
+// EvaluatePairList evaluates a list of lists.
+func (ev *Evaluator) EvalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
 	var result sx.ListBuilder
 	for node := pair; node != nil; node = node.Tail() {
 		elem := ev.Eval(node.Car(), env)
