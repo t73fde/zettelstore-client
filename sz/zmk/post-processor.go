@@ -18,8 +18,8 @@ import (
 	"zettelstore.de/sx.fossil"
 )
 
-const symInVerse = sx.Symbol("in-verse")
-const symNoBlock = sx.Symbol("no-block")
+var symInVerse = sx.MakeSymbol("in-verse")
+var symNoBlock = sx.MakeSymbol("no-block")
 
 func postProcess(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	if lst == nil {
@@ -29,10 +29,11 @@ func postProcess(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	if !isSym {
 		panic(lst)
 	}
-	if fn, found := symMap[sym]; found {
+	symVal := sym.GetValue()
+	if fn, found := symMap[symVal]; found {
 		return fn(lst, env)
 	}
-	if _, found := ignoreMap[sym]; found {
+	if _, found := ignoreMap[symVal]; found {
 		return lst
 	}
 	panic(lst)
@@ -48,69 +49,69 @@ func postProcessPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	return pList.List()
 }
 
-var ignoreMap = map[sx.Symbol]struct{}{
-	sz.SymThematic:   {},
-	sz.SymTransclude: {},
+var ignoreMap = map[string]struct{}{
+	sz.SymThematic.GetValue():   {},
+	sz.SymTransclude.GetValue(): {},
 
-	sz.SymLiteralComment: {},
-	sz.SymLiteralHTML:    {},
-	sz.SymLiteralInput:   {},
-	sz.SymLiteralMath:    {},
-	sz.SymLiteralProg:    {},
-	sz.SymLiteralOutput:  {},
-	sz.SymLiteralZettel:  {},
-	sz.SymSpace:          {},
-	sz.SymHard:           {},
+	sz.SymLiteralComment.GetValue(): {},
+	sz.SymLiteralHTML.GetValue():    {},
+	sz.SymLiteralInput.GetValue():   {},
+	sz.SymLiteralMath.GetValue():    {},
+	sz.SymLiteralProg.GetValue():    {},
+	sz.SymLiteralOutput.GetValue():  {},
+	sz.SymLiteralZettel.GetValue():  {},
+	sz.SymSpace.GetValue():          {},
+	sz.SymHard.GetValue():           {},
 }
 
-var symMap map[sx.Symbol]func(*sx.Pair, *sx.Pair) *sx.Pair
+var symMap map[string]func(*sx.Pair, *sx.Pair) *sx.Pair
 
 func init() {
-	symMap = map[sx.Symbol]func(*sx.Pair, *sx.Pair) *sx.Pair{
-		sz.SymBlock:           postProcessBlockList,
-		sz.SymPara:            postProcessInlineList,
-		sz.SymRegionBlock:     postProcessRegion,
-		sz.SymRegionQuote:     postProcessRegion,
-		sz.SymRegionVerse:     postProcessRegionVerse,
-		sz.SymVerbatimComment: postProcessVerbatim,
-		sz.SymVerbatimEval:    postProcessVerbatim,
-		sz.SymVerbatimMath:    postProcessVerbatim,
-		sz.SymVerbatimProg:    postProcessVerbatim,
-		sz.SymVerbatimZettel:  postProcessVerbatim,
-		sz.SymHeading:         postProcessHeading,
-		sz.SymListOrdered:     postProcessItemList,
-		sz.SymListUnordered:   postProcessItemList,
-		sz.SymListQuote:       postProcessQuoteList,
-		sz.SymDescription:     postProcessDescription,
-		sz.SymTable:           postProcessTable,
+	symMap = map[string]func(*sx.Pair, *sx.Pair) *sx.Pair{
+		sz.SymBlock.GetValue():           postProcessBlockList,
+		sz.SymPara.GetValue():            postProcessInlineList,
+		sz.SymRegionBlock.GetValue():     postProcessRegion,
+		sz.SymRegionQuote.GetValue():     postProcessRegion,
+		sz.SymRegionVerse.GetValue():     postProcessRegionVerse,
+		sz.SymVerbatimComment.GetValue(): postProcessVerbatim,
+		sz.SymVerbatimEval.GetValue():    postProcessVerbatim,
+		sz.SymVerbatimMath.GetValue():    postProcessVerbatim,
+		sz.SymVerbatimProg.GetValue():    postProcessVerbatim,
+		sz.SymVerbatimZettel.GetValue():  postProcessVerbatim,
+		sz.SymHeading.GetValue():         postProcessHeading,
+		sz.SymListOrdered.GetValue():     postProcessItemList,
+		sz.SymListUnordered.GetValue():   postProcessItemList,
+		sz.SymListQuote.GetValue():       postProcessQuoteList,
+		sz.SymDescription.GetValue():     postProcessDescription,
+		sz.SymTable.GetValue():           postProcessTable,
 
-		sz.SymInline:       postProcessInlineList,
-		sz.SymText:         postProcessText,
-		sz.SymSoft:         postProcessSoft,
-		sz.SymEndnote:      postProcessEndnote,
-		sz.SymMark:         postProcessMark,
-		sz.SymLinkBased:    postProcessInlines4,
-		sz.SymLinkBroken:   postProcessInlines4,
-		sz.SymLinkExternal: postProcessInlines4,
-		sz.SymLinkFound:    postProcessInlines4,
-		sz.SymLinkHosted:   postProcessInlines4,
-		sz.SymLinkInvalid:  postProcessInlines4,
-		sz.SymLinkQuery:    postProcessInlines4,
-		sz.SymLinkSelf:     postProcessInlines4,
-		sz.SymLinkZettel:   postProcessInlines4,
-		sz.SymEmbed:        postProcessInlines4,
-		sz.SymCite:         postProcessInlines4,
-		sz.SymFormatDelete: postProcessFormat,
-		sz.SymFormatEmph:   postProcessFormat,
-		sz.SymFormatInsert: postProcessFormat,
-		sz.SymFormatMark:   postProcessFormat,
-		sz.SymFormatQuote:  postProcessFormat,
-		sz.SymFormatStrong: postProcessFormat,
-		sz.SymFormatSpan:   postProcessFormat,
-		sz.SymFormatSub:    postProcessFormat,
-		sz.SymFormatSuper:  postProcessFormat,
+		sz.SymInline.GetValue():       postProcessInlineList,
+		sz.SymText.GetValue():         postProcessText,
+		sz.SymSoft.GetValue():         postProcessSoft,
+		sz.SymEndnote.GetValue():      postProcessEndnote,
+		sz.SymMark.GetValue():         postProcessMark,
+		sz.SymLinkBased.GetValue():    postProcessInlines4,
+		sz.SymLinkBroken.GetValue():   postProcessInlines4,
+		sz.SymLinkExternal.GetValue(): postProcessInlines4,
+		sz.SymLinkFound.GetValue():    postProcessInlines4,
+		sz.SymLinkHosted.GetValue():   postProcessInlines4,
+		sz.SymLinkInvalid.GetValue():  postProcessInlines4,
+		sz.SymLinkQuery.GetValue():    postProcessInlines4,
+		sz.SymLinkSelf.GetValue():     postProcessInlines4,
+		sz.SymLinkZettel.GetValue():   postProcessInlines4,
+		sz.SymEmbed.GetValue():        postProcessInlines4,
+		sz.SymCite.GetValue():         postProcessInlines4,
+		sz.SymFormatDelete.GetValue(): postProcessFormat,
+		sz.SymFormatEmph.GetValue():   postProcessFormat,
+		sz.SymFormatInsert.GetValue(): postProcessFormat,
+		sz.SymFormatMark.GetValue():   postProcessFormat,
+		sz.SymFormatQuote.GetValue():  postProcessFormat,
+		sz.SymFormatStrong.GetValue(): postProcessFormat,
+		sz.SymFormatSpan.GetValue():   postProcessFormat,
+		sz.SymFormatSub.GetValue():    postProcessFormat,
+		sz.SymFormatSuper.GetValue():  postProcessFormat,
 
-		symSeparator: ignoreProcess,
+		symSeparator.GetValue(): ignoreProcess,
 	}
 }
 
@@ -292,8 +293,8 @@ func postProcessCells(cells *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
 	return pCells.List(), width
 }
 
-func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, align []sx.Symbol) {
-	align = make([]sx.Symbol, width)
+func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, align []*sx.Symbol) {
+	align = make([]*sx.Symbol, width)
 
 	foundHeader := false
 	cellCount := 0
@@ -331,7 +332,7 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 		if elem.Car().IsEqual(sz.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s != "" {
 				cellAlign := getCellAlignment(s[len(s)-1])
-				if cellAlign != sz.SymCell {
+				if !cellAlign.IsEqual(sz.SymCell) {
 					elem.SetCdr(sx.Cons(s[0:len(s)-1], nil))
 				}
 				align[cellCount-1] = cellAlign
@@ -348,14 +349,14 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 	}
 
 	for i := 0; i < width; i++ {
-		if align[i] == "" {
+		if align[i] == nil {
 			align[i] = sz.SymCell // Default alignment
 		}
 	}
 	return rows.Head(), rows.Tail(), align
 }
 
-func alignRow(row *sx.Pair, align []sx.Symbol) {
+func alignRow(row *sx.Pair, align []*sx.Symbol) {
 	if row == nil {
 		return
 	}
@@ -376,7 +377,7 @@ func alignRow(row *sx.Pair, align []sx.Symbol) {
 		if elem.Car().IsEqual(sz.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s != "" {
 				cellAlign := getCellAlignment(s[0])
-				if cellAlign != sz.SymCell {
+				if !cellAlign.IsEqual(sz.SymCell) {
 					elem.SetCdr(sx.Cons(s[1:], nil))
 					cell.SetCar(cellAlign)
 				}
@@ -390,7 +391,7 @@ func alignRow(row *sx.Pair, align []sx.Symbol) {
 	}
 }
 
-func getCellAlignment(ch byte) sx.Symbol {
+func getCellAlignment(ch byte) *sx.Symbol {
 	switch ch {
 	case ':':
 		return sz.SymCellCenter

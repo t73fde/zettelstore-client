@@ -36,7 +36,7 @@ func ParseNoneInlines(inp *input.Input) *sx.Pair {
 
 // ParsePlainBlocks parses the block as plain text with the given syntax.
 func ParsePlainBlocks(inp *input.Input, syntax string) *sx.Pair {
-	var sym sx.Symbol
+	var sym *sx.Symbol
 	if syntax == api.ValueSyntaxHTML {
 		sym = SymVerbatimHTML
 	} else {
@@ -51,7 +51,7 @@ func ParsePlainBlocks(inp *input.Input, syntax string) *sx.Pair {
 
 // ParsePlainInlines parses the inline as plain text with the given syntax.
 func ParsePlainInlines(inp *input.Input, syntax string) *sx.Pair {
-	var sym sx.Symbol
+	var sym *sx.Symbol
 	if syntax == api.ValueSyntaxHTML {
 		sym = SymLiteralHTML
 	} else {

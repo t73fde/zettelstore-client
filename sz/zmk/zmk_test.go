@@ -27,12 +27,12 @@ import (
 
 type TestCase struct{ source, want string }
 type TestCases []TestCase
-type symbolMap map[string]sx.Symbol
+type symbolMap map[string]*sx.Symbol
 
 func replace(s string, sm symbolMap, tcs TestCases) TestCases {
 	var sym string
 	if len(sm) > 0 {
-		sym = string(sm[s])
+		sym = sm[s].GetValue()
 	}
 	var testCases TestCases
 	for _, tc := range tcs {

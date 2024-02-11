@@ -35,8 +35,8 @@ type Evaluator struct {
 	unique        string
 	noLinks       bool // true iff output must not include links
 
-	fns     map[sx.Symbol]EvalFn
-	minArgs map[sx.Symbol]int
+	fns     map[string]EvalFn
+	minArgs map[string]int
 }
 
 // NewEvaluator creates a new Evaluator object.
@@ -44,8 +44,8 @@ func NewEvaluator(headingOffset int) *Evaluator {
 	ev := &Evaluator{
 		headingOffset: int64(headingOffset),
 
-		fns:     make(map[sx.Symbol]EvalFn, 128),
-		minArgs: make(map[sx.Symbol]int, 128),
+		fns:     make(map[string]EvalFn, 128),
+		minArgs: make(map[string]int, 128),
 	}
 	ev.bindMetadata()
 	ev.bindBlocks()
@@ -69,7 +69,7 @@ func (tr *Evaluator) EvaluateAttrbute(a attrs.Attributes) *sx.Pair {
 	for i := len(keys) - 1; i >= 0; i-- {
 		key := keys[i]
 		if key != attrs.DefaultAttribute && tr.IsValidName(key) {
-			plist = plist.Cons(sx.Cons(sx.Symbol(key), sx.String(a[key])))
+			plist = plist.Cons(sx.Cons(sx.MakeSymbol(key), sx.String(a[key])))
 		}
 	}
 	if plist == nil {
@@ -210,34 +210,36 @@ func (env *Environment) getLanguage() string {
 // EvalFn is a function to be called for evaluation.
 type EvalFn func(sx.Vector, *Environment) sx.Object
 
-func (ev *Evaluator) bind(sym sx.Symbol, minArgs int, fn EvalFn) {
-	ev.fns[sym] = fn
+func (ev *Evaluator) bind(sym *sx.Symbol, minArgs int, fn EvalFn) {
+	symVal := sym.GetValue()
+	ev.fns[symVal] = fn
 	if minArgs > 0 {
-		ev.minArgs[sym] = minArgs
+		ev.minArgs[symVal] = minArgs
 	}
 }
 
 // ResolveBinding returns the function bound to the given name.
-func (ev *Evaluator) ResolveBinding(sym sx.Symbol) EvalFn {
-	if fn, found := ev.fns[sym]; found {
+func (ev *Evaluator) ResolveBinding(sym *sx.Symbol) EvalFn {
+	if fn, found := ev.fns[sym.GetValue()]; found {
 		return fn
 	}
 	return nil
 }
 
 // Rebind overwrites a binding, but leaves the minimum number of arguments intact.
-func (ev *Evaluator) Rebind(sym sx.Symbol, fn EvalFn) {
-	if _, found := ev.fns[sym]; !found {
+func (ev *Evaluator) Rebind(sym *sx.Symbol, fn EvalFn) {
+	symVal := sym.GetValue()
+	if _, found := ev.fns[symVal]; !found {
 		panic(sym)
 	}
-	ev.fns[sym] = fn
+	ev.fns[symVal] = fn
 }
 
 func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.SymMeta, 0, ev.evalList)
 	evalMetaString := func(args sx.Vector, env *Environment) sx.Object {
 		a := make(attrs.Attributes, 2).
-			Set("name", string(ev.getSymbol(args[0], env))).
+			Set("name", ev.getSymbol(args[0], env).GetValue()).
 			Set("content", string(getString(args[1], env)))
 		return ev.EvaluateMeta(a)
 	}
@@ -261,7 +263,7 @@ func (ev *Evaluator) bindMetadata() {
 			s = s[1:]
 		}
 		a := make(attrs.Attributes, 2).
-			Set("name", string(ev.getSymbol(args[0], env))).
+			Set("name", ev.getSymbol(args[0], env).GetValue()).
 			Set("content", s)
 		return ev.EvaluateMeta(a)
 	}
@@ -270,7 +272,7 @@ func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.SymTypeWordSet, 2, evalMetaSet)
 	ev.bind(sz.SymTypeZettelmarkup, 2, func(args sx.Vector, env *Environment) sx.Object {
 		a := make(attrs.Attributes, 2).
-			Set("name", string(ev.getSymbol(args[0], env))).
+			Set("name", ev.getSymbol(args[0], env).GetValue()).
 			Set("content", text.EvaluateInlineString(getList(args[1], env)))
 		return ev.EvaluateMeta(a)
 	})
@@ -293,7 +295,7 @@ func (ev *Evaluator) bindBlocks() {
 			return sx.Nil()
 		}
 		level := strconv.FormatInt(nLevel+ev.headingOffset, 10)
-		headingSymbol := sx.Symbol("h" + level)
+		headingSymbol := sx.MakeSymbol("h" + level)
 
 		a := ev.GetAttributes(args[1], env)
 		env.pushAttributes(a)
@@ -450,7 +452,7 @@ func (ev *Evaluator) bindBlocks() {
 	})
 }
 
-func (ev *Evaluator) makeListFn(sym sx.Symbol) EvalFn {
+func (ev *Evaluator) makeListFn(sym *sx.Symbol) EvalFn {
 	return func(args sx.Vector, env *Environment) sx.Object {
 		var result sx.ListBuilder
 		result.Add(sym)
@@ -495,7 +497,7 @@ func (ev *Evaluator) makeCellFn(align string) EvalFn {
 	}
 }
 
-func (ev *Evaluator) makeRegionFn(sym sx.Symbol, genericToClass bool) EvalFn {
+func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) EvalFn {
 	return func(args sx.Vector, env *Environment) sx.Object {
 		a := ev.GetAttributes(args[0], env)
 		env.pushAttributes(a)
@@ -511,7 +513,7 @@ func (ev *Evaluator) makeRegionFn(sym sx.Symbol, genericToClass bool) EvalFn {
 			result.Add(ev.EvaluateAttrbute(a))
 		}
 		if region, isPair := sx.GetPair(args[1]); isPair {
-			if evalRegion := ev.evalPairList(region, env); evalRegion != nil {
+			if evalRegion := ev.EvalPairList(region, env); evalRegion != nil {
 				result.ExtendBang(evalRegion)
 			}
 		}
@@ -726,7 +728,7 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.SymLiteralZettel, 0, nilFn)
 }
 
-func (ev *Evaluator) makeFormatFn(sym sx.Symbol) EvalFn {
+func (ev *Evaluator) makeFormatFn(sym *sx.Symbol) EvalFn {
 	return func(args sx.Vector, env *Environment) sx.Object {
 		a := ev.GetAttributes(args[0], env)
 		env.pushAttributes(a)
@@ -811,7 +813,7 @@ func (ev *Evaluator) evalQuote(args sx.Vector, env *Environment) sx.Object {
 
 var visibleReplacer = strings.NewReplacer(" ", "\u2423")
 
-func (ev *Evaluator) evalLiteral(args sx.Vector, a attrs.Attributes, sym sx.Symbol, env *Environment) sx.Object {
+func (ev *Evaluator) evalLiteral(args sx.Vector, a attrs.Attributes, sym *sx.Symbol, env *Environment) sx.Object {
 	if a == nil {
 		a = ev.GetAttributes(args[0], env)
 	}
@@ -866,7 +868,7 @@ func flattenText(sb *strings.Builder, lst *sx.Pair) {
 		switch obj := elem.Car().(type) {
 		case sx.String:
 			sb.WriteString(string(obj))
-		case sx.Symbol:
+		case *sx.Symbol:
 			if obj.IsEqual(sz.SymSpace) {
 				sb.WriteByte(' ')
 				break
@@ -899,7 +901,8 @@ func (ev *Evaluator) Eval(obj sx.Object, env *Environment) sx.Object {
 		env.err = fmt.Errorf("symbol expected, but got %T/%v", lst.Car(), lst.Car())
 		return sx.Nil()
 	}
-	fn, found := ev.fns[sym]
+	symVal := sym.GetValue()
+	fn, found := ev.fns[symVal]
 	if !found {
 		env.err = fmt.Errorf("symbol %q not bound", sym)
 		return sx.Nil()
@@ -913,7 +916,7 @@ func (ev *Evaluator) Eval(obj sx.Object, env *Environment) sx.Object {
 		args = append(args, pair.Car())
 		cdr = pair.Cdr()
 	}
-	if minArgs, hasMinArgs := ev.minArgs[sym]; hasMinArgs {
+	if minArgs, hasMinArgs := ev.minArgs[symVal]; hasMinArgs {
 		if minArgs > len(args) {
 			env.err = fmt.Errorf("%v needs at least %d arguments, but got only %d", sym, minArgs, len(args))
 			return sx.Nil()
@@ -938,7 +941,8 @@ func (ev *Evaluator) evalSlice(args sx.Vector, env *Environment) *sx.Pair {
 	return nil
 }
 
-func (ev *Evaluator) evalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
+// EvaluatePairList evaluates a list of lists.
+func (ev *Evaluator) EvalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
 	var result sx.ListBuilder
 	for node := pair; node != nil; node = node.Tail() {
 		elem := ev.Eval(node.Car(), env)
@@ -961,14 +965,14 @@ func (ev *Evaluator) evalLink(a attrs.Attributes, refValue sx.String, inline sx.
 	return result.Cons(ev.EvaluateAttrbute(a)).Cons(SymA)
 }
 
-func (ev *Evaluator) getSymbol(obj sx.Object, env *Environment) sx.Symbol {
+func (ev *Evaluator) getSymbol(obj sx.Object, env *Environment) *sx.Symbol {
 	if env.err == nil {
 		if sym, ok := sx.GetSymbol(obj); ok {
 			return sym
 		}
 		env.err = fmt.Errorf("%v/%T is not a symbol", obj, obj)
 	}
-	return sx.Symbol("???")
+	return sx.MakeSymbol("???")
 }
 func getString(val sx.Object, env *Environment) sx.String {
 	if env.err != nil {

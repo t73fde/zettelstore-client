@@ -103,7 +103,7 @@ func startsWithSpaceSoftBreak(ins sx.Vector) bool {
 	return pair0.Car().IsEqual(sz.SymSpace) && sz.IsBreakSym(car1)
 }
 
-const symSeparator = sx.Symbol("sEpArAtOr")
+var symSeparator = sx.MakeSymbol("sEpArAtOr")
 
 func (cp *zmkP) cleanupListsAfterEOL() {
 	for _, l := range cp.lists {
@@ -169,7 +169,7 @@ func (cp *zmkP) parseVerbatim() (rn *sx.Pair, success bool) {
 	if inp.Ch == input.EOS {
 		return nil, false
 	}
-	var sym sx.Symbol
+	var sym *sx.Symbol
 	switch fch {
 	case '@':
 		sym = sz.SymVerbatimZettel
@@ -216,7 +216,7 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 		return nil, false
 	}
 
-	var sym sx.Symbol
+	var sym *sx.Symbol
 	oldInVerse := cp.inVerse
 	defer func() { cp.inVerse = oldInVerse }()
 	switch fch {
@@ -341,7 +341,7 @@ func (cp *zmkP) parseNestedList() (res *sx.Pair, success bool) {
 		return nil, false
 	}
 	cp.skipSpace()
-	if kinds[len(kinds)-1] != sz.SymListQuote && input.IsEOLEOS(cp.inp.Ch) {
+	if !kinds[len(kinds)-1].IsEqual(sz.SymListQuote) && input.IsEOLEOS(cp.inp.Ch) {
 		return nil, false
 	}
 
@@ -359,11 +359,11 @@ func (cp *zmkP) parseNestedList() (res *sx.Pair, success bool) {
 	return cp.cleanupParsedNestedList(newLnCount)
 }
 
-func (cp *zmkP) parseNestedListKinds() []sx.Symbol {
+func (cp *zmkP) parseNestedListKinds() []*sx.Symbol {
 	inp := cp.inp
-	result := make([]sx.Symbol, 0, 8)
+	result := make([]*sx.Symbol, 0, 8)
 	for {
-		var sym sx.Symbol
+		var sym *sx.Symbol
 		switch inp.Ch {
 		case '*':
 			sym = sz.SymListUnordered
@@ -385,7 +385,7 @@ func (cp *zmkP) parseNestedListKinds() []sx.Symbol {
 	}
 }
 
-func (cp *zmkP) buildNestedList(kinds []sx.Symbol) (ln *sx.Pair, newLnCount int) {
+func (cp *zmkP) buildNestedList(kinds []*sx.Symbol) (ln *sx.Pair, newLnCount int) {
 	for i, kind := range kinds {
 		if i < len(cp.lists) {
 			if !cp.lists[i].Car().IsEqual(kind) {

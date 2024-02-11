@@ -38,7 +38,7 @@ func Walk(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 // WalkChildren will walk all child nodes.
 func WalkChildren(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 	if sym, isSymbol := sx.GetSymbol(node.Car()); isSymbol {
-		if fn, found := mapChildrenWalk[sym]; found {
+		if fn, found := mapChildrenWalk[sym.GetValue()]; found {
 			return fn(v, node, env)
 		}
 		log.Println("MISS", sym, node)
@@ -47,45 +47,45 @@ func WalkChildren(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 	panic(node)
 }
 
-var mapChildrenWalk map[sx.Symbol]func(Visitor, *sx.Pair, *sx.Pair) *sx.Pair
+var mapChildrenWalk map[string]func(Visitor, *sx.Pair, *sx.Pair) *sx.Pair
 
 func init() {
-	mapChildrenWalk = map[sx.Symbol]func(Visitor, *sx.Pair, *sx.Pair) *sx.Pair{
-		SymBlock:         walkChildrenTail,
-		SymPara:          walkChildrenTail,
-		SymRegionBlock:   walkChildrenRegion,
-		SymRegionQuote:   walkChildrenRegion,
-		SymRegionVerse:   walkChildrenRegion,
-		SymHeading:       walkChildrenHeading,
-		SymListOrdered:   walkChildrenTail,
-		SymListUnordered: walkChildrenTail,
-		SymListQuote:     walkChildrenTail,
-		SymDescription:   walkChildrenDescription,
-		SymTable:         walkChildrenTable,
+	mapChildrenWalk = map[string]func(Visitor, *sx.Pair, *sx.Pair) *sx.Pair{
+		SymBlock.GetValue():         walkChildrenTail,
+		SymPara.GetValue():          walkChildrenTail,
+		SymRegionBlock.GetValue():   walkChildrenRegion,
+		SymRegionQuote.GetValue():   walkChildrenRegion,
+		SymRegionVerse.GetValue():   walkChildrenRegion,
+		SymHeading.GetValue():       walkChildrenHeading,
+		SymListOrdered.GetValue():   walkChildrenTail,
+		SymListUnordered.GetValue(): walkChildrenTail,
+		SymListQuote.GetValue():     walkChildrenTail,
+		SymDescription.GetValue():   walkChildrenDescription,
+		SymTable.GetValue():         walkChildrenTable,
 
-		SymInline:       walkChildrenTail,
-		SymEndnote:      walkChildrenInlines3,
-		SymMark:         walkChildrenMark,
-		SymLinkBased:    walkChildrenInlines4,
-		SymLinkBroken:   walkChildrenInlines4,
-		SymLinkExternal: walkChildrenInlines4,
-		SymLinkFound:    walkChildrenInlines4,
-		SymLinkHosted:   walkChildrenInlines4,
-		SymLinkInvalid:  walkChildrenInlines4,
-		SymLinkQuery:    walkChildrenInlines4,
-		SymLinkSelf:     walkChildrenInlines4,
-		SymLinkZettel:   walkChildrenInlines4,
-		SymEmbed:        walkChildrenInlines4,
-		SymCite:         walkChildrenInlines4,
-		SymFormatDelete: walkChildrenInlines3,
-		SymFormatEmph:   walkChildrenInlines3,
-		SymFormatInsert: walkChildrenInlines3,
-		SymFormatMark:   walkChildrenInlines3,
-		SymFormatQuote:  walkChildrenInlines3,
-		SymFormatStrong: walkChildrenInlines3,
-		SymFormatSpan:   walkChildrenInlines3,
-		SymFormatSub:    walkChildrenInlines3,
-		SymFormatSuper:  walkChildrenInlines3,
+		SymInline.GetValue():       walkChildrenTail,
+		SymEndnote.GetValue():      walkChildrenInlines3,
+		SymMark.GetValue():         walkChildrenMark,
+		SymLinkBased.GetValue():    walkChildrenInlines4,
+		SymLinkBroken.GetValue():   walkChildrenInlines4,
+		SymLinkExternal.GetValue(): walkChildrenInlines4,
+		SymLinkFound.GetValue():    walkChildrenInlines4,
+		SymLinkHosted.GetValue():   walkChildrenInlines4,
+		SymLinkInvalid.GetValue():  walkChildrenInlines4,
+		SymLinkQuery.GetValue():    walkChildrenInlines4,
+		SymLinkSelf.GetValue():     walkChildrenInlines4,
+		SymLinkZettel.GetValue():   walkChildrenInlines4,
+		SymEmbed.GetValue():        walkChildrenInlines4,
+		SymCite.GetValue():         walkChildrenInlines4,
+		SymFormatDelete.GetValue(): walkChildrenInlines3,
+		SymFormatEmph.GetValue():   walkChildrenInlines3,
+		SymFormatInsert.GetValue(): walkChildrenInlines3,
+		SymFormatMark.GetValue():   walkChildrenInlines3,
+		SymFormatQuote.GetValue():  walkChildrenInlines3,
+		SymFormatStrong.GetValue(): walkChildrenInlines3,
+		SymFormatSpan.GetValue():   walkChildrenInlines3,
+		SymFormatSub.GetValue():    walkChildrenInlines3,
+		SymFormatSuper.GetValue():  walkChildrenInlines3,
 	}
 }
 

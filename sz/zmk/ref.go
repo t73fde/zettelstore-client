@@ -30,7 +30,7 @@ func ParseReference(s string) *sx.Pair {
 		return makePairRef(sz.SymRefStateQuery, s[len(api.QueryPrefix):])
 	}
 	if state, ok := localState(s); ok {
-		if state == sz.SymRefStateBased {
+		if state.IsEqual(sz.SymRefStateBased) {
 			s = s[1:]
 		}
 		_, err := url.Parse(s)
@@ -53,7 +53,7 @@ func ParseReference(s string) *sx.Pair {
 	}
 	return makePairRef(sz.SymRefStateExternal, s)
 }
-func makePairRef(sym sx.Symbol, val string) *sx.Pair {
+func makePairRef(sym *sx.Symbol, val string) *sx.Pair {
 	return sx.MakeList(sym, sx.String(val))
 }
 
@@ -63,7 +63,7 @@ func externalURL(u *url.URL) bool {
 	return u.Scheme != "" || u.Opaque != "" || u.Host != "" || u.User != nil
 }
 
-func localState(path string) (sx.Symbol, bool) {
+func localState(path string) (*sx.Symbol, bool) {
 	if len(path) > 0 && path[0] == '/' {
 		if len(path) > 1 && path[1] == '/' {
 			return sz.SymRefStateBased, true

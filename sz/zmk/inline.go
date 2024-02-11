@@ -393,7 +393,7 @@ func (cp *zmkP) parseComment() (res *sx.Pair, success bool) {
 	}
 }
 
-var mapRuneFormat = map[rune]sx.Symbol{
+var mapRuneFormat = map[rune]*sx.Symbol{
 	'_': sz.SymFormatEmph,
 	'*': sz.SymFormatStrong,
 	'>': sz.SymFormatInsert,
@@ -439,7 +439,7 @@ func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
 	}
 }
 
-var mapRuneLiteral = map[rune]sx.Symbol{
+var mapRuneLiteral = map[rune]*sx.Symbol{
 	'@':          sz.SymLiteralZettel,
 	'`':          sz.SymLiteralProg,
 	runeModGrave: sz.SymLiteralProg,
@@ -480,8 +480,8 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 	}
 }
 
-func createLiteralNode(sym sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
-	if sym == sz.SymLiteralZettel {
+func createLiteralNode(sym *sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
+	if sym.IsEqual(sz.SymLiteralZettel) {
 		if p := attrs.Assoc(sx.String("")); p != nil {
 			if val, isString := sx.GetString(p.Cdr()); isString && val == api.ValueSyntaxHTML {
 				sym = sz.SymLiteralHTML

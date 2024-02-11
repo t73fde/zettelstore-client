@@ -47,8 +47,8 @@ func GoValue(obj sx.Object) string {
 	switch o := obj.(type) {
 	case sx.String:
 		return string(o)
-	case sx.Symbol:
-		return string(o)
+	case *sx.Symbol:
+		return o.GoString()
 	}
 	return obj.String()
 }
@@ -105,8 +105,8 @@ func makeMetaValue(mnode *sx.Pair) (MetaValue, bool) {
 		return result, false
 	}
 	next = next.Tail()
-	result.Type = string(typeSym)
-	result.Key = string(keySym)
+	result.Type = typeSym.GetValue()
+	result.Key = keySym.GetValue()
 	result.Value = next.Car()
 	return result, true
 }
@@ -129,26 +129,26 @@ func (m Meta) GetPair(key string) *sx.Pair {
 
 // MapRefStateToLinkEmbed maps a reference state symbol to a link symbol or to
 // an embed symbol, depending on 'forLink'.
-func MapRefStateToLinkEmbed(symRefState sx.Symbol, forLink bool) sx.Symbol {
+func MapRefStateToLinkEmbed(symRefState *sx.Symbol, forLink bool) *sx.Symbol {
 	if !forLink {
 		return SymEmbed
 	}
-	if sym, found := mapRefStateLink[symRefState]; found {
+	if sym, found := mapRefStateLink[symRefState.GetValue()]; found {
 		return sym
 	}
 	return SymLinkInvalid
 }
 
-var mapRefStateLink = map[sx.Symbol]sx.Symbol{
-	SymRefStateInvalid:  SymLinkInvalid,
-	SymRefStateZettel:   SymLinkZettel,
-	SymRefStateSelf:     SymLinkSelf,
-	SymRefStateFound:    SymLinkFound,
-	SymRefStateBroken:   SymLinkBroken,
-	SymRefStateHosted:   SymLinkHosted,
-	SymRefStateBased:    SymLinkBased,
-	SymRefStateQuery:    SymLinkQuery,
-	SymRefStateExternal: SymLinkExternal,
+var mapRefStateLink = map[string]*sx.Symbol{
+	SymRefStateInvalid.GetValue():  SymLinkInvalid,
+	SymRefStateZettel.GetValue():   SymLinkZettel,
+	SymRefStateSelf.GetValue():     SymLinkSelf,
+	SymRefStateFound.GetValue():    SymLinkFound,
+	SymRefStateBroken.GetValue():   SymLinkBroken,
+	SymRefStateHosted.GetValue():   SymLinkHosted,
+	SymRefStateBased.GetValue():    SymLinkBased,
+	SymRefStateQuery.GetValue():    SymLinkQuery,
+	SymRefStateExternal.GetValue(): SymLinkExternal,
 }
 
 // IsBreakSym return true if the object is either a soft or a hard break symbol.
