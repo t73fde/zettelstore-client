@@ -27,11 +27,11 @@ import (
 // EncodeZettel transforms zettel data into a sx object.
 func EncodeZettel(zettel api.ZettelData) sx.Object {
 	return sx.MakeList(
-		sx.Symbol("zettel"),
+		sx.MakeSymbol("zettel"),
 		meta2sz(zettel.Meta),
-		sx.MakeList(sx.Symbol("rights"), sx.Int64(int64(zettel.Rights))),
-		sx.MakeList(sx.Symbol("encoding"), sx.String(zettel.Encoding)),
-		sx.MakeList(sx.Symbol("content"), sx.String(zettel.Content)),
+		sx.MakeList(sx.MakeSymbol("rights"), sx.Int64(int64(zettel.Rights))),
+		sx.MakeList(sx.MakeSymbol("encoding"), sx.String(zettel.Encoding)),
+		sx.MakeList(sx.MakeSymbol("content"), sx.String(zettel.Content)),
 	)
 }
 
@@ -83,20 +83,20 @@ func EncodeMetaRights(mr api.MetaRights) *sx.Pair {
 	return sx.MakeList(
 		sx.SymbolList,
 		meta2sz(mr.Meta),
-		sx.MakeList(sx.Symbol("rights"), sx.Int64(int64(mr.Rights))),
+		sx.MakeList(sx.MakeSymbol("rights"), sx.Int64(int64(mr.Rights))),
 	)
 }
 
 func meta2sz(m api.ZettelMeta) sx.Object {
 	var result sx.ListBuilder
-	result.Add(sx.Symbol("meta"))
+	result.Add(sx.MakeSymbol("meta"))
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		val := sx.MakeList(sx.Symbol(k), sx.String(m[k]))
+		val := sx.MakeList(sx.MakeSymbol(k), sx.String(m[k]))
 		result.Add(val)
 	}
 	return result.List()
@@ -113,7 +113,7 @@ func ParseMeta(pair *sx.Pair) (api.ZettelMeta, error) {
 		if err != nil {
 			return nil, err
 		}
-		res[string(mVals[0].(sx.Symbol))] = string(mVals[1].(sx.String))
+		res[(mVals[0].(*sx.Symbol)).GetValue()] = string(mVals[1].(sx.String))
 	}
 	return res, nil
 }
@@ -197,7 +197,7 @@ func CheckSymbol(obj sx.Object, name string) error {
 	if !isSymbol {
 		return fmt.Errorf("object %v/%T is not a symbol", obj, obj)
 	}
-	if got := string(sym); got != name {
+	if got := sym.GetValue(); got != name {
 		return fmt.Errorf("symbol %q expected, but got: %q", name, got)
 	}
 	return nil

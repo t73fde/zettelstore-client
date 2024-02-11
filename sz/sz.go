@@ -46,8 +46,8 @@ func GoValue(obj sx.Object) string {
 	switch o := obj.(type) {
 	case sx.String:
 		return string(o)
-	case sx.Symbol:
-		return string(o)
+	case *sx.Symbol:
+		return o.GoString()
 	}
 	return obj.String()
 }
@@ -104,8 +104,8 @@ func makeMetaValue(mnode *sx.Pair) (MetaValue, bool) {
 		return result, false
 	}
 	next = next.Tail()
-	result.Type = string(typeSym)
-	result.Key = string(keySym)
+	result.Type = typeSym.GetValue()
+	result.Key = keySym.GetValue()
 	result.Value = next.Car()
 	return result, true
 }
