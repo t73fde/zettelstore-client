@@ -288,9 +288,11 @@ const (
 
 	ActionSeparator = "|"
 
+	AtomAction     = "ATOM"
 	KeysAction     = "KEYS"
 	RedirectAction = "REDIRECT"
 	ReIndexAction  = "REINDEX"
+	RSSAction      = "RSS"
 
 	ExistOperator    = "?"
 	ExistNotOperator = "!?"
