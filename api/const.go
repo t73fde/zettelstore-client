@@ -288,6 +288,10 @@ const (
 
 	ActionSeparator = "|"
 
+	KeysAction     = "KEYS"
+	RedirectAction = "REDIRECT"
+	ReIndexAction  = "REINDEX"
+
 	ExistOperator    = "?"
 	ExistNotOperator = "!?"
 
