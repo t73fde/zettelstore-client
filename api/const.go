@@ -291,7 +291,7 @@ const (
 	AtomAction     = "ATOM"
 	KeysAction     = "KEYS"
 	MinAction      = "MIN"
-	MaxAscion      = "MAX"
+	MaxAction      = "MAX"
 	NumberedAction = "NUMBERED"
 	RedirectAction = "REDIRECT"
 	ReIndexAction  = "REINDEX"
