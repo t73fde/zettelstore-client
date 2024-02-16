@@ -290,9 +290,13 @@ const (
 
 	AtomAction     = "ATOM"
 	KeysAction     = "KEYS"
+	MinAction      = "MIN"
+	MaxAscion      = "MAX"
+	NumberedAction = "NUMBERED"
 	RedirectAction = "REDIRECT"
 	ReIndexAction  = "REINDEX"
 	RSSAction      = "RSS"
+	TitleAction    = "TITLE"
 
 	ExistOperator    = "?"
 	ExistNotOperator = "!?"
