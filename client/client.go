@@ -413,7 +413,7 @@ func makeZettelID(obj sx.Object) (api.ZettelID, error) {
 
 // QueryAggregate returns a aggregate as a result of a query.
 // It is most often used in a query with an action, where the action is either
-// a metadata key of type Word, WordSet, or TagSet.
+// a metadata key of type Word or of type TagSet.
 func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregate, error) {
 	lines, err := c.QueryZettel(ctx, query)
 	if err != nil {

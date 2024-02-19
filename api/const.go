@@ -89,7 +89,6 @@ const (
 	MetaTimestamp    = "Timestamp"
 	MetaURL          = "URL"
 	MetaWord         = "Word"
-	MetaWordSet      = "WordSet"
 	MetaZettelmarkup = "Zettelmarkup"
 )
 
@@ -287,6 +286,16 @@ const (
 	UnlinkedDirective = "UNLINKED"
 
 	ActionSeparator = "|"
+
+	AtomAction     = "ATOM"
+	KeysAction     = "KEYS"
+	MinAction      = "MIN"
+	MaxAction      = "MAX"
+	NumberedAction = "NUMBERED"
+	RedirectAction = "REDIRECT"
+	ReIndexAction  = "REINDEX"
+	RSSAction      = "RSS"
+	TitleAction    = "TITLE"
 
 	ExistOperator    = "?"
 	ExistNotOperator = "!?"
