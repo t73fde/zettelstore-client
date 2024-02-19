@@ -47,7 +47,8 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 	}
 
 	bnl := blkBuild.List()
-	if bs := postProcessPairList(bnl, nil); bs != nil {
+	var pp postProcessor
+	if bs := pp.visitPairList(bnl, nil); bs != nil {
 		return bs.Cons(sz.SymBlock)
 	}
 	return nil
@@ -65,7 +66,8 @@ func ParseInlines(inp *input.Input) *sx.Pair {
 	}
 
 	inl := ins.MakeList().Cons(sz.SymInline)
-	return postProcess(inl, nil)
+	var pp postProcessor
+	return sz.Walk(&pp, inl, nil)
 }
 
 type zmkP struct {

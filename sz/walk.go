@@ -14,8 +14,6 @@
 package sz
 
 import (
-	"log"
-
 	"zettelstore.de/sx.fossil"
 )
 
@@ -32,16 +30,12 @@ func Walk(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 	if result, isPair := sx.GetPair(v.Visit(node, env)); isPair {
 		return result
 	}
-	return WalkChildren(v, node, env)
-}
 
-// WalkChildren will walk all child nodes.
-func WalkChildren(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 	if sym, isSymbol := sx.GetSymbol(node.Car()); isSymbol {
-		if fn, found := mapChildrenWalk[sym.GetValue()]; found {
+		symVal := sym.GetValue()
+		if fn, found := mapChildrenWalk[symVal]; found {
 			return fn(v, node, env)
 		}
-		log.Println("MISS", sym, node)
 		return node
 	}
 	panic(node)
