@@ -89,7 +89,6 @@ const (
 	MetaTimestamp    = "Timestamp"
 	MetaURL          = "URL"
 	MetaWord         = "Word"
-	MetaWordSet      = "WordSet"
 	MetaZettelmarkup = "Zettelmarkup"
 )
 

@@ -269,7 +269,6 @@ func (ev *Evaluator) bindMetadata() {
 	}
 	ev.bind(sz.SymTypeIDSet, 2, evalMetaSet)
 	ev.bind(sz.SymTypeTagSet, 2, evalMetaSet)
-	ev.bind(sz.SymTypeWordSet, 2, evalMetaSet)
 	ev.bind(sz.SymTypeZettelmarkup, 2, func(args sx.Vector, env *Environment) sx.Object {
 		a := make(attrs.Attributes, 2).
 			Set("name", ev.getSymbol(args[0], env).GetValue()).

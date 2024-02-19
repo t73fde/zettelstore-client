@@ -105,7 +105,6 @@ const (
 	NameTypeTimestamp    = "TIMESTAMP"
 	NameTypeURL          = "URL"
 	NameTypeWord         = "WORD"
-	NameTypeWordSet      = "WORD-SET"
 	NameTypeZettelmarkup = "ZETTELMARKUP"
 )
 
@@ -197,6 +196,5 @@ var (
 	SymTypeTimestamp    = sx.MakeSymbol(NameTypeTimestamp)
 	SymTypeURL          = sx.MakeSymbol(NameTypeURL)
 	SymTypeWord         = sx.MakeSymbol(NameTypeWord)
-	SymTypeWordSet      = sx.MakeSymbol(NameTypeWordSet)
 	SymTypeZettelmarkup = sx.MakeSymbol(NameTypeZettelmarkup)
 )
