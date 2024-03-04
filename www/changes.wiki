@@ -1,7 +1,13 @@
 <title>Change Log</title>
 
+<a name="0_18"></a>
+<h2>Changes for Version 0.18.0 (pending)</h2>
+
 <a name="0_17"></a>
-<h2>Changes for Version 0.17.0 (pending)</h2>
+<h2>Changes for Version 0.17.0 (2024-03-04)</h2>
+  *  Generic GET method for HTTP client.
+  *  Adapt to sz changes; see manual for current syntax.
+  *  Got some packages from Zettelstore, for general use.
 
 <a name="0_16"></a>
 <h2>Changes for Version 0.16.0 (2023-11-30)</h2>
