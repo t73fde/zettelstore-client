@@ -27,11 +27,11 @@ import (
 	"strings"
 	"time"
 
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxreader"
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/sexp"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxreader"
 )
 
 // Client contains all data to execute requests.

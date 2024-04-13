@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"sort"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/api"
-	"zettelstore.de/sx.fossil"
 )
 
 // EncodeZettel transforms zettel data into a sx object.

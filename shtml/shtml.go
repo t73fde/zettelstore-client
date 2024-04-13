@@ -20,12 +20,12 @@ import (
 	"strconv"
 	"strings"
 
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxhtml"
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/attrs"
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/client.fossil/text"
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 // Evaluator will transform a s-expression that encodes the zettel AST into an s-expression

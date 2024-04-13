@@ -16,8 +16,8 @@ package sexp_test
 import (
 	"testing"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/sexp"
-	"zettelstore.de/sx.fossil"
 )
 
 func TestParseObject(t *testing.T) {

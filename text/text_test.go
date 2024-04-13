@@ -17,9 +17,9 @@ import (
 	"strings"
 	"testing"
 
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxreader"
 	"zettelstore.de/client.fossil/text"
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxreader"
 )
 
 func TestSzText(t *testing.T) {
