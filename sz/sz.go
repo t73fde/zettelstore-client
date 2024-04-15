@@ -45,9 +45,9 @@ func GetAttributes(seq *sx.Pair) (result attrs.Attributes) {
 func GoValue(obj sx.Object) string {
 	switch o := obj.(type) {
 	case sx.String:
-		return string(o)
+		return o.GetValue()
 	case *sx.Symbol:
-		return o.GoString()
+		return o.GetValue()
 	}
 	return obj.String()
 }

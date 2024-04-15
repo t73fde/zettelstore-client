@@ -194,12 +194,12 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	token := string(vals[1].(sx.String))
+	token := vals[1].(sx.String).GetValue()
 	if len(token) < 4 {
 		return fmt.Errorf("no valid token found: %q", token)
 	}
 	c.token = token
-	c.tokenType = string(vals[0].(sx.String))
+	c.tokenType = vals[0].(sx.String).GetValue()
 	c.expires = time.Now().Add(time.Duration(vals[2].(sx.Int64)*9/10) * time.Second)
 	return nil
 }
@@ -719,8 +719,8 @@ func (c *Client) GetVersionInfo(ctx context.Context) (VersionInfo, error) {
 				Major: int(vals[0].(sx.Int64)),
 				Minor: int(vals[1].(sx.Int64)),
 				Patch: int(vals[2].(sx.Int64)),
-				Info:  string(vals[3].(sx.String)),
-				Hash:  string(vals[4].(sx.String)),
+				Info:  vals[3].(sx.String).GetValue(),
+				Hash:  vals[4].(sx.String).GetValue(),
 			}, nil
 		}
 	}
