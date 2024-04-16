@@ -13,9 +13,7 @@
 
 package sz
 
-import (
-	"zettelstore.de/sx.fossil"
-)
+import "t73f.de/r/sx"
 
 // Visitor is walking the sx-based AST.
 type Visitor interface {

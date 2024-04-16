@@ -19,9 +19,9 @@ import (
 	"strings"
 	"unicode"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil"
 )
 
 func ParseBlocks(inp *input.Input) *sx.Pair {
@@ -114,7 +114,7 @@ func (attrs attrMap) asPairAssoc() *sx.Pair {
 	var assoc *sx.Pair = nil
 	for i := len(names) - 1; i >= 0; i-- {
 		n := names[i]
-		assoc = assoc.Cons(sx.Cons(sx.String(n), sx.String(attrs[n])))
+		assoc = assoc.Cons(sx.Cons(sx.MakeString(n), sx.MakeString(attrs[n])))
 	}
 	return assoc
 }

@@ -18,10 +18,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil"
 )
 
 func (cp *zmkP) parseInline() *sx.Pair {
@@ -94,7 +94,7 @@ func (cp *zmkP) parseString() sx.String {
 		// The following case must contain all runes that occur in parseInline!
 		// Plus the closing brackets ] and } and ) and the middle |
 		case input.EOS, '\n', '\r', ' ', '\t', '[', ']', '{', '}', '(', ')', '|', '%', '_', '*', '>', '~', '^', ',', '"', '#', ':', '\'', '@', '`', runeModGrave, '$', '=', '\\', '-', '&':
-			return sx.String(string(inp.Src[pos:inp.Pos]))
+			return sx.MakeString(string(inp.Src[pos:inp.Pos]))
 		}
 	}
 }
@@ -113,15 +113,15 @@ func (cp *zmkP) parseBackslash() *sx.Pair {
 func (cp *zmkP) parseBackslashRest() sx.String {
 	inp := cp.inp
 	if input.IsEOLEOS(inp.Ch) {
-		return sx.String("\\")
+		return sx.MakeString("\\")
 	}
 	if inp.Ch == ' ' {
 		inp.Next()
-		return sx.String("\u00a0")
+		return sx.MakeString("\u00a0")
 	}
 	pos := inp.Pos
 	inp.Next()
-	return sx.String(string(inp.Src[pos:inp.Pos]))
+	return sx.MakeString(string(inp.Src[pos:inp.Pos]))
 }
 
 func (cp *zmkP) parseSpace() *sx.Pair {
@@ -134,7 +134,7 @@ func (cp *zmkP) parseSpace() *sx.Pair {
 			if cp.inVerse {
 				spaces := utf8.RuneCount(inp.Src[pos:inp.Pos])
 				s := strings.Repeat("\u00a0", spaces)
-				return sx.MakeList(sz.SymSpace, sx.String(s))
+				return sx.MakeList(sz.SymSpace, sx.MakeString(s))
 			}
 			return sx.MakeList(sz.SymSpace)
 		}
@@ -303,7 +303,7 @@ loop:
 		return nil, false
 	}
 	attrs := cp.parseInlineAttributes()
-	cn := ins.Cons(sx.String(inp.Src[pos:posL])).Cons(attrs).Cons(sz.SymCite)
+	cn := ins.Cons(sx.MakeString(string(inp.Src[pos:posL]))).Cons(attrs).Cons(sz.SymCite)
 	return cn, true
 }
 
@@ -340,9 +340,9 @@ func (cp *zmkP) parseMark() (*sx.Pair, bool) {
 		inp.Next()
 	}
 	mn := ins.
-		Cons(sx.String("")). // Fragment
-		Cons(sx.String("")). // Slug
-		Cons(sx.String(mark)).
+		Cons(sx.MakeString("")). // Fragment
+		Cons(sx.MakeString("")). // Slug
+		Cons(sx.MakeString(string(mark))).
 		Cons(sz.SymMark)
 	return mn, true
 	// Problematisch ist, dass hier noch nicht mn.Fragment und mn.Slug gesetzt werden.
@@ -386,7 +386,7 @@ func (cp *zmkP) parseComment() (res *sx.Pair, success bool) {
 			return sx.MakeList(
 				sz.SymLiteralComment,
 				attrs,
-				sx.String(inp.Src[pos:inp.Pos]),
+				sx.MakeString(string(inp.Src[pos:inp.Pos])),
 			), true
 		}
 		inp.Next()
@@ -429,7 +429,7 @@ func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
 				fn := sx.MakeList(inlines...).Cons(attrs).Cons(symFormat)
 				return fn, true
 			}
-			inlines = append(inlines, sx.MakeList(sz.SymText, sx.String(fch)))
+			inlines = append(inlines, sx.MakeList(sz.SymText, sx.MakeString(string(fch))))
 		} else if in := cp.parseInline(); in != nil {
 			if input.IsEOLEOS(inp.Ch) && sz.IsBreakSym(in.Car()) {
 				return nil, false
@@ -475,21 +475,21 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 			inp.Next()
 		} else {
 			s := cp.parseString()
-			sb.WriteString(string(s))
+			sb.WriteString(s.GetValue())
 		}
 	}
 }
 
 func createLiteralNode(sym *sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
 	if sym.IsEqual(sz.SymLiteralZettel) {
-		if p := attrs.Assoc(sx.String("")); p != nil {
-			if val, isString := sx.GetString(p.Cdr()); isString && val == api.ValueSyntaxHTML {
+		if p := attrs.Assoc(sx.MakeString("")); p != nil {
+			if val, isString := sx.GetString(p.Cdr()); isString && val.GetValue() == api.ValueSyntaxHTML {
 				sym = sz.SymLiteralHTML
-				attrs = attrs.RemoveAssoc(sx.String(""))
+				attrs = attrs.RemoveAssoc(sx.MakeString(""))
 			}
 		}
 	}
-	return sx.MakeList(sym, attrs, sx.String(content))
+	return sx.MakeList(sym, attrs, sx.MakeString(content))
 }
 
 func (cp *zmkP) parseLiteralMath() (res *sx.Pair, success bool) {
@@ -508,7 +508,7 @@ func (cp *zmkP) parseLiteralMath() (res *sx.Pair, success bool) {
 			content := append([]byte{}, inp.Src[pos:inp.Pos]...)
 			inp.Next()
 			inp.Next()
-			fn := sx.MakeList(sz.SymLiteralMath, cp.parseInlineAttributes(), sx.String(content))
+			fn := sx.MakeList(sz.SymLiteralMath, cp.parseInlineAttributes(), sx.MakeString(string(content)))
 			return fn, true
 		}
 		inp.Next()
@@ -522,12 +522,12 @@ func (cp *zmkP) parseNdash() (res *sx.Pair, success bool) {
 	}
 	inp.Next()
 	inp.Next()
-	return sx.MakeList(sz.SymText, sx.String("\u2013")), true
+	return sx.MakeList(sz.SymText, sx.MakeString("\u2013")), true
 }
 
 func (cp *zmkP) parseEntity() (res *sx.Pair, success bool) {
 	if text, ok := cp.inp.ScanEntity(); ok {
-		return sx.MakeList(sz.SymText, sx.String(text)), true
+		return sx.MakeList(sz.SymText, sx.MakeString(text)), true
 	}
 	return nil, false
 }

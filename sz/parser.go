@@ -14,9 +14,9 @@
 package sz
 
 import (
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/input"
-	"zettelstore.de/sx.fossil"
 )
 
 // --- Contains some simple parsers
@@ -44,8 +44,8 @@ func ParsePlainBlocks(inp *input.Input, syntax string) *sx.Pair {
 	}
 	return sx.MakeList(
 		sym,
-		sx.MakeList(sx.Cons(sx.String(""), sx.String(syntax))),
-		sx.String(inp.ScanLineContent()),
+		sx.MakeList(sx.Cons(sx.MakeString(""), sx.MakeString(syntax))),
+		sx.MakeString(string(inp.ScanLineContent())),
 	)
 }
 
@@ -61,7 +61,7 @@ func ParsePlainInlines(inp *input.Input, syntax string) *sx.Pair {
 	inp.SkipToEOL()
 	return sx.MakeList(
 		sym,
-		sx.MakeList(sx.Cons(sx.String(""), sx.String(syntax))),
-		sx.String(inp.Src[pos:inp.Pos]),
+		sx.MakeList(sx.Cons(sx.MakeString(""), sx.MakeString(syntax))),
+		sx.MakeString(string(inp.Src[pos:inp.Pos])),
 	)
 }

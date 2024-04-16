@@ -13,7 +13,7 @@
 
 package sz
 
-import "zettelstore.de/sx.fossil"
+import "t73f.de/r/sx"
 
 // Various constants for Zettel data. Some of them are technically variables.
 

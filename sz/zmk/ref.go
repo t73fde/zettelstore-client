@@ -16,9 +16,9 @@ import (
 	"net/url"
 	"strings"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil"
 )
 
 // ParseReference parses a string and returns a reference.
@@ -54,7 +54,7 @@ func ParseReference(s string) *sx.Pair {
 	return makePairRef(sz.SymRefStateExternal, s)
 }
 func makePairRef(sym *sx.Symbol, val string) *sx.Pair {
-	return sx.MakeList(sym, sx.String(val))
+	return sx.MakeList(sym, sx.MakeString(val))
 }
 
 func invalidReference(s string) bool { return s == "" || s == "00000000000000" }

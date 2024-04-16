@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"sort"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/api"
-	"zettelstore.de/sx.fossil"
 )
 
 // EncodeZettel transforms zettel data into a sx object.
@@ -30,8 +30,8 @@ func EncodeZettel(zettel api.ZettelData) sx.Object {
 		sx.MakeSymbol("zettel"),
 		meta2sz(zettel.Meta),
 		sx.MakeList(sx.MakeSymbol("rights"), sx.Int64(int64(zettel.Rights))),
-		sx.MakeList(sx.MakeSymbol("encoding"), sx.String(zettel.Encoding)),
-		sx.MakeList(sx.MakeSymbol("content"), sx.String(zettel.Content)),
+		sx.MakeList(sx.MakeSymbol("encoding"), sx.MakeString(zettel.Encoding)),
+		sx.MakeList(sx.MakeSymbol("content"), sx.MakeString(zettel.Content)),
 	)
 }
 
@@ -73,8 +73,8 @@ func ParseZettel(obj sx.Object) (api.ZettelData, error) {
 	return api.ZettelData{
 		Meta:     meta,
 		Rights:   rights,
-		Encoding: string(encVals[1].(sx.String)),
-		Content:  string(contentVals[1].(sx.String)),
+		Encoding: encVals[1].(sx.String).GetValue(),
+		Content:  contentVals[1].(sx.String).GetValue(),
 	}, nil
 }
 
@@ -96,7 +96,7 @@ func meta2sz(m api.ZettelMeta) sx.Object {
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		val := sx.MakeList(sx.MakeSymbol(k), sx.String(m[k]))
+		val := sx.MakeList(sx.MakeSymbol(k), sx.MakeString(m[k]))
 		result.Add(val)
 	}
 	return result.List()
@@ -113,7 +113,7 @@ func ParseMeta(pair *sx.Pair) (api.ZettelMeta, error) {
 		if err != nil {
 			return nil, err
 		}
-		res[(mVals[0].(*sx.Symbol)).GetValue()] = string(mVals[1].(sx.String))
+		res[(mVals[0].(*sx.Symbol)).GetValue()] = mVals[1].(sx.String).GetValue()
 	}
 	return res, nil
 }

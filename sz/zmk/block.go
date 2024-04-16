@@ -16,9 +16,9 @@ package zmk
 import (
 	"fmt"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil"
 )
 
 // parseBlock parses one block.
@@ -192,7 +192,7 @@ func (cp *zmkP) parseVerbatim() (rn *sx.Pair, success bool) {
 		case fch:
 			if cp.countDelim(fch) >= cnt {
 				inp.SkipToEOL()
-				rn = sx.MakeList(sym, attrs, sx.String(content))
+				rn = sx.MakeList(sym, attrs, sx.MakeString(string(content)))
 				return rn, true
 			}
 			inp.SetPos(posL)
@@ -315,8 +315,8 @@ func (cp *zmkP) parseHeading() (hn *sx.Pair, success bool) {
 }
 func createHeading(level int64, attrs, text *sx.Pair) *sx.Pair {
 	return text.
-		Cons(sx.String("")). // Fragment
-		Cons(sx.String("")). // Slug
+		Cons(sx.MakeString("")). // Fragment
+		Cons(sx.MakeString("")). // Slug
 		Cons(attrs).
 		Cons(sx.Int64(level)).
 		Cons(sz.SymHeading)

@@ -25,6 +25,7 @@ const (
 	ZidAuthors              = ZettelID("00000000000005")
 	ZidDependencies         = ZettelID("00000000000006")
 	ZidLog                  = ZettelID("00000000000007")
+	ZidMemory               = ZettelID("00000000000008")
 	ZidBoxManager           = ZettelID("00000000000020")
 	ZidMetadataKey          = ZettelID("00000000000090")
 	ZidParser               = ZettelID("00000000000092")

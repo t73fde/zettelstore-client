@@ -15,8 +15,8 @@
 package sz
 
 import (
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/attrs"
-	"zettelstore.de/sx.fossil"
 )
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.
@@ -46,9 +46,9 @@ func GetAttributes(seq *sx.Pair) (result attrs.Attributes) {
 func GoValue(obj sx.Object) string {
 	switch o := obj.(type) {
 	case sx.String:
-		return string(o)
+		return o.GetValue()
 	case *sx.Symbol:
-		return o.GoString()
+		return o.GetValue()
 	}
 	return obj.String()
 }

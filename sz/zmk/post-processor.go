@@ -14,8 +14,8 @@
 package zmk
 
 import (
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil"
 )
 
 var symInVerse = sx.MakeSymbol("in-verse")
@@ -137,7 +137,7 @@ func postProcessRegionVerse(pp *postProcessor, rn *sx.Pair, env *sx.Pair) *sx.Pa
 }
 
 func postProcessVerbatim(pp *postProcessor, verb *sx.Pair, _ *sx.Pair) *sx.Pair {
-	if content, isString := sx.GetString(verb.Tail().Tail().Car()); isString && content != "" {
+	if content, isString := sx.GetString(verb.Tail().Tail().Car()); isString && content.GetValue() != "" {
 		return verb
 	}
 	return nil
@@ -295,10 +295,11 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 		// elem is first cell inline element
 		elem := cellTail.Head()
 		if elem.Car().IsEqual(sz.SymText) {
-			if s, isString := sx.GetString(elem.Tail().Car()); isString && s != "" {
-				if s[0] == '=' {
+			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
+				str := s.GetValue()
+				if str[0] == '=' {
 					foundHeader = true
-					elem.SetCdr(sx.Cons(s[1:], nil))
+					elem.SetCdr(sx.Cons(sx.MakeString(str[1:]), nil))
 				}
 			}
 		}
@@ -314,10 +315,11 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 
 		elem = cellTail.Head()
 		if elem.Car().IsEqual(sz.SymText) {
-			if s, isString := sx.GetString(elem.Tail().Car()); isString && s != "" {
-				cellAlign := getCellAlignment(s[len(s)-1])
+			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
+				str := s.GetValue()
+				cellAlign := getCellAlignment(str[len(str)-1])
 				if !cellAlign.IsEqual(sz.SymCell) {
-					elem.SetCdr(sx.Cons(s[0:len(s)-1], nil))
+					elem.SetCdr(sx.Cons(sx.MakeString(str[0:len(str)-1]), nil))
 				}
 				align[cellCount-1] = cellAlign
 				cell.SetCar(cellAlign)
@@ -359,10 +361,11 @@ func alignRow(row *sx.Pair, align []*sx.Symbol) {
 		// elem is first cell inline element
 		elem := cellTail.Head()
 		if elem.Car().IsEqual(sz.SymText) {
-			if s, isString := sx.GetString(elem.Tail().Car()); isString && s != "" {
-				cellAlign := getCellAlignment(s[0])
+			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
+				str := s.GetValue()
+				cellAlign := getCellAlignment(str[0])
 				if !cellAlign.IsEqual(sz.SymCell) {
-					elem.SetCdr(sx.Cons(s[1:], nil))
+					elem.SetCdr(sx.Cons(sx.MakeString(str[1:]), nil))
 					cell.SetCar(cellAlign)
 				}
 			}
@@ -415,9 +418,9 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 
 		if lastSym.IsEqual(sz.SymText) && elemSym.IsEqual(sz.SymText) {
 			// Merge two TEXT elements into one
-			lastText := last.Tail().Car().(sx.String)
-			elemText := elem.Tail().Car().(sx.String)
-			last.SetCdr(sx.Cons(lastText+elemText, sx.Nil()))
+			lastText := last.Tail().Car().(sx.String).GetValue()
+			elemText := elem.Tail().Car().(sx.String).GetValue()
+			last.SetCdr(sx.Cons(sx.MakeString(lastText+elemText), sx.Nil()))
 			continue
 		}
 
@@ -457,7 +460,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 
 func postProcessText(_ *postProcessor, txt *sx.Pair, _ *sx.Pair) *sx.Pair {
 	if tail := txt.Tail(); tail != nil {
-		if content, isString := sx.GetString(tail.Car()); isString && content != "" {
+		if content, isString := sx.GetString(tail.Car()); isString && content.GetValue() != "" {
 			return txt
 		}
 	}

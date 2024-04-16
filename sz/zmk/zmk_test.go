@@ -19,10 +19,10 @@ import (
 	"strings"
 	"testing"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/input"
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/client.fossil/sz/zmk"
-	"zettelstore.de/sx.fossil"
 )
 
 type TestCase struct{ source, want string }

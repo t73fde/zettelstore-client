@@ -17,8 +17,8 @@ package text
 import (
 	"strings"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil"
 )
 
 // Encoder is the structure to hold relevant data to execute the encoding.
@@ -65,7 +65,7 @@ func (enc *Encoder) execute(obj sx.Object) {
 			return
 		}
 		if val, isString := sx.GetString(args.Car()); isString {
-			enc.sb.WriteString(string(val))
+			enc.sb.WriteString(val.GetValue())
 		}
 	} else if sym.IsEqual(sz.SymSpace) || sym.IsEqual(sz.SymSoft) {
 		enc.sb.WriteByte(' ')

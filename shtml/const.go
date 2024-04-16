@@ -13,7 +13,7 @@
 
 package shtml
 
-import "zettelstore.de/sx.fossil"
+import "t73f.de/r/sx"
 
 // Symbols for HTML header tags
 var (

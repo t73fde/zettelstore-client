@@ -20,12 +20,12 @@ import (
 	"strconv"
 	"strings"
 
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxhtml"
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/attrs"
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/client.fossil/text"
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 // Evaluator will transform a s-expression that encodes the zettel AST into an s-expression
@@ -69,7 +69,7 @@ func (tr *Evaluator) EvaluateAttrbute(a attrs.Attributes) *sx.Pair {
 	for i := len(keys) - 1; i >= 0; i-- {
 		key := keys[i]
 		if key != attrs.DefaultAttribute && tr.IsValidName(key) {
-			plist = plist.Cons(sx.Cons(sx.MakeSymbol(key), sx.String(a[key])))
+			plist = plist.Cons(sx.Cons(sx.MakeSymbol(key), sx.MakeString(a[key])))
 		}
 	}
 	if plist == nil {
@@ -124,20 +124,20 @@ func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
 
 	var result sx.ListBuilder
 	result.Add(SymOL)
-	result.Add(sx.Nil().Cons(sx.Cons(SymAttrClass, sx.String("zs-endnotes"))).Cons(sxhtml.SymAttr))
+	result.Add(sx.Nil().Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnotes"))).Cons(sxhtml.SymAttr))
 	for i, fni := range env.endnotes {
 		noteNum := strconv.Itoa(i + 1)
-		attrs := fni.attrs.Cons(sx.Cons(SymAttrClass, sx.String("zs-endnote"))).
-			Cons(sx.Cons(SymAttrValue, sx.String(noteNum))).
-			Cons(sx.Cons(SymAttrId, sx.String("fn:"+fni.noteID))).
-			Cons(sx.Cons(SymAttrRole, sx.String("doc-endnote"))).
+		attrs := fni.attrs.Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnote"))).
+			Cons(sx.Cons(SymAttrValue, sx.MakeString(noteNum))).
+			Cons(sx.Cons(SymAttrId, sx.MakeString("fn:"+fni.noteID))).
+			Cons(sx.Cons(SymAttrRole, sx.MakeString("doc-endnote"))).
 			Cons(sxhtml.SymAttr)
 
-		backref := sx.Nil().Cons(sx.String("\u21a9\ufe0e")).
+		backref := sx.Nil().Cons(sx.MakeString("\u21a9\ufe0e")).
 			Cons(sx.Nil().
-				Cons(sx.Cons(SymAttrClass, sx.String("zs-endnote-backref"))).
-				Cons(sx.Cons(SymAttrHref, sx.String("#fnref:"+fni.noteID))).
-				Cons(sx.Cons(SymAttrRole, sx.String("doc-backlink"))).
+				Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnote-backref"))).
+				Cons(sx.Cons(SymAttrHref, sx.MakeString("#fnref:"+fni.noteID))).
+				Cons(sx.Cons(SymAttrRole, sx.MakeString("doc-backlink"))).
 				Cons(sxhtml.SymAttr)).
 			Cons(SymA)
 
@@ -145,7 +145,7 @@ func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
 		li.Add(SymLI)
 		li.Add(attrs)
 		li.ExtendBang(fni.noteHx)
-		li.Add(sx.String(" "))
+		li.Add(sx.MakeString(" "))
 		li.Add(backref)
 		result.Add(li.List())
 	}
@@ -240,7 +240,7 @@ func (ev *Evaluator) bindMetadata() {
 	evalMetaString := func(args sx.Vector, env *Environment) sx.Object {
 		a := make(attrs.Attributes, 2).
 			Set("name", ev.getSymbol(args[0], env).GetValue()).
-			Set("content", string(getString(args[1], env)))
+			Set("content", getString(args[1], env).GetValue())
 		return ev.EvaluateMeta(a)
 	}
 	ev.bind(sz.SymTypeCredential, 2, evalMetaString)
@@ -256,7 +256,7 @@ func (ev *Evaluator) bindMetadata() {
 		var sb strings.Builder
 		for elem := getList(args[1], env); elem != nil; elem = elem.Tail() {
 			sb.WriteByte(' ')
-			sb.WriteString(string(getString(elem.Car(), env)))
+			sb.WriteString(getString(elem.Car(), env).GetValue())
 		}
 		s := sb.String()
 		if len(s) > 0 {
@@ -299,7 +299,7 @@ func (ev *Evaluator) bindBlocks() {
 		a := ev.GetAttributes(args[1], env)
 		env.pushAttributes(a)
 		defer env.popAttributes()
-		if fragment := string(getString(args[3], env)); fragment != "" {
+		if fragment := getString(args[3], env).GetValue(); fragment != "" {
 			a = a.Set("id", ev.unique+fragment)
 		}
 
@@ -309,7 +309,7 @@ func (ev *Evaluator) bindBlocks() {
 			}
 			return result.Cons(headingSymbol)
 		}
-		return sx.MakeList(headingSymbol, sx.String("<MISSING TEXT>"))
+		return sx.MakeList(headingSymbol, sx.MakeString("<MISSING TEXT>"))
 	})
 	ev.bind(sz.SymThematic, 0, func(args sx.Vector, env *Environment) sx.Object {
 		result := sx.Nil()
@@ -399,7 +399,7 @@ func (ev *Evaluator) bindBlocks() {
 	ev.bind(sz.SymVerbatimComment, 1, func(args sx.Vector, env *Environment) sx.Object {
 		if ev.GetAttributes(args[0], env).HasDefault() {
 			if len(args) > 1 {
-				if s := getString(args[1], env); s != "" {
+				if s := getString(args[1], env); s.GetValue() != "" {
 					return sx.Nil().Cons(s).Cons(sxhtml.SymBlockComment)
 				}
 			}
@@ -417,7 +417,7 @@ func (ev *Evaluator) bindBlocks() {
 		a := ev.GetAttributes(args[0], env)
 		content := getString(args[1], env)
 		if a.HasDefault() {
-			content = sx.String(visibleReplacer.Replace(string(content)))
+			content = sx.MakeString(visibleReplacer.Replace(content.GetValue()))
 		}
 		return ev.evalVerbatim(a, content)
 	})
@@ -434,16 +434,16 @@ func (ev *Evaluator) bindBlocks() {
 		if sx.IsNil(refKind) {
 			return sx.Nil()
 		}
-		if refValue := getString(ref.Tail().Car(), env); refValue != "" {
+		if refValue := getString(ref.Tail().Car(), env); refValue.GetValue() != "" {
 			if refSym, isRefSym := sx.GetSymbol(refKind); isRefSym && refSym.IsEqual(sz.SymRefStateExternal) {
-				a := ev.GetAttributes(args[0], env).Set("src", string(refValue)).AddClass("external")
+				a := ev.GetAttributes(args[0], env).Set("src", refValue.GetValue()).AddClass("external")
 				return sx.Nil().Cons(sx.Nil().Cons(ev.EvaluateAttrbute(a)).Cons(SymIMG)).Cons(SymP)
 			}
 			return sx.MakeList(
 				sxhtml.SymInlineComment,
-				sx.String("transclude"),
+				sx.MakeString("transclude"),
 				refKind,
-				sx.String("->"),
+				sx.MakeString("->"),
 				refValue,
 			)
 		}
@@ -540,11 +540,11 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.SymText, 1, func(args sx.Vector, env *Environment) sx.Object { return getString(args[0], env) })
 	ev.bind(sz.SymSpace, 0, func(args sx.Vector, env *Environment) sx.Object {
 		if len(args) == 0 {
-			return sx.String(" ")
+			return sx.MakeString(" ")
 		}
 		return getString(args[0], env)
 	})
-	ev.bind(sz.SymSoft, 0, func(sx.Vector, *Environment) sx.Object { return sx.String(" ") })
+	ev.bind(sz.SymSoft, 0, func(sx.Vector, *Environment) sx.Object { return sx.MakeString(" ") })
 	ev.bind(sz.SymHard, 0, func(sx.Vector, *Environment) sx.Object { return sx.Nil().Cons(symBR) })
 
 	ev.bind(sz.SymLinkInvalid, 2, func(args sx.Vector, env *Environment) sx.Object {
@@ -565,7 +565,7 @@ func (ev *Evaluator) bindInlines() {
 		env.pushAttributes(a)
 		defer env.popAttributes()
 		refValue := getString(args[1], env)
-		return ev.evalLink(a.Set("href", string(refValue)), refValue, args[2:], env)
+		return ev.evalLink(a.Set("href", refValue.GetValue()), refValue, args[2:], env)
 	}
 	ev.bind(sz.SymLinkZettel, 2, evalHREF)
 	ev.bind(sz.SymLinkSelf, 2, evalHREF)
@@ -584,7 +584,7 @@ func (ev *Evaluator) bindInlines() {
 		env.pushAttributes(a)
 		defer env.popAttributes()
 		refValue := getString(args[1], env)
-		query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(string(refValue))
+		query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(refValue.GetValue())
 		return ev.evalLink(a.Set("href", query), refValue, args[2:], env)
 	})
 	ev.bind(sz.SymLinkExternal, 2, func(args sx.Vector, env *Environment) sx.Object {
@@ -592,17 +592,17 @@ func (ev *Evaluator) bindInlines() {
 		env.pushAttributes(a)
 		defer env.popAttributes()
 		refValue := getString(args[1], env)
-		return ev.evalLink(a.Set("href", string(refValue)).AddClass("external"), refValue, args[2:], env)
+		return ev.evalLink(a.Set("href", refValue.GetValue()).AddClass("external"), refValue, args[2:], env)
 	})
 
 	ev.bind(sz.SymEmbed, 3, func(args sx.Vector, env *Environment) sx.Object {
 		ref := getList(args[1], env)
-		syntax := getString(args[2], env)
+		syntax := getString(args[2], env).GetValue()
 		if syntax == api.ValueSyntaxSVG {
 			embedAttr := sx.MakeList(
 				sxhtml.SymAttr,
-				sx.Cons(SymAttrType, sx.String("image/svg+xml")),
-				sx.Cons(SymAttrSrc, sx.String("/"+string(getString(ref.Tail(), env))+".svg")),
+				sx.Cons(SymAttrType, sx.MakeString("image/svg+xml")),
+				sx.Cons(SymAttrSrc, sx.MakeString("/"+getString(ref.Tail(), env).GetValue()+".svg")),
 			)
 			return sx.MakeList(
 				SymFIGURE,
@@ -613,7 +613,7 @@ func (ev *Evaluator) bindInlines() {
 			)
 		}
 		a := ev.GetAttributes(args[0], env)
-		a = a.Set("src", string(getString(ref.Tail().Car(), env)))
+		a = a.Set("src", getString(ref.Tail().Car(), env).GetValue())
 		if len(args) > 3 {
 			var sb strings.Builder
 			flattenText(&sb, sx.MakeList(args[3:]...))
@@ -630,7 +630,7 @@ func (ev *Evaluator) bindInlines() {
 			summary = ""
 		}
 		return ev.evalBLOB(
-			sx.MakeList(sxhtml.SymListSplice, sx.String(summary)),
+			sx.MakeList(sxhtml.SymListSplice, sx.MakeString(summary)),
 			syntax,
 			data,
 		)
@@ -641,9 +641,9 @@ func (ev *Evaluator) bindInlines() {
 		env.pushAttributes(a)
 		defer env.popAttributes()
 		result := sx.Nil()
-		if key := getString(args[1], env); key != "" {
+		if key := getString(args[1], env); key.GetValue() != "" {
 			if len(args) > 2 {
-				result = ev.evalSlice(args[2:], env).Cons(sx.String(", "))
+				result = ev.evalSlice(args[2:], env).Cons(sx.MakeString(", "))
 			}
 			result = result.Cons(key)
 		}
@@ -658,8 +658,8 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.SymMark, 3, func(args sx.Vector, env *Environment) sx.Object {
 		result := ev.evalSlice(args[3:], env)
 		if !ev.noLinks {
-			if fragment := getString(args[2], env); fragment != "" {
-				a := attrs.Attributes{"id": string(fragment) + ev.unique}
+			if fragment := getString(args[2], env).GetValue(); fragment != "" {
+				a := attrs.Attributes{"id": fragment + ev.unique}
 				return result.Cons(ev.EvaluateAttrbute(a)).Cons(SymA)
 			}
 		}
@@ -680,12 +680,12 @@ func (ev *Evaluator) bindInlines() {
 		noteID := ev.unique + noteNum
 		env.endnotes = append(env.endnotes, endnoteInfo{
 			noteID: noteID, noteAST: args[1:], noteHx: nil, attrs: attrPlist})
-		hrefAttr := sx.Nil().Cons(sx.Cons(SymAttrRole, sx.String("doc-noteref"))).
-			Cons(sx.Cons(SymAttrHref, sx.String("#fn:"+noteID))).
-			Cons(sx.Cons(SymAttrClass, sx.String("zs-noteref"))).
+		hrefAttr := sx.Nil().Cons(sx.Cons(SymAttrRole, sx.MakeString("doc-noteref"))).
+			Cons(sx.Cons(SymAttrHref, sx.MakeString("#fn:"+noteID))).
+			Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-noteref"))).
 			Cons(sxhtml.SymAttr)
-		href := sx.Nil().Cons(sx.String(noteNum)).Cons(hrefAttr).Cons(SymA)
-		supAttr := sx.Nil().Cons(sx.Cons(SymAttrId, sx.String("fnref:"+noteID))).Cons(sxhtml.SymAttr)
+		href := sx.Nil().Cons(sx.MakeString(noteNum)).Cons(hrefAttr).Cons(SymA)
+		supAttr := sx.Nil().Cons(sx.Cons(SymAttrId, sx.MakeString("fnref:"+noteID))).Cons(sxhtml.SymAttr)
 		return sx.Nil().Cons(href).Cons(supAttr).Cons(symSUP)
 	})
 
@@ -702,7 +702,7 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.SymLiteralComment, 1, func(args sx.Vector, env *Environment) sx.Object {
 		if ev.GetAttributes(args[0], env).HasDefault() {
 			if len(args) > 1 {
-				if s := getString(ev.Eval(args[1], env), env); s != "" {
+				if s := getString(ev.Eval(args[1], env), env); s.GetValue() != "" {
 					return sx.Nil().Cons(s).Cons(sxhtml.SymInlineComment)
 				}
 			}
@@ -793,14 +793,14 @@ func (ev *Evaluator) evalQuote(args sx.Vector, env *Environment) sx.Object {
 
 	lastPair := res.LastPair()
 	if lastPair.IsNil() {
-		res = sx.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.String(leftQ), sx.String(rightQ)), sx.Nil())
+		res = sx.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(leftQ), sx.MakeString(rightQ)), sx.Nil())
 	} else {
 		if quotes.nbsp {
-			lastPair.AppendBang(sx.MakeList(sxhtml.SymNoEscape, sx.String("&nbsp;"), sx.String(rightQ)))
-			res = res.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.String(leftQ), sx.String("&nbsp;")))
+			lastPair.AppendBang(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString("&nbsp;"), sx.MakeString(rightQ)))
+			res = res.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(leftQ), sx.MakeString("&nbsp;")))
 		} else {
-			lastPair.AppendBang(sx.MakeList(sxhtml.SymNoEscape, sx.String(rightQ)))
-			res = res.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.String(leftQ)))
+			lastPair.AppendBang(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(rightQ)))
+			res = res.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(leftQ)))
 		}
 	}
 	if len(a) > 0 {
@@ -817,12 +817,12 @@ func (ev *Evaluator) evalLiteral(args sx.Vector, a attrs.Attributes, sym *sx.Sym
 		a = ev.GetAttributes(args[0], env)
 	}
 	a = setProgLang(a)
-	literal := string(getString(args[1], env))
+	literal := getString(args[1], env).GetValue()
 	if a.HasDefault() {
 		a = a.RemoveDefault()
 		literal = visibleReplacer.Replace(literal)
 	}
-	res := sx.Nil().Cons(sx.String(literal))
+	res := sx.Nil().Cons(sx.MakeString(literal))
 	if len(a) > 0 {
 		res = res.Cons(ev.EvaluateAttrbute(a))
 	}
@@ -836,27 +836,27 @@ func setProgLang(a attrs.Attributes) attrs.Attributes {
 }
 
 func (ev *Evaluator) evalHTML(args sx.Vector, env *Environment) sx.Object {
-	if s := getString(ev.Eval(args[1], env), env); s != "" && IsSafe(string(s)) {
+	if s := getString(ev.Eval(args[1], env), env); s.GetValue() != "" && IsSafe(s.GetValue()) {
 		return sx.Nil().Cons(s).Cons(sxhtml.SymNoEscape)
 	}
 	return nil
 }
 
 func (ev *Evaluator) evalBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
-	if data == "" {
+	if data.GetValue() == "" {
 		return sx.Nil()
 	}
-	switch syntax {
+	switch syntax.GetValue() {
 	case "":
 		return sx.Nil()
 	case api.ValueSyntaxSVG:
 		return sx.Nil().Cons(sx.Nil().Cons(data).Cons(sxhtml.SymNoEscape)).Cons(SymP)
 	default:
-		imgAttr := sx.Nil().Cons(sx.Cons(SymAttrSrc, sx.String("data:image/"+string(syntax)+";base64,"+string(data))))
+		imgAttr := sx.Nil().Cons(sx.Cons(SymAttrSrc, sx.MakeString("data:image/"+syntax.GetValue()+";base64,"+data.GetValue())))
 		var sb strings.Builder
 		flattenText(&sb, description)
 		if d := sb.String(); d != "" {
-			imgAttr = imgAttr.Cons(sx.Cons(symAttrAlt, sx.String(d)))
+			imgAttr = imgAttr.Cons(sx.Cons(symAttrAlt, sx.MakeString(d)))
 		}
 		return sx.Nil().Cons(sx.Nil().Cons(imgAttr.Cons(sxhtml.SymAttr)).Cons(SymIMG)).Cons(SymP)
 	}
@@ -866,7 +866,7 @@ func flattenText(sb *strings.Builder, lst *sx.Pair) {
 	for elem := lst; elem != nil; elem = elem.Tail() {
 		switch obj := elem.Car().(type) {
 		case sx.String:
-			sb.WriteString(string(obj))
+			sb.WriteString(obj.GetValue())
 		case *sx.Symbol:
 			if obj.IsEqual(sz.SymSpace) {
 				sb.WriteByte(' ')
@@ -975,13 +975,13 @@ func (ev *Evaluator) getSymbol(obj sx.Object, env *Environment) *sx.Symbol {
 }
 func getString(val sx.Object, env *Environment) sx.String {
 	if env.err != nil {
-		return ""
+		return sx.String{}
 	}
 	if s, ok := sx.GetString(val); ok {
 		return s
 	}
 	env.err = fmt.Errorf("%v/%T is not a string", val, val)
-	return ""
+	return sx.String{}
 }
 func getList(val sx.Object, env *Environment) *sx.Pair {
 	if env.err == nil {
