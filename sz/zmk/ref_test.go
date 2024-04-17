@@ -15,7 +15,7 @@ package zmk_test
 import (
 	"testing"
 
-	"zettelstore.de/client.fossil/sz/zmk"
+	"t73f.de/r/zsc/sz/zmk"
 )
 
 func TestParseReference(t *testing.T) {

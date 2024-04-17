@@ -16,8 +16,8 @@ package sz_test
 import (
 	"testing"
 
-	"zettelstore.de/client.fossil/input"
-	"zettelstore.de/client.fossil/sz"
+	"t73f.de/r/zsc/input"
+	"t73f.de/r/zsc/sz"
 )
 
 func TestParseNone(t *testing.T) {

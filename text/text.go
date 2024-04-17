@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"t73f.de/r/sx"
-	"zettelstore.de/client.fossil/sz"
+	"t73f.de/r/zsc/sz"
 )
 
 // Encoder is the structure to hold relevant data to execute the encoding.

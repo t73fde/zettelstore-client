@@ -1,4 +1,4 @@
-module zettelstore.de/client.fossil
+module t73f.de/r/zsc
 
 go 1.22
 

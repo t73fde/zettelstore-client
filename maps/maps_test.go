@@ -16,7 +16,7 @@ package maps_test
 import (
 	"testing"
 
-	"zettelstore.de/client.fossil/maps"
+	"t73f.de/r/zsc/maps"
 )
 
 func isSorted(seq []string) bool {

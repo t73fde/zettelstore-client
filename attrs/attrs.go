@@ -17,7 +17,7 @@ package attrs
 import (
 	"strings"
 
-	"zettelstore.de/client.fossil/maps"
+	"t73f.de/r/zsc/maps"
 )
 
 // Attributes store additional information about some node types.

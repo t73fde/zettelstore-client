@@ -16,7 +16,7 @@ package sz
 
 import (
 	"t73f.de/r/sx"
-	"zettelstore.de/client.fossil/attrs"
+	"t73f.de/r/zsc/attrs"
 )
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.

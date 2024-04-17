@@ -16,8 +16,8 @@ package zmk_test
 import (
 	"testing"
 
-	"zettelstore.de/client.fossil/input"
-	"zettelstore.de/client.fossil/sz/zmk"
+	"t73f.de/r/zsc/input"
+	"t73f.de/r/zsc/sz/zmk"
 )
 
 func FuzzParseBlocks(f *testing.F) {

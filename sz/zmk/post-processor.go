@@ -15,7 +15,7 @@ package zmk
 
 import (
 	"t73f.de/r/sx"
-	"zettelstore.de/client.fossil/sz"
+	"t73f.de/r/zsc/sz"
 )
 
 var symInVerse = sx.MakeSymbol("in-verse")
