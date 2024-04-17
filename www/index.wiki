@@ -26,8 +26,7 @@ it is in your search path for commands.
 How you can execute the following Go command to retrieve a given version of
 this library:
 
-<code>GOVCS=zettelstore.de:fossil go get -x
-zettelstore.de/client.fossil@HASH</code>
+<code>GOVCS=zettelstore.de:fossil go get -x t73f.de/r/zsc@HASH</code>
 
 where <code>HASH</code> is the hash value of the commit you want to use.
 

@@ -17,7 +17,7 @@ import (
 	"testing"
 
 	"t73f.de/r/sx"
-	"zettelstore.de/client.fossil/sexp"
+	"t73f.de/r/zsc/sexp"
 )
 
 func TestParseObject(t *testing.T) {

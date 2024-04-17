@@ -16,7 +16,7 @@ package input_test
 import (
 	"testing"
 
-	"zettelstore.de/client.fossil/input"
+	"t73f.de/r/zsc/input"
 )
 
 func TestScanEntity(t *testing.T) {

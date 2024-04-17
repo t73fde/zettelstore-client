@@ -16,7 +16,7 @@ package attrs_test
 import (
 	"testing"
 
-	"zettelstore.de/client.fossil/attrs"
+	"t73f.de/r/zsc/attrs"
 )
 
 func TestHasDefault(t *testing.T) {
