@@ -57,9 +57,6 @@ func NewClient(u *url.URL) *Client {
 	myURL.Fragment = ""
 	myURL.RawFragment = ""
 	base := myURL.String()
-	if !strings.HasSuffix(base, "/") {
-		base += "/"
-	}
 	c := Client{
 		base: base,
 		client: http.Client{
