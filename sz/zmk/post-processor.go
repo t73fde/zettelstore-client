@@ -136,7 +136,7 @@ func postProcessRegionVerse(pp *postProcessor, rn *sx.Pair, env *sx.Pair) *sx.Pa
 	return postProcessRegion(pp, rn, env.Cons(sx.Cons(symInVerse, nil)))
 }
 
-func postProcessVerbatim(pp *postProcessor, verb *sx.Pair, _ *sx.Pair) *sx.Pair {
+func postProcessVerbatim(_ *postProcessor, verb *sx.Pair, _ *sx.Pair) *sx.Pair {
 	if content, isString := sx.GetString(verb.Tail().Tail().Car()); isString && content.GetValue() != "" {
 		return verb
 	}
