@@ -16,7 +16,6 @@ package zmk
 import (
 	"fmt"
 	"strings"
-	"unicode/utf8"
 
 	"t73f.de/r/sx"
 	"t73f.de/r/zsc/api"
@@ -38,8 +37,6 @@ func (cp *zmkP) parseInline() *sx.Pair {
 			return nil
 		case '\n', '\r':
 			return cp.parseSoftBreak()
-		case ' ', '\t':
-			return cp.parseSpace()
 		case '[':
 			switch inp.Next() {
 			case '[':
@@ -93,7 +90,7 @@ func (cp *zmkP) parseString() sx.String {
 		switch inp.Next() {
 		// The following case must contain all runes that occur in parseInline!
 		// Plus the closing brackets ] and } and ) and the middle |
-		case input.EOS, '\n', '\r', ' ', '\t', '[', ']', '{', '}', '(', ')', '|', '%', '_', '*', '>', '~', '^', ',', '"', '#', ':', '\'', '@', '`', runeModGrave, '$', '=', '\\', '-', '&':
+		case input.EOS, '\n', '\r', '[', ']', '{', '}', '(', ')', '|', '%', '_', '*', '>', '~', '^', ',', '"', '#', ':', '\'', '@', '`', runeModGrave, '$', '=', '\\', '-', '&':
 			return sx.MakeString(string(inp.Src[pos:inp.Pos]))
 		}
 	}
@@ -122,23 +119,6 @@ func (cp *zmkP) parseBackslashRest() sx.String {
 	pos := inp.Pos
 	inp.Next()
 	return sx.MakeString(string(inp.Src[pos:inp.Pos]))
-}
-
-func (cp *zmkP) parseSpace() *sx.Pair {
-	inp := cp.inp
-	pos := inp.Pos
-	for {
-		switch inp.Next() {
-		case ' ', '\t':
-		default:
-			if cp.inVerse {
-				spaces := utf8.RuneCount(inp.Src[pos:inp.Pos])
-				s := strings.Repeat("\u00a0", spaces)
-				return sx.MakeList(sz.SymSpace, sx.MakeString(s))
-			}
-			return sx.MakeList(sz.SymSpace)
-		}
-	}
 }
 
 func (cp *zmkP) parseSoftBreak() *sx.Pair {

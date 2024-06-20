@@ -70,7 +70,6 @@ const (
 	NameRegionQuote     = "REGION-QUOTE"
 	NameRegionVerse     = "REGION-VERSE"
 	NameSoft            = "SOFT"
-	NameSpace           = "SPACE"
 	NameTable           = "TABLE"
 	NameText            = "TEXT"
 	NameThematic        = "THEMATIC"
@@ -161,7 +160,6 @@ var (
 	SymRegionQuote     = sx.MakeSymbol(NameRegionQuote)
 	SymRegionVerse     = sx.MakeSymbol(NameRegionVerse)
 	SymSoft            = sx.MakeSymbol(NameSoft)
-	SymSpace           = sx.MakeSymbol(NameSpace)
 	SymTable           = sx.MakeSymbol(NameTable)
 	SymText            = sx.MakeSymbol(NameText)
 	SymThematic        = sx.MakeSymbol(NameThematic)

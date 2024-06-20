@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"t73f.de/r/sx"
+	"t73f.de/r/zsc/input"
 	"t73f.de/r/zsc/sz"
 )
 
@@ -65,9 +66,20 @@ func (enc *Encoder) execute(obj sx.Object) {
 			return
 		}
 		if val, isString := sx.GetString(args.Car()); isString {
-			enc.sb.WriteString(val.GetValue())
+			hadSpace := false
+			for _, ch := range val.GetValue() {
+				if input.IsSpace(ch) {
+					if !hadSpace {
+						enc.sb.WriteByte(' ')
+						hadSpace = true
+					}
+				} else {
+					enc.sb.WriteRune(ch)
+					hadSpace = false
+				}
+			}
 		}
-	} else if sym.IsEqual(sz.SymSpace) || sym.IsEqual(sz.SymSoft) {
+	} else if sym.IsEqual(sz.SymSoft) {
 		enc.sb.WriteByte(' ')
 	} else if sym.IsEqual(sz.SymHard) {
 		enc.sb.WriteByte('\n')

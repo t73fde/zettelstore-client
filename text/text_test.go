@@ -29,7 +29,8 @@ func TestSzText(t *testing.T) {
 	}{
 		{"()", ""},
 		{`(INLINE (TEXT "a"))`, "a"},
-		{`(INLINE (SPACE "a"))`, " "},
+		{`(INLINE (TEXT " "))`, " "},
+		{`(INLINE (TEXT "  "))`, " "},
 	}
 	for i, tc := range testcases {
 		sval, err := sxreader.MakeReader(strings.NewReader(tc.src)).Read()
