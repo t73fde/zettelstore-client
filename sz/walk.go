@@ -30,8 +30,7 @@ func Walk(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 	}
 
 	if sym, isSymbol := sx.GetSymbol(node.Car()); isSymbol {
-		symVal := sym.GetValue()
-		if fn, found := mapChildrenWalk[symVal]; found {
+		if fn, found := mapChildrenWalk[sym]; found {
 			return fn(v, node, env)
 		}
 		return node
@@ -39,45 +38,45 @@ func Walk(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 	panic(node)
 }
 
-var mapChildrenWalk map[string]func(Visitor, *sx.Pair, *sx.Pair) *sx.Pair
+var mapChildrenWalk map[*sx.Symbol]func(Visitor, *sx.Pair, *sx.Pair) *sx.Pair
 
 func init() {
-	mapChildrenWalk = map[string]func(Visitor, *sx.Pair, *sx.Pair) *sx.Pair{
-		NameBlock:         walkChildrenTail,
-		NamePara:          walkChildrenTail,
-		NameRegionBlock:   walkChildrenRegion,
-		NameRegionQuote:   walkChildrenRegion,
-		NameRegionVerse:   walkChildrenRegion,
-		NameHeading:       walkChildrenHeading,
-		NameListOrdered:   walkChildrenTail,
-		NameListUnordered: walkChildrenTail,
-		NameListQuote:     walkChildrenTail,
-		NameDescription:   walkChildrenDescription,
-		NameTable:         walkChildrenTable,
+	mapChildrenWalk = map[*sx.Symbol]func(Visitor, *sx.Pair, *sx.Pair) *sx.Pair{
+		SymBlock:         walkChildrenTail,
+		SymPara:          walkChildrenTail,
+		SymRegionBlock:   walkChildrenRegion,
+		SymRegionQuote:   walkChildrenRegion,
+		SymRegionVerse:   walkChildrenRegion,
+		SymHeading:       walkChildrenHeading,
+		SymListOrdered:   walkChildrenTail,
+		SymListUnordered: walkChildrenTail,
+		SymListQuote:     walkChildrenTail,
+		SymDescription:   walkChildrenDescription,
+		SymTable:         walkChildrenTable,
 
-		NameInline:       walkChildrenTail,
-		NameEndnote:      walkChildrenInlines3,
-		NameMark:         walkChildrenMark,
-		NameLinkBased:    walkChildrenInlines4,
-		NameLinkBroken:   walkChildrenInlines4,
-		NameLinkExternal: walkChildrenInlines4,
-		NameLinkFound:    walkChildrenInlines4,
-		NameLinkHosted:   walkChildrenInlines4,
-		NameLinkInvalid:  walkChildrenInlines4,
-		NameLinkQuery:    walkChildrenInlines4,
-		NameLinkSelf:     walkChildrenInlines4,
-		NameLinkZettel:   walkChildrenInlines4,
-		NameEmbed:        walkChildrenInlines4,
-		NameCite:         walkChildrenInlines4,
-		NameFormatDelete: walkChildrenInlines3,
-		NameFormatEmph:   walkChildrenInlines3,
-		NameFormatInsert: walkChildrenInlines3,
-		NameFormatMark:   walkChildrenInlines3,
-		NameFormatQuote:  walkChildrenInlines3,
-		NameFormatStrong: walkChildrenInlines3,
-		NameFormatSpan:   walkChildrenInlines3,
-		NameFormatSub:    walkChildrenInlines3,
-		NameFormatSuper:  walkChildrenInlines3,
+		SymInline:       walkChildrenTail,
+		SymEndnote:      walkChildrenInlines3,
+		SymMark:         walkChildrenMark,
+		SymLinkBased:    walkChildrenInlines4,
+		SymLinkBroken:   walkChildrenInlines4,
+		SymLinkExternal: walkChildrenInlines4,
+		SymLinkFound:    walkChildrenInlines4,
+		SymLinkHosted:   walkChildrenInlines4,
+		SymLinkInvalid:  walkChildrenInlines4,
+		SymLinkQuery:    walkChildrenInlines4,
+		SymLinkSelf:     walkChildrenInlines4,
+		SymLinkZettel:   walkChildrenInlines4,
+		SymEmbed:        walkChildrenInlines4,
+		SymCite:         walkChildrenInlines4,
+		SymFormatDelete: walkChildrenInlines3,
+		SymFormatEmph:   walkChildrenInlines3,
+		SymFormatInsert: walkChildrenInlines3,
+		SymFormatMark:   walkChildrenInlines3,
+		SymFormatQuote:  walkChildrenInlines3,
+		SymFormatStrong: walkChildrenInlines3,
+		SymFormatSpan:   walkChildrenInlines3,
+		SymFormatSub:    walkChildrenInlines3,
+		SymFormatSuper:  walkChildrenInlines3,
 	}
 }
 

@@ -551,7 +551,7 @@ func TestVerbatimComment(t *testing.T) {
 func TestPara(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, true, TestCases{
-		// {"a\n\nb", "(BLOCK (PARA (TEXT \"a\")) (PARA (TEXT \"b\")))"},
+		{"a\n\nb", "(BLOCK (PARA (TEXT \"a\")) (PARA (TEXT \"b\")))"},
 		{"a\n \nb", "(BLOCK (PARA (TEXT \"a\") (SOFT) (HARD) (TEXT \"b\")))"},
 	})
 }
