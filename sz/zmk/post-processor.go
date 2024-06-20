@@ -33,8 +33,7 @@ func (pp *postProcessor) Visit(lst *sx.Pair, env *sx.Pair) sx.Object {
 	if !isSym {
 		panic(lst)
 	}
-	symVal := sym.GetValue()
-	if fn, found := symMap[symVal]; found {
+	if fn, found := symMap[sym]; found {
 		return fn(pp, lst, env)
 	}
 	return sx.Int64(0)
@@ -50,54 +49,54 @@ func (pp *postProcessor) visitPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	return pList.List()
 }
 
-var symMap map[string]func(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair
+var symMap map[*sx.Symbol]func(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair
 
 func init() {
-	symMap = map[string]func(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair{
-		sz.NameBlock:           postProcessBlockList,
-		sz.NamePara:            postProcessInlineList,
-		sz.NameRegionBlock:     postProcessRegion,
-		sz.NameRegionQuote:     postProcessRegion,
-		sz.NameRegionVerse:     postProcessRegionVerse,
-		sz.NameVerbatimComment: postProcessVerbatim,
-		sz.NameVerbatimEval:    postProcessVerbatim,
-		sz.NameVerbatimMath:    postProcessVerbatim,
-		sz.NameVerbatimProg:    postProcessVerbatim,
-		sz.NameVerbatimZettel:  postProcessVerbatim,
-		sz.NameHeading:         postProcessHeading,
-		sz.NameListOrdered:     postProcessItemList,
-		sz.NameListUnordered:   postProcessItemList,
-		sz.NameListQuote:       postProcessQuoteList,
-		sz.NameDescription:     postProcessDescription,
-		sz.NameTable:           postProcessTable,
+	symMap = map[*sx.Symbol]func(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair{
+		sz.SymBlock:           postProcessBlockList,
+		sz.SymPara:            postProcessInlineList,
+		sz.SymRegionBlock:     postProcessRegion,
+		sz.SymRegionQuote:     postProcessRegion,
+		sz.SymRegionVerse:     postProcessRegionVerse,
+		sz.SymVerbatimComment: postProcessVerbatim,
+		sz.SymVerbatimEval:    postProcessVerbatim,
+		sz.SymVerbatimMath:    postProcessVerbatim,
+		sz.SymVerbatimProg:    postProcessVerbatim,
+		sz.SymVerbatimZettel:  postProcessVerbatim,
+		sz.SymHeading:         postProcessHeading,
+		sz.SymListOrdered:     postProcessItemList,
+		sz.SymListUnordered:   postProcessItemList,
+		sz.SymListQuote:       postProcessQuoteList,
+		sz.SymDescription:     postProcessDescription,
+		sz.SymTable:           postProcessTable,
 
-		sz.NameInline:       postProcessInlineList,
-		sz.NameText:         postProcessText,
-		sz.NameSoft:         postProcessSoft,
-		sz.NameEndnote:      postProcessEndnote,
-		sz.NameMark:         postProcessMark,
-		sz.NameLinkBased:    postProcessInlines4,
-		sz.NameLinkBroken:   postProcessInlines4,
-		sz.NameLinkExternal: postProcessInlines4,
-		sz.NameLinkFound:    postProcessInlines4,
-		sz.NameLinkHosted:   postProcessInlines4,
-		sz.NameLinkInvalid:  postProcessInlines4,
-		sz.NameLinkQuery:    postProcessInlines4,
-		sz.NameLinkSelf:     postProcessInlines4,
-		sz.NameLinkZettel:   postProcessInlines4,
-		sz.NameEmbed:        postProcessInlines4,
-		sz.NameCite:         postProcessInlines4,
-		sz.NameFormatDelete: postProcessFormat,
-		sz.NameFormatEmph:   postProcessFormat,
-		sz.NameFormatInsert: postProcessFormat,
-		sz.NameFormatMark:   postProcessFormat,
-		sz.NameFormatQuote:  postProcessFormat,
-		sz.NameFormatStrong: postProcessFormat,
-		sz.NameFormatSpan:   postProcessFormat,
-		sz.NameFormatSub:    postProcessFormat,
-		sz.NameFormatSuper:  postProcessFormat,
+		sz.SymInline:       postProcessInlineList,
+		sz.SymText:         postProcessText,
+		sz.SymSoft:         postProcessSoft,
+		sz.SymEndnote:      postProcessEndnote,
+		sz.SymMark:         postProcessMark,
+		sz.SymLinkBased:    postProcessInlines4,
+		sz.SymLinkBroken:   postProcessInlines4,
+		sz.SymLinkExternal: postProcessInlines4,
+		sz.SymLinkFound:    postProcessInlines4,
+		sz.SymLinkHosted:   postProcessInlines4,
+		sz.SymLinkInvalid:  postProcessInlines4,
+		sz.SymLinkQuery:    postProcessInlines4,
+		sz.SymLinkSelf:     postProcessInlines4,
+		sz.SymLinkZettel:   postProcessInlines4,
+		sz.SymEmbed:        postProcessInlines4,
+		sz.SymCite:         postProcessInlines4,
+		sz.SymFormatDelete: postProcessFormat,
+		sz.SymFormatEmph:   postProcessFormat,
+		sz.SymFormatInsert: postProcessFormat,
+		sz.SymFormatMark:   postProcessFormat,
+		sz.SymFormatQuote:  postProcessFormat,
+		sz.SymFormatStrong: postProcessFormat,
+		sz.SymFormatSpan:   postProcessFormat,
+		sz.SymFormatSub:    postProcessFormat,
+		sz.SymFormatSuper:  postProcessFormat,
 
-		symSeparator.GetValue(): ignoreProcess,
+		symSeparator: ignoreProcess,
 	}
 }
 
