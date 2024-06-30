@@ -26,11 +26,20 @@ const (
 	ZidDependencies         = ZettelID("00000000000006")
 	ZidLog                  = ZettelID("00000000000007")
 	ZidMemory               = ZettelID("00000000000008")
+	ZidSx                   = ZettelID("00000000000009")
+	ZidHTTP                 = ZettelID("00000000000010")
+	ZidAPI                  = ZettelID("00000000000011")
+	ZidWebUI                = ZettelID("00000000000012")
+	ZidConsole              = ZettelID("00000000000013")
 	ZidBoxManager           = ZettelID("00000000000020")
+	ZidIndex                = ZettelID("00000000000021")
+	ZidQuery                = ZettelID("00000000000022")
 	ZidMetadataKey          = ZettelID("00000000000090")
 	ZidParser               = ZettelID("00000000000092")
 	ZidStartupConfiguration = ZettelID("00000000000096")
 	ZidConfiguration        = ZettelID("00000000000100")
+	ZidDirectory            = ZettelID("00000000000101")
+	ZidWarnings             = ZettelID("00000000000102")
 
 	// WebUI HTML templates are in the range 10000..19999
 	ZidBaseTemplate   = ZettelID("00000000010100")
@@ -72,7 +81,9 @@ const (
 	ZidTemplateNewTag    = ZettelID("00000000090003")
 	ZidTemplateNewUser   = ZettelID("00000000090002")
 
-	ZidDefaultHome = ZettelID("00010000000000")
+	ZidAppDirectory = ZettelID("00009999999998")
+	ZidMapping      = ZettelID("00009999999999")
+	ZidDefaultHome  = ZettelID("00010000000000")
 )
 
 // LengthZid factors the constant length of a zettel identifier
