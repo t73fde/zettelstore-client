@@ -18,72 +18,73 @@ import "fmt"
 // Predefined Zettel Identifier
 const (
 	// System zettel
-	ZidVersion              = ZettelID("00000000000001")
-	ZidHost                 = ZettelID("00000000000002")
-	ZidOperatingSystem      = ZettelID("00000000000003")
-	ZidLicense              = ZettelID("00000000000004")
-	ZidAuthors              = ZettelID("00000000000005")
-	ZidDependencies         = ZettelID("00000000000006")
-	ZidLog                  = ZettelID("00000000000007")
-	ZidMemory               = ZettelID("00000000000008")
-	ZidSx                   = ZettelID("00000000000009")
-	ZidHTTP                 = ZettelID("00000000000010")
-	ZidAPI                  = ZettelID("00000000000011")
-	ZidWebUI                = ZettelID("00000000000012")
-	ZidConsole              = ZettelID("00000000000013")
-	ZidBoxManager           = ZettelID("00000000000020")
-	ZidIndex                = ZettelID("00000000000021")
-	ZidQuery                = ZettelID("00000000000022")
-	ZidMetadataKey          = ZettelID("00000000000090")
-	ZidParser               = ZettelID("00000000000092")
-	ZidStartupConfiguration = ZettelID("00000000000096")
-	ZidConfiguration        = ZettelID("00000000000100")
-	ZidDirectory            = ZettelID("00000000000101")
-	ZidWarnings             = ZettelID("00000000000102")
+	ZidVersion              = ZettelID("00000000000001") // -> 0001
+	ZidHost                 = ZettelID("00000000000002") // -> 0002
+	ZidOperatingSystem      = ZettelID("00000000000003") // -> 0003
+	ZidLicense              = ZettelID("00000000000004") // -> 0004
+	ZidAuthors              = ZettelID("00000000000005") // -> 0005
+	ZidDependencies         = ZettelID("00000000000006") // -> 0006
+	ZidLog                  = ZettelID("00000000000007") // -> 0007
+	ZidMemory               = ZettelID("00000000000008") // -> 0008
+	ZidSx                   = ZettelID("00000000000009") // -> 0009
+	ZidHTTP                 = ZettelID("00000000000010") // -> 000a
+	ZidAPI                  = ZettelID("00000000000011") // -> 000b
+	ZidWebUI                = ZettelID("00000000000012") // -> 000c
+	ZidConsole              = ZettelID("00000000000013") // -> 000d
+	ZidBoxManager           = ZettelID("00000000000020") // -> 000e
+	ZidIndex                = ZettelID("00000000000021") // -> 000f
+	ZidQuery                = ZettelID("00000000000022") // -> 000g
+	ZidMetadataKey          = ZettelID("00000000000090") // -> 000h
+	ZidParser               = ZettelID("00000000000092") // -> 000i
+	ZidStartupConfiguration = ZettelID("00000000000096") // -> 000j
+	ZidConfiguration        = ZettelID("00000000000100") // -> 000k
+	ZidDirectory            = ZettelID("00000000000101") // -> 000l
+	ZidWarnings             = ZettelID("00000000000102") // -> 000m
 
 	// WebUI HTML templates are in the range 10000..19999
-	ZidBaseTemplate   = ZettelID("00000000010100")
-	ZidLoginTemplate  = ZettelID("00000000010200")
-	ZidListTemplate   = ZettelID("00000000010300")
-	ZidZettelTemplate = ZettelID("00000000010401")
-	ZidInfoTemplate   = ZettelID("00000000010402")
-	ZidFormTemplate   = ZettelID("00000000010403")
-	ZidRenameTemplate = ZettelID("00000000010404")
-	ZidDeleteTemplate = ZettelID("00000000010405")
-	ZidErrorTemplate  = ZettelID("00000000010700")
+	ZidBaseTemplate   = ZettelID("00000000010100") // -> 000r
+	ZidLoginTemplate  = ZettelID("00000000010200") // -> 000s
+	ZidListTemplate   = ZettelID("00000000010300") // -> 000t
+	ZidZettelTemplate = ZettelID("00000000010401") // -> 000u
+	ZidInfoTemplate   = ZettelID("00000000010402") // -> 000v
+	ZidFormTemplate   = ZettelID("00000000010403") // -> 000w
+	ZidRenameTemplate = ZettelID("00000000010404") // -> 001z
+	ZidDeleteTemplate = ZettelID("00000000010405") // -> 000x
+	ZidErrorTemplate  = ZettelID("00000000010700") // -> 000y
 
 	// WebUI sxn code zettel are in the range 19000..19999
-	ZidSxnStart = ZettelID("00000000019000")
-	ZidSxnBase  = ZettelID("00000000019990")
+	ZidSxnStart = ZettelID("00000000019000") // -> 000p
+	ZidSxnBase  = ZettelID("00000000019990") // -> 000q
 
 	// CSS-related zettel are in the range 20000..29999
-	ZidBaseCSS = ZettelID("00000000020001")
-	ZidUserCSS = ZettelID("00000000025001")
+	ZidBaseCSS = ZettelID("00000000020001") // -> 000z
+	ZidUserCSS = ZettelID("00000000025001") // -> 0010
 
 	// WebUI JS zettel are in the range 30000..39999
 
 	// WebUI image zettel are in the range 40000..49999
-	ZidEmoji = ZettelID("00000000040001")
+	ZidEmoji = ZettelID("00000000040001") // -> 000n
 
 	// Other sxn code zettel are in the range 50000..59999
-	ZidSxnPrelude = ZettelID("00000000059900")
+	ZidSxnPrelude = ZettelID("00000000059900") // -> 000o
 
 	// Predefined Zettelmarkup zettel are in the range 60000..69999
-	ZidRoleZettelZettel        = ZettelID("00000000060010")
-	ZidRoleConfigurationZettel = ZettelID("00000000060020")
-	ZidRoleRoleZettel          = ZettelID("00000000060030")
-	ZidRoleTagZettel           = ZettelID("00000000060040")
+	ZidRoleZettelZettel        = ZettelID("00000000060010") // -> 0011
+	ZidRoleConfigurationZettel = ZettelID("00000000060020") // -> 0012
+	ZidRoleRoleZettel          = ZettelID("00000000060030") // -> 0013
+	ZidRoleTagZettel           = ZettelID("00000000060040") // -> 0014
 
 	// Range 90000...99999 is reserved for zettel templates
-	ZidTOCNewTemplate    = ZettelID("00000000090000")
-	ZidTemplateNewZettel = ZettelID("00000000090001")
-	ZidTemplateNewRole   = ZettelID("00000000090004")
-	ZidTemplateNewTag    = ZettelID("00000000090003")
-	ZidTemplateNewUser   = ZettelID("00000000090002")
+	ZidTOCNewTemplate    = ZettelID("00000000090000") // -> 0015
+	ZidTemplateNewZettel = ZettelID("00000000090001") // -> 0016
+	ZidTemplateNewRole   = ZettelID("00000000090004") // -> 0019
+	ZidTemplateNewTag    = ZettelID("00000000090003") // -> 0018
+	ZidTemplateNewUser   = ZettelID("00000000090002") // -> 0017
 
-	ZidAppDirectory = ZettelID("00009999999998")
-	ZidMapping      = ZettelID("00009999999999")
-	ZidDefaultHome  = ZettelID("00010000000000")
+	ZidSession      = ZettelID("00009999999998") // -> 00zx
+	ZidAppDirectory = ZettelID("00009999999998") // -> 00zy
+	ZidMapping      = ZettelID("00009999999999") // -> 00zz
+	ZidDefaultHome  = ZettelID("00010000000000") // -> 0100
 )
 
 // LengthZid factors the constant length of a zettel identifier
