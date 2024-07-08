@@ -2,6 +2,8 @@
 
 <a name="0_18"></a>
 <h2>Changes for Version 0.18.0 (pending)</h2>
+  *  Reserve some zettel identifier for future use
+  *  Mark <code>client.Client.RenameZettel</code> as deprecated
 
 <a name="0_17"></a>
 <h2>Changes for Version 0.17.0 (2024-03-04)</h2>

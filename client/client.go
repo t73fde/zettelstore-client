@@ -654,6 +654,8 @@ func (c *Client) UpdateZettelData(ctx context.Context, zid api.ZettelID, data ap
 }
 
 // RenameZettel renames a zettel.
+//
+// This function is deprecated and will be removed in v0.19 (or later).
 func (c *Client) RenameZettel(ctx context.Context, oldZid, newZid api.ZettelID) error {
 	ub := c.NewURLBuilder('z').SetZid(oldZid)
 	h := http.Header{
