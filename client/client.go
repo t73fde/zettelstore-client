@@ -700,7 +700,7 @@ func (c *Client) ExecuteCommand(ctx context.Context, command api.Command) error 
 	return nil
 }
 
-// GetVersionInfo returns version information..
+// GetVersionInfo returns version information.
 func (c *Client) GetVersionInfo(ctx context.Context) (VersionInfo, error) {
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, c.NewURLBuilder('x'), nil, nil)
 	if err != nil {
@@ -733,6 +733,24 @@ type VersionInfo struct {
 	Patch int
 	Info  string
 	Hash  string
+}
+
+// GetApplicationZid returns the zettel identifier used to configure client
+// application with the given name.
+func (c *Client) GetApplicationZid(ctx context.Context, appname string) (api.ZettelID, error) {
+	mr, err := c.GetMetaData(ctx, api.ZidAppDirectory)
+	if err != nil {
+		return api.InvalidZID, err
+	}
+	key := appname + "-zid"
+	val, found := mr.Meta[key]
+	if !found {
+		return api.InvalidZID, fmt.Errorf("no application registered: %v", appname)
+	}
+	if zid := api.ZettelID(val); zid.IsValid() {
+		return zid, nil
+	}
+	return api.InvalidZID, fmt.Errorf("invalid identifier for application %v: %v", appname, val)
 }
 
 // Get executes a GET request to the given URL and returns the read data.
