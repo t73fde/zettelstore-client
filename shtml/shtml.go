@@ -538,12 +538,6 @@ func (ev *Evaluator) evalVerbatim(a attrs.Attributes, s sx.String) sx.Object {
 func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.SymInline, 0, ev.evalList)
 	ev.bind(sz.SymText, 1, func(args sx.Vector, env *Environment) sx.Object { return getString(args[0], env) })
-	ev.bind(sz.SymSpace, 0, func(args sx.Vector, env *Environment) sx.Object {
-		if len(args) == 0 {
-			return sx.MakeString(" ")
-		}
-		return getString(args[0], env)
-	})
 	ev.bind(sz.SymSoft, 0, func(sx.Vector, *Environment) sx.Object { return sx.MakeString(" ") })
 	ev.bind(sz.SymHard, 0, func(sx.Vector, *Environment) sx.Object { return sx.Nil().Cons(symBR) })
 
@@ -867,11 +861,6 @@ func flattenText(sb *strings.Builder, lst *sx.Pair) {
 		switch obj := elem.Car().(type) {
 		case sx.String:
 			sb.WriteString(obj.GetValue())
-		case *sx.Symbol:
-			if obj.IsEqual(sz.SymSpace) {
-				sb.WriteByte(' ')
-				break
-			}
 		case *sx.Pair:
 			flattenText(sb, obj)
 		}

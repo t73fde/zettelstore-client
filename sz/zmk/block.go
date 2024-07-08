@@ -99,8 +99,19 @@ func startsWithSpaceSoftBreak(ins sx.Vector) bool {
 	if !isPair0 || !isPair1 {
 		return false
 	}
-	car1 := pair1.Car()
-	return pair0.Car().IsEqual(sz.SymSpace) && sz.IsBreakSym(car1)
+	if pair0.Car().IsEqual(sz.SymText) && sz.IsBreakSym(pair1.Car()) {
+		if args := pair0.Tail(); args != nil {
+			if val, isString := sx.GetString(args.Car()); isString {
+				for _, ch := range val.GetValue() {
+					if !input.IsSpace(ch) {
+						return false
+					}
+				}
+				return true
+			}
+		}
+	}
+	return false
 }
 
 var symSeparator = sx.MakeSymbol("sEpArAtOr")

@@ -133,22 +133,22 @@ func MapRefStateToLinkEmbed(symRefState *sx.Symbol, forLink bool) *sx.Symbol {
 	if !forLink {
 		return SymEmbed
 	}
-	if sym, found := mapRefStateLink[symRefState.GetValue()]; found {
+	if sym, found := mapRefStateLink[symRefState]; found {
 		return sym
 	}
 	return SymLinkInvalid
 }
 
-var mapRefStateLink = map[string]*sx.Symbol{
-	NameRefStateInvalid:  SymLinkInvalid,
-	NameRefStateZettel:   SymLinkZettel,
-	NameRefStateSelf:     SymLinkSelf,
-	NameRefStateFound:    SymLinkFound,
-	NameRefStateBroken:   SymLinkBroken,
-	NameRefStateHosted:   SymLinkHosted,
-	NameRefStateBased:    SymLinkBased,
-	NameRefStateQuery:    SymLinkQuery,
-	NameRefStateExternal: SymLinkExternal,
+var mapRefStateLink = map[*sx.Symbol]*sx.Symbol{
+	SymRefStateInvalid:  SymLinkInvalid,
+	SymRefStateZettel:   SymLinkZettel,
+	SymRefStateSelf:     SymLinkSelf,
+	SymRefStateFound:    SymLinkFound,
+	SymRefStateBroken:   SymLinkBroken,
+	SymRefStateHosted:   SymLinkHosted,
+	SymRefStateBased:    SymLinkBased,
+	SymRefStateQuery:    SymLinkQuery,
+	SymRefStateExternal: SymLinkExternal,
 }
 
 // IsBreakSym return true if the object is either a soft or a hard break symbol.

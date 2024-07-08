@@ -14,6 +14,8 @@
 package zmk
 
 import (
+	"strings"
+
 	"t73f.de/r/sx"
 	"t73f.de/r/zsc/sz"
 )
@@ -31,8 +33,7 @@ func (pp *postProcessor) Visit(lst *sx.Pair, env *sx.Pair) sx.Object {
 	if !isSym {
 		panic(lst)
 	}
-	symVal := sym.GetValue()
-	if fn, found := symMap[symVal]; found {
+	if fn, found := symMap[sym]; found {
 		return fn(pp, lst, env)
 	}
 	return sx.Int64(0)
@@ -48,54 +49,54 @@ func (pp *postProcessor) visitPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	return pList.List()
 }
 
-var symMap map[string]func(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair
+var symMap map[*sx.Symbol]func(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair
 
 func init() {
-	symMap = map[string]func(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair{
-		sz.NameBlock:           postProcessBlockList,
-		sz.NamePara:            postProcessInlineList,
-		sz.NameRegionBlock:     postProcessRegion,
-		sz.NameRegionQuote:     postProcessRegion,
-		sz.NameRegionVerse:     postProcessRegionVerse,
-		sz.NameVerbatimComment: postProcessVerbatim,
-		sz.NameVerbatimEval:    postProcessVerbatim,
-		sz.NameVerbatimMath:    postProcessVerbatim,
-		sz.NameVerbatimProg:    postProcessVerbatim,
-		sz.NameVerbatimZettel:  postProcessVerbatim,
-		sz.NameHeading:         postProcessHeading,
-		sz.NameListOrdered:     postProcessItemList,
-		sz.NameListUnordered:   postProcessItemList,
-		sz.NameListQuote:       postProcessQuoteList,
-		sz.NameDescription:     postProcessDescription,
-		sz.NameTable:           postProcessTable,
+	symMap = map[*sx.Symbol]func(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair{
+		sz.SymBlock:           postProcessBlockList,
+		sz.SymPara:            postProcessInlineList,
+		sz.SymRegionBlock:     postProcessRegion,
+		sz.SymRegionQuote:     postProcessRegion,
+		sz.SymRegionVerse:     postProcessRegionVerse,
+		sz.SymVerbatimComment: postProcessVerbatim,
+		sz.SymVerbatimEval:    postProcessVerbatim,
+		sz.SymVerbatimMath:    postProcessVerbatim,
+		sz.SymVerbatimProg:    postProcessVerbatim,
+		sz.SymVerbatimZettel:  postProcessVerbatim,
+		sz.SymHeading:         postProcessHeading,
+		sz.SymListOrdered:     postProcessItemList,
+		sz.SymListUnordered:   postProcessItemList,
+		sz.SymListQuote:       postProcessQuoteList,
+		sz.SymDescription:     postProcessDescription,
+		sz.SymTable:           postProcessTable,
 
-		sz.NameInline:       postProcessInlineList,
-		sz.NameText:         postProcessText,
-		sz.NameSoft:         postProcessSoft,
-		sz.NameEndnote:      postProcessEndnote,
-		sz.NameMark:         postProcessMark,
-		sz.NameLinkBased:    postProcessInlines4,
-		sz.NameLinkBroken:   postProcessInlines4,
-		sz.NameLinkExternal: postProcessInlines4,
-		sz.NameLinkFound:    postProcessInlines4,
-		sz.NameLinkHosted:   postProcessInlines4,
-		sz.NameLinkInvalid:  postProcessInlines4,
-		sz.NameLinkQuery:    postProcessInlines4,
-		sz.NameLinkSelf:     postProcessInlines4,
-		sz.NameLinkZettel:   postProcessInlines4,
-		sz.NameEmbed:        postProcessInlines4,
-		sz.NameCite:         postProcessInlines4,
-		sz.NameFormatDelete: postProcessFormat,
-		sz.NameFormatEmph:   postProcessFormat,
-		sz.NameFormatInsert: postProcessFormat,
-		sz.NameFormatMark:   postProcessFormat,
-		sz.NameFormatQuote:  postProcessFormat,
-		sz.NameFormatStrong: postProcessFormat,
-		sz.NameFormatSpan:   postProcessFormat,
-		sz.NameFormatSub:    postProcessFormat,
-		sz.NameFormatSuper:  postProcessFormat,
+		sz.SymInline:       postProcessInlineList,
+		sz.SymText:         postProcessText,
+		sz.SymSoft:         postProcessSoft,
+		sz.SymEndnote:      postProcessEndnote,
+		sz.SymMark:         postProcessMark,
+		sz.SymLinkBased:    postProcessInlines4,
+		sz.SymLinkBroken:   postProcessInlines4,
+		sz.SymLinkExternal: postProcessInlines4,
+		sz.SymLinkFound:    postProcessInlines4,
+		sz.SymLinkHosted:   postProcessInlines4,
+		sz.SymLinkInvalid:  postProcessInlines4,
+		sz.SymLinkQuery:    postProcessInlines4,
+		sz.SymLinkSelf:     postProcessInlines4,
+		sz.SymLinkZettel:   postProcessInlines4,
+		sz.SymEmbed:        postProcessInlines4,
+		sz.SymCite:         postProcessInlines4,
+		sz.SymFormatDelete: postProcessFormat,
+		sz.SymFormatEmph:   postProcessFormat,
+		sz.SymFormatInsert: postProcessFormat,
+		sz.SymFormatMark:   postProcessFormat,
+		sz.SymFormatQuote:  postProcessFormat,
+		sz.SymFormatStrong: postProcessFormat,
+		sz.SymFormatSpan:   postProcessFormat,
+		sz.SymFormatSub:    postProcessFormat,
+		sz.SymFormatSuper:  postProcessFormat,
 
-		symSeparator.GetValue(): ignoreProcess,
+		symSeparator: ignoreProcess,
 	}
 }
 
@@ -120,20 +121,25 @@ func postProcessInlineList(pp *postProcessor, lst *sx.Pair, env *sx.Pair) *sx.Pa
 }
 
 func postProcessRegion(pp *postProcessor, rn *sx.Pair, env *sx.Pair) *sx.Pair {
+	return doPostProcessRegion(pp, rn, env, env)
+}
+
+func postProcessRegionVerse(pp *postProcessor, rn *sx.Pair, env *sx.Pair) *sx.Pair {
+	return doPostProcessRegion(pp, rn, env.Cons(sx.Cons(symInVerse, nil)), env)
+}
+
+func doPostProcessRegion(pp *postProcessor, rn *sx.Pair, envBlock, envInline *sx.Pair) *sx.Pair {
+
 	sym := rn.Car()
 	next := rn.Tail()
 	attrs := next.Car()
 	next = next.Tail()
-	blocks := pp.visitPairList(next.Head(), env)
-	text := pp.visitInlines(next.Tail(), env)
+	blocks := pp.visitPairList(next.Head(), envBlock)
+	text := pp.visitInlines(next.Tail(), envInline)
 	if blocks == nil && text == nil {
 		return nil
 	}
 	return text.Cons(blocks).Cons(attrs).Cons(sym)
-}
-
-func postProcessRegionVerse(pp *postProcessor, rn *sx.Pair, env *sx.Pair) *sx.Pair {
-	return postProcessRegion(pp, rn, env.Cons(sx.Cons(symInVerse, nil)))
 }
 
 func postProcessVerbatim(_ *postProcessor, verb *sx.Pair, _ *sx.Pair) *sx.Pair {
@@ -398,7 +404,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	}
 	inVerse := env.Assoc(symInVerse) != nil
 	vector := make([]*sx.Pair, 0, length)
-	// 1st phase: process all childs, ignore SPACE at start, and merge some elements
+	// 1st phase: process all childs, ignore ' ' / '\t' at start, and merge some elements
 	for node := lst; node != nil; node = node.Tail() {
 		elem := sz.Walk(pp, node.Head(), env)
 		if elem == nil {
@@ -406,11 +412,26 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 		}
 		elemSym := elem.Car()
 		if len(vector) == 0 {
-			// The 1st element is always moved, except for a SPACE outside a verse block
-			if !inVerse && elemSym.IsEqual(sz.SymSpace) {
+			// If the 1st element is a TEXT, remove all ' ', '\t' at the beginning, if outside a verse block.
+			if inVerse || !elemSym.IsEqual(sz.SymText) {
+				vector = append(vector, elem)
 				continue
 			}
-			vector = append(vector, elem)
+
+			elemTail := elem.Tail()
+			elemText := elemTail.Car().(sx.String).GetValue()
+			if elemText != "" && (elemText[0] == ' ' || elemText[0] == '\t') {
+				for elemText != "" {
+					if ch := elemText[0]; ch != ' ' && ch != '\t' {
+						break
+					}
+					elemText = elemText[1:]
+				}
+				elemTail.SetCar(sx.MakeString(elemText))
+			}
+			if elemText != "" {
+				vector = append(vector, elem)
+			}
 			continue
 		}
 		last := vector[len(vector)-1]
@@ -424,10 +445,19 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 			continue
 		}
 
-		if lastSym.IsEqual(sz.SymSpace) && elemSym.IsEqual(sz.SymSoft) {
-			// Merge (SPACE) (SOFT) to (HARD)
-			vector[len(vector)-1] = sx.Cons(sz.SymHard, sx.Nil())
-			continue
+		if lastSym.IsEqual(sz.SymText) && elemSym.IsEqual(sz.SymSoft) {
+			// Merge (TEXT "... ") (SOFT) to (TEXT "...") (HARD)
+			lastTail := last.Tail()
+			if lastText := lastTail.Car().(sx.String).GetValue(); strings.HasSuffix(lastText, " ") {
+				newText := removeTrailingSpaces(lastText)
+				if newText == "" {
+					vector[len(vector)-1] = sx.Cons(sz.SymHard, sx.Nil())
+					continue
+				}
+				lastTail.SetCar(sx.MakeString(newText))
+				elemSym = sz.SymHard
+				elem.SetCar(elemSym)
+			}
 		}
 
 		vector = append(vector, elem)
@@ -436,15 +466,25 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 		return nil
 	}
 
-	// 2nd phase: remove (SOFT), (HARD), (SPACE) at the end
+	// 2nd phase: remove (SOFT), (HARD) at the end, remove trailing spaces in (TEXT "...")
 	lastPos := len(vector) - 1
 	for lastPos >= 0 {
 		elem := vector[lastPos]
 		elemSym := elem.Car()
-		if !elemSym.IsEqual(sz.SymSpace) && !sz.IsBreakSym(elemSym) {
+		if elemSym.IsEqual(sz.SymText) {
+			elemTail := elem.Tail()
+			elemText := elemTail.Car().(sx.String).GetValue()
+			newText := removeTrailingSpaces(elemText)
+			if newText != "" {
+				elemTail.SetCar(sx.MakeString(newText))
+				break
+			}
+			lastPos--
+		} else if sz.IsBreakSym(elemSym) {
+			lastPos--
+		} else {
 			break
 		}
-		lastPos--
 	}
 	if lastPos < 0 {
 		return nil
@@ -456,6 +496,16 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 		curr = curr.AppendBang(vector[i])
 	}
 	return result
+}
+
+func removeTrailingSpaces(s string) string {
+	for len(s) > 0 {
+		if ch := s[len(s)-1]; ch != ' ' && ch != '\t' {
+			return s
+		}
+		s = s[0 : len(s)-1]
+	}
+	return ""
 }
 
 func postProcessText(_ *postProcessor, txt *sx.Pair, _ *sx.Pair) *sx.Pair {

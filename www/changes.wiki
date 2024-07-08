@@ -5,6 +5,7 @@
   *  Rename to be package <code>t73f.de/r/zsc</code>
   *  Reserve some zettel identifier for future use
   *  Mark <code>client.Client.RenameZettel</code> as deprecated
+  *  Remove space node from (Sx-) AST
 
 <a name="0_17"></a>
 <h2>Changes for Version 0.17.0 (2024-03-04)</h2>
