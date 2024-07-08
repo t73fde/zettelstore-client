@@ -17,7 +17,7 @@ package api
 // ZettelID contains the identifier of a zettel. It is a string with 14 digits.
 type ZettelID string
 
-// InvalidZID is an invalif zettel identifier
+// InvalidZID is an invalid zettel identifier
 const InvalidZID = ""
 
 // IsValid returns true, if the idenfifier contains 14 digits.

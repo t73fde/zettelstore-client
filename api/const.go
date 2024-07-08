@@ -81,7 +81,7 @@ const (
 	ZidTemplateNewTag    = ZettelID("00000000090003") // -> 0018
 	ZidTemplateNewUser   = ZettelID("00000000090002") // -> 0017
 
-	ZidSession      = ZettelID("00009999999998") // -> 00zx
+	ZidSession      = ZettelID("00009999999997") // -> 00zx
 	ZidAppDirectory = ZettelID("00009999999998") // -> 00zy
 	ZidMapping      = ZettelID("00009999999999") // -> 00zz
 	ZidDefaultHome  = ZettelID("00010000000000") // -> 0100
