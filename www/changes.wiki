@@ -1,7 +1,12 @@
 <title>Change Log</title>
 
+<a name="0_19"></a>
+<h2>Changes for Version 0.19.0 (pending)</h2>
+
 <a name="0_18"></a>
-<h2>Changes for Version 0.18.0 (pending)</h2>
+<h2>Changes for Version 0.18.0 (2024-07-11)</h2>
+  *  Add client method <code>GetApplicationZid</code> to retrieve the zettel
+     identifier of an configuration zettel for a specific application.
   *  Rename to be package <code>t73f.de/r/zsc</code>
   *  Reserve some zettel identifier for future use
   *  Mark <code>client.Client.RenameZettel</code> as deprecated
