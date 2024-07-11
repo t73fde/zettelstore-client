@@ -49,7 +49,6 @@ const (
 	ZidZettelTemplate = ZettelID("00000000010401") // -> 000v
 	ZidInfoTemplate   = ZettelID("00000000010402") // -> 000w
 	ZidFormTemplate   = ZettelID("00000000010403") // -> 000x
-	ZidRenameTemplate = ZettelID("00000000010404") // -> 001z
 	ZidDeleteTemplate = ZettelID("00000000010405") // -> 000y
 	ZidErrorTemplate  = ZettelID("00000000010700") // -> 000z
 
@@ -177,8 +176,6 @@ const (
 
 // Additional HTTP constants.
 const (
-	MethodMove = "MOVE" // HTTP method for renaming a zettel
-
 	HeaderAccept      = "Accept"
 	HeaderContentType = "Content-Type"
 	HeaderDestination = "Destination"

@@ -2,6 +2,7 @@
 
 <a name="0_19"></a>
 <h2>Changes for Version 0.19.0 (pending)</h2>
+  *  Remove support for rename operation; removed all associated constants
 
 <a name="0_18"></a>
 <h2>Changes for Version 0.18.0 (2024-07-11)</h2>
