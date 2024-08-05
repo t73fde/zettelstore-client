@@ -155,7 +155,7 @@ func (ev *Evaluator) Endnotes(env *Environment) *sx.Pair {
 // Environment where sz objects are evaluated to shtml objects
 type Environment struct {
 	err          error
-	langStack    []string
+	langStack    LangStack
 	endnotes     []endnoteInfo
 	quoteNesting uint
 }
@@ -168,11 +168,9 @@ type endnoteInfo struct {
 
 // MakeEnvironment builds a new evaluation environment.
 func MakeEnvironment(lang string) Environment {
-	langStack := make([]string, 1, 16)
-	langStack[0] = lang
 	return Environment{
 		err:          nil,
-		langStack:    langStack,
+		langStack:    NewLangStack(lang),
 		endnotes:     nil,
 		quoteNesting: 0,
 	}
@@ -183,28 +181,30 @@ func (env *Environment) GetError() error { return env.err }
 
 // Reset the environment.
 func (env *Environment) Reset() {
-	env.langStack = env.langStack[0:1]
+	env.langStack.Reset()
 	env.endnotes = nil
 	env.quoteNesting = 0
 }
 
-// PushAttribute adds the current attributes to the environment.
+// pushAttribute adds the current attributes to the environment.
 func (env *Environment) pushAttributes(a attrs.Attributes) {
 	if value, ok := a.Get("lang"); ok {
-		env.langStack = append(env.langStack, value)
+		env.langStack.Push(value)
 	} else {
-		env.langStack = append(env.langStack, env.getLanguage())
+		env.langStack.Dup()
 	}
 }
 
-// popAttributes removes the current attributes from the envrionment
-func (env *Environment) popAttributes() {
-	env.langStack = env.langStack[0 : len(env.langStack)-1]
-}
+// popAttributes removes the current attributes from the envrionment.
+func (env *Environment) popAttributes() { env.langStack.Pop() }
 
-// getLanguage returns the current language
-func (env *Environment) getLanguage() string {
-	return env.langStack[len(env.langStack)-1]
+// getLanguage returns the current language.
+func (env *Environment) getLanguage() string { return env.langStack.Top() }
+
+func (env *Environment) getQuotes() (string, string, bool) {
+	qi := GetQuoteInfo(env.getLanguage())
+	leftQ, rightQ := qi.GetQuotes(env.quoteNesting)
+	return leftQ, rightQ, qi.GetNBSp()
 }
 
 // EvalFn is a function to be called for evaluation.
@@ -737,39 +737,6 @@ func (ev *Evaluator) makeFormatFn(sym *sx.Symbol) EvalFn {
 	}
 }
 
-type quoteData struct {
-	primLeft, primRight string
-	secLeft, secRight   string
-	nbsp                bool
-}
-
-var langQuotes = map[string]quoteData{
-	"":              {"&quot;", "&quot;", "&quot;", "&quot;", false},
-	api.ValueLangEN: {"&ldquo;", "&rdquo;", "&lsquo;", "&rsquo;", false},
-	"de":            {"&bdquo;", "&ldquo;", "&sbquo;", "&lsquo;", false},
-	"fr":            {"&laquo;", "&raquo;", "&lsaquo;", "&rsaquo;", true},
-}
-
-func getQuoteData(lang string) quoteData {
-	langFields := strings.FieldsFunc(lang, func(r rune) bool { return r == '-' || r == '_' })
-	for len(langFields) > 0 {
-		langSup := strings.Join(langFields, "-")
-		quotes, ok := langQuotes[langSup]
-		if ok {
-			return quotes
-		}
-		langFields = langFields[0 : len(langFields)-1]
-	}
-	return langQuotes[""]
-}
-
-func getQuotes(data *quoteData, env *Environment) (string, string) {
-	if env.quoteNesting%2 == 0 {
-		return data.primLeft, data.primRight
-	}
-	return data.secLeft, data.secRight
-}
-
 func (ev *Evaluator) evalQuote(args sx.Vector, env *Environment) sx.Object {
 	a := ev.GetAttributes(args[0], env)
 	env.pushAttributes(a)
@@ -778,8 +745,7 @@ func (ev *Evaluator) evalQuote(args sx.Vector, env *Environment) sx.Object {
 	if val, hasClass := a.Get(""); hasClass {
 		a = a.Remove("").AddClass(val)
 	}
-	quotes := getQuoteData(env.getLanguage())
-	leftQ, rightQ := getQuotes(&quotes, env)
+	leftQ, rightQ, withNbsp := env.getQuotes()
 
 	env.quoteNesting++
 	res := ev.evalSlice(args[1:], env)
@@ -789,7 +755,7 @@ func (ev *Evaluator) evalQuote(args sx.Vector, env *Environment) sx.Object {
 	if lastPair.IsNil() {
 		res = sx.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(leftQ), sx.MakeString(rightQ)), sx.Nil())
 	} else {
-		if quotes.nbsp {
+		if withNbsp {
 			lastPair.AppendBang(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString("&nbsp;"), sx.MakeString(rightQ)))
 			res = res.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(leftQ), sx.MakeString("&nbsp;")))
 		} else {
