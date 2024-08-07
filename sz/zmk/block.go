@@ -274,11 +274,12 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 
 // parseRegionLastLine parses the last line of a region and returns its inline text.
 func (cp *zmkP) parseRegionLastLine() *sx.Pair {
+	inp := cp.inp
 	cp.clearStacked() // remove any lists defined in the region
-	cp.skipSpace()
+	inp.SkipSpace()
 	var region sx.ListBuilder
 	for {
-		switch cp.inp.Ch {
+		switch inp.Ch {
 		case input.EOS, '\n', '\r':
 			return region.List()
 		}
@@ -301,7 +302,7 @@ func (cp *zmkP) parseHeading() (hn *sx.Pair, success bool) {
 		return nil, false
 	}
 	inp.Next()
-	cp.skipSpace()
+	inp.SkipSpace()
 	if delims > 7 {
 		delims = 7
 	}
@@ -351,8 +352,9 @@ func (cp *zmkP) parseNestedList() (res *sx.Pair, success bool) {
 	if len(kinds) == 0 {
 		return nil, false
 	}
-	cp.skipSpace()
-	if !kinds[len(kinds)-1].IsEqual(sz.SymListQuote) && input.IsEOLEOS(cp.inp.Ch) {
+	inp := cp.inp
+	inp.SkipSpace()
+	if !kinds[len(kinds)-1].IsEqual(sz.SymListQuote) && input.IsEOLEOS(inp.Ch) {
 		return nil, false
 	}
 
@@ -447,7 +449,7 @@ func (cp *zmkP) parseDefTerm() (res *sx.Pair, success bool) {
 		return nil, false
 	}
 	inp.Next()
-	cp.skipSpace()
+	inp.SkipSpace()
 	descrl := cp.descrl
 	if descrl == nil {
 		descrl = sx.Cons(sz.SymDescription, nil)
@@ -486,7 +488,7 @@ func (cp *zmkP) parseDefDescr() (res *sx.Pair, success bool) {
 		return nil, false
 	}
 	inp.Next()
-	cp.skipSpace()
+	inp.SkipSpace()
 	descrl := cp.descrl
 	lastPair, pos := lastPairPos(descrl)
 	if descrl == nil || pos <= 0 {

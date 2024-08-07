@@ -25,3 +25,6 @@ func IsSpace(ch rune) bool {
 	}
 	return unicode.IsSpace(ch)
 }
+
+// IsSpace returns true if current character is a whitespace.
+func (inp *Input) IsSpace() bool { return IsSpace(inp.Ch) }

@@ -97,13 +97,7 @@ func (inp *Input) Accept(s string) bool {
 }
 
 // IsEOLEOS returns true if char is either EOS or EOL.
-func IsEOLEOS(ch rune) bool {
-	switch ch {
-	case EOS, '\n', '\r':
-		return true
-	}
-	return false
-}
+func IsEOLEOS(ch rune) bool { return ch == EOS || ch == '\n' || ch == '\r' }
 
 // EatEOL transforms both "\r" and "\r\n" into "\n".
 func (inp *Input) EatEOL() {
@@ -124,6 +118,13 @@ func (inp *Input) SetPos(pos int) {
 	if inp.Pos != pos {
 		inp.readPos = pos
 		inp.Next()
+	}
+}
+
+// SkipSpace reads while the current character is not a space character.
+func (inp *Input) SkipSpace() {
+	for ch := inp.Ch; IsSpace(ch); {
+		ch = inp.Next()
 	}
 }
 

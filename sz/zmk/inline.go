@@ -150,7 +150,7 @@ func hasQueryPrefix(src []byte) bool {
 func (cp *zmkP) parseReference(openCh, closeCh rune) (ref string, text *sx.Pair, _ bool) {
 	inp := cp.inp
 	inp.Next()
-	cp.skipSpace()
+	inp.SkipSpace()
 	if inp.Ch == openCh {
 		// Additional opening chars result in a fail
 		return "", nil, false
@@ -184,7 +184,7 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (ref string, text *sx.Pair,
 		}
 	}
 
-	cp.skipSpace()
+	inp.SkipSpace()
 	pos = inp.Pos
 	if !cp.readReferenceToClose(closeCh) {
 		return "", nil, false
@@ -330,9 +330,9 @@ func (cp *zmkP) parseMark() (*sx.Pair, bool) {
 }
 
 func (cp *zmkP) parseLinkLikeRest() (*sx.Pair, bool) {
-	cp.skipSpace()
 	var ins sx.Vector
 	inp := cp.inp
+	inp.SkipSpace()
 	for inp.Ch != ']' {
 		in := cp.parseInline()
 		if in == nil {
@@ -359,7 +359,7 @@ func (cp *zmkP) parseComment() (res *sx.Pair, success bool) {
 		inp.Next()
 	}
 	attrs := cp.parseInlineAttributes()
-	cp.skipSpace()
+	inp.SkipSpace()
 	pos := inp.Pos
 	for {
 		if input.IsEOLEOS(inp.Ch) {
