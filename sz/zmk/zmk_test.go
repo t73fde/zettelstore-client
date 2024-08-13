@@ -54,6 +54,7 @@ func checkTcs(t *testing.T, isBlock bool, tcs TestCases) {
 		t.Run(fmt.Sprintf("TC=%02d,src=%q", tcn, tc.source), func(st *testing.T) {
 			st.Helper()
 			ast := parseInput(tc.source, isBlock)
+			sz.Walk(astWalker{}, ast, nil)
 			got := ast.String()
 			if tc.want != got {
 				st.Errorf("\nwant=%q\n got=%q", tc.want, got)
@@ -61,7 +62,7 @@ func checkTcs(t *testing.T, isBlock bool, tcs TestCases) {
 		})
 	}
 }
-func parseInput(src string, asBlock bool) sx.Sequence {
+func parseInput(src string, asBlock bool) *sx.Pair {
 	inp := input.NewInput([]byte(src))
 	if asBlock {
 		bl := zmk.ParseBlocks(inp)
@@ -70,6 +71,10 @@ func parseInput(src string, asBlock bool) sx.Sequence {
 	il := zmk.ParseInlines(inp)
 	return il
 }
+
+type astWalker struct{}
+
+func (astWalker) Visit(node *sx.Pair, env *sx.Pair) sx.Object { return sx.MakeBoolean(true) }
 
 func TestEOL(t *testing.T) {
 	t.Parallel()

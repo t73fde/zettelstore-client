@@ -66,7 +66,7 @@ func init() {
 		SymLinkQuery:    walkChildrenInlines4,
 		SymLinkSelf:     walkChildrenInlines4,
 		SymLinkZettel:   walkChildrenInlines4,
-		SymEmbed:        walkChildrenInlines4,
+		SymEmbed:        walkChildrenEmbed,
 		SymCite:         walkChildrenInlines4,
 		SymFormatDelete: walkChildrenInlines3,
 		SymFormatEmph:   walkChildrenInlines3,
@@ -165,9 +165,7 @@ func walkChildrenDescription(v Visitor, dn *sx.Pair, env *sx.Pair) *sx.Pair {
 }
 
 func walkChildrenTable(v Visitor, tn *sx.Pair, env *sx.Pair) *sx.Pair {
-	header := tn.Tail()
-	header.SetCar(walkChildrenList(v, header.Tail(), env))
-	for row := header.Tail(); row != nil; row = row.Tail() {
+	for row := tn.Tail(); row != nil; row = row.Tail() {
 		row.SetCar(walkChildrenList(v, row.Head(), env))
 	}
 	return tn
@@ -183,6 +181,22 @@ func walkChildrenMark(v Visitor, mn *sx.Pair, env *sx.Pair) *sx.Pair {
 	// fragment := next.Car()
 	next.SetCdr(walkChildrenList(v, next.Tail(), env))
 	return mn
+}
+
+func walkChildrenEmbed(v Visitor, en *sx.Pair, env *sx.Pair) *sx.Pair {
+	// sym := en.Car()
+	next := en.Tail()
+	// attr := next.Car()
+	next = next.Tail()
+	// ref := next.Car()
+	next = next.Tail()
+	// syntax := next.Car()
+	next = next.Tail()
+	if next != nil {
+		// text := next.Car()
+		next.SetCar(Walk(v, next.Head(), env))
+	}
+	return en
 }
 
 func walkChildrenInlines4(v Visitor, ln *sx.Pair, env *sx.Pair) *sx.Pair {

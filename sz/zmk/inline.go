@@ -461,7 +461,7 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 }
 
 func createLiteralNode(sym *sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
-	if sym.IsEqual(sz.SymLiteralZettel) {
+	if sym.IsEqualSymbol(sz.SymLiteralZettel) {
 		if p := attrs.Assoc(sx.MakeString("")); p != nil {
 			if val, isString := sx.GetString(p.Cdr()); isString && val.GetValue() == api.ValueSyntaxHTML {
 				sym = sz.SymLiteralHTML
