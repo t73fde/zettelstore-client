@@ -591,21 +591,6 @@ func (ev *Evaluator) bindInlines() {
 
 	ev.bind(sz.SymEmbed, 3, func(args sx.Vector, env *Environment) sx.Object {
 		ref := getList(args[1], env)
-		syntax := getString(args[2], env).GetValue()
-		if syntax == api.ValueSyntaxSVG {
-			embedAttr := sx.MakeList(
-				sxhtml.SymAttr,
-				sx.Cons(SymAttrType, sx.MakeString("image/svg+xml")),
-				sx.Cons(SymAttrSrc, sx.MakeString("/"+getString(ref.Tail(), env).GetValue()+".svg")),
-			)
-			return sx.MakeList(
-				SymFIGURE,
-				sx.MakeList(
-					SymEMBED,
-					embedAttr,
-				),
-			)
-		}
 		a := ev.GetAttributes(args[0], env)
 		a = a.Set("src", getString(ref.Tail().Car(), env).GetValue())
 		if len(args) > 3 {
