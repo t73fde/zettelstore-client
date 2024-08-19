@@ -61,6 +61,7 @@ var (
 	symTBODY      = sx.MakeSymbol("tbody")
 	symTHEAD      = sx.MakeSymbol("thead")
 	symTD         = sx.MakeSymbol("td")
+	symTH         = sx.MakeSymbol("th")
 	symTR         = sx.MakeSymbol("tr")
 	SymUL         = sx.MakeSymbol("ul")
 )

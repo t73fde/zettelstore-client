@@ -364,14 +364,14 @@ func (ev *Evaluator) bindBlocks() {
 	ev.bind(sz.SymTable, 1, func(args sx.Vector, env *Environment) sx.Object {
 		thead := sx.Nil()
 		if header := getList(args[0], env); !sx.IsNil(header) {
-			thead = sx.Nil().Cons(ev.evalTableRow(header, env)).Cons(symTHEAD)
+			thead = sx.Nil().Cons(ev.evalTableRow(symTH, header, env)).Cons(symTHEAD)
 		}
 
 		var tbody sx.ListBuilder
 		if len(args) > 1 {
 			tbody.Add(symTBODY)
 			for _, row := range args[1:] {
-				tbody.Add(ev.evalTableRow(getList(row, env), env))
+				tbody.Add(ev.evalTableRow(symTD, getList(row, env), env))
 			}
 		}
 
@@ -475,14 +475,14 @@ func (ev *Evaluator) evalDescriptionTerm(term *sx.Pair, env *Environment) *sx.Pa
 	return result.List()
 }
 
-func (ev *Evaluator) evalTableRow(pairs *sx.Pair, env *Environment) *sx.Pair {
+func (ev *Evaluator) evalTableRow(sym *sx.Symbol, pairs *sx.Pair, env *Environment) *sx.Pair {
 	if pairs == nil {
 		return nil
 	}
 	var row sx.ListBuilder
 	row.Add(symTR)
 	for pair := pairs; pair != nil; pair = pair.Tail() {
-		row.Add(ev.Eval(pair.Car(), env))
+		row.Add(sx.Cons(sym, ev.Eval(pair.Car(), env)))
 	}
 	return row.List()
 }
@@ -492,7 +492,7 @@ func (ev *Evaluator) makeCellFn(align string) EvalFn {
 		if align != "" {
 			tdata = tdata.Cons(ev.EvaluateAttrbute(attrs.Attributes{"class": align}))
 		}
-		return tdata.Cons(symTD)
+		return tdata
 	}
 }
 
