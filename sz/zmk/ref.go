@@ -30,7 +30,7 @@ func ParseReference(s string) *sx.Pair {
 		return makePairRef(sz.SymRefStateQuery, s[len(api.QueryPrefix):])
 	}
 	if state, ok := localState(s); ok {
-		if state.IsEqual(sz.SymRefStateBased) {
+		if state.IsEqualSymbol(sz.SymRefStateBased) {
 			s = s[1:]
 		}
 		_, err := url.Parse(s)

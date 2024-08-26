@@ -15,6 +15,7 @@
 package attrs
 
 import (
+	"slices"
 	"strings"
 
 	"t73f.de/r/zsc/maps"
@@ -87,42 +88,39 @@ func (a Attributes) Remove(key string) Attributes {
 	return a
 }
 
-// AddClass adds a value to the class attribute.
-func (a Attributes) AddClass(class string) Attributes {
+// Add a value to an attribute key.
+func (a Attributes) Add(key, value string) Attributes {
 	if a == nil {
-		return map[string]string{"class": class}
+		return map[string]string{key: value}
 	}
-	classes := a.GetClasses()
-	for _, cls := range classes {
-		if cls == class {
-			return a
-		}
+	values := a.Values(key)
+	if !slices.Contains(values, value) {
+		values = append(values, value)
+		a[key] = strings.Join(values, " ")
 	}
-	classes = append(classes, class)
-	a["class"] = strings.Join(classes, " ")
 	return a
 }
 
-// GetClasses returns the class values as a string slice
-func (a Attributes) GetClasses() []string {
-	if a == nil {
-		return nil
+// Values are the space separated values of an attribute.
+func (a Attributes) Values(key string) []string {
+	if a != nil {
+		if value, ok := a[key]; ok {
+			return strings.Fields(value)
+		}
 	}
-	classes, ok := a["class"]
-	if !ok {
-		return nil
-	}
-	return strings.Fields(classes)
+	return nil
 }
 
-// HasClass returns true, if attributes contains the given class.
-func (a Attributes) HasClass(s string) bool {
-	if a == nil {
-		return false
-	}
-	classes, found := a["class"]
-	if !found {
-		return false
-	}
-	return strings.Contains(" "+classes+" ", " "+s+" ")
+// Has the attribute key a value?
+func (a Attributes) Has(key, value string) bool {
+	return slices.Contains(a.Values(key), value)
 }
+
+// AddClass adds a value to the class attribute.
+func (a Attributes) AddClass(class string) Attributes { return a.Add("class", class) }
+
+// GetClasses returns the class values as a string slice
+func (a Attributes) GetClasses() []string { return a.Values("class") }
+
+// HasClass returns true, if attributes contains the given class.
+func (a Attributes) HasClass(s string) bool { return a.Has("class", s) }

@@ -57,7 +57,7 @@ func TestHasClass(t *testing.T) {
 		class   string
 		exp     bool
 	}{
-		{"", "", true},
+		{"", "", false},
 		{"x", "", false},
 		{"x", "x", true},
 		{"x", "y", false},

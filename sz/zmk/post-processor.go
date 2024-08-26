@@ -324,7 +324,7 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
 				cellAlign := getCellAlignment(str[len(str)-1])
-				if !cellAlign.IsEqual(sz.SymCell) {
+				if !cellAlign.IsEqualSymbol(sz.SymCell) {
 					elem.SetCdr(sx.Cons(sx.MakeString(str[0:len(str)-1]), nil))
 				}
 				align[cellCount-1] = cellAlign
@@ -370,7 +370,7 @@ func alignRow(row *sx.Pair, align []*sx.Symbol) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
 				cellAlign := getCellAlignment(str[0])
-				if !cellAlign.IsEqual(sz.SymCell) {
+				if !cellAlign.IsEqualSymbol(sz.SymCell) {
 					elem.SetCdr(sx.Cons(sx.MakeString(str[1:]), nil))
 					cell.SetCar(cellAlign)
 				}

@@ -4,6 +4,7 @@
 <h2>Changes for Version 0.19.0 (pending)</h2>
   *  Remove support for rename operation; removed all associated constants
   *  Make quote handling in shtml public, to be used by other encodeers
+  *  shtml generates external links with rel attribute
 
 <a name="0_18"></a>
 <h2>Changes for Version 0.18.0 (2024-07-11)</h2>
