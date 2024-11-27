@@ -40,7 +40,6 @@ const (
 	ZidStartupConfiguration = ZettelID("00000000000096") // -> 000k
 	ZidConfiguration        = ZettelID("00000000000100") // -> 000l
 	ZidDirectory            = ZettelID("00000000000101") // -> 000m
-	ZidWarnings             = ZettelID("00000000000102") // -> 000n
 
 	// WebUI HTML templates are in the range 10000..19999
 	ZidBaseTemplate   = ZettelID("00000000010100") // -> 000s
@@ -83,7 +82,6 @@ const (
 
 	ZidSession      = ZettelID("00009999999997") // -> 00zx
 	ZidAppDirectory = ZettelID("00009999999998") // -> 00zy
-	ZidMapping      = ZettelID("00009999999999") // -> 00zz
 	ZidDefaultHome  = ZettelID("00010000000000") // -> 0100
 )
 
