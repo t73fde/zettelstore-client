@@ -15,7 +15,11 @@ package api
 
 import "fmt"
 
-// Predefined Zettel Identifier
+// Predefined zettel identifier.
+//
+// See [List of predefined zettel].
+//
+// [List of predefined zettel]: https://zettelstore.de/manual/h/00001005090000
 const (
 	// System zettel
 	ZidVersion              = ZettelID("00000000000001")
@@ -90,7 +94,11 @@ const (
 // LengthZid factors the constant length of a zettel identifier
 const LengthZid = len(ZidDefaultHome)
 
-// Values of the metadata key/value type.
+// Values of the metadata key/value types.
+//
+// See [Supported Key Types].
+//
+// [Supported Key Types]: https://zettelstore.de/manual/h/00001006030000
 const (
 	MetaCredential   = "Credential"
 	MetaEmpty        = "EString"
@@ -105,7 +113,11 @@ const (
 	MetaZettelmarkup = "Zettelmarkup"
 )
 
-// Predefined general Metadata keys
+// Predefined / supported metadata keys.
+//
+// See [Supported Metadata Keys].
+//
+// [Supported Metadata Keys]: https://zettelstore.de/manual/h/00001006020000
 const (
 	KeyID           = "id"
 	KeyTitle        = "title"
@@ -145,26 +157,26 @@ const (
 	KeyVisibility   = "visibility"
 )
 
-// Predefined Metadata values
+// Predefined metadata values.
 const (
 	ValueFalse             = "false"
 	ValueTrue              = "true"
-	ValueLangEN            = "en"
-	ValueRoleConfiguration = "configuration"
-	ValueRoleTag           = "tag"
-	ValueRoleRole          = "role"
-	ValueRoleZettel        = "zettel"
-	ValueSyntaxCSS         = "css"
-	ValueSyntaxDraw        = "draw"
-	ValueSyntaxGif         = "gif"
-	ValueSyntaxHTML        = "html"
-	ValueSyntaxMarkdown    = "markdown"
-	ValueSyntaxMD          = "md"
-	ValueSyntaxNone        = "none"
-	ValueSyntaxSVG         = "svg"
-	ValueSyntaxSxn         = "sxn"
-	ValueSyntaxText        = "text"
-	ValueSyntaxZmk         = "zmk"
+	ValueLangEN            = "en"            // Default for "lang"
+	ValueRoleConfiguration = "configuration" // A role for internal zettel
+	ValueRoleTag           = "tag"           // A role for tag zettel
+	ValueRoleRole          = "role"          // A role for role zettel
+	ValueRoleZettel        = "zettel"        // A role for zettel
+	ValueSyntaxCSS         = "css"           // Syntax: CSS
+	ValueSyntaxDraw        = "draw"          // Syntax: Drawing
+	ValueSyntaxGif         = "gif"           // Syntax GIF image
+	ValueSyntaxHTML        = "html"          // Syntax: HTML
+	ValueSyntaxMarkdown    = "markdown"      // Syntax: Markdown / CommonMark
+	ValueSyntaxMD          = "md"            // Syntax: Markdown / CommonMark
+	ValueSyntaxNone        = "none"          // Syntax: no syntax / content, just metadata
+	ValueSyntaxSVG         = "svg"           // Syntax: SVG
+	ValueSyntaxSxn         = "sxn"           // Syntax: S-Expression
+	ValueSyntaxText        = "text"          // Syntax: plain text
+	ValueSyntaxZmk         = "zmk"           // Syntax: Zettelmarkup
 	ValueUserRoleCreator   = "creator"
 	ValueUserRoleOwner     = "owner"
 	ValueUserRoleReader    = "reader"
@@ -199,15 +211,15 @@ const (
 
 // Supported encoding values.
 const (
-	EncodingHTML  = "html"
-	EncodingMD    = "md"
-	EncodingSHTML = "shtml"
-	EncodingSz    = "sz"
-	EncodingText  = "text"
-	EncodingZMK   = "zmk"
+	EncodingHTML  = "html"  // Plain HTML
+	EncodingMD    = "md"    // Markdown
+	EncodingSHTML = "shtml" // SxHTML
+	EncodingSz    = "sz"    // Structure of zettel, encoded a an S-expression
+	EncodingText  = "text"  // plain text content
+	EncodingZMK   = "zmk"   // Zettelmarkup
 
-	EncodingPlain = "plain"
-	EncodingData  = "data"
+	EncodingPlain = "plain" // Plain zettel, no processing
+	EncodingData  = "data"  // Plain zettel, metadata as S-Expression
 )
 
 var mapEncodingEnum = map[string]EncodingEnum{
@@ -272,62 +284,62 @@ const (
 // Command to be executed atthe Zettelstore
 type Command string
 
-// Supported command values
+// Supported command values.
 const (
 	CommandAuthenticated = Command("authenticated")
 	CommandRefresh       = Command("refresh")
 )
 
-// Supported search operator representations
+// Supported search operator representations.
 const (
-	BackwardDirective = "BACKWARD"
-	ContextDirective  = "CONTEXT"
-	CostDirective     = "COST"
-	ForwardDirective  = "FORWARD"
-	FullDirective     = "FULL"
-	IdentDirective    = "IDENT"
-	ItemsDirective    = "ITEMS"
-	MaxDirective      = "MAX"
-	LimitDirective    = "LIMIT"
-	OffsetDirective   = "OFFSET"
-	OrDirective       = "OR"
-	OrderDirective    = "ORDER"
-	PhraseDirective   = "PHRASE"
-	PickDirective     = "PICK"
-	RandomDirective   = "RANDOM"
-	ReverseDirective  = "REVERSE"
-	UnlinkedDirective = "UNLINKED"
+	BackwardDirective = "BACKWARD" // Backward-only context
+	ContextDirective  = "CONTEXT"  // Context directive
+	CostDirective     = "COST"     // Maximum cost of a context operation
+	ForwardDirective  = "FORWARD"  // Forward-only context
+	FullDirective     = "FULL"     // Include tags in context
+	IdentDirective    = "IDENT"    // Use only specified zettel
+	ItemsDirective    = "ITEMS"    // Select list elements in a zettel
+	MaxDirective      = "MAX"      // Maximum number of context results
+	LimitDirective    = "LIMIT"    // Maximum number of zettel
+	OffsetDirective   = "OFFSET"   // Offset to start returned zettel list
+	OrDirective       = "OR"       // Combine several search expression with an "or"
+	OrderDirective    = "ORDER"    // Specify metadata keys for the order of returned list
+	PhraseDirective   = "PHRASE"   // Only unlinked zettel with given phrase
+	PickDirective     = "PICK"     // Pick some random zettel
+	RandomDirective   = "RANDOM"   // Order zettel list randomly
+	ReverseDirective  = "REVERSE"  // Reverse the order of a zettel list
+	UnlinkedDirective = "UNLINKED" // Search for zettel that contain a phase(s) but do not link
 
-	ActionSeparator = "|"
+	ActionSeparator = "|" // Separates action list of previous elements of query expression
 
-	AtomAction     = "ATOM"
-	KeysAction     = "KEYS"
-	MinAction      = "MIN"
-	MaxAction      = "MAX"
-	NumberedAction = "NUMBERED"
-	RedirectAction = "REDIRECT"
-	ReIndexAction  = "REINDEX"
-	RSSAction      = "RSS"
-	TitleAction    = "TITLE"
+	AtomAction     = "ATOM"     // Return an Atom web feed
+	KeysAction     = "KEYS"     // Provide metadata key used
+	MinAction      = "MIN"      // Return only those values with a minimum amount of zettel
+	MaxAction      = "MAX"      // Return only those values with a maximum amount of zettel
+	NumberedAction = "NUMBERED" // Return a numbered list
+	RedirectAction = "REDIRECT" // Return the first zettel in list
+	ReIndexAction  = "REINDEX"  // Ensure that zettel is/are indexed.
+	RSSAction      = "RSS"      // Return a RSS web feed
+	TitleAction    = "TITLE"    // Set a title for Atom or RSS web feed
 
-	ExistOperator    = "?"
-	ExistNotOperator = "!?"
+	ExistOperator    = "?"  // Does zettel have metadata with given key?
+	ExistNotOperator = "!?" // True id zettel does not have metadata with given key.
 
 	SearchOperatorNot        = "!"
-	SearchOperatorEqual      = "="
-	SearchOperatorNotEqual   = "!="
-	SearchOperatorHas        = ":"
-	SearchOperatorHasNot     = "!:"
-	SearchOperatorPrefix     = "["
-	SearchOperatorNoPrefix   = "!["
-	SearchOperatorSuffix     = "]"
-	SearchOperatorNoSuffix   = "!]"
-	SearchOperatorMatch      = "~"
-	SearchOperatorNoMatch    = "!~"
-	SearchOperatorLess       = "<"
-	SearchOperatorNotLess    = "!<"
-	SearchOperatorGreater    = ">"
-	SearchOperatorNotGreater = "!>"
+	SearchOperatorEqual      = "="  // True if values are equal
+	SearchOperatorNotEqual   = "!=" // False if values are equal
+	SearchOperatorHas        = ":"  // True if values are equal/included
+	SearchOperatorHasNot     = "!:" // False if values are equal/included
+	SearchOperatorPrefix     = "["  // True if value is prefix of the other
+	SearchOperatorNoPrefix   = "![" // False if value is prefix of the other
+	SearchOperatorSuffix     = "]"  // True if value is suffix of other
+	SearchOperatorNoSuffix   = "!]" // False if value is suffix of other
+	SearchOperatorMatch      = "~"  // True if value is included in other
+	SearchOperatorNoMatch    = "!~" // False if value is included in other
+	SearchOperatorLess       = "<"  // True if value is smaller than other
+	SearchOperatorNotLess    = "!<" // False if value is smaller than other
+	SearchOperatorGreater    = ">"  // True if value is greater than other
+	SearchOperatorNotGreater = "!>" // False if value is greater than other
 )
 
 // QueryPrefix is the prefix that denotes a query expression within a reference.

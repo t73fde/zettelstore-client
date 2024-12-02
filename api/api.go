@@ -34,7 +34,7 @@ func (zid ZettelID) IsValid() bool {
 	return true
 }
 
-// ZettelMeta is a map containg the metadata of a zettel.
+// ZettelMeta is a map containg the normalized metadata of a zettel.
 type ZettelMeta map[string]string
 
 // ZettelRights is an integer that encode access rights for a zettel.
@@ -46,7 +46,7 @@ const (
 	ZettelCanCreate              // Current user is allowed to create a new zettel
 	ZettelCanRead                // Requesting user is allowed to read the zettel
 	ZettelCanWrite               // Requesting user is allowed to update the zettel
-	placeholder_1                // Was assigned to rename right, which is now removed
+	placeholdergo1               // Was assigned to rename right, which is now removed
 	ZettelCanDelete              // Requesting user is allowed to delete the zettel
 	ZettelMaxRight               // Sentinel value
 )
@@ -65,11 +65,16 @@ type ZidMetaRights struct {
 }
 
 // ZettelData contains all data for a zettel.
+//
+//   - Meta is a map containing the metadata of the zettel.
+//   - Rights is an integer specifying the access rights.
+//   - Encoding is a string specifying the encoding of the zettel content.
+//   - Content is the zettel content itself.
 type ZettelData struct {
 	Meta     ZettelMeta
 	Rights   ZettelRights
 	Encoding string
-	Content  string
+	Content  string // raw, uninterpreted zettel content
 }
 
 // Aggregate maps metadata keys to list of zettel identifier.

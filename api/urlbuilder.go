@@ -33,7 +33,7 @@ func NewURLBuilder(prefix string, key byte) *URLBuilder {
 	return &result
 }
 
-// Clone an URLBuilder
+// Clone an URLBuilder.
 func (ub *URLBuilder) Clone() *URLBuilder {
 	cpy := new(URLBuilder)
 	ub.base.Copy(&cpy.base)
@@ -47,19 +47,21 @@ func (ub *URLBuilder) SetZid(zid ZettelID) *URLBuilder {
 	return ub
 }
 
-// AppendPath adds a new path element
+// AppendPath adds a new path element.
 func (ub *URLBuilder) AppendPath(p string) *URLBuilder {
 	ub.base.AddPath(p)
 	return ub
 }
 
-// AppendKVQuery adds a new key/value query parameter
+// AppendKVQuery adds a new key/value query parameter.
 func (ub *URLBuilder) AppendKVQuery(key, value string) *URLBuilder {
 	ub.base.AddQuery(key, value)
 	return ub
 }
 
-// AppendQuery adds a new query
+// AppendQuery adds a new query.
+//
+// Basically the same as [URLBuilder.AppendKVQuery]([api.QueryKeyQuery], value)
 func (ub *URLBuilder) AppendQuery(value string) *URLBuilder {
 	if value != "" {
 		ub.base.AddQuery(QueryKeyQuery, value)
@@ -73,7 +75,7 @@ func (ub *URLBuilder) ClearQuery() *URLBuilder {
 	return ub
 }
 
-// SetFragment stores the fragment
+// SetFragment sets the fragment.
 func (ub *URLBuilder) SetFragment(s string) *URLBuilder {
 	ub.base.SetFragment(s)
 	return ub
