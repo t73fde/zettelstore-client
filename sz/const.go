@@ -15,8 +15,7 @@ package sz
 
 import "t73f.de/r/sx"
 
-// Various constants for Zettel data. Some of them are technically variables.
-
+// Various constants for Zettel data. They are technically variables.
 var (
 	// Symbols for Metanodes
 	SymBlock  = sx.MakeSymbol("BLOCK")

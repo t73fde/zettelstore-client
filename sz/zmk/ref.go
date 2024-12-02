@@ -10,6 +10,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 // SPDX-FileCopyrightText: 2020-present Detlef Stern
 // -----------------------------------------------------------------------------
+
 package zmk
 
 import (

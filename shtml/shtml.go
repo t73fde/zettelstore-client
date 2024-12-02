@@ -880,7 +880,7 @@ func (ev *Evaluator) evalSlice(args sx.Vector, env *Environment) *sx.Pair {
 	return nil
 }
 
-// EvaluatePairList evaluates a list of lists.
+// EvalPairList evaluates a list of lists.
 func (ev *Evaluator) EvalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
 	var result sx.ListBuilder
 	for node := pair; node != nil; node = node.Tail() {

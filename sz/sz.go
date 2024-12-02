@@ -67,13 +67,21 @@ func GetMetaContent(zettel sx.Object) (Meta, *sx.Pair) {
 	return nil, nil
 }
 
+// Meta map metadata keys to MetaValue.
 type Meta map[string]MetaValue
+
+// MetaValue is an extended metadata value:
+//
+//   - Type: the type assiciated with the metata key
+//   - Key: the metadata key itself
+//   - Value: the metadata value as an (sx-) object.
 type MetaValue struct {
 	Type  string
 	Key   string
 	Value sx.Object
 }
 
+// MakeMeta build a Meta based on a list of metadata objects.
 func MakeMeta(obj sx.Object) Meta {
 	if result := doMakeMeta(obj); len(result) > 0 {
 		return result
@@ -111,6 +119,7 @@ func makeMetaValue(mnode *sx.Pair) (MetaValue, bool) {
 	return result, true
 }
 
+// GetString return the metadata string value associated with the given key.
 func (m Meta) GetString(key string) string {
 	if v, found := m[key]; found {
 		return GoValue(v.Value)
@@ -118,6 +127,8 @@ func (m Meta) GetString(key string) string {
 	return ""
 }
 
+// GetPair return the metadata value associated with the given key,
+// as a list of objects.
 func (m Meta) GetPair(key string) *sx.Pair {
 	if mv, found := m[key]; found {
 		if pair, isPair := sx.GetPair(mv.Value); isPair {

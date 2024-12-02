@@ -11,10 +11,12 @@
 // SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
+// Package maps provides utility functions to work with maps.
 package maps
 
 import "sort"
 
+// Keys returns the sorted list of string keys of the given map.
 func Keys[T any](m map[string]T) []string {
 	if len(m) == 0 {
 		return nil

@@ -27,6 +27,7 @@ type Encoder struct {
 	sb strings.Builder
 }
 
+// NewEncoder returns a new text encoder.
 func NewEncoder() *Encoder {
 	enc := &Encoder{
 		sb: strings.Builder{},
@@ -34,6 +35,7 @@ func NewEncoder() *Encoder {
 	return enc
 }
 
+// Encode the object list as a string.
 func (enc *Encoder) Encode(lst *sx.Pair) string {
 	enc.executeList(lst)
 	result := enc.sb.String()

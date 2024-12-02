@@ -35,6 +35,7 @@ func EncodeZettel(zettel api.ZettelData) sx.Object {
 	)
 }
 
+// ParseZettel parses an object to contain all needed data for a zettel.
 func ParseZettel(obj sx.Object) (api.ZettelData, error) {
 	vals, err := ParseList(obj, "ypppp")
 	if err != nil {
@@ -188,7 +189,12 @@ func ParseList(obj sx.Object, spec string) (sx.Vector, error) {
 	return result, nil
 }
 
+// ErrElementsMissing is returned,
+// if ParseList is called with a list smaller than the number of type specifications.
 var ErrElementsMissing = errors.New("spec contains more data")
+
+// ErrNoSpec is returned,
+// if ParseList if called with a list greater than the number of type specifications.
 var ErrNoSpec = errors.New("no spec for elements")
 
 // CheckSymbol ensures that the given object is a symbol with the given name.

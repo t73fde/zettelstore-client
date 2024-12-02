@@ -24,6 +24,7 @@ import (
 	"t73f.de/r/zsc/sz"
 )
 
+// ParseBlocks tries to parse the input as a block element.
 func ParseBlocks(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
 
@@ -54,6 +55,7 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 	return nil
 }
 
+// ParseInlines tries to parse the input as an inline element.
 func ParseInlines(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
 	var ins sx.Vector
@@ -111,7 +113,7 @@ func (attrs attrMap) asPairAssoc() *sx.Pair {
 		names = append(names, n)
 	}
 	slices.Sort(names)
-	var assoc *sx.Pair = nil
+	var assoc *sx.Pair
 	for i := len(names) - 1; i >= 0; i-- {
 		n := names[i]
 		assoc = assoc.Cons(sx.Cons(sx.MakeString(n), sx.MakeString(attrs[n])))
