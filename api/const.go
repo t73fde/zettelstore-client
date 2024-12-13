@@ -312,15 +312,12 @@ const (
 
 	ActionSeparator = "|" // Separates action list of previous elements of query expression
 
-	AtomAction     = "ATOM"     // Return an Atom web feed
 	KeysAction     = "KEYS"     // Provide metadata key used
 	MinAction      = "MIN"      // Return only those values with a minimum amount of zettel
 	MaxAction      = "MAX"      // Return only those values with a maximum amount of zettel
 	NumberedAction = "NUMBERED" // Return a numbered list
 	RedirectAction = "REDIRECT" // Return the first zettel in list
 	ReIndexAction  = "REINDEX"  // Ensure that zettel is/are indexed.
-	RSSAction      = "RSS"      // Return a RSS web feed
-	TitleAction    = "TITLE"    // Set a title for Atom or RSS web feed
 
 	ExistOperator    = "?"  // Does zettel have metadata with given key?
 	ExistNotOperator = "!?" // True id zettel does not have metadata with given key.
