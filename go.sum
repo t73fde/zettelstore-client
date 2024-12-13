@@ -1,6 +1,6 @@
 t73f.de/r/sx v0.0.0-20240814083626-4df0ec6454b5 h1:ug4hohM6pK28M8Uo0o3+XvjBure2wfEtuCnHVIdqBZY=
 t73f.de/r/sx v0.0.0-20240814083626-4df0ec6454b5/go.mod h1:VRvsWoBErPKvMieDMMk1hsh1tb9sA4ijEQWGw/TbtQ0=
-t73f.de/r/sxwebs v0.0.0-20240814085618-5b4b5c496c94 h1:gLneaEyYotvcY/dDznzdcSXK1RqsJVi2AfeYDc1iVwM=
-t73f.de/r/sxwebs v0.0.0-20240814085618-5b4b5c496c94/go.mod h1:83W3QFkmrniIKv6R+Xq+imvbSolhoutTnNhW0ErJoco=
-t73f.de/r/webs v0.0.0-20240814085020-19dac746d568 h1:Pa+vO2r++qhcShv0p7t/gIrJ1DHPMn4gopEXLxDmoRg=
-t73f.de/r/webs v0.0.0-20240814085020-19dac746d568/go.mod h1:NSoOON8be62MfQZzlCApK27Jt2zhIa6Vrmo9RJ4tOnQ=
+t73f.de/r/sxwebs v0.0.0-20241031144449-53c3b2ed1a6f h1:VJ4S7YWy9tCJuFz5MckqUjjktPaf0kpnTkNBVRVXpo4=
+t73f.de/r/sxwebs v0.0.0-20241031144449-53c3b2ed1a6f/go.mod h1:IaM+U+LvYTYeuiIS5cwZW6kcEpdwoKBYVCU7LZr4Sgk=
+t73f.de/r/webs v0.0.0-20241031141359-cd4f76a622cd h1:+7cqJonXKDso+uPvsvOPl7BiLkhj8VQT/Has8qC5VIQ=
+t73f.de/r/webs v0.0.0-20241031141359-cd4f76a622cd/go.mod h1:NSoOON8be62MfQZzlCApK27Jt2zhIa6Vrmo9RJ4tOnQ=

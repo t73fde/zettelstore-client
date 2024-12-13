@@ -3,12 +3,12 @@
 This repository contains Go client software to
 access [https://zettelstore.de|Zettelstore] via its API.
 
-<h3>Latest Release: 0.18.0 (2024-07-11)</h3>
-  *  [./changes.wiki#0_18|Change summary]
-  *  [/timeline?p=v0.18.0&bt=v0.17.0&y=ci|Check-ins for version 0.18.0],
-     [/vdiff?to=v0.18.0&from=v0.17.0|content diff]
-  *  [/timeline?df=v0.18.0&y=ci|Check-ins derived from the 0.18.0 release],
-     [/vdiff?from=v0.18.0&to=trunk|content diff]
+<h3>Latest Release: 0.19.0 (2024-12-13)</h3>
+  *  [./changes.wiki#0_19|Change summary]
+  *  [/timeline?p=v0.19.0&bt=v0.18.0&y=ci|Check-ins for version 0.19],
+     [/vdiff?to=v0.19.0&from=v0.18.0|content diff]
+  *  [/timeline?df=v0.19.0&y=ci|Check-ins derived from the 0.19 release],
+     [/vdiff?from=v0.19.0&to=trunk|content diff]
   *  [/timeline?t=release|Timeline of all past releases]
 
 <h3>Use instructions</h3>
@@ -18,10 +18,10 @@ you must execute a <code>go get</code> command. Since Go treats non-standard
 software and non-standard platforms quite badly, you must use some non-standard
 commands.
 
-First, you must install the version control system
-[https://fossil-scm.org|Fossil], which is a superior solution compared to Git,
-in too many use cases. It is just a single executable, nothing more. Make sure,
-it is in your search path for commands.
+First, you must install the [https://fossil-scm.org|Fossil] version control
+system. In too many use cases it is a superior solution compared to Git, It is
+just a single executable, nothing more. Make sure, it is in your search path
+for commands.
 
 How you can execute the following Go command to retrieve a given version of
 this library:
