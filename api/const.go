@@ -77,6 +77,9 @@ const (
 	ZidRoleRoleZettel          = ZettelID("00000000060030")
 	ZidRoleTagZettel           = ZettelID("00000000060040")
 
+	// Range 80000...89999 is reserved for web ui menus
+	ZidTOCListsMenu = ZettelID("00000000080001") // "Lists" menu
+
 	// Range 90000...99999 is reserved for zettel templates
 	ZidTOCNewTemplate    = ZettelID("00000000090000")
 	ZidTemplateNewZettel = ZettelID("00000000090001")
