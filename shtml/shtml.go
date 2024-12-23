@@ -129,7 +129,7 @@ func Endnotes(env *Environment) *sx.Pair {
 		noteNum := strconv.Itoa(i + 1)
 		attrs := fni.attrs.Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnote"))).
 			Cons(sx.Cons(SymAttrValue, sx.MakeString(noteNum))).
-			Cons(sx.Cons(SymAttrId, sx.MakeString("fn:"+fni.noteID))).
+			Cons(sx.Cons(SymAttrID, sx.MakeString("fn:"+fni.noteID))).
 			Cons(sx.Cons(SymAttrRole, sx.MakeString("doc-endnote"))).
 			Cons(sxhtml.SymAttr)
 
@@ -664,7 +664,7 @@ func (ev *Evaluator) bindInlines() {
 			Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-noteref"))).
 			Cons(sxhtml.SymAttr)
 		href := sx.Nil().Cons(sx.MakeString(noteNum)).Cons(hrefAttr).Cons(SymA)
-		supAttr := sx.Nil().Cons(sx.Cons(SymAttrId, sx.MakeString("fnref:"+noteID))).Cons(sxhtml.SymAttr)
+		supAttr := sx.Nil().Cons(sx.Cons(SymAttrID, sx.MakeString("fnref:"+noteID))).Cons(sxhtml.SymAttr)
 		return sx.Nil().Cons(href).Cons(supAttr).Cons(symSUP)
 	})
 

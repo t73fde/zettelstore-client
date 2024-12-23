@@ -19,7 +19,7 @@ import "t73f.de/r/sx"
 var (
 	SymBody   = sx.MakeSymbol("body")
 	SymHead   = sx.MakeSymbol("head")
-	SymHtml   = sx.MakeSymbol("html")
+	SymHTML   = sx.MakeSymbol("html")
 	SymMeta   = sx.MakeSymbol("meta")
 	SymScript = sx.MakeSymbol("script")
 	SymTitle  = sx.MakeSymbol("title")
@@ -71,7 +71,7 @@ var (
 	symAttrAlt    = sx.MakeSymbol("alt")
 	SymAttrClass  = sx.MakeSymbol("class")
 	SymAttrHref   = sx.MakeSymbol("href")
-	SymAttrId     = sx.MakeSymbol("id")
+	SymAttrID     = sx.MakeSymbol("id")
 	SymAttrLang   = sx.MakeSymbol("lang")
 	SymAttrOpen   = sx.MakeSymbol("open")
 	SymAttrRel    = sx.MakeSymbol("rel")
