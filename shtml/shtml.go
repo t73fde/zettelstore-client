@@ -25,7 +25,6 @@ import (
 	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/attrs"
 	"t73f.de/r/zsc/sz"
-	"t73f.de/r/zsc/text"
 )
 
 // Evaluator will transform a s-expression that encodes the zettel AST into an s-expression
@@ -269,12 +268,6 @@ func (ev *Evaluator) bindMetadata() {
 	}
 	ev.bind(sz.SymTypeIDSet, 2, evalMetaSet)
 	ev.bind(sz.SymTypeTagSet, 2, evalMetaSet)
-	ev.bind(sz.SymTypeZettelmarkup, 2, func(args sx.Vector, env *Environment) sx.Object {
-		a := make(attrs.Attributes, 2).
-			Set("name", getSymbol(args[0], env).GetValue()).
-			Set("content", text.EvaluateInlineString(getList(args[1], env)))
-		return ev.EvaluateMeta(a)
-	})
 }
 
 // EvaluateMeta returns HTML meta object for an attribute.
