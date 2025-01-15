@@ -62,7 +62,6 @@ var (
 	SymLiteralInput    = sx.MakeSymbol("LITERAL-INPUT")
 	SymLiteralMath     = sx.MakeSymbol("LITERAL-MATH")
 	SymLiteralOutput   = sx.MakeSymbol("LITERAL-OUTPUT")
-	SymLiteralZettel   = sx.MakeSymbol("LITERAL-ZETTEL")
 	SymMark            = sx.MakeSymbol("MARK")
 	SymPara            = sx.MakeSymbol("PARA")
 	SymRegionBlock     = sx.MakeSymbol("REGION-BLOCK")

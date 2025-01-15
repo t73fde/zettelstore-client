@@ -56,7 +56,7 @@ func (cp *zmkP) parseInline() *sx.Pair {
 			in, success = cp.parseComment()
 		case '_', '*', '>', '~', '^', ',', '"', '#', ':':
 			in, success = cp.parseFormat()
-		case '@', '\'', '`', '=', runeModGrave:
+		case '\'', '`', '=', runeModGrave:
 			in, success = cp.parseLiteral()
 		case '$':
 			in, success = cp.parseLiteralMath()
@@ -90,7 +90,7 @@ func (cp *zmkP) parseString() sx.String {
 		switch inp.Next() {
 		// The following case must contain all runes that occur in parseInline!
 		// Plus the closing brackets ] and } and ) and the middle |
-		case input.EOS, '\n', '\r', '[', ']', '{', '}', '(', ')', '|', '%', '_', '*', '>', '~', '^', ',', '"', '#', ':', '\'', '@', '`', runeModGrave, '$', '=', '\\', '-', '&':
+		case input.EOS, '\n', '\r', '[', ']', '{', '}', '(', ')', '|', '%', '_', '*', '>', '~', '^', ',', '"', '#', ':', '\'', '`', runeModGrave, '$', '=', '\\', '-', '&':
 			return sx.MakeString(string(inp.Src[pos:inp.Pos]))
 		}
 	}
@@ -420,7 +420,6 @@ func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
 }
 
 var mapRuneLiteral = map[rune]*sx.Symbol{
-	'@':          sz.SymLiteralZettel,
 	'`':          sz.SymLiteralProg,
 	runeModGrave: sz.SymLiteralProg,
 	'\'':         sz.SymLiteralInput,
@@ -449,7 +448,7 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 			if inp.Peek() == fch {
 				inp.Next()
 				inp.Next()
-				return createLiteralNode(symLiteral, cp.parseInlineAttributes(), sb.String()), true
+				return sx.MakeList(symLiteral, cp.parseBlockAttributes(), sx.MakeString(sb.String())), true
 			}
 			sb.WriteRune(fch)
 			inp.Next()
@@ -458,18 +457,6 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 			sb.WriteString(s.GetValue())
 		}
 	}
-}
-
-func createLiteralNode(sym *sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {
-	if sym.IsEqualSymbol(sz.SymLiteralZettel) {
-		if p := attrs.Assoc(sx.MakeString("")); p != nil {
-			if val, isString := sx.GetString(p.Cdr()); isString && val.GetValue() == api.ValueSyntaxHTML {
-				sym = sz.SymLiteralHTML
-				attrs = attrs.RemoveAssoc(sx.MakeString(""))
-			}
-		}
-	}
-	return sx.MakeList(sym, attrs, sx.MakeString(content))
 }
 
 func (cp *zmkP) parseLiteralMath() (res *sx.Pair, success bool) {

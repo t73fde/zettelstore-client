@@ -695,8 +695,6 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.SymLiteralProg, 2, func(args sx.Vector, env *Environment) sx.Object {
 		return evalLiteral(args, nil, symCODE, env)
 	})
-
-	ev.bind(sz.SymLiteralZettel, 0, nilFn)
 }
 
 func (ev *Evaluator) makeFormatFn(sym *sx.Symbol) EvalFn {

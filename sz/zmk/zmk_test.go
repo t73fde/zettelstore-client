@@ -394,13 +394,12 @@ func TestFormat(t *testing.T) {
 
 func TestLiteral(t *testing.T) {
 	symMap := symbolMap{
-		"@": sz.SymLiteralZettel,
 		"`": sz.SymLiteralProg,
 		"'": sz.SymLiteralInput,
 		"=": sz.SymLiteralOutput,
 	}
 	t.Parallel()
-	for _, ch := range []string{"@", "`", "'", "="} {
+	for _, ch := range []string{"`", "'", "="} {
 		checkTcs(t, false, replace(ch, symMap, TestCases{
 			{"$", "(INLINE (TEXT \"$\"))"},
 			{"$$", "(INLINE (TEXT \"$$\"))"},
@@ -424,11 +423,6 @@ func TestLiteral(t *testing.T) {
 		{"''``a``''", "(INLINE (LITERAL-INPUT () \"``a``\"))"},
 		{"''``''``", "(INLINE (LITERAL-INPUT () \"``\") (TEXT \"``\"))"},
 		{"''\\'''", "(INLINE (LITERAL-INPUT () \"'\"))"},
-	})
-	checkTcs(t, false, TestCases{
-		{"@@HTML@@{=html}", "(INLINE (LITERAL-HTML () \"HTML\"))"},
-		{"@@HTML@@{=html lang=en}", "(INLINE (LITERAL-HTML ((\"lang\" . \"en\")) \"HTML\"))"},
-		{"@@HTML@@{=html,lang=en}", "(INLINE (LITERAL-HTML ((\"lang\" . \"en\")) \"HTML\"))"},
 	})
 }
 
