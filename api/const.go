@@ -103,17 +103,16 @@ const LengthZid = len(ZidDefaultHome)
 //
 // [Supported Key Types]: https://zettelstore.de/manual/h/00001006030000
 const (
-	MetaCredential   = "Credential"
-	MetaEmpty        = "EString"
-	MetaID           = "Identifier"
-	MetaIDSet        = "IdentifierSet"
-	MetaNumber       = "Number"
-	MetaString       = "String"
-	MetaTagSet       = "TagSet"
-	MetaTimestamp    = "Timestamp"
-	MetaURL          = "URL"
-	MetaWord         = "Word"
-	MetaZettelmarkup = "Zettelmarkup"
+	MetaCredential = "Credential"
+	MetaEmpty      = "EString"
+	MetaID         = "Identifier"
+	MetaIDSet      = "IdentifierSet"
+	MetaNumber     = "Number"
+	MetaString     = "String"
+	MetaTagSet     = "TagSet"
+	MetaTimestamp  = "Timestamp"
+	MetaURL        = "URL"
+	MetaWord       = "Word"
 )
 
 // Predefined / supported metadata keys.
