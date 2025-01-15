@@ -58,7 +58,6 @@ var (
 	SymListQuote       = sx.MakeSymbol("QUOTATION")
 	SymLiteralProg     = sx.MakeSymbol("LITERAL-CODE")
 	SymLiteralComment  = sx.MakeSymbol("LITERAL-COMMENT")
-	SymLiteralHTML     = sx.MakeSymbol("LITERAL-HTML")
 	SymLiteralInput    = sx.MakeSymbol("LITERAL-INPUT")
 	SymLiteralMath     = sx.MakeSymbol("LITERAL-MATH")
 	SymLiteralOutput   = sx.MakeSymbol("LITERAL-OUTPUT")

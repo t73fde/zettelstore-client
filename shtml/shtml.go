@@ -681,7 +681,6 @@ func (ev *Evaluator) bindInlines() {
 		}
 		return sx.Nil()
 	})
-	ev.bind(sz.SymLiteralHTML, 2, ev.evalHTML)
 	ev.bind(sz.SymLiteralInput, 2, func(args sx.Vector, env *Environment) sx.Object {
 		return evalLiteral(args, nil, symKBD, env)
 	})
