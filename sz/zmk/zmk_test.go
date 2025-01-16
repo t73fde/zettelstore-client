@@ -74,7 +74,8 @@ func parseInput(src string, asBlock bool) *sx.Pair {
 
 type astWalker struct{}
 
-func (astWalker) Visit(node *sx.Pair, env *sx.Pair) sx.Object { return sx.MakeBoolean(true) }
+func (astWalker) VisitBefore(node *sx.Pair, env *sx.Pair) (sx.Object, bool) { return sx.Nil(), false }
+func (astWalker) VisitAfter(node *sx.Pair, env *sx.Pair) (sx.Object, bool)  { return node, true }
 
 func TestEOL(t *testing.T) {
 	t.Parallel()
@@ -211,30 +212,30 @@ func TestEmbed(t *testing.T) {
 		{"{{\n}}", "(INLINE (TEXT \"{{\") (SOFT) (TEXT \"}}\"))"},
 		{"{{a }}", "(INLINE (TEXT \"{{a }}\"))"},
 		{"{{a\n}}", "(INLINE (TEXT \"{{a\") (SOFT) (TEXT \"}}\"))"},
-		{"{{a}}", "(INLINE (EMBED () \"a\"))"},
-		{"{{12345678901234}}", "(INLINE (EMBED () \"12345678901234\"))"},
-		{"{{ a}}", "(INLINE (EMBED () \"a\"))"},
+		{"{{a}}", "(INLINE (EMBED () (EXTERNAL \"a\")))"},
+		{"{{12345678901234}}", "(INLINE (EMBED () (ZETTEL \"12345678901234\")))"},
+		{"{{ a}}", "(INLINE (EMBED () (EXTERNAL \"a\")))"},
 		{"{{a}", "(INLINE (TEXT \"{{a}\"))"},
 		{"{{|a}}", "(INLINE (TEXT \"{{|a}}\"))"},
 		{"{{b|}}", "(INLINE (TEXT \"{{b|}}\"))"},
-		{"{{b|a}}", "(INLINE (EMBED () \"a\" (TEXT \"b\")))"},
-		{"{{b| a}}", "(INLINE (EMBED () \"a\" (TEXT \"b\")))"},
+		{"{{b|a}}", "(INLINE (EMBED () (EXTERNAL \"a\") (TEXT \"b\")))"},
+		{"{{b| a}}", "(INLINE (EMBED () (EXTERNAL \"a\") (TEXT \"b\")))"},
 		{"{{b|a}", "(INLINE (TEXT \"{{b|a}\"))"},
-		{"{{b\nc|a}}", "(INLINE (EMBED () \"a\" (TEXT \"b\") (SOFT) (TEXT \"c\")))"},
-		{"{{b c|a#n}}", "(INLINE (EMBED () \"a#n\" (TEXT \"b c\")))"},
-		{"{{a}}{go}", "(INLINE (EMBED ((\"go\" . \"\")) \"a\"))"},
-		{"{{{{a}}|b}}", "(INLINE (TEXT \"{{\") (EMBED () \"a\") (TEXT \"|b}}\"))"},
-		{"{{\\|}}", "(INLINE (EMBED () \"\\\\|\"))"},
-		{"{{\\||a}}", "(INLINE (EMBED () \"a\" (TEXT \"|\")))"},
-		{"{{b\\||a}}", "(INLINE (EMBED () \"a\" (TEXT \"b|\")))"},
-		{"{{b\\|c|a}}", "(INLINE (EMBED () \"a\" (TEXT \"b|c\")))"},
-		{"{{\\}}}", "(INLINE (EMBED () \"\\\\}\"))"},
-		{"{{\\}|a}}", "(INLINE (EMBED () \"a\" (TEXT \"}\")))"},
-		{"{{b\\}|a}}", "(INLINE (EMBED () \"a\" (TEXT \"b}\")))"},
-		{"{{\\}\\||a}}", "(INLINE (EMBED () \"a\" (TEXT \"}|\")))"},
-		{"{{http://a}}", "(INLINE (EMBED () \"http://a\"))"},
-		{"{{http://a|http://a}}", "(INLINE (EMBED () \"http://a\" (TEXT \"http://a\")))"},
-		{"{{{{a}}}}", "(INLINE (TEXT \"{{\") (EMBED () \"a\") (TEXT \"}}\"))"},
+		{"{{b\nc|a}}", "(INLINE (EMBED () (EXTERNAL \"a\") (TEXT \"b\") (SOFT) (TEXT \"c\")))"},
+		{"{{b c|a#n}}", "(INLINE (EMBED () (EXTERNAL \"a#n\") (TEXT \"b c\")))"},
+		{"{{a}}{go}", "(INLINE (EMBED ((\"go\" . \"\")) (EXTERNAL \"a\")))"},
+		{"{{{{a}}|b}}", "(INLINE (TEXT \"{{\") (EMBED () (EXTERNAL \"a\")) (TEXT \"|b}}\"))"},
+		{"{{\\|}}", "(INLINE (EMBED () (EXTERNAL \"\\\\|\")))"},
+		{"{{\\||a}}", "(INLINE (EMBED () (EXTERNAL \"a\") (TEXT \"|\")))"},
+		{"{{b\\||a}}", "(INLINE (EMBED () (EXTERNAL \"a\") (TEXT \"b|\")))"},
+		{"{{b\\|c|a}}", "(INLINE (EMBED () (EXTERNAL \"a\") (TEXT \"b|c\")))"},
+		{"{{\\}}}", "(INLINE (EMBED () (EXTERNAL \"\\\\}\")))"},
+		{"{{\\}|a}}", "(INLINE (EMBED () (EXTERNAL \"a\") (TEXT \"}\")))"},
+		{"{{b\\}|a}}", "(INLINE (EMBED () (EXTERNAL \"a\") (TEXT \"b}\")))"},
+		{"{{\\}\\||a}}", "(INLINE (EMBED () (EXTERNAL \"a\") (TEXT \"}|\")))"},
+		{"{{http://a}}", "(INLINE (EMBED () (EXTERNAL \"http://a\")))"},
+		{"{{http://a|http://a}}", "(INLINE (EMBED () (EXTERNAL \"http://a\") (TEXT \"http://a\")))"},
+		{"{{{{a}}}}", "(INLINE (TEXT \"{{\") (EMBED () (EXTERNAL \"a\")) (TEXT \"}}\"))"},
 	})
 }
 
@@ -621,11 +622,11 @@ func TestHeading(t *testing.T) {
 		{" =", "(BLOCK (PARA (TEXT \"=\")))"},
 		{"=== h\na", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\")) (PARA (TEXT \"a\")))"},
 		{"=== h i {-}", "(BLOCK (HEADING 1 ((\"-\" . \"\")) \"\" \"\" (TEXT \"h i\")))"},
-		{"=== h {{a}}", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h \") (EMBED () \"a\")))"},
-		{"=== h{{a}}", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\") (EMBED () \"a\")))"},
-		{"=== {{a}}", "(BLOCK (HEADING 1 () \"\" \"\" (EMBED () \"a\")))"},
-		{"=== h {{a}}{-}", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h \") (EMBED ((\"-\" . \"\")) \"a\")))"},
-		{"=== h {{a}} {-}", "(BLOCK (HEADING 1 ((\"-\" . \"\")) \"\" \"\" (TEXT \"h \") (EMBED () \"a\")))"},
+		{"=== h {{a}}", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h \") (EMBED () (EXTERNAL \"a\"))))"},
+		{"=== h{{a}}", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\") (EMBED () (EXTERNAL \"a\"))))"},
+		{"=== {{a}}", "(BLOCK (HEADING 1 () \"\" \"\" (EMBED () (EXTERNAL \"a\"))))"},
+		{"=== h {{a}}{-}", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h \") (EMBED ((\"-\" . \"\")) (EXTERNAL \"a\"))))"},
+		{"=== h {{a}} {-}", "(BLOCK (HEADING 1 ((\"-\" . \"\")) \"\" \"\" (TEXT \"h \") (EMBED () (EXTERNAL \"a\"))))"},
 		{"=== h {-}{{a}}", "(BLOCK (HEADING 1 ((\"-\" . \"\")) \"\" \"\" (TEXT \"h\")))"},
 		{"=== h{id=abc}", "(BLOCK (HEADING 1 ((\"id\" . \"abc\")) \"\" \"\" (TEXT \"h\")))"},
 		{"=== h\n=== h", "(BLOCK (HEADING 1 () \"\" \"\" (TEXT \"h\")) (HEADING 1 () \"\" \"\" (TEXT \"h\")))"},
@@ -775,7 +776,7 @@ func TestTransclude(t *testing.T) {
 		{"{{{a}}}}", "(BLOCK (TRANSCLUDE () (EXTERNAL \"a\")))"},
 		{"{{{a\\}}}}", "(BLOCK (TRANSCLUDE () (EXTERNAL \"a\\\\}\")))"},
 		{"{{{a\\}}}}b", "(BLOCK (TRANSCLUDE ((\"\" . \"b\")) (EXTERNAL \"a\\\\}\")))"},
-		{"{{{a}}", "(BLOCK (PARA (TEXT \"{\") (EMBED () \"a\")))"},
+		{"{{{a}}", "(BLOCK (PARA (TEXT \"{\") (EMBED () (EXTERNAL \"a\"))))"},
 		{"{{{a}}}{go=b}", "(BLOCK (TRANSCLUDE ((\"go\" . \"b\")) (EXTERNAL \"a\")))"},
 	})
 }

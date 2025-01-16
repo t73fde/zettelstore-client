@@ -69,7 +69,10 @@ func ParseInlines(inp *input.Input) *sx.Pair {
 
 	inl := ins.MakeList().Cons(sz.SymInline)
 	var pp postProcessor
-	return sz.Walk(&pp, inl, nil)
+	if pair, isPair := sx.GetPair(sz.Walk(&pp, inl, nil)); isPair {
+		return pair
+	}
+	return sx.Nil()
 }
 
 type zmkP struct {

@@ -40,7 +40,7 @@ func (cp *zmkP) parseInline() *sx.Pair {
 		case '[':
 			switch inp.Next() {
 			case '[':
-				in, success = cp.parseLinkEmbed('[', ']', true)
+				in, success = cp.parseLink('[', ']')
 			case '@':
 				in, success = cp.parseCite()
 			case '^':
@@ -50,7 +50,7 @@ func (cp *zmkP) parseInline() *sx.Pair {
 			}
 		case '{':
 			if inp.Next() == '{' {
-				in, success = cp.parseLinkEmbed('{', '}', false)
+				in, success = cp.parseEmbed('{', '}')
 			}
 		case '%':
 			in, success = cp.parseComment()
@@ -126,17 +126,30 @@ func (cp *zmkP) parseSoftBreak() *sx.Pair {
 	return sx.MakeList(sz.SymSoft)
 }
 
-func (cp *zmkP) parseLinkEmbed(openCh, closeCh rune, forLink bool) (*sx.Pair, bool) {
+func (cp *zmkP) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
 	if refString, text, ok := cp.parseReference(openCh, closeCh); ok {
 		attrs := cp.parseInlineAttributes()
 		if len(refString) > 0 {
 			ref := ParseReference(refString)
 			refSym, _ := sx.GetSymbol(ref.Car())
-			sym := sz.MapRefStateToLinkEmbed(refSym, forLink)
+			sym := sz.MapRefStateToLink(refSym)
 			ln := text.
 				Cons(ref.Tail().Car()). // reference value
 				Cons(attrs).
 				Cons(sym)
+			return ln, true
+		}
+	}
+	return nil, false
+}
+func (cp *zmkP) parseEmbed(openCh, closeCh rune) (*sx.Pair, bool) {
+	if refString, text, ok := cp.parseReference(openCh, closeCh); ok {
+		attrs := cp.parseInlineAttributes()
+		if len(refString) > 0 {
+			ln := text.
+				Cons(ParseReference(refString)).
+				Cons(attrs).
+				Cons(sz.SymEmbed)
 			return ln, true
 		}
 	}

@@ -17,25 +17,28 @@ import "t73f.de/r/sx"
 
 // Visitor is walking the sx-based AST.
 type Visitor interface {
-	Visit(node *sx.Pair, env *sx.Pair) sx.Object
+	VisitBefore(node *sx.Pair, env *sx.Pair) (sx.Object, bool)
+	VisitAfter(node *sx.Pair, env *sx.Pair) (sx.Object, bool)
 }
 
 // Walk a sx-based AST through a Visitor.
-func Walk(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
+func Walk(v Visitor, node *sx.Pair, env *sx.Pair) sx.Object {
 	if node == nil {
 		return nil
 	}
-	if result, isPair := sx.GetPair(v.Visit(node, env)); isPair {
+	if result, ok := v.VisitBefore(node, env); ok {
 		return result
 	}
 
 	if sym, isSymbol := sx.GetSymbol(node.Car()); isSymbol {
 		if fn, found := mapChildrenWalk[sym]; found {
-			return fn(v, node, env)
+			node = fn(v, node, env)
+			if result, ok := v.VisitAfter(node, env); ok {
+				return result
+			}
 		}
-		return node
 	}
-	panic(node)
+	return node
 }
 
 var mapChildrenWalk map[*sx.Symbol]func(Visitor, *sx.Pair, *sx.Pair) *sx.Pair

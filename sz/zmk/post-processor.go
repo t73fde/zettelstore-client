@@ -25,24 +25,26 @@ var symNoBlock = sx.MakeSymbol("no-block")
 
 type postProcessor struct{}
 
-func (pp *postProcessor) Visit(lst *sx.Pair, env *sx.Pair) sx.Object {
+func (pp *postProcessor) VisitBefore(lst *sx.Pair, env *sx.Pair) (sx.Object, bool) {
 	if lst == nil {
-		return nil
+		return nil, true
 	}
 	sym, isSym := sx.GetSymbol(lst.Car())
 	if !isSym {
 		panic(lst)
 	}
 	if fn, found := symMap[sym]; found {
-		return fn(pp, lst, env)
+		return fn(pp, lst, env), true
 	}
-	return sx.Int64(0)
+	return nil, false
 }
+
+func (pp *postProcessor) VisitAfter(lst *sx.Pair, _ *sx.Pair) (sx.Object, bool) { return lst, true }
 
 func (pp *postProcessor) visitPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
 	for node := lst; node != nil; node = node.Tail() {
-		if elem := sz.Walk(pp, node.Head(), env); elem != nil {
+		if elem, isPair := sx.GetPair(sz.Walk(pp, node.Head(), env)); isPair && elem != nil {
 			pList.Add(elem)
 		}
 	}
@@ -406,8 +408,8 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	vector := make([]*sx.Pair, 0, length)
 	// 1st phase: process all childs, ignore ' ' / '\t' at start, and merge some elements
 	for node := lst; node != nil; node = node.Tail() {
-		elem := sz.Walk(pp, node.Head(), env)
-		if elem == nil {
+		elem, isPair := sx.GetPair(sz.Walk(pp, node.Head(), env))
+		if !isPair || elem == nil {
 			continue
 		}
 		elemSym := elem.Car()
