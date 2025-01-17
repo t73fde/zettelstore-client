@@ -490,8 +490,8 @@ func (cp *zmkP) parseDefDescr() (res *sx.Pair, success bool) {
 	inp.Next()
 	inp.SkipSpace()
 	descrl := cp.descrl
-	lastPair, pos := lastPairPos(descrl)
-	if descrl == nil || pos <= 0 {
+	lastPair, lpPos := lastPairPos(descrl)
+	if descrl == nil || lpPos < 0 {
 		// No term given
 		return nil, false
 	}
@@ -502,7 +502,7 @@ func (cp *zmkP) parseDefDescr() (res *sx.Pair, success bool) {
 	}
 
 	newDef := sx.MakeList(sz.SymBlock, pn.MakeList().Cons(sz.SymPara))
-	if pos%2 == 1 {
+	if lpPos%2 == 1 {
 		// Just a term, but no definitions
 		lastPair.AppendBang(sx.MakeList(sz.SymBlock, newDef))
 	} else {
@@ -588,14 +588,36 @@ func (cp *zmkP) parseIndentForDescription(cnt int) bool {
 		}
 	}
 
-	// Continuation of a definition description
+	// Continuation of a definition description.
+	// Either it is a continuation of a definition paragraph, or it is a new paragraph.
 	pn := cp.parseLinePara()
 	if len(pn) == 0 {
 		return false
 	}
-	bn := lastPair.Head()
-	para := bn.LastPair().Head().LastPair().Head()
 	pnList := pn.MakeList()
+
+	bn := lastPair.Head()
+
+	// Check for new paragraph
+	for curr := bn.Tail(); curr != nil; {
+		obj := curr.Head()
+		if obj == nil {
+			break
+		}
+		next := curr.Tail()
+		if next == nil {
+			break
+		}
+		if symSeparator.IsEqual(next.Head().Car()) {
+			// It is a new paragraph!
+			obj.LastPair().AppendBang(pnList.Cons(sz.SymPara))
+			return true
+		}
+		curr = next
+	}
+
+	// Continuation of existing paragraph
+	para := bn.LastPair().Head().LastPair().Head()
 	if para.Car().IsEqual(sz.SymPara) {
 		para.LastPair().SetCdr(pnList)
 	} else {
