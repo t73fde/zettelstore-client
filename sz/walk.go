@@ -33,10 +33,10 @@ func Walk(v Visitor, node *sx.Pair, env *sx.Pair) sx.Object {
 	if sym, isSymbol := sx.GetSymbol(node.Car()); isSymbol {
 		if fn, found := mapChildrenWalk[sym]; found {
 			node = fn(v, node, env)
-			if result, ok := v.VisitAfter(node, env); ok {
-				return result
-			}
 		}
+	}
+	if result, ok := v.VisitAfter(node, env); ok {
+		return result
 	}
 	return node
 }
@@ -56,6 +56,10 @@ func init() {
 		SymListQuote:     walkChildrenTail,
 		SymDescription:   walkChildrenDescription,
 		SymTable:         walkChildrenTable,
+		SymCell:          walkChildrenTail,
+		SymCellCenter:    walkChildrenTail,
+		SymCellLeft:      walkChildrenTail,
+		SymCellRight:     walkChildrenTail,
 
 		SymInline:       walkChildrenTail,
 		SymEndnote:      walkChildrenInlines3,
