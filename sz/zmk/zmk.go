@@ -81,8 +81,6 @@ type zmkP struct {
 	lastRow      *sx.Pair     // Last row of table, or nil if not in table.
 	descrl       *sx.Pair     // Current description list
 	nestingLevel int          // Count nesting of block and inline elements
-
-	inVerse bool // Currently in a vers region?
 }
 
 // runeModGrave is Unicode code point U+02CB (715) called "MODIFIER LETTER

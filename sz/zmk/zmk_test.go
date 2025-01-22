@@ -593,9 +593,10 @@ func TestVerseRegion(t *testing.T) {
 		{"$$$$\nabc\n$$$\ndef\n$$$\n$$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\")) (REGION-VERSE () ((PARA (TEXT \"def\")))))))"},
 		{"$$$go\n$$$x", "(BLOCK (REGION-VERSE ((\"\" . \"go\")) () (TEXT \"x\")))"},
 		{"$$$\nabc\n$$$ def ", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\"))) (TEXT \"def\")))"},
-		{"$$$\n space \n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \" space\")))))"},
-		{"$$$\n  spaces  \n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"  spaces\")))))"},
-		{"$$$\n  spaces  \n space  \n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"  spaces  \") (HARD) (TEXT \" space\")))))"},
+		{"$$$\n space \n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"\u00a0space\u00a0\")))))"},
+		{"$$$\n  spaces  \n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"\u00a0\u00a0spaces\u00a0\u00a0\")))))"},
+		{"$$$\n  spaces  \n space  \n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"\u00a0\u00a0spaces\u00a0\u00a0\") (HARD) (TEXT \"\u00a0space\u00a0\u00a0\")))))"},
+		{"$$$\n space space \n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"\u00a0space\u00a0space\u00a0\")))))"},
 	}))
 }
 
@@ -645,6 +646,8 @@ func TestHRule(t *testing.T) {
 		{"2-1", "(BLOCK (PARA (TEXT \"2-1\")))"},
 		{"---  {  go  }  ", "(BLOCK (THEMATIC ((\"go\" . \"\"))))"},
 		{"---  {  .go  }  ", "(BLOCK (THEMATIC ((\"class\" . \"go\"))))"},
+		{`---{lang=zmk}`, "(BLOCK (THEMATIC ((\"lang\" . \"zmk\"))))"},
+		{`---{lang="zmk"}`, "(BLOCK (THEMATIC ((\"lang\" . \"zmk\"))))"},
 	})
 }
 

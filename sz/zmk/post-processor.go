@@ -413,14 +413,23 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 			continue
 		}
 		elemSym := elem.Car()
+		elemTail := elem.Tail()
+
+		if inVerse && elemSym.IsEqual(sz.SymText) {
+			if s, isString := sx.GetString(elemTail.Car()); isString {
+				verseText := s.GetValue()
+				verseText = strings.ReplaceAll(verseText, " ", "\u00a0")
+				elemTail.SetCar(sx.MakeString(verseText))
+			}
+		}
+
 		if len(vector) == 0 {
 			// If the 1st element is a TEXT, remove all ' ', '\t' at the beginning, if outside a verse block.
-			if inVerse || !elemSym.IsEqual(sz.SymText) {
+			if !elemSym.IsEqual(sz.SymText) {
 				vector = append(vector, elem)
 				continue
 			}
 
-			elemTail := elem.Tail()
 			elemText := elemTail.Car().(sx.String).GetValue()
 			if elemText != "" && (elemText[0] == ' ' || elemText[0] == '\t') {
 				for elemText != "" {

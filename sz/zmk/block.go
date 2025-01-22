@@ -228,8 +228,6 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 	}
 
 	var sym *sx.Symbol
-	oldInVerse := cp.inVerse
-	defer func() { cp.inVerse = oldInVerse }()
 	switch fch {
 	case ':':
 		sym = sz.SymRegionBlock
@@ -237,7 +235,6 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 		sym = sz.SymRegionQuote
 	case '"':
 		sym = sz.SymRegionVerse
-		cp.inVerse = true
 	default:
 		panic(fmt.Sprintf("%q is not a region char", fch))
 	}
