@@ -302,6 +302,7 @@ const (
 	IdentDirective    = "IDENT"    // Use only specified zettel
 	ItemsDirective    = "ITEMS"    // Select list elements in a zettel
 	MaxDirective      = "MAX"      // Maximum number of context results
+	MinDirective      = "MIN"      // Minimum number of context results
 	LimitDirective    = "LIMIT"    // Maximum number of zettel
 	OffsetDirective   = "OFFSET"   // Offset to start returned zettel list
 	OrDirective       = "OR"       // Combine several search expression with an "or"
