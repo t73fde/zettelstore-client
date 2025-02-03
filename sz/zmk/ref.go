@@ -19,6 +19,7 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/sz"
 )
 
@@ -44,8 +45,7 @@ func ParseReference(s string) *sx.Pair {
 		return makePairRef(sz.SymRefStateInvalid, s)
 	}
 	if !externalURL(u) {
-		zid := api.ZettelID(u.Path)
-		if zid.IsValid() {
+		if _, err := id.Parse(u.Path); err == nil {
 			return makePairRef(sz.SymRefStateZettel, s)
 		}
 		if u.Path == "" && u.Fragment != "" {

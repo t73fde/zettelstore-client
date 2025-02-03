@@ -14,25 +14,7 @@
 // Package api contains common definitions used for client and server.
 package api
 
-// ZettelID contains the identifier of a zettel. It is a string with 14 digits.
-type ZettelID string
-
-// InvalidZID is an invalid zettel identifier
-const InvalidZID = ""
-
-// IsValid returns true, if the idenfifier contains 14 digits.
-func (zid ZettelID) IsValid() bool {
-	if len(zid) != 14 {
-		return false
-	}
-	for i := range 14 {
-		ch := zid[i]
-		if ch < '0' || '9' < ch {
-			return false
-		}
-	}
-	return true
-}
+import "t73f.de/r/zsc/domain/id"
 
 // ZettelMeta is a map containg the normalized metadata of a zettel.
 type ZettelMeta map[string]string
@@ -59,7 +41,7 @@ type MetaRights struct {
 
 // ZidMetaRights contains the identifier, the metadata of a zettel, and its rights.
 type ZidMetaRights struct {
-	ID     ZettelID
+	ID     id.Zid
 	Meta   ZettelMeta
 	Rights ZettelRights
 }
@@ -78,4 +60,4 @@ type ZettelData struct {
 }
 
 // Aggregate maps metadata keys to list of zettel identifier.
-type Aggregate map[string][]ZettelID
+type Aggregate map[string][]id.Zid

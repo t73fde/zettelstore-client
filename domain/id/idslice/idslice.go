@@ -1,0 +1,50 @@
+//-----------------------------------------------------------------------------
+// Copyright (c) 2021-present Detlef Stern
+//
+// This file is part of zettelstore-client.
+//
+// Zettelstore Client is licensed under the latest version of the EUPL
+// (European Union Public License). Please see file LICENSE.txt for your rights
+// and obligations under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2021-present Detlef Stern
+//-----------------------------------------------------------------------------
+
+// Package idslice implements type specific slices of zettel identifier.
+package idslice
+
+import (
+	"slices"
+	"strings"
+
+	"t73f.de/r/zsc/domain/id"
+)
+
+// Slice is a sequence of zettel identifier. A special case is a sorted slice.
+type Slice []id.Zid
+
+// Sort a slice of Zids.
+func (zs Slice) Sort() { slices.Sort(zs) }
+
+// Clone a zettel identifier slice
+func (zs Slice) Clone() Slice { return slices.Clone(zs) }
+
+// Equal reports whether zs and other are the same length and contain the samle zettel
+// identifier. A nil argument is equivalent to an empty slice.
+func (zs Slice) Equal(other Slice) bool { return slices.Equal(zs, other) }
+
+// MetaString returns the slice as a string to be store in metadata.
+func (zs Slice) MetaString() string {
+	if len(zs) == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	for i, zid := range zs {
+		if i > 0 {
+			sb.WriteByte(' ')
+		}
+		sb.WriteString(zid.String())
+	}
+	return sb.String()
+}

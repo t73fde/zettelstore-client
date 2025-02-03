@@ -13,7 +13,10 @@
 
 package api
 
-import "t73f.de/r/webs/urlbuilder"
+import (
+	"t73f.de/r/webs/urlbuilder"
+	"t73f.de/r/zsc/domain/id"
+)
 
 // URLBuilder should be used to create zettelstore URLs.
 type URLBuilder struct {
@@ -42,8 +45,8 @@ func (ub *URLBuilder) Clone() *URLBuilder {
 }
 
 // SetZid sets the zettel identifier.
-func (ub *URLBuilder) SetZid(zid ZettelID) *URLBuilder {
-	ub.base.AddPath(string(zid))
+func (ub *URLBuilder) SetZid(zid id.Zid) *URLBuilder {
+	ub.base.AddPath(zid.String())
 	return ub
 }
 

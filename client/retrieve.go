@@ -24,6 +24,7 @@ import (
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxreader"
 	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/sexp"
 	"t73f.de/r/zsc/sz"
 )
@@ -182,7 +183,7 @@ func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregat
 		if fields := bytes.Fields(line); len(fields) > 1 {
 			key := string(fields[0])
 			for _, field := range fields[1:] {
-				if zid := api.ZettelID(string(field)); zid.IsValid() {
+				if zid, zidErr := id.Parse(string(field)); zidErr == nil {
 					agg[key] = append(agg[key], zid)
 				}
 			}
@@ -194,43 +195,39 @@ func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregat
 // TagZettel returns the identifier of the tag zettel for a given tag.
 //
 // This method only works if c.AllowRedirect(true) was called.
-func (c *Client) TagZettel(ctx context.Context, tag string) (api.ZettelID, error) {
+func (c *Client) TagZettel(ctx context.Context, tag string) (id.Zid, error) {
 	return c.fetchTagOrRoleZettel(ctx, api.QueryKeyTag, tag)
 }
 
 // RoleZettel returns the identifier of the tag zettel for a given role.
 //
 // This method only works if c.AllowRedirect(true) was called.
-func (c *Client) RoleZettel(ctx context.Context, role string) (api.ZettelID, error) {
+func (c *Client) RoleZettel(ctx context.Context, role string) (id.Zid, error) {
 	return c.fetchTagOrRoleZettel(ctx, api.QueryKeyRole, role)
 }
 
-func (c *Client) fetchTagOrRoleZettel(ctx context.Context, key, val string) (api.ZettelID, error) {
+func (c *Client) fetchTagOrRoleZettel(ctx context.Context, key, val string) (id.Zid, error) {
 	if c.client.CheckRedirect == nil {
 		panic("client does not allow to track redirect")
 	}
 	ub := c.NewURLBuilder('z').AppendKVQuery(key, val)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err != nil {
-		return api.InvalidZID, err
+		return id.Invalid, err
 	}
 	defer resp.Body.Close()
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return api.InvalidZID, err
+		return id.Invalid, err
 	}
 
 	switch resp.StatusCode {
 	case http.StatusNotFound:
-		return "", nil
+		return id.Invalid, nil
 	case http.StatusFound:
-		zid := api.ZettelID(data)
-		if zid.IsValid() {
-			return zid, nil
-		}
-		return api.InvalidZID, nil
+		return id.Parse(string(data))
 	default:
-		return api.InvalidZID, statusToError(resp)
+		return id.Invalid, statusToError(resp)
 	}
 }
 
@@ -241,7 +238,7 @@ func (c *Client) fetchTagOrRoleZettel(ctx context.Context, key, val string) (api
 // The format of the byte slice is described in [Layout of a zettel].
 //
 // [Layout of a zettel]: https://zettelstore.de/manual/h/00001006000000
-func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) ([]byte, error) {
+func (c *Client) GetZettel(ctx context.Context, zid id.Zid, part string) ([]byte, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
 	if part != "" && part != api.PartContent {
 		ub.AppendKVQuery(api.QueryKeyPart, part)
@@ -263,7 +260,7 @@ func (c *Client) GetZettel(ctx context.Context, zid api.ZettelID, part string) (
 }
 
 // GetZettelData returns a zettel as a struct of its parts.
-func (c *Client) GetZettelData(ctx context.Context, zid api.ZettelID) (api.ZettelData, error) {
+func (c *Client) GetZettelData(ctx context.Context, zid id.Zid) (api.ZettelData, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartZettel)
@@ -290,7 +287,7 @@ func (c *Client) GetZettelData(ctx context.Context, zid api.ZettelID) (api.Zette
 // detail in [Encodings available via the API].
 //
 // [Encodings available via the API]: https://zettelstore.de/manual/h/00001012920500
-func (c *Client) GetParsedZettel(ctx context.Context, zid api.ZettelID, enc api.EncodingEnum) ([]byte, error) {
+func (c *Client) GetParsedZettel(ctx context.Context, zid id.Zid, enc api.EncodingEnum) ([]byte, error) {
 	return c.getZettelString(ctx, zid, enc, true)
 }
 
@@ -303,11 +300,11 @@ func (c *Client) GetParsedZettel(ctx context.Context, zid api.ZettelID, enc api.
 // detail in [Encodings available via the API].
 //
 // [Encodings available via the API]: https://zettelstore.de/manual/h/00001012920500
-func (c *Client) GetEvaluatedZettel(ctx context.Context, zid api.ZettelID, enc api.EncodingEnum) ([]byte, error) {
+func (c *Client) GetEvaluatedZettel(ctx context.Context, zid id.Zid, enc api.EncodingEnum) ([]byte, error) {
 	return c.getZettelString(ctx, zid, enc, false)
 }
 
-func (c *Client) getZettelString(ctx context.Context, zid api.ZettelID, enc api.EncodingEnum, parseOnly bool) ([]byte, error) {
+func (c *Client) getZettelString(ctx context.Context, zid id.Zid, enc api.EncodingEnum, parseOnly bool) ([]byte, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, enc.String())
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartContent)
@@ -335,7 +332,7 @@ func (c *Client) getZettelString(ctx context.Context, zid api.ZettelID, enc api.
 // part must be one of "meta", "content", or "zettel".
 //
 // Basically, this function returns the sz encoding of a part of a zettel.
-func (c *Client) GetParsedSz(ctx context.Context, zid api.ZettelID, part string) (sx.Object, error) {
+func (c *Client) GetParsedSz(ctx context.Context, zid id.Zid, part string) (sx.Object, error) {
 	return c.getSz(ctx, zid, part, true)
 }
 
@@ -347,11 +344,11 @@ func (c *Client) GetParsedSz(ctx context.Context, zid api.ZettelID, part string)
 // part must be one of "meta", "content", or "zettel".
 //
 // Basically, this function returns the sz encoding of a part of a zettel.
-func (c *Client) GetEvaluatedSz(ctx context.Context, zid api.ZettelID, part string) (sx.Object, error) {
+func (c *Client) GetEvaluatedSz(ctx context.Context, zid id.Zid, part string) (sx.Object, error) {
 	return c.getSz(ctx, zid, part, false)
 }
 
-func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parseOnly bool) (sx.Object, error) {
+func (c *Client) getSz(ctx context.Context, zid id.Zid, part string, parseOnly bool) (sx.Object, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingSz)
 	if part != "" {
@@ -372,7 +369,7 @@ func (c *Client) getSz(ctx context.Context, zid api.ZettelID, part string, parse
 }
 
 // GetMetaData returns the metadata of a zettel.
-func (c *Client) GetMetaData(ctx context.Context, zid api.ZettelID) (api.MetaRights, error) {
+func (c *Client) GetMetaData(ctx context.Context, zid id.Zid) (api.MetaRights, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
 	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartMeta)
@@ -463,20 +460,21 @@ type VersionInfo struct {
 
 // GetApplicationZid returns the zettel identifier used to configure a client
 // application with the given name.
-func (c *Client) GetApplicationZid(ctx context.Context, appname string) (api.ZettelID, error) {
+func (c *Client) GetApplicationZid(ctx context.Context, appname string) (id.Zid, error) {
 	mr, err := c.GetMetaData(ctx, api.ZidAppDirectory)
 	if err != nil {
-		return api.InvalidZID, err
+		return id.Invalid, err
 	}
 	key := appname + "-zid"
 	val, found := mr.Meta[key]
 	if !found {
-		return api.InvalidZID, fmt.Errorf("no application registered: %v", appname)
+		return id.Invalid, fmt.Errorf("no application registered: %v", appname)
 	}
-	if zid := api.ZettelID(val); zid.IsValid() {
+	zid, err := id.Parse(val)
+	if err == nil {
 		return zid, nil
 	}
-	return api.InvalidZID, fmt.Errorf("invalid identifier for application %v: %v", appname, val)
+	return id.Invalid, fmt.Errorf("invalid identifier for application %v: %v", appname, val)
 }
 
 // Get executes a GET request to the given URL and returns the read data.

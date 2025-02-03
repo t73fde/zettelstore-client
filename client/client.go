@@ -29,6 +29,7 @@ import (
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxreader"
 	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/sexp"
 )
 
@@ -251,63 +252,60 @@ func (c *Client) RefreshToken(ctx context.Context) error {
 // data contains the zettel metadata and content, as it is stored in a file in a zettel box,
 // or as returned by [Client.GetZettel].
 // Metadata is separated from zettel content by an empty line.
-func (c *Client) CreateZettel(ctx context.Context, data []byte) (api.ZettelID, error) {
+func (c *Client) CreateZettel(ctx context.Context, data []byte) (id.Zid, error) {
 	ub := c.NewURLBuilder('z')
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, bytes.NewBuffer(data))
 	if err != nil {
-		return api.InvalidZID, err
+		return id.Invalid, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
-		return api.InvalidZID, statusToError(resp)
+		return id.Invalid, statusToError(resp)
 	}
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return api.InvalidZID, err
+		return id.Invalid, err
 	}
-	if zid := api.ZettelID(b); zid.IsValid() {
-		return zid, nil
-	}
-	return api.InvalidZID, err
+	return id.Parse(string(b))
 }
 
 // CreateZettelData creates a new zettel and returns its URL.
 //
 // data contains the zettel date, encoded as explicit struct.
-func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelData) (api.ZettelID, error) {
+func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelData) (id.Zid, error) {
 	var buf bytes.Buffer
 	if _, err := sx.Print(&buf, sexp.EncodeZettel(data)); err != nil {
-		return api.InvalidZID, err
+		return id.Invalid, err
 	}
 	ub := c.NewURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, &buf)
 	if err != nil {
-		return api.InvalidZID, err
+		return id.Invalid, err
 	}
 	defer resp.Body.Close()
 	rdr := sxreader.MakeReader(resp.Body)
 	obj, err := rdr.Read()
 	if resp.StatusCode != http.StatusCreated {
-		return api.InvalidZID, statusToError(resp)
+		return id.Invalid, statusToError(resp)
 	}
 	if err != nil {
-		return api.InvalidZID, err
+		return id.Invalid, err
 	}
 	return makeZettelID(obj)
 }
 
-func makeZettelID(obj sx.Object) (api.ZettelID, error) {
+func makeZettelID(obj sx.Object) (id.Zid, error) {
 	val, isInt64 := obj.(sx.Int64)
 	if !isInt64 || val <= 0 {
-		return api.InvalidZID, fmt.Errorf("invalid zettel ID: %v", val)
+		return id.Invalid, fmt.Errorf("invalid zettel ID: %v", val)
 	}
 	sVal := strconv.FormatInt(int64(val), 10)
 	if len(sVal) < 14 {
 		sVal = "00000000000000"[0:14-len(sVal)] + sVal
 	}
-	zid := api.ZettelID(sVal)
-	if !zid.IsValid() {
-		return api.InvalidZID, fmt.Errorf("invalid zettel ID: %v", val)
+	zid, err := id.Parse(sVal)
+	if err != nil {
+		return id.Invalid, fmt.Errorf("invalid zettel ID %v: %w", val, err)
 	}
 	return zid, nil
 }
@@ -317,7 +315,7 @@ func makeZettelID(obj sx.Object) (api.ZettelID, error) {
 // data contains the zettel metadata and content, as it is stored in a file in a zettel box,
 // or as returned by [Client.GetZettel].
 // Metadata is separated from zettel content by an empty line.
-func (c *Client) UpdateZettel(ctx context.Context, zid api.ZettelID, data []byte) error {
+func (c *Client) UpdateZettel(ctx context.Context, zid id.Zid, data []byte) error {
 	ub := c.NewURLBuilder('z').SetZid(zid)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPut, ub, bytes.NewBuffer(data))
 	if err != nil {
@@ -331,7 +329,7 @@ func (c *Client) UpdateZettel(ctx context.Context, zid api.ZettelID, data []byte
 }
 
 // UpdateZettelData updates an existing zettel, specified by its zettel identifier.
-func (c *Client) UpdateZettelData(ctx context.Context, zid api.ZettelID, data api.ZettelData) error {
+func (c *Client) UpdateZettelData(ctx context.Context, zid id.Zid, data api.ZettelData) error {
 	var buf bytes.Buffer
 	if _, err := sx.Print(&buf, sexp.EncodeZettel(data)); err != nil {
 		return err
@@ -349,7 +347,7 @@ func (c *Client) UpdateZettelData(ctx context.Context, zid api.ZettelID, data ap
 }
 
 // DeleteZettel deletes a zettel with the given identifier.
-func (c *Client) DeleteZettel(ctx context.Context, zid api.ZettelID) error {
+func (c *Client) DeleteZettel(ctx context.Context, zid id.Zid) error {
 	ub := c.NewURLBuilder('z').SetZid(zid)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodDelete, ub, nil)
 	if err != nil {
