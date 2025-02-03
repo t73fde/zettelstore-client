@@ -37,8 +37,8 @@ func TestDigraphOriginators(t *testing.T) {
 		term *idset.Set
 	}{
 		{"empty", nil, nil, nil},
-		{"single", zps{{0, 1}}, idset.NewSet(0), idset.NewSet(1)},
-		{"chain", zps{{0, 1}, {1, 2}, {2, 3}}, idset.NewSet(0), idset.NewSet(3)},
+		{"single", zps{{0, 1}}, idset.New(0), idset.New(1)},
+		{"chain", zps{{0, 1}, {1, 2}, {2, 3}}, idset.New(0), idset.New(3)},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -62,12 +62,12 @@ func TestDigraphReachableVertices(t *testing.T) {
 		exp   *idset.Set
 	}{
 		{"nil", nil, 0, nil},
-		{"0-2", zps{{1, 2}, {2, 3}}, 1, idset.NewSet(2, 3)},
-		{"1,2", zps{{1, 2}, {2, 3}}, 2, idset.NewSet(3)},
-		{"0-2,1-2", zps{{1, 2}, {2, 3}, {1, 3}}, 1, idset.NewSet(2, 3)},
-		{"0-2,1-2/1", zps{{1, 2}, {2, 3}, {1, 3}}, 2, idset.NewSet(3)},
+		{"0-2", zps{{1, 2}, {2, 3}}, 1, idset.New(2, 3)},
+		{"1,2", zps{{1, 2}, {2, 3}}, 2, idset.New(3)},
+		{"0-2,1-2", zps{{1, 2}, {2, 3}, {1, 3}}, 1, idset.New(2, 3)},
+		{"0-2,1-2/1", zps{{1, 2}, {2, 3}, {1, 3}}, 2, idset.New(3)},
 		{"0-2,1-2/2", zps{{1, 2}, {2, 3}, {1, 3}}, 3, nil},
-		{"0-2,1-2,3*", zps{{1, 2}, {2, 3}, {1, 3}, {4, 4}}, 1, idset.NewSet(2, 3)},
+		{"0-2,1-2,3*", zps{{1, 2}, {2, 3}, {1, 3}, {4, 4}}, 1, idset.New(2, 3)},
 	}
 
 	for _, tc := range testcases {

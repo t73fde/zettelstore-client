@@ -30,10 +30,10 @@ func TestSetContainsOrNil(t *testing.T) {
 	}{
 		{nil, id.Invalid, true},
 		{nil, 14, true},
-		{idset.NewSet(), id.Invalid, false},
-		{idset.NewSet(), 1, false},
-		{idset.NewSet(), id.Invalid, false},
-		{idset.NewSet(1), 1, true},
+		{idset.New(), id.Invalid, false},
+		{idset.New(), 1, false},
+		{idset.New(), id.Invalid, false},
+		{idset.New(1), 1, true},
 	}
 	for i, tc := range testcases {
 		got := tc.s.ContainsOrNil(tc.zid)
@@ -50,13 +50,13 @@ func TestSetAdd(t *testing.T) {
 		exp    idslice.Slice
 	}{
 		{nil, nil, nil},
-		{idset.NewSet(), nil, nil},
-		{idset.NewSet(), idset.NewSet(), nil},
-		{nil, idset.NewSet(1), idslice.Slice{1}},
-		{idset.NewSet(1), nil, idslice.Slice{1}},
-		{idset.NewSet(1), idset.NewSet(), idslice.Slice{1}},
-		{idset.NewSet(1), idset.NewSet(2), idslice.Slice{1, 2}},
-		{idset.NewSet(1), idset.NewSet(1), idslice.Slice{1}},
+		{idset.New(), nil, nil},
+		{idset.New(), idset.New(), nil},
+		{nil, idset.New(1), idslice.Slice{1}},
+		{idset.New(1), nil, idslice.Slice{1}},
+		{idset.New(1), idset.New(), idslice.Slice{1}},
+		{idset.New(1), idset.New(2), idslice.Slice{1, 2}},
+		{idset.New(1), idset.New(1), idslice.Slice{1}},
 	}
 	for i, tc := range testcases {
 		sl1 := tc.s1.SafeSorted()
@@ -75,8 +75,8 @@ func TestSetSafeSorted(t *testing.T) {
 		exp idslice.Slice
 	}{
 		{nil, nil},
-		{idset.NewSet(), nil},
-		{idset.NewSet(9, 4, 6, 1, 7), idslice.Slice{1, 4, 6, 7, 9}},
+		{idset.New(), nil},
+		{idset.New(9, 4, 6, 1, 7), idslice.Slice{1, 4, 6, 7, 9}},
 	}
 	for i, tc := range testcases {
 		got := tc.set.SafeSorted()
@@ -93,16 +93,16 @@ func TestSetIntersectOrSet(t *testing.T) {
 		exp    idslice.Slice
 	}{
 		{nil, nil, nil},
-		{idset.NewSet(), nil, nil},
-		{nil, idset.NewSet(), nil},
-		{idset.NewSet(), idset.NewSet(), nil},
-		{idset.NewSet(1), nil, nil},
-		{nil, idset.NewSet(1), idslice.Slice{1}},
-		{idset.NewSet(1), idset.NewSet(), nil},
-		{idset.NewSet(), idset.NewSet(1), nil},
-		{idset.NewSet(1), idset.NewSet(2), nil},
-		{idset.NewSet(2), idset.NewSet(1), nil},
-		{idset.NewSet(1), idset.NewSet(1), idslice.Slice{1}},
+		{idset.New(), nil, nil},
+		{nil, idset.New(), nil},
+		{idset.New(), idset.New(), nil},
+		{idset.New(1), nil, nil},
+		{nil, idset.New(1), idslice.Slice{1}},
+		{idset.New(1), idset.New(), nil},
+		{idset.New(), idset.New(1), nil},
+		{idset.New(1), idset.New(2), nil},
+		{idset.New(2), idset.New(1), nil},
+		{idset.New(1), idset.New(1), idslice.Slice{1}},
 	}
 	for i, tc := range testcases {
 		sl1 := tc.s1.SafeSorted()
@@ -121,17 +121,17 @@ func TestSetIUnion(t *testing.T) {
 		exp    *idset.Set
 	}{
 		{nil, nil, nil},
-		{idset.NewSet(), nil, nil},
-		{nil, idset.NewSet(), nil},
-		{idset.NewSet(), idset.NewSet(), nil},
-		{idset.NewSet(1), nil, idset.NewSet(1)},
-		{nil, idset.NewSet(1), idset.NewSet(1)},
-		{idset.NewSet(1), idset.NewSet(), idset.NewSet(1)},
-		{idset.NewSet(), idset.NewSet(1), idset.NewSet(1)},
-		{idset.NewSet(1), idset.NewSet(2), idset.NewSet(1, 2)},
-		{idset.NewSet(2), idset.NewSet(1), idset.NewSet(2, 1)},
-		{idset.NewSet(1), idset.NewSet(1), idset.NewSet(1)},
-		{idset.NewSet(1, 2, 3), idset.NewSet(2, 3, 4), idset.NewSet(1, 2, 3, 4)},
+		{idset.New(), nil, nil},
+		{nil, idset.New(), nil},
+		{idset.New(), idset.New(), nil},
+		{idset.New(1), nil, idset.New(1)},
+		{nil, idset.New(1), idset.New(1)},
+		{idset.New(1), idset.New(), idset.New(1)},
+		{idset.New(), idset.New(1), idset.New(1)},
+		{idset.New(1), idset.New(2), idset.New(1, 2)},
+		{idset.New(2), idset.New(1), idset.New(2, 1)},
+		{idset.New(1), idset.New(1), idset.New(1)},
+		{idset.New(1, 2, 3), idset.New(2, 3, 4), idset.New(1, 2, 3, 4)},
 	}
 	for i, tc := range testcases {
 		s1 := tc.s1.Clone()
@@ -151,22 +151,22 @@ func TestSetISubtract(t *testing.T) {
 		exp    idslice.Slice
 	}{
 		{nil, nil, nil},
-		{idset.NewSet(), nil, nil},
-		{nil, idset.NewSet(), nil},
-		{idset.NewSet(), idset.NewSet(), nil},
-		{idset.NewSet(1), nil, idslice.Slice{1}},
-		{nil, idset.NewSet(1), nil},
-		{idset.NewSet(1), idset.NewSet(), idslice.Slice{1}},
-		{idset.NewSet(), idset.NewSet(1), nil},
-		{idset.NewSet(1), idset.NewSet(2), idslice.Slice{1}},
-		{idset.NewSet(2), idset.NewSet(1), idslice.Slice{2}},
-		{idset.NewSet(1), idset.NewSet(1), nil},
-		{idset.NewSet(1, 2, 3), idset.NewSet(1), idslice.Slice{2, 3}},
-		{idset.NewSet(1, 2, 3), idset.NewSet(2), idslice.Slice{1, 3}},
-		{idset.NewSet(1, 2, 3), idset.NewSet(3), idslice.Slice{1, 2}},
-		{idset.NewSet(1, 2, 3), idset.NewSet(1, 2), idslice.Slice{3}},
-		{idset.NewSet(1, 2, 3), idset.NewSet(1, 3), idslice.Slice{2}},
-		{idset.NewSet(1, 2, 3), idset.NewSet(2, 3), idslice.Slice{1}},
+		{idset.New(), nil, nil},
+		{nil, idset.New(), nil},
+		{idset.New(), idset.New(), nil},
+		{idset.New(1), nil, idslice.Slice{1}},
+		{nil, idset.New(1), nil},
+		{idset.New(1), idset.New(), idslice.Slice{1}},
+		{idset.New(), idset.New(1), nil},
+		{idset.New(1), idset.New(2), idslice.Slice{1}},
+		{idset.New(2), idset.New(1), idslice.Slice{2}},
+		{idset.New(1), idset.New(1), nil},
+		{idset.New(1, 2, 3), idset.New(1), idslice.Slice{2, 3}},
+		{idset.New(1, 2, 3), idset.New(2), idslice.Slice{1, 3}},
+		{idset.New(1, 2, 3), idset.New(3), idslice.Slice{1, 2}},
+		{idset.New(1, 2, 3), idset.New(1, 2), idslice.Slice{3}},
+		{idset.New(1, 2, 3), idset.New(1, 3), idslice.Slice{2}},
+		{idset.New(1, 2, 3), idset.New(2, 3), idslice.Slice{1}},
 	}
 	for i, tc := range testcases {
 		s1 := tc.s1.Clone()
@@ -187,14 +187,14 @@ func TestSetDiff(t *testing.T) {
 		exp1, exp2 *idset.Set
 	}{
 		{nil, nil, nil, nil},
-		{idset.NewSet(1), nil, nil, idset.NewSet(1)},
-		{nil, idset.NewSet(1), idset.NewSet(1), nil},
-		{idset.NewSet(1), idset.NewSet(1), nil, nil},
-		{idset.NewSet(1, 2), idset.NewSet(1), nil, idset.NewSet(2)},
-		{idset.NewSet(1), idset.NewSet(1, 2), idset.NewSet(2), nil},
-		{idset.NewSet(1, 2), idset.NewSet(1, 3), idset.NewSet(3), idset.NewSet(2)},
-		{idset.NewSet(1, 2, 3), idset.NewSet(2, 3, 4), idset.NewSet(4), idset.NewSet(1)},
-		{idset.NewSet(2, 3, 4), idset.NewSet(1, 2, 3), idset.NewSet(1), idset.NewSet(4)},
+		{idset.New(1), nil, nil, idset.New(1)},
+		{nil, idset.New(1), idset.New(1), nil},
+		{idset.New(1), idset.New(1), nil, nil},
+		{idset.New(1, 2), idset.New(1), nil, idset.New(2)},
+		{idset.New(1), idset.New(1, 2), idset.New(2), nil},
+		{idset.New(1, 2), idset.New(1, 3), idset.New(3), idset.New(2)},
+		{idset.New(1, 2, 3), idset.New(2, 3, 4), idset.New(4), idset.New(1)},
+		{idset.New(2, 3, 4), idset.New(1, 2, 3), idset.New(1), idset.New(4)},
 	}
 	for i, tc := range testcases {
 		gotN, gotO := tc.in1.Diff(tc.in2)
@@ -214,17 +214,17 @@ func TestSetRemove(t *testing.T) {
 		exp    idslice.Slice
 	}{
 		{nil, nil, nil},
-		{idset.NewSet(), nil, nil},
-		{idset.NewSet(), idset.NewSet(), nil},
-		{idset.NewSet(1), nil, idslice.Slice{1}},
-		{idset.NewSet(1), idset.NewSet(), idslice.Slice{1}},
-		{idset.NewSet(1), idset.NewSet(2), idslice.Slice{1}},
-		{idset.NewSet(1), idset.NewSet(1), idslice.Slice{}},
+		{idset.New(), nil, nil},
+		{idset.New(), idset.New(), nil},
+		{idset.New(1), nil, idslice.Slice{1}},
+		{idset.New(1), idset.New(), idslice.Slice{1}},
+		{idset.New(1), idset.New(2), idslice.Slice{1}},
+		{idset.New(1), idset.New(1), idslice.Slice{}},
 	}
 	for i, tc := range testcases {
 		sl1 := tc.s1.SafeSorted()
 		sl2 := tc.s2.SafeSorted()
-		newS1 := idset.NewSet(sl1...)
+		newS1 := idset.New(sl1...)
 		newS1.ISubstract(tc.s2)
 		got := newS1.SafeSorted()
 		if !got.Equal(tc.exp) {
@@ -234,7 +234,7 @@ func TestSetRemove(t *testing.T) {
 }
 
 func BenchmarkSet(b *testing.B) {
-	s := idset.NewSetCap(b.N)
+	s := idset.NewCap(b.N)
 	for i := range b.N {
 		s.Add(id.Zid(i))
 	}

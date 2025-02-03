@@ -106,7 +106,7 @@ func (dg Digraph) Vertices() *idset.Set {
 	if len(dg) == 0 {
 		return nil
 	}
-	verts := idset.NewSetCap(len(dg))
+	verts := idset.NewCap(len(dg))
 	for vert := range dg {
 		verts.Add(vert)
 	}

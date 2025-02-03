@@ -24,7 +24,7 @@ import (
 
 // Set is a set of zettel identifier
 type Set struct {
-	seq []id.Zid
+	seq idslice.Slice
 }
 
 // String returns a string representation of the set.
@@ -47,13 +47,13 @@ func (s *Set) MetaString() string {
 	return sb.String()
 }
 
-// NewSet returns a new set of identifier with the given initial values.
-func NewSet(zids ...id.Zid) *Set {
+// New returns a new set of identifier with the given initial values.
+func New(zids ...id.Zid) *Set {
 	switch l := len(zids); l {
 	case 0:
 		return &Set{seq: nil}
 	case 1:
-		return &Set{seq: []id.Zid{zids[0]}}
+		return &Set{seq: idslice.Slice{zids[0]}}
 	default:
 		result := Set{seq: make(idslice.Slice, 0, l)}
 		result.AddSlice(zids)
@@ -61,8 +61,8 @@ func NewSet(zids ...id.Zid) *Set {
 	}
 }
 
-// NewSetCap returns a new set of identifier with the given capacity and initial values.
-func NewSetCap(c int, zids ...id.Zid) *Set {
+// NewCap returns a new set of identifier with the given capacity and initial values.
+func NewCap(c int, zids ...id.Zid) *Set {
 	result := Set{seq: make(idslice.Slice, 0, max(c, len(zids)))}
 	result.AddSlice(zids)
 	return &result
@@ -92,7 +92,7 @@ func (s *Set) Clone() *Set {
 // Add adds a Add to the set.
 func (s *Set) Add(zid id.Zid) *Set {
 	if s == nil {
-		return NewSet(zid)
+		return New(zid)
 	}
 	s.add(zid)
 	return s
@@ -107,7 +107,7 @@ func (s *Set) ContainsOrNil(zid id.Zid) bool { return s == nil || s.contains(zid
 // AddSlice adds all identifier of the given slice to the set.
 func (s *Set) AddSlice(sl idslice.Slice) *Set {
 	if s == nil {
-		return NewSet(sl...)
+		return New(sl...)
 	}
 	s.seq = slices.Grow(s.seq, len(sl))
 	for _, zid := range sl {
