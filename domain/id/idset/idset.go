@@ -20,6 +20,7 @@ import (
 
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/domain/id/idslice"
+	"t73f.de/r/zsc/domain/meta"
 )
 
 // Set is a set of zettel identifier
@@ -46,6 +47,9 @@ func (s *Set) MetaString() string {
 	}
 	return sb.String()
 }
+
+// MetaValue returns a metadata value representation of the set.
+func (s *Set) MetaValue() meta.Value { return meta.Value(s.MetaString()) }
 
 // New returns a new set of identifier with the given initial values.
 func New(zids ...id.Zid) *Set {

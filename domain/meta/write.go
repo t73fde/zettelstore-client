@@ -43,7 +43,7 @@ func (m *Meta) doWrite(w io.Writer, ignoreKeyPred func(string) bool) (length int
 			length += l
 		}
 		if err == nil {
-			l, err = io.WriteString(w, p.Value)
+			l, err = io.WriteString(w, string(p.Value))
 			length += l
 		}
 		if err == nil {

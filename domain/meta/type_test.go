@@ -33,10 +33,10 @@ func TestNow(t *testing.T) {
 	if len(val) != 14 {
 		t.Errorf("Value is not 14 digits long: %q", val)
 	}
-	if _, err := strconv.ParseInt(val, 10, 64); err != nil {
+	if _, err := strconv.ParseInt(string(val), 10, 64); err != nil {
 		t.Errorf("Unable to parse %q as an int64: %v", val, err)
 	}
-	if _, ok = meta.TimeValue(val); !ok {
+	if _, ok = val.TimeValue(); !ok {
 		t.Errorf("Unable to get time from value %q", val)
 	}
 }
@@ -44,7 +44,7 @@ func TestNow(t *testing.T) {
 func TestTimeValue(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
-		value string
+		value meta.Value
 		valid bool
 		exp   time.Time
 	}{
@@ -67,7 +67,7 @@ func TestTimeValue(t *testing.T) {
 		{"2023103916541700", false, time.Time{}},
 	}
 	for i, tc := range testCases {
-		got, ok := meta.TimeValue(tc.value)
+		got, ok := tc.value.TimeValue()
 		if ok != tc.valid {
 			t.Errorf("%d: parsing of %q should be %v, but got %v", i, tc.value, tc.valid, ok)
 			continue

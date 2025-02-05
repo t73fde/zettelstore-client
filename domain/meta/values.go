@@ -56,14 +56,14 @@ const (
 	VisibilityExpert
 )
 
-var visMap = map[string]Visibility{
+var visMap = map[Value]Visibility{
 	api.ValueVisibilityPublic:  VisibilityPublic,
 	api.ValueVisibilityCreator: VisibilityCreator,
 	api.ValueVisibilityLogin:   VisibilityLogin,
 	api.ValueVisibilityOwner:   VisibilityOwner,
 	api.ValueVisibilityExpert:  VisibilityExpert,
 }
-var revVisMap = map[Visibility]string{}
+var revVisMap = map[Visibility]Value{}
 
 func init() {
 	for k, v := range visMap {
@@ -71,8 +71,8 @@ func init() {
 	}
 }
 
-// GetVisibility returns the visibility value of the given string
-func GetVisibility(val string) Visibility {
+// GetVisibility returns the visibility value of the given value string
+func (val Value) GetVisibility() Visibility {
 	if vis, ok := visMap[val]; ok {
 		return vis
 	}
@@ -81,7 +81,7 @@ func GetVisibility(val string) Visibility {
 
 func (v Visibility) String() string {
 	if s, ok := revVisMap[v]; ok {
-		return s
+		return string(s)
 	}
 	return fmt.Sprintf("Unknown (%d)", v)
 }
@@ -99,7 +99,7 @@ const (
 	UserRoleOwner
 )
 
-var urMap = map[string]UserRole{
+var urMap = map[Value]UserRole{
 	api.ValueUserRoleCreator: UserRoleCreator,
 	api.ValueUserRoleReader:  UserRoleReader,
 	api.ValueUserRoleWriter:  UserRoleWriter,
@@ -107,7 +107,7 @@ var urMap = map[string]UserRole{
 }
 
 // GetUserRole role returns the user role of the given string.
-func GetUserRole(val string) UserRole {
+func (val Value) GetUserRole() UserRole {
 	if ur, ok := urMap[val]; ok {
 		return ur
 	}

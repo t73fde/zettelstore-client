@@ -15,6 +15,7 @@
 package meta
 
 import (
+	"maps"
 	"regexp"
 	"slices"
 	"strings"
@@ -24,7 +25,7 @@ import (
 	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/input"
-	"t73f.de/r/zsc/maps"
+	mymaps "t73f.de/r/zsc/maps"
 	"t73f.de/r/zsc/strfun"
 )
 
@@ -109,7 +110,7 @@ func GetDescription(name string) DescriptionKey {
 
 // GetSortedKeyDescriptions delivers all metadata key descriptions as a slice, sorted by name.
 func GetSortedKeyDescriptions() []*DescriptionKey {
-	keys := maps.Keys(registeredKeys)
+	keys := mymaps.Keys(registeredKeys)
 	result := make([]*DescriptionKey, 0, len(keys))
 	for _, n := range keys {
 		result = append(result, registeredKeys[n])
@@ -164,23 +165,26 @@ func init() {
 // NewPrefix is the prefix for metadata key in template zettel for creating new zettel.
 const NewPrefix = "new-"
 
+// Value ist a single metadata value.
+type Value string
+
 // Meta contains all meta-data of a zettel.
 type Meta struct {
 	Zid     id.Zid
-	pairs   map[string]string
+	pairs   map[string]Value
 	YamlSep bool
 }
 
 // New creates a new chunk for storing metadata.
 func New(zid id.Zid) *Meta {
-	return &Meta{Zid: zid, pairs: make(map[string]string, 5)}
+	return &Meta{Zid: zid, pairs: make(map[string]Value, 5)}
 }
 
 // NewWithData creates metadata object with given data.
 func NewWithData(zid id.Zid, data map[string]string) *Meta {
-	pairs := make(map[string]string, len(data))
+	pairs := make(map[string]Value, len(data))
 	for k, v := range data {
-		pairs[k] = v
+		pairs[k] = Value(v)
 	}
 	return &Meta{Zid: zid, pairs: pairs}
 }
@@ -201,7 +205,7 @@ func (m *Meta) Length() int {
 func (m *Meta) Clone() *Meta {
 	return &Meta{
 		Zid:     m.Zid,
-		pairs:   m.Map(),
+		pairs:   maps.Clone(m.pairs),
 		YamlSep: m.YamlSep,
 	}
 }
@@ -210,7 +214,7 @@ func (m *Meta) Clone() *Meta {
 func (m *Meta) Map() map[string]string {
 	pairs := make(map[string]string, len(m.pairs))
 	for k, v := range m.pairs {
-		pairs[k] = v
+		pairs[k] = string(v)
 	}
 	return pairs
 }
@@ -223,7 +227,7 @@ func KeyIsValid(s string) bool { return reKey.MatchString(s) }
 // Pair is one key-value-pair of a Zettel meta.
 type Pair struct {
 	Key   string
-	Value string
+	Value Value
 }
 
 var firstKeys = []string{api.KeyTitle, api.KeyRole, api.KeyTags, api.KeySyntax}
@@ -234,34 +238,35 @@ func init() {
 }
 
 // Set stores the given string value under the given key.
-func (m *Meta) Set(key, value string) {
+func (m *Meta) Set(key string, value Value) {
 	if key != api.KeyID {
-		m.pairs[key] = trimValue(value)
+		m.pairs[key] = value.TrimSpace()
 	}
 }
 
 // SetNonEmpty stores the given value under the given key, if the value is non-empty.
 // An empty value will delete the previous association.
-func (m *Meta) SetNonEmpty(key, value string) {
+func (m *Meta) SetNonEmpty(key string, value Value) {
 	if value == "" {
-		delete(m.pairs, key)
+		delete(m.pairs, key) // TODO: key != api.KeyID
 	} else {
-		m.Set(key, trimValue(value))
+		m.Set(key, value.TrimSpace())
 	}
 }
 
-func trimValue(value string) string {
-	return strings.TrimFunc(value, input.IsSpace)
+// TrimSpace removes all leading and remaining space from value
+func (val Value) TrimSpace() Value {
+	return Value(strings.TrimFunc(string(val), input.IsSpace))
 }
 
 // Get retrieves the string value of a given key. The bool value signals,
 // whether there was a value stored or not.
-func (m *Meta) Get(key string) (string, bool) {
+func (m *Meta) Get(key string) (Value, bool) {
 	if m == nil {
 		return "", false
 	}
 	if key == api.KeyID {
-		return m.Zid.String(), true
+		return Value(m.Zid.String()), true
 	}
 	value, ok := m.pairs[key]
 	return value, ok
@@ -269,7 +274,7 @@ func (m *Meta) Get(key string) (string, bool) {
 
 // GetDefault retrieves the string value of the given key. If no value was
 // stored, the given default value is returned.
-func (m *Meta) GetDefault(key, def string) string {
+func (m *Meta) GetDefault(key string, def Value) Value {
 	if value, found := m.Get(key); found {
 		return value
 	}
@@ -280,7 +285,7 @@ func (m *Meta) GetDefault(key, def string) string {
 // defined default value: the string representation of the zettel identifier.
 func (m *Meta) GetTitle() string {
 	if title, found := m.Get(api.KeyTitle); found {
-		return title
+		return string(title)
 	}
 	return m.Zid.String()
 }
@@ -375,7 +380,7 @@ func (m *Meta) Equal(o *Meta, allowComputed bool) bool {
 	return true
 }
 
-func equalValue(key, val string, other *Meta, allowComputed bool) bool {
+func equalValue(key string, val Value, other *Meta, allowComputed bool) bool {
 	if allowComputed || !IsComputed(key) {
 		if valO, found := other.pairs[key]; !found || val != valO {
 			return false
@@ -390,7 +395,7 @@ func (m *Meta) Sanitize() {
 		return
 	}
 	for k, v := range m.pairs {
-		m.pairs[RemoveNonGraphic(k)] = RemoveNonGraphic(v)
+		m.pairs[RemoveNonGraphic(k)] = Value(RemoveNonGraphic(string(v)))
 	}
 }
 

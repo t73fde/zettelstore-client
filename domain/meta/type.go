@@ -115,28 +115,28 @@ func Type(key string) *DescriptionType {
 func (m *Meta) SetList(key string, values []string) {
 	if key != api.KeyID {
 		for i, val := range values {
-			values[i] = trimValue(val)
+			values[i] = string(Value(val).TrimSpace())
 		}
-		m.pairs[key] = strings.Join(values, " ")
+		m.pairs[key] = Value(strings.Join(values, " "))
 	}
 }
 
 // SetWord stores the given word under the given key.
 func (m *Meta) SetWord(key, word string) {
-	if slist := ListFromValue(word); len(slist) > 0 {
-		m.Set(key, slist[0])
+	if slist := Value(word).ListFromValue(); len(slist) > 0 {
+		m.Set(key, Value(slist[0]))
 	}
 }
 
 // SetNow stores the current timestamp under the given key.
 func (m *Meta) SetNow(key string) {
-	m.Set(key, time.Now().Local().Format(id.TimestampLayout))
+	m.Set(key, Value(time.Now().Local().Format(id.TimestampLayout)))
 }
 
 // BoolValue returns the value interpreted as a bool.
-func BoolValue(value string) bool {
-	if len(value) > 0 {
-		switch value[0] {
+func (val Value) BoolValue() bool {
+	if len(val) > 0 {
+		switch val[0] {
 		case '0', 'f', 'F', 'n', 'N':
 			return false
 		}
@@ -146,42 +146,42 @@ func BoolValue(value string) bool {
 
 // GetBool returns the boolean value of the given key.
 func (m *Meta) GetBool(key string) bool {
-	if value, ok := m.Get(key); ok {
-		return BoolValue(value)
+	if val, ok := m.Get(key); ok {
+		return val.BoolValue()
 	}
 	return false
 }
 
 // TimeValue returns the time value of the given value.
-func TimeValue(value string) (time.Time, bool) {
-	if t, err := time.Parse(id.TimestampLayout, ExpandTimestamp(value)); err == nil {
+func (val Value) TimeValue() (time.Time, bool) {
+	if t, err := time.Parse(id.TimestampLayout, ExpandTimestamp(val)); err == nil {
 		return t, true
 	}
 	return time.Time{}, false
 }
 
 // ExpandTimestamp makes a short-form timestamp larger.
-func ExpandTimestamp(value string) string {
+func ExpandTimestamp(value Value) string {
 	switch l := len(value); l {
 	case 4: // YYYY
-		return value + "0101000000"
+		return string(value) + "0101000000"
 	case 6: // YYYYMM
-		return value + "01000000"
+		return string(value) + "01000000"
 	case 8, 10, 12: // YYYYMMDD, YYYYMMDDhh, YYYYMMDDhhmm
-		return value + "000000"[:14-l]
+		return string(value) + "000000"[:14-l]
 	case 14: // YYYYMMDDhhmmss
-		return value
+		return string(value)
 	default:
 		if l > 14 {
-			return value[:14]
+			return string(value[:14])
 		}
-		return value
+		return string(value)
 	}
 }
 
 // ListFromValue transforms a string value into a list value.
-func ListFromValue(value string) []string {
-	return strings.Fields(value)
+func (val Value) ListFromValue() []string {
+	return strings.Fields(string(val))
 }
 
 // GetList retrieves the string list value of a given key. The bool value
@@ -191,12 +191,15 @@ func (m *Meta) GetList(key string) ([]string, bool) {
 	if !ok {
 		return nil, false
 	}
-	return ListFromValue(value), true
+	return value.ListFromValue(), true
 }
 
+// ToLower maps the value to lowercase runes.
+func (val Value) ToLower() Value { return Value(strings.ToLower(string(val))) }
+
 // TagsFromValue returns the value as a sequence of normalized tags.
-func TagsFromValue(value string) []string {
-	tags := ListFromValue(strings.ToLower(value))
+func (val Value) TagsFromValue() []string {
+	tags := val.ToLower().ListFromValue()
 	for i, tag := range tags {
 		if len(tag) > 1 && tag[0] == '#' {
 			tags[i] = tag[1:]
@@ -206,25 +209,25 @@ func TagsFromValue(value string) []string {
 }
 
 // CleanTag removes the number character ('#') from a tag value and lowercases it.
-func CleanTag(tag string) string {
-	if len(tag) > 1 && tag[0] == '#' {
-		return tag[1:]
+func (val Value) CleanTag() Value {
+	if len(val) > 1 && val[0] == '#' {
+		return val[1:]
 	}
-	return tag
+	return val
 }
 
 // NormalizeTag adds a missing prefix "#" to the tag
-func NormalizeTag(tag string) string {
-	if len(tag) > 0 && tag[0] == '#' {
-		return tag
+func (val Value) NormalizeTag() Value {
+	if len(val) > 0 && val[0] == '#' {
+		return val
 	}
-	return "#" + tag
+	return "#" + val
 }
 
 // GetNumber retrieves the numeric value of a given key.
 func (m *Meta) GetNumber(key string, def int64) int64 {
 	if value, ok := m.Get(key); ok {
-		if num, err := strconv.ParseInt(value, 10, 64); err == nil {
+		if num, err := strconv.ParseInt(string(value), 10, 64); err == nil {
 			return num
 		}
 	}

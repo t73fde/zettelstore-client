@@ -27,13 +27,13 @@ const testID = id.Zid(98765432101234)
 func newMeta(title string, tags []string, syntax string) *meta.Meta {
 	m := meta.New(testID)
 	if title != "" {
-		m.Set(api.KeyTitle, title)
+		m.Set(api.KeyTitle, meta.Value(title))
 	}
 	if tags != nil {
-		m.Set(api.KeyTags, strings.Join(tags, " "))
+		m.Set(api.KeyTags, meta.Value(strings.Join(tags, " ")))
 	}
 	if syntax != "" {
-		m.Set(api.KeySyntax, syntax)
+		m.Set(api.KeySyntax, meta.Value(syntax))
 	}
 	return m
 }

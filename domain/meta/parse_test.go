@@ -39,7 +39,10 @@ func TestEmpty(t *testing.T) {
 
 func TestTitle(t *testing.T) {
 	t.Parallel()
-	td := []struct{ s, e string }{
+	td := []struct {
+		s string
+		e meta.Value
+	}{
 		{api.KeyTitle + ": a title", "a title"},
 		{api.KeyTitle + ": a\n\t title", "a title"},
 		{api.KeyTitle + ": a\n\t title\r\n  x", "a title x"},
@@ -86,7 +89,7 @@ func TestTags(t *testing.T) {
 			}
 			continue
 		}
-		tags := meta.TagsFromValue(tagsString)
+		tags := tagsString.TagsFromValue()
 		if tc.exp == "" && len(tags) > 0 {
 			t.Errorf("%d / %q: expected no %s, but got %v", i, tc.src, api.KeyTags, tags)
 			continue
@@ -152,7 +155,7 @@ func TestPrecursorIDSet(t *testing.T) {
 	t.Parallel()
 	var testdata = []struct {
 		inp string
-		exp string
+		exp meta.Value
 	}{
 		{"", ""},
 		{"123", ""},

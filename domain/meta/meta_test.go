@@ -129,7 +129,7 @@ func checkHeader(t *testing.T, exp map[string]string, gotP []Pair) {
 	t.Helper()
 	got := make(map[string]string, len(gotP))
 	for _, p := range gotP {
-		got[p.Key] = p.Value
+		got[p.Key] = string(p.Value)
 		if _, ok := exp[p.Key]; !ok {
 			t.Errorf("Key %q is not expected, but has value %q", p.Key, p.Value)
 		}
@@ -235,7 +235,7 @@ func TestEqual(t *testing.T) {
 func pairs2meta(pairs []string) *Meta {
 	m := New(testID)
 	for i := 0; i < len(pairs); i += 2 {
-		m.Set(pairs[i], pairs[i+1])
+		m.Set(pairs[i], Value(pairs[i+1]))
 	}
 	return m
 }

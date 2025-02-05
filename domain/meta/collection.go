@@ -54,7 +54,7 @@ func createSimplearrangement(metaList []*Meta, key string) Arrangement {
 	a := make(Arrangement)
 	for _, m := range metaList {
 		if val, ok := m.Get(key); ok && val != "" {
-			a[val] = append(a[val], m)
+			a[string(val)] = append(a[string(val)], m)
 		}
 	}
 	return a

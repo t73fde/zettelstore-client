@@ -80,7 +80,7 @@ func parseHeader(m *Meta, inp *input.Input) {
 		}
 		val = append(val, ' ')
 	}
-	addToMeta(m, string(key), string(val))
+	addToMeta(m, string(key), Value(val))
 }
 
 func skipToEOL(inp *input.Input) {
@@ -111,8 +111,8 @@ func addToSet(set strfun.Set, elems []string, useElem predValidElem) {
 	}
 }
 
-func addSet(m *Meta, key, val string, useElem predValidElem) {
-	newElems := strings.Fields(val)
+func addSet(m *Meta, key string, val Value, useElem predValidElem) {
+	newElems := strings.Fields(string(val))
 	oldElems, ok := m.GetList(key)
 	if !ok {
 		oldElems = nil
@@ -128,7 +128,7 @@ func addSet(m *Meta, key, val string, useElem predValidElem) {
 	m.SetList(key, maps.Keys(set))
 }
 
-func addData(m *Meta, k, v string) {
+func addData(m *Meta, k string, v Value) {
 	if o, ok := m.Get(k); !ok || o == "" {
 		m.Set(k, v)
 	} else if v != "" {
@@ -136,8 +136,8 @@ func addData(m *Meta, k, v string) {
 	}
 }
 
-func addToMeta(m *Meta, key, val string) {
-	v := trimValue(val)
+func addToMeta(m *Meta, key string, val Value) {
+	v := val.TrimSpace()
 	key = strings.ToLower(key)
 	if !KeyIsValid(key) {
 		return
@@ -150,11 +150,11 @@ func addToMeta(m *Meta, key, val string) {
 
 	switch Type(key) {
 	case TypeTagSet:
-		addSet(m, key, strings.ToLower(v), func(s string) bool { return s[0] == '#' && len(s) > 1 })
+		addSet(m, key, v.ToLower(), func(s string) bool { return s[0] == '#' && len(s) > 1 })
 	case TypeWord:
-		m.Set(key, strings.ToLower(v))
+		m.Set(key, v.ToLower())
 	case TypeID:
-		if _, err := id.Parse(v); err == nil {
+		if _, err := id.Parse(string(v)); err == nil {
 			m.Set(key, v)
 		}
 	case TypeIDSet:
@@ -163,7 +163,7 @@ func addToMeta(m *Meta, key, val string) {
 			return err == nil
 		})
 	case TypeTimestamp:
-		if _, ok := TimeValue(v); ok {
+		if _, ok := v.TimeValue(); ok {
 			m.Set(key, v)
 		}
 	default:
