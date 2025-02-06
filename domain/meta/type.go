@@ -123,7 +123,7 @@ func (m *Meta) SetList(key string, values []string) {
 
 // SetWord stores the given word under the given key.
 func (m *Meta) SetWord(key, word string) {
-	if slist := Value(word).ListFromValue(); len(slist) > 0 {
+	if slist := Value(word).AsList(); len(slist) > 0 {
 		m.Set(key, Value(slist[0]))
 	}
 }
@@ -133,55 +133,12 @@ func (m *Meta) SetNow(key string) {
 	m.Set(key, Value(time.Now().Local().Format(id.TimestampLayout)))
 }
 
-// BoolValue returns the value interpreted as a bool.
-func (val Value) BoolValue() bool {
-	if len(val) > 0 {
-		switch val[0] {
-		case '0', 'f', 'F', 'n', 'N':
-			return false
-		}
-	}
-	return true
-}
-
 // GetBool returns the boolean value of the given key.
 func (m *Meta) GetBool(key string) bool {
 	if val, ok := m.Get(key); ok {
-		return val.BoolValue()
+		return val.AsBool()
 	}
 	return false
-}
-
-// TimeValue returns the time value of the given value.
-func (val Value) TimeValue() (time.Time, bool) {
-	if t, err := time.Parse(id.TimestampLayout, ExpandTimestamp(val)); err == nil {
-		return t, true
-	}
-	return time.Time{}, false
-}
-
-// ExpandTimestamp makes a short-form timestamp larger.
-func ExpandTimestamp(value Value) string {
-	switch l := len(value); l {
-	case 4: // YYYY
-		return string(value) + "0101000000"
-	case 6: // YYYYMM
-		return string(value) + "01000000"
-	case 8, 10, 12: // YYYYMMDD, YYYYMMDDhh, YYYYMMDDhhmm
-		return string(value) + "000000"[:14-l]
-	case 14: // YYYYMMDDhhmmss
-		return string(value)
-	default:
-		if l > 14 {
-			return string(value[:14])
-		}
-		return string(value)
-	}
-}
-
-// ListFromValue transforms a string value into a list value.
-func (val Value) ListFromValue() []string {
-	return strings.Fields(string(val))
 }
 
 // GetList retrieves the string list value of a given key. The bool value
@@ -191,37 +148,7 @@ func (m *Meta) GetList(key string) ([]string, bool) {
 	if !ok {
 		return nil, false
 	}
-	return value.ListFromValue(), true
-}
-
-// ToLower maps the value to lowercase runes.
-func (val Value) ToLower() Value { return Value(strings.ToLower(string(val))) }
-
-// TagsFromValue returns the value as a sequence of normalized tags.
-func (val Value) TagsFromValue() []string {
-	tags := val.ToLower().ListFromValue()
-	for i, tag := range tags {
-		if len(tag) > 1 && tag[0] == '#' {
-			tags[i] = tag[1:]
-		}
-	}
-	return tags
-}
-
-// CleanTag removes the number character ('#') from a tag value and lowercases it.
-func (val Value) CleanTag() Value {
-	if len(val) > 1 && val[0] == '#' {
-		return val[1:]
-	}
-	return val
-}
-
-// NormalizeTag adds a missing prefix "#" to the tag
-func (val Value) NormalizeTag() Value {
-	if len(val) > 0 && val[0] == '#' {
-		return val
-	}
-	return "#" + val
+	return value.AsList(), true
 }
 
 // GetNumber retrieves the numeric value of a given key.

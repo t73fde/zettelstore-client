@@ -165,9 +165,6 @@ func init() {
 // NewPrefix is the prefix for metadata key in template zettel for creating new zettel.
 const NewPrefix = "new-"
 
-// Value ist a single metadata value.
-type Value string
-
 // Meta contains all meta-data of a zettel.
 type Meta struct {
 	Zid     id.Zid

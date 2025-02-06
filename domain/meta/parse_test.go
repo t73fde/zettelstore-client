@@ -89,7 +89,7 @@ func TestTags(t *testing.T) {
 			}
 			continue
 		}
-		tags := tagsString.TagsFromValue()
+		tags := tagsString.AsTags()
 		if tc.exp == "" && len(tags) > 0 {
 			t.Errorf("%d / %q: expected no %s, but got %v", i, tc.src, api.KeyTags, tags)
 			continue

@@ -15,9 +15,88 @@ package meta
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/domain/id"
 )
+
+// Value ist a single metadata value.
+type Value string
+
+// AsBool returns the value interpreted as a bool.
+func (val Value) AsBool() bool {
+	if len(val) > 0 {
+		switch val[0] {
+		case '0', 'f', 'F', 'n', 'N':
+			return false
+		}
+	}
+	return true
+}
+
+// AsTime returns the time value of the given value.
+func (val Value) AsTime() (time.Time, bool) {
+	if t, err := time.Parse(id.TimestampLayout, ExpandTimestamp(val)); err == nil {
+		return t, true
+	}
+	return time.Time{}, false
+}
+
+// ExpandTimestamp makes a short-form timestamp larger.
+func ExpandTimestamp(val Value) string {
+	switch l := len(val); l {
+	case 4: // YYYY
+		return string(val) + "0101000000"
+	case 6: // YYYYMM
+		return string(val) + "01000000"
+	case 8, 10, 12: // YYYYMMDD, YYYYMMDDhh, YYYYMMDDhhmm
+		return string(val) + "000000"[:14-l]
+	case 14: // YYYYMMDDhhmmss
+		return string(val)
+	default:
+		if l > 14 {
+			return string(val[:14])
+		}
+		return string(val)
+	}
+}
+
+// AsList transforms a value into a list value.
+func (val Value) AsList() []string {
+	return strings.Fields(string(val))
+}
+
+// ToLower maps the value to lowercase runes.
+func (val Value) ToLower() Value { return Value(strings.ToLower(string(val))) }
+
+// AsTags returns the value as a sequence of normalized tags.
+func (val Value) AsTags() []string {
+	tags := val.ToLower().AsList()
+	for i, tag := range tags {
+		if len(tag) > 1 && tag[0] == '#' {
+			tags[i] = tag[1:]
+		}
+	}
+	return tags
+}
+
+// CleanTag removes the number character ('#') from a tag value and lowercases it.
+func (val Value) CleanTag() Value {
+	if len(val) > 1 && val[0] == '#' {
+		return val[1:]
+	}
+	return val
+}
+
+// NormalizeTag adds a missing prefix "#" to the tag
+func (val Value) NormalizeTag() Value {
+	if len(val) > 0 && val[0] == '#' {
+		return val
+	}
+	return "#" + val
+}
 
 // Supported syntax values.
 const (
@@ -71,8 +150,8 @@ func init() {
 	}
 }
 
-// GetVisibility returns the visibility value of the given value string
-func (val Value) GetVisibility() Visibility {
+// AsVisibility returns the visibility value of the given value string
+func (val Value) AsVisibility() Visibility {
 	if vis, ok := visMap[val]; ok {
 		return vis
 	}
@@ -106,8 +185,8 @@ var urMap = map[Value]UserRole{
 	api.ValueUserRoleOwner:   UserRoleOwner,
 }
 
-// GetUserRole role returns the user role of the given string.
-func (val Value) GetUserRole() UserRole {
+// AsUserRole role returns the user role of the given string.
+func (val Value) AsUserRole() UserRole {
 	if ur, ok := urMap[val]; ok {
 		return ur
 	}

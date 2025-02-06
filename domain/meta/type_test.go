@@ -36,7 +36,7 @@ func TestNow(t *testing.T) {
 	if _, err := strconv.ParseInt(string(val), 10, 64); err != nil {
 		t.Errorf("Unable to parse %q as an int64: %v", val, err)
 	}
-	if _, ok = val.TimeValue(); !ok {
+	if _, ok = val.AsTime(); !ok {
 		t.Errorf("Unable to get time from value %q", val)
 	}
 }
@@ -67,7 +67,7 @@ func TestTimeValue(t *testing.T) {
 		{"2023103916541700", false, time.Time{}},
 	}
 	for i, tc := range testCases {
-		got, ok := tc.value.TimeValue()
+		got, ok := tc.value.AsTime()
 		if ok != tc.valid {
 			t.Errorf("%d: parsing of %q should be %v, but got %v", i, tc.value, tc.valid, ok)
 			continue
