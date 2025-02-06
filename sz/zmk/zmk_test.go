@@ -395,7 +395,7 @@ func TestFormat(t *testing.T) {
 
 func TestLiteral(t *testing.T) {
 	symMap := symbolMap{
-		"`": sz.SymLiteralProg,
+		"`": sz.SymLiteralCode,
 		"'": sz.SymLiteralInput,
 		"=": sz.SymLiteralOutput,
 	}

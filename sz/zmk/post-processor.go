@@ -63,7 +63,7 @@ func init() {
 		sz.SymVerbatimComment: postProcessVerbatim,
 		sz.SymVerbatimEval:    postProcessVerbatim,
 		sz.SymVerbatimMath:    postProcessVerbatim,
-		sz.SymVerbatimProg:    postProcessVerbatim,
+		sz.SymVerbatimCode:    postProcessVerbatim,
 		sz.SymVerbatimZettel:  postProcessVerbatim,
 		sz.SymHeading:         postProcessHeading,
 		sz.SymListOrdered:     postProcessItemList,

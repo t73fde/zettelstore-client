@@ -434,8 +434,8 @@ func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
 }
 
 var mapRuneLiteral = map[rune]*sx.Symbol{
-	'`':          sz.SymLiteralProg,
-	runeModGrave: sz.SymLiteralProg,
+	'`':          sz.SymLiteralCode,
+	runeModGrave: sz.SymLiteralCode,
 	'\'':         sz.SymLiteralInput,
 	'=':          sz.SymLiteralOutput,
 	// No '$': sz.SymLiteralMath, because pairing literal math is a little different

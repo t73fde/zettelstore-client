@@ -56,7 +56,7 @@ var (
 	SymListOrdered     = sx.MakeSymbol("ORDERED")
 	SymListUnordered   = sx.MakeSymbol("UNORDERED")
 	SymListQuote       = sx.MakeSymbol("QUOTATION")
-	SymLiteralProg     = sx.MakeSymbol("LITERAL-CODE")
+	SymLiteralCode     = sx.MakeSymbol("LITERAL-CODE")
 	SymLiteralComment  = sx.MakeSymbol("LITERAL-COMMENT")
 	SymLiteralInput    = sx.MakeSymbol("LITERAL-INPUT")
 	SymLiteralMath     = sx.MakeSymbol("LITERAL-MATH")
@@ -72,11 +72,11 @@ var (
 	SymThematic        = sx.MakeSymbol("THEMATIC")
 	SymTransclude      = sx.MakeSymbol("TRANSCLUDE")
 	SymUnknown         = sx.MakeSymbol("UNKNOWN-NODE")
+	SymVerbatimCode    = sx.MakeSymbol("VERBATIM-CODE")
 	SymVerbatimComment = sx.MakeSymbol("VERBATIM-COMMENT")
 	SymVerbatimEval    = sx.MakeSymbol("VERBATIM-EVAL")
 	SymVerbatimHTML    = sx.MakeSymbol("VERBATIM-HTML")
 	SymVerbatimMath    = sx.MakeSymbol("VERBATIM-MATH")
-	SymVerbatimProg    = sx.MakeSymbol("VERBATIM-CODE")
 	SymVerbatimZettel  = sx.MakeSymbol("VERBATIM-ZETTEL")
 
 	// Constant symbols for reference states.

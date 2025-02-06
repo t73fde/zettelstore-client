@@ -407,7 +407,7 @@ func (ev *Evaluator) bindBlocks() {
 	ev.bind(sz.SymVerbatimMath, 2, func(args sx.Vector, env *Environment) sx.Object {
 		return evalVerbatim(GetAttributes(args[0], env).AddClass("zs-math"), getString(args[1], env))
 	})
-	ev.bind(sz.SymVerbatimProg, 2, func(args sx.Vector, env *Environment) sx.Object {
+	ev.bind(sz.SymVerbatimCode, 2, func(args sx.Vector, env *Environment) sx.Object {
 		a := GetAttributes(args[0], env)
 		content := getString(args[1], env)
 		if a.HasDefault() {
@@ -692,7 +692,7 @@ func (ev *Evaluator) bindInlines() {
 	ev.bind(sz.SymLiteralOutput, 2, func(args sx.Vector, env *Environment) sx.Object {
 		return evalLiteral(args, nil, symSAMP, env)
 	})
-	ev.bind(sz.SymLiteralProg, 2, func(args sx.Vector, env *Environment) sx.Object {
+	ev.bind(sz.SymLiteralCode, 2, func(args sx.Vector, env *Environment) sx.Object {
 		return evalLiteral(args, nil, symCODE, env)
 	})
 }

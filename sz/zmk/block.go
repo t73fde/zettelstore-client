@@ -185,7 +185,7 @@ func (cp *zmkP) parseVerbatim() (rn *sx.Pair, success bool) {
 	case '@':
 		sym = sz.SymVerbatimZettel
 	case '`', runeModGrave:
-		sym = sz.SymVerbatimProg
+		sym = sz.SymVerbatimCode
 	case '%':
 		sym = sz.SymVerbatimComment
 	case '~':

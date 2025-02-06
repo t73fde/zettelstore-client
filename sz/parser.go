@@ -34,7 +34,7 @@ func ParsePlainBlocks(inp *input.Input, syntax string) *sx.Pair {
 	if syntax == meta.ValueSyntaxHTML {
 		sym = SymVerbatimHTML
 	} else {
-		sym = SymVerbatimProg
+		sym = SymVerbatimCode
 	}
 	return sx.MakeList(
 		sym,
