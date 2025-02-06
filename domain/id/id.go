@@ -34,6 +34,85 @@ const (
 	maxZid = 99999999999999
 )
 
+// Predefined zettel identifier.
+//
+// See [List of predefined zettel].
+//
+// [List of predefined zettel]: https://zettelstore.de/manual/h/00001005090000
+const (
+	// System zettel
+	ZidVersion              = Zid(1)
+	ZidHost                 = Zid(2)
+	ZidOperatingSystem      = Zid(3)
+	ZidLicense              = Zid(4)
+	ZidAuthors              = Zid(5)
+	ZidDependencies         = Zid(6)
+	ZidLog                  = Zid(7)
+	ZidMemory               = Zid(8)
+	ZidSx                   = Zid(9)
+	ZidHTTP                 = Zid(10)
+	ZidAPI                  = Zid(11)
+	ZidWebUI                = Zid(12)
+	ZidConsole              = Zid(13)
+	ZidBoxManager           = Zid(20)
+	ZidZettel               = Zid(21)
+	ZidIndex                = Zid(22)
+	ZidQuery                = Zid(23)
+	ZidMetadataKey          = Zid(90)
+	ZidParser               = Zid(92)
+	ZidStartupConfiguration = Zid(96)
+	ZidConfiguration        = Zid(100)
+	ZidDirectory            = Zid(101)
+
+	// WebUI HTML templates are in the range 10000..19999
+	ZidBaseTemplate   = Zid(10100)
+	ZidLoginTemplate  = Zid(10200)
+	ZidListTemplate   = Zid(10300)
+	ZidZettelTemplate = Zid(10401)
+	ZidInfoTemplate   = Zid(10402)
+	ZidFormTemplate   = Zid(10403)
+	ZidDeleteTemplate = Zid(10405)
+	ZidErrorTemplate  = Zid(10700)
+
+	// WebUI sxn code zettel are in the range 19000..19999
+	ZidSxnStart = Zid(19000)
+	ZidSxnBase  = Zid(19990)
+
+	// CSS-related zettel are in the range 20000..29999
+	ZidBaseCSS = Zid(20001)
+	ZidUserCSS = Zid(25001)
+
+	// WebUI JS zettel are in the range 30000..39999
+
+	// WebUI image zettel are in the range 40000..49999
+	ZidEmoji = Zid(40001)
+
+	// Other sxn code zettel are in the range 50000..59999
+	ZidSxnPrelude = Zid(59900)
+
+	// Predefined Zettelmarkup zettel are in the range 60000..69999
+	ZidRoleZettelZettel        = Zid(60010)
+	ZidRoleConfigurationZettel = Zid(60020)
+	ZidRoleRoleZettel          = Zid(60030)
+	ZidRoleTagZettel           = Zid(60040)
+
+	// Range 80000...89999 is reserved for web ui menus
+	ZidTOCListsMenu = Zid(80001) // "Lists" menu
+
+	// Range 90000...99999 is reserved for zettel templates
+	ZidTOCNewTemplate    = Zid(90000)
+	ZidTemplateNewZettel = Zid(90001)
+	ZidTemplateNewRole   = Zid(90004)
+	ZidTemplateNewTag    = Zid(90003)
+	ZidTemplateNewUser   = Zid(90002)
+
+	// Range 00000999999900...00000999999999 are predefined zettel to be searched by content.
+	ZidAppDirectory = Zid(999999999)
+
+	// Default Home Zettel
+	ZidDefaultHome = Zid(10000000000)
+)
+
 // ParseUint interprets a string as a possible zettel identifier
 // and returns its integer value.
 func ParseUint(s string) (uint64, error) {

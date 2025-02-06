@@ -19,7 +19,6 @@ import (
 	"sync"
 	"time"
 
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
 )
 
@@ -43,18 +42,36 @@ func registerType(name string, isSet bool) *DescriptionType {
 	return t
 }
 
+// Values of the metadata key/value types.
+//
+// See [Supported Key Types].
+//
+// [Supported Key Types]: https://zettelstore.de/manual/h/00001006030000
+const (
+	MetaCredential = "Credential"
+	MetaEmpty      = "EString"
+	MetaID         = "Identifier"
+	MetaIDSet      = "IdentifierSet"
+	MetaNumber     = "Number"
+	MetaString     = "String"
+	MetaTagSet     = "TagSet"
+	MetaTimestamp  = "Timestamp"
+	MetaURL        = "URL"
+	MetaWord       = "Word"
+)
+
 // Supported key types.
 var (
-	TypeCredential = registerType(api.MetaCredential, false)
-	TypeEmpty      = registerType(api.MetaEmpty, false)
-	TypeID         = registerType(api.MetaID, false)
-	TypeIDSet      = registerType(api.MetaIDSet, true)
-	TypeNumber     = registerType(api.MetaNumber, false)
-	TypeString     = registerType(api.MetaString, false)
-	TypeTagSet     = registerType(api.MetaTagSet, true)
-	TypeTimestamp  = registerType(api.MetaTimestamp, false)
-	TypeURL        = registerType(api.MetaURL, false)
-	TypeWord       = registerType(api.MetaWord, false)
+	TypeCredential = registerType(MetaCredential, false)
+	TypeEmpty      = registerType(MetaEmpty, false)
+	TypeID         = registerType(MetaID, false)
+	TypeIDSet      = registerType(MetaIDSet, true)
+	TypeNumber     = registerType(MetaNumber, false)
+	TypeString     = registerType(MetaString, false)
+	TypeTagSet     = registerType(MetaTagSet, true)
+	TypeTimestamp  = registerType(MetaTimestamp, false)
+	TypeURL        = registerType(MetaURL, false)
+	TypeWord       = registerType(MetaWord, false)
 )
 
 // Type returns a type hint for the given key. If no type hint is specified,
@@ -113,7 +130,7 @@ func Type(key string) *DescriptionType {
 
 // SetList stores the given string list value under the given key.
 func (m *Meta) SetList(key string, values []string) {
-	if key != api.KeyID {
+	if key != KeyID {
 		for i, val := range values {
 			values[i] = string(Value(val).TrimSpace())
 		}

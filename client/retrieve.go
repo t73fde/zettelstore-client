@@ -461,7 +461,7 @@ type VersionInfo struct {
 // GetApplicationZid returns the zettel identifier used to configure a client
 // application with the given name.
 func (c *Client) GetApplicationZid(ctx context.Context, appname string) (id.Zid, error) {
-	mr, err := c.GetMetaData(ctx, api.ZidAppDirectory)
+	mr, err := c.GetMetaData(ctx, id.ZidAppDirectory)
 	if err != nil {
 		return id.Invalid, err
 	}

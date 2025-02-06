@@ -24,6 +24,7 @@ import (
 	"t73f.de/r/sxwebs/sxhtml"
 	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/attrs"
+	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/sz"
 )
 
@@ -597,7 +598,7 @@ func (ev *Evaluator) bindInlines() {
 	})
 	ev.bind(sz.SymEmbedBLOB, 3, func(args sx.Vector, env *Environment) sx.Object {
 		a, syntax, data := GetAttributes(args[0], env), getString(args[1], env), getString(args[2], env)
-		summary, hasSummary := a.Get(api.KeySummary)
+		summary, hasSummary := a.Get(meta.KeySummary)
 		if !hasSummary {
 			summary = ""
 		}
@@ -784,7 +785,7 @@ func evalBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
 	switch syntax.GetValue() {
 	case "":
 		return sx.Nil()
-	case api.ValueSyntaxSVG:
+	case meta.ValueSyntaxSVG:
 		return sx.Nil().Cons(sx.Nil().Cons(data).Cons(sxhtml.SymNoEscape)).Cons(SymP)
 	default:
 		imgAttr := sx.Nil().Cons(sx.Cons(SymAttrSrc, sx.MakeString("data:image/"+syntax.GetValue()+";base64,"+data.GetValue())))

@@ -17,7 +17,6 @@ import (
 	"strings"
 	"testing"
 
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
 )
 
@@ -42,36 +41,36 @@ func TestKeyIsValid(t *testing.T) {
 func TestTitleHeader(t *testing.T) {
 	t.Parallel()
 	m := New(testID)
-	if got, ok := m.Get(api.KeyTitle); ok && got != "" {
+	if got, ok := m.Get(KeyTitle); ok && got != "" {
 		t.Errorf("Title is not empty, but %q", got)
 	}
-	addToMeta(m, api.KeyTitle, " ")
-	if got, ok := m.Get(api.KeyTitle); ok && got != "" {
+	addToMeta(m, KeyTitle, " ")
+	if got, ok := m.Get(KeyTitle); ok && got != "" {
 		t.Errorf("Title is not empty, but %q", got)
 	}
 	const st = "A simple text"
-	addToMeta(m, api.KeyTitle, " "+st+"  ")
-	if got, ok := m.Get(api.KeyTitle); !ok || got != st {
+	addToMeta(m, KeyTitle, " "+st+"  ")
+	if got, ok := m.Get(KeyTitle); !ok || got != st {
 		t.Errorf("Title is not %q, but %q", st, got)
 	}
-	addToMeta(m, api.KeyTitle, "  "+st+"\t")
+	addToMeta(m, KeyTitle, "  "+st+"\t")
 	const exp = st + " " + st
-	if got, ok := m.Get(api.KeyTitle); !ok || got != exp {
+	if got, ok := m.Get(KeyTitle); !ok || got != exp {
 		t.Errorf("Title is not %q, but %q", exp, got)
 	}
 
 	m = New(testID)
 	const at = "A Title"
-	addToMeta(m, api.KeyTitle, at)
-	addToMeta(m, api.KeyTitle, " ")
-	if got, ok := m.Get(api.KeyTitle); !ok || got != at {
+	addToMeta(m, KeyTitle, at)
+	addToMeta(m, KeyTitle, " ")
+	if got, ok := m.Get(KeyTitle); !ok || got != at {
 		t.Errorf("Title is not %q, but %q", at, got)
 	}
 }
 
 func checkTags(t *testing.T, exp []string, m *Meta) {
 	t.Helper()
-	got, _ := m.GetList(api.KeyTags)
+	got, _ := m.GetList(KeyTags)
 	for i, tag := range exp {
 		if i < len(got) {
 			if tag != got[i] {
@@ -91,36 +90,36 @@ func TestTagsHeader(t *testing.T) {
 	m := New(testID)
 	checkTags(t, []string{}, m)
 
-	addToMeta(m, api.KeyTags, "")
+	addToMeta(m, KeyTags, "")
 	checkTags(t, []string{}, m)
 
-	addToMeta(m, api.KeyTags, "  #t1 #t2  #t3 #t4  ")
+	addToMeta(m, KeyTags, "  #t1 #t2  #t3 #t4  ")
 	checkTags(t, []string{"#t1", "#t2", "#t3", "#t4"}, m)
 
-	addToMeta(m, api.KeyTags, "#t5")
+	addToMeta(m, KeyTags, "#t5")
 	checkTags(t, []string{"#t1", "#t2", "#t3", "#t4", "#t5"}, m)
 
-	addToMeta(m, api.KeyTags, "t6")
+	addToMeta(m, KeyTags, "t6")
 	checkTags(t, []string{"#t1", "#t2", "#t3", "#t4", "#t5"}, m)
 }
 
 func TestSyntax(t *testing.T) {
 	t.Parallel()
 	m := New(testID)
-	if got, ok := m.Get(api.KeySyntax); ok || got != "" {
+	if got, ok := m.Get(KeySyntax); ok || got != "" {
 		t.Errorf("Syntax is not %q, but %q", "", got)
 	}
-	addToMeta(m, api.KeySyntax, " ")
-	if got, _ := m.Get(api.KeySyntax); got != "" {
+	addToMeta(m, KeySyntax, " ")
+	if got, _ := m.Get(KeySyntax); got != "" {
 		t.Errorf("Syntax is not %q, but %q", "", got)
 	}
-	addToMeta(m, api.KeySyntax, "MarkDown")
+	addToMeta(m, KeySyntax, "MarkDown")
 	const exp = "markdown"
-	if got, ok := m.Get(api.KeySyntax); !ok || got != exp {
+	if got, ok := m.Get(KeySyntax); !ok || got != exp {
 		t.Errorf("Syntax is not %q, but %q", exp, got)
 	}
-	addToMeta(m, api.KeySyntax, " ")
-	if got, _ := m.Get(api.KeySyntax); got != "" {
+	addToMeta(m, KeySyntax, " ")
+	if got, _ := m.Get(KeySyntax); got != "" {
 		t.Errorf("Syntax is not %q, but %q", "", got)
 	}
 }
@@ -193,10 +192,10 @@ func TestEqual(t *testing.T) {
 		{nil, nil, false, true},
 		{[]string{"a", "a"}, nil, false, false},
 		{[]string{"a", "a"}, nil, true, false},
-		{[]string{api.KeyFolge, "0"}, nil, true, false},
-		{[]string{api.KeyFolge, "0"}, nil, false, true},
-		{[]string{api.KeyFolge, "0"}, []string{api.KeyFolge, "0"}, true, true},
-		{[]string{api.KeyFolge, "0"}, []string{api.KeyFolge, "0"}, false, true},
+		{[]string{KeyFolge, "0"}, nil, true, false},
+		{[]string{KeyFolge, "0"}, nil, false, true},
+		{[]string{KeyFolge, "0"}, []string{KeyFolge, "0"}, true, true},
+		{[]string{KeyFolge, "0"}, []string{KeyFolge, "0"}, false, true},
 	}
 	for i, tc := range testcases {
 		m1 := pairs2meta(tc.pairs1)

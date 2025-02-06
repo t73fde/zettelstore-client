@@ -17,7 +17,6 @@ import (
 	"strings"
 	"testing"
 
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/domain/meta"
 )
@@ -27,13 +26,13 @@ const testID = id.Zid(98765432101234)
 func newMeta(title string, tags []string, syntax string) *meta.Meta {
 	m := meta.New(testID)
 	if title != "" {
-		m.Set(api.KeyTitle, meta.Value(title))
+		m.Set(meta.KeyTitle, meta.Value(title))
 	}
 	if tags != nil {
-		m.Set(api.KeyTags, meta.Value(strings.Join(tags, " ")))
+		m.Set(meta.KeyTags, meta.Value(strings.Join(tags, " ")))
 	}
 	if syntax != "" {
-		m.Set(api.KeySyntax, meta.Value(syntax))
+		m.Set(meta.KeySyntax, meta.Value(syntax))
 	}
 	return m
 }

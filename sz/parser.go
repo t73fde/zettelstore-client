@@ -15,7 +15,7 @@ package sz
 
 import (
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/input"
 )
 
@@ -31,7 +31,7 @@ func ParseNoneBlocks(*input.Input) *sx.Pair { return nil }
 // ParsePlainBlocks parses the block as plain text with the given syntax.
 func ParsePlainBlocks(inp *input.Input, syntax string) *sx.Pair {
 	var sym *sx.Symbol
-	if syntax == api.ValueSyntaxHTML {
+	if syntax == meta.ValueSyntaxHTML {
 		sym = SymVerbatimHTML
 	} else {
 		sym = SymVerbatimProg

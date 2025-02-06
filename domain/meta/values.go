@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
 )
 
@@ -98,28 +97,45 @@ func (val Value) NormalizeTag() Value {
 	return "#" + val
 }
 
-// Supported syntax values.
+// Predefined metadata values.
 const (
-	SyntaxCSS      = api.ValueSyntaxCSS
-	SyntaxDraw     = api.ValueSyntaxDraw
-	SyntaxGif      = api.ValueSyntaxGif
-	SyntaxHTML     = api.ValueSyntaxHTML
-	SyntaxJPEG     = "jpeg"
-	SyntaxJPG      = "jpg"
-	SyntaxMarkdown = api.ValueSyntaxMarkdown
-	SyntaxMD       = api.ValueSyntaxMD
-	SyntaxNone     = api.ValueSyntaxNone
-	SyntaxPlain    = "plain"
-	SyntaxPNG      = "png"
-	SyntaxSVG      = api.ValueSyntaxSVG
-	SyntaxSxn      = api.ValueSyntaxSxn
-	SyntaxText     = api.ValueSyntaxText
-	SyntaxTxt      = "txt"
-	SyntaxWebp     = "webp"
-	SyntaxZmk      = api.ValueSyntaxZmk
-
-	DefaultSyntax = SyntaxPlain
+	ValueFalse             = "false"
+	ValueTrue              = "true"
+	ValueLangEN            = "en"            // Default for "lang"
+	ValueRoleConfiguration = "configuration" // A role for internal zettel
+	ValueRoleTag           = "tag"           // A role for tag zettel
+	ValueRoleRole          = "role"          // A role for role zettel
+	ValueRoleZettel        = "zettel"        // A role for zettel
+	ValueSyntaxCSS         = "css"           // Syntax: CSS
+	ValueSyntaxDraw        = "draw"          // Syntax: Drawing
+	ValueSyntaxGif         = "gif"           // Syntax: GIF image
+	ValueSyntaxHTML        = "html"          // Syntax: HTML
+	ValueSyntaxJPEG        = "jpeg"          // Syntax: JPEG image
+	ValueSyntaxJPG         = "jpg"           // Syntax: PEG image
+	ValueSyntaxMarkdown    = "markdown"      // Syntax: Markdown / CommonMark
+	ValueSyntaxMD          = "md"            // Syntax: Markdown / CommonMark
+	ValueSyntaxNone        = "none"          // Syntax: no syntax / content, just metadata
+	ValueSyntaxPlain       = "plain"         // Syntax: plain text
+	ValueSyntaxPNG         = "png"           // Syntax: PNG image
+	ValueSyntaxSVG         = "svg"           // Syntax: SVG
+	ValueSyntaxSxn         = "sxn"           // Syntax: S-Expression
+	ValueSyntaxText        = "text"          // Syntax: plain text
+	ValueSyntaxTxt         = "txt"           // Syntax: plain text
+	ValueSyntaxWebp        = "webp"          // Syntax: WEBP image
+	ValueSyntaxZmk         = "zmk"           // Syntax: Zettelmarkup
+	ValueUserRoleCreator   = "creator"
+	ValueUserRoleOwner     = "owner"
+	ValueUserRoleReader    = "reader"
+	ValueUserRoleWriter    = "writer"
+	ValueVisibilityCreator = "creator"
+	ValueVisibilityExpert  = "expert"
+	ValueVisibilityLogin   = "login"
+	ValueVisibilityOwner   = "owner"
+	ValueVisibilityPublic  = "public"
 )
+
+// DefaultSyntax is the default value for metadata 'syntax'.
+const DefaultSyntax = ValueSyntaxPlain
 
 // Visibility enumerates the variations of the 'visibility' meta key.
 type Visibility int
@@ -136,11 +152,11 @@ const (
 )
 
 var visMap = map[Value]Visibility{
-	api.ValueVisibilityPublic:  VisibilityPublic,
-	api.ValueVisibilityCreator: VisibilityCreator,
-	api.ValueVisibilityLogin:   VisibilityLogin,
-	api.ValueVisibilityOwner:   VisibilityOwner,
-	api.ValueVisibilityExpert:  VisibilityExpert,
+	ValueVisibilityPublic:  VisibilityPublic,
+	ValueVisibilityCreator: VisibilityCreator,
+	ValueVisibilityLogin:   VisibilityLogin,
+	ValueVisibilityOwner:   VisibilityOwner,
+	ValueVisibilityExpert:  VisibilityExpert,
 }
 var revVisMap = map[Visibility]Value{}
 
@@ -179,10 +195,10 @@ const (
 )
 
 var urMap = map[Value]UserRole{
-	api.ValueUserRoleCreator: UserRoleCreator,
-	api.ValueUserRoleReader:  UserRoleReader,
-	api.ValueUserRoleWriter:  UserRoleWriter,
-	api.ValueUserRoleOwner:   UserRoleOwner,
+	ValueUserRoleCreator: UserRoleCreator,
+	ValueUserRoleReader:  UserRoleReader,
+	ValueUserRoleWriter:  UserRoleWriter,
+	ValueUserRoleOwner:   UserRoleOwner,
 }
 
 // AsUserRole role returns the user role of the given string.

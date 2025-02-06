@@ -16,7 +16,7 @@ package shtml
 import (
 	"strings"
 
-	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/domain/meta"
 )
 
 // LangStack is a stack to store the nesting of "lang" attribute values.
@@ -85,10 +85,10 @@ func (qi *QuoteInfo) GetQuotes(level uint) (string, string) {
 func (qi *QuoteInfo) GetNBSp() bool { return qi.nbsp }
 
 var langQuotes = map[string]*QuoteInfo{
-	"":              {"&quot;", "&quot;", "&quot;", "&quot;", false},
-	api.ValueLangEN: {"&ldquo;", "&rdquo;", "&lsquo;", "&rsquo;", false},
-	"de":            {"&bdquo;", "&ldquo;", "&sbquo;", "&lsquo;", false},
-	"fr":            {"&laquo;", "&raquo;", "&lsaquo;", "&rsaquo;", true},
+	"":               {"&quot;", "&quot;", "&quot;", "&quot;", false},
+	meta.ValueLangEN: {"&ldquo;", "&rdquo;", "&lsquo;", "&rsquo;", false},
+	"de":             {"&bdquo;", "&ldquo;", "&sbquo;", "&lsquo;", false},
+	"fr":             {"&laquo;", "&raquo;", "&lsaquo;", "&rsaquo;", true},
 }
 
 // GetQuoteInfo returns language specific data about quotes.

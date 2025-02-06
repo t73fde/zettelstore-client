@@ -22,7 +22,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/input"
 	mymaps "t73f.de/r/zsc/maps"
@@ -118,51 +117,95 @@ func GetSortedKeyDescriptions() []*DescriptionKey {
 	return result
 }
 
+// Predefined / supported metadata keys.
+//
+// See [Supported Metadata Keys].
+//
+// [Supported Metadata Keys]: https://zettelstore.de/manual/h/00001006020000
+const (
+	KeyID           = "id"
+	KeyTitle        = "title"
+	KeyRole         = "role"
+	KeyTags         = "tags"
+	KeySyntax       = "syntax"
+	KeyAuthor       = "author"
+	KeyBack         = "back"
+	KeyBackward     = "backward"
+	KeyBoxNumber    = "box-number"
+	KeyCopyright    = "copyright"
+	KeyCreated      = "created"
+	KeyCredential   = "credential"
+	KeyDead         = "dead"
+	KeyExpire       = "expire"
+	KeyFolge        = "folge"
+	KeyFolgeRole    = "folge-role"
+	KeyForward      = "forward"
+	KeyLang         = "lang"
+	KeyLicense      = "license"
+	KeyModified     = "modified"
+	KeyPrecursor    = "precursor"
+	KeyPredecessor  = "predecessor"
+	KeyPrequel      = "prequel"
+	KeyPublished    = "published"
+	KeyQuery        = "query"
+	KeyReadOnly     = "read-only"
+	KeySequel       = "sequel"
+	KeySubordinates = "subordinates"
+	KeySuccessors   = "successors"
+	KeySummary      = "summary"
+	KeySuperior     = "superior"
+	KeyURL          = "url"
+	KeyUselessFiles = "useless-files"
+	KeyUserID       = "user-id"
+	KeyUserRole     = "user-role"
+	KeyVisibility   = "visibility"
+)
+
 // Supported keys.
 func init() {
-	registerKey(api.KeyID, TypeID, usageComputed, "")
-	registerKey(api.KeyTitle, TypeEmpty, usageUser, "")
-	registerKey(api.KeyRole, TypeWord, usageUser, "")
-	registerKey(api.KeyTags, TypeTagSet, usageUser, "")
-	registerKey(api.KeySyntax, TypeWord, usageUser, "")
+	registerKey(KeyID, TypeID, usageComputed, "")
+	registerKey(KeyTitle, TypeEmpty, usageUser, "")
+	registerKey(KeyRole, TypeWord, usageUser, "")
+	registerKey(KeyTags, TypeTagSet, usageUser, "")
+	registerKey(KeySyntax, TypeWord, usageUser, "")
 
 	// Properties that are inverse keys
-	registerKey(api.KeyFolge, TypeIDSet, usageProperty, "")
-	registerKey(api.KeySequel, TypeIDSet, usageProperty, "")
-	registerKey(api.KeySuccessors, TypeIDSet, usageProperty, "")
-	registerKey(api.KeySubordinates, TypeIDSet, usageProperty, "")
+	registerKey(KeyFolge, TypeIDSet, usageProperty, "")
+	registerKey(KeySequel, TypeIDSet, usageProperty, "")
+	registerKey(KeySuccessors, TypeIDSet, usageProperty, "")
+	registerKey(KeySubordinates, TypeIDSet, usageProperty, "")
 
 	// Non-inverse keys
-	registerKey(api.KeyAuthor, TypeString, usageUser, "")
-	registerKey(api.KeyBack, TypeIDSet, usageProperty, "")
-	registerKey(api.KeyBackward, TypeIDSet, usageProperty, "")
-	registerKey(api.KeyBoxNumber, TypeNumber, usageProperty, "")
-	registerKey(api.KeyCopyright, TypeString, usageUser, "")
-	registerKey(api.KeyCreated, TypeTimestamp, usageComputed, "")
-	registerKey(api.KeyCredential, TypeCredential, usageUser, "")
-	registerKey(api.KeyDead, TypeIDSet, usageProperty, "")
-	registerKey(api.KeyExpire, TypeTimestamp, usageUser, "")
-	registerKey(api.KeyFolgeRole, TypeWord, usageUser, "")
-	registerKey(api.KeyForward, TypeIDSet, usageProperty, "")
-	registerKey(api.KeyLang, TypeWord, usageUser, "")
-	registerKey(api.KeyLicense, TypeEmpty, usageUser, "")
-	registerKey(api.KeyModified, TypeTimestamp, usageComputed, "")
-	registerKey(api.KeyPrecursor, TypeIDSet, usageUser, api.KeyFolge)
-	registerKey(api.KeyPredecessor, TypeID, usageUser, api.KeySuccessors)
-	registerKey(api.KeyPrequel, TypeIDSet, usageUser, api.KeySequel)
-	registerKey(api.KeyPublished, TypeTimestamp, usageProperty, "")
-	registerKey(api.KeyQuery, TypeEmpty, usageUser, "")
-	registerKey(api.KeyReadOnly, TypeWord, usageUser, "")
-	registerKey(api.KeySummary, TypeString, usageUser, "")
-	registerKey(api.KeySuperior, TypeIDSet, usageUser, api.KeySubordinates)
-	registerKey(api.KeyURL, TypeURL, usageUser, "")
-	registerKey(api.KeyUselessFiles, TypeString, usageProperty, "")
-	registerKey(api.KeyUserID, TypeWord, usageUser, "")
-	registerKey(api.KeyUserRole, TypeWord, usageUser, "")
-	registerKey(api.KeyVisibility, TypeWord, usageUser, "")
+	registerKey(KeyAuthor, TypeString, usageUser, "")
+	registerKey(KeyBack, TypeIDSet, usageProperty, "")
+	registerKey(KeyBackward, TypeIDSet, usageProperty, "")
+	registerKey(KeyBoxNumber, TypeNumber, usageProperty, "")
+	registerKey(KeyCopyright, TypeString, usageUser, "")
+	registerKey(KeyCreated, TypeTimestamp, usageComputed, "")
+	registerKey(KeyCredential, TypeCredential, usageUser, "")
+	registerKey(KeyDead, TypeIDSet, usageProperty, "")
+	registerKey(KeyExpire, TypeTimestamp, usageUser, "")
+	registerKey(KeyFolgeRole, TypeWord, usageUser, "")
+	registerKey(KeyForward, TypeIDSet, usageProperty, "")
+	registerKey(KeyLang, TypeWord, usageUser, "")
+	registerKey(KeyLicense, TypeEmpty, usageUser, "")
+	registerKey(KeyModified, TypeTimestamp, usageComputed, "")
+	registerKey(KeyPrecursor, TypeIDSet, usageUser, KeyFolge)
+	registerKey(KeyPredecessor, TypeID, usageUser, KeySuccessors)
+	registerKey(KeyPrequel, TypeIDSet, usageUser, KeySequel)
+	registerKey(KeyPublished, TypeTimestamp, usageProperty, "")
+	registerKey(KeyQuery, TypeEmpty, usageUser, "")
+	registerKey(KeyReadOnly, TypeWord, usageUser, "")
+	registerKey(KeySummary, TypeString, usageUser, "")
+	registerKey(KeySuperior, TypeIDSet, usageUser, KeySubordinates)
+	registerKey(KeyURL, TypeURL, usageUser, "")
+	registerKey(KeyUselessFiles, TypeString, usageProperty, "")
+	registerKey(KeyUserID, TypeWord, usageUser, "")
+	registerKey(KeyUserRole, TypeWord, usageUser, "")
+	registerKey(KeyVisibility, TypeWord, usageUser, "")
 }
 
-// NewPrefix is the prefix for metadata key in template zettel for creating new zettel.
+// NewPrefix is the prefix for metadata keys in template zettel for creating new zettel.
 const NewPrefix = "new-"
 
 // Meta contains all meta-data of a zettel.
@@ -227,7 +270,7 @@ type Pair struct {
 	Value Value
 }
 
-var firstKeys = []string{api.KeyTitle, api.KeyRole, api.KeyTags, api.KeySyntax}
+var firstKeys = []string{KeyTitle, KeyRole, KeyTags, KeySyntax}
 var firstKeySet strfun.Set
 
 func init() {
@@ -236,7 +279,7 @@ func init() {
 
 // Set stores the given string value under the given key.
 func (m *Meta) Set(key string, value Value) {
-	if key != api.KeyID {
+	if key != KeyID {
 		m.pairs[key] = value.TrimSpace()
 	}
 }
@@ -245,7 +288,7 @@ func (m *Meta) Set(key string, value Value) {
 // An empty value will delete the previous association.
 func (m *Meta) SetNonEmpty(key string, value Value) {
 	if value == "" {
-		delete(m.pairs, key) // TODO: key != api.KeyID
+		delete(m.pairs, key) // TODO: key != KeyID
 	} else {
 		m.Set(key, value.TrimSpace())
 	}
@@ -262,7 +305,7 @@ func (m *Meta) Get(key string) (Value, bool) {
 	if m == nil {
 		return "", false
 	}
-	if key == api.KeyID {
+	if key == KeyID {
 		return Value(m.Zid.String()), true
 	}
 	value, ok := m.pairs[key]
@@ -281,7 +324,7 @@ func (m *Meta) GetDefault(key string, def Value) Value {
 // GetTitle returns the title of the metadata. It is the only key that has a
 // defined default value: the string representation of the zettel identifier.
 func (m *Meta) GetTitle() string {
-	if title, found := m.Get(api.KeyTitle); found {
+	if title, found := m.Get(KeyTitle); found {
 		return string(title)
 	}
 	return m.Zid.String()
@@ -349,7 +392,7 @@ func (m *Meta) getKeysRest(addKeyPred func(string) bool) []string {
 
 // Delete removes a key from the data.
 func (m *Meta) Delete(key string) {
-	if key != api.KeyID {
+	if key != KeyID {
 		delete(m.pairs, key)
 	}
 }

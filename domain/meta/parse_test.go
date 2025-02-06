@@ -17,7 +17,6 @@ import (
 	"strings"
 	"testing"
 
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/input"
 )
@@ -29,10 +28,10 @@ func parseMetaStr(src string) *meta.Meta {
 func TestEmpty(t *testing.T) {
 	t.Parallel()
 	m := parseMetaStr("")
-	if got, ok := m.Get(api.KeySyntax); ok || got != "" {
+	if got, ok := m.Get(meta.KeySyntax); ok || got != "" {
 		t.Errorf("Syntax is not %q, but %q", "", got)
 	}
-	if got, ok := m.GetList(api.KeyTags); ok || len(got) > 0 {
+	if got, ok := m.GetList(meta.KeyTags); ok || len(got) > 0 {
 		t.Errorf("Tags are not nil, but %v", got)
 	}
 }
@@ -43,21 +42,21 @@ func TestTitle(t *testing.T) {
 		s string
 		e meta.Value
 	}{
-		{api.KeyTitle + ": a title", "a title"},
-		{api.KeyTitle + ": a\n\t title", "a title"},
-		{api.KeyTitle + ": a\n\t title\r\n  x", "a title x"},
-		{api.KeyTitle + " AbC", "AbC"},
-		{api.KeyTitle + " AbC\n ded", "AbC ded"},
-		{api.KeyTitle + ": o\ntitle: p", "o p"},
-		{api.KeyTitle + ": O\n\ntitle: P", "O"},
-		{api.KeyTitle + ": b\r\ntitle: c", "b c"},
-		{api.KeyTitle + ": B\r\n\r\ntitle: C", "B"},
-		{api.KeyTitle + ": r\rtitle: q", "r q"},
-		{api.KeyTitle + ": R\r\rtitle: Q", "R"},
+		{meta.KeyTitle + ": a title", "a title"},
+		{meta.KeyTitle + ": a\n\t title", "a title"},
+		{meta.KeyTitle + ": a\n\t title\r\n  x", "a title x"},
+		{meta.KeyTitle + " AbC", "AbC"},
+		{meta.KeyTitle + " AbC\n ded", "AbC ded"},
+		{meta.KeyTitle + ": o\ntitle: p", "o p"},
+		{meta.KeyTitle + ": O\n\ntitle: P", "O"},
+		{meta.KeyTitle + ": b\r\ntitle: c", "b c"},
+		{meta.KeyTitle + ": B\r\n\r\ntitle: C", "B"},
+		{meta.KeyTitle + ": r\rtitle: q", "r q"},
+		{meta.KeyTitle + ": R\r\rtitle: Q", "R"},
 	}
 	for i, tc := range td {
 		m := parseMetaStr(tc.s)
-		if got, ok := m.Get(api.KeyTitle); !ok || got != tc.e {
+		if got, ok := m.Get(meta.KeyTitle); !ok || got != tc.e {
 			t.Log(m)
 			t.Errorf("TC=%d: expected %q, got %q", i, tc.e, got)
 		}
@@ -71,27 +70,27 @@ func TestTags(t *testing.T) {
 		exp string
 	}{
 		{"", ""},
-		{api.KeyTags + ":", ""},
-		{api.KeyTags + ": c", ""},
-		{api.KeyTags + ": #", ""},
-		{api.KeyTags + ": #c", "c"},
-		{api.KeyTags + ": #c #", "c"},
-		{api.KeyTags + ": #c #b", "b c"},
-		{api.KeyTags + ": #c # #", "c"},
-		{api.KeyTags + ": #c # #b", "b c"},
+		{meta.KeyTags + ":", ""},
+		{meta.KeyTags + ": c", ""},
+		{meta.KeyTags + ": #", ""},
+		{meta.KeyTags + ": #c", "c"},
+		{meta.KeyTags + ": #c #", "c"},
+		{meta.KeyTags + ": #c #b", "b c"},
+		{meta.KeyTags + ": #c # #", "c"},
+		{meta.KeyTags + ": #c # #b", "b c"},
 	}
 	for i, tc := range testcases {
 		m := parseMetaStr(tc.src)
-		tagsString, found := m.Get(api.KeyTags)
+		tagsString, found := m.Get(meta.KeyTags)
 		if !found {
 			if tc.exp != "" {
-				t.Errorf("%d / %q: no %s found", i, tc.src, api.KeyTags)
+				t.Errorf("%d / %q: no %s found", i, tc.src, meta.KeyTags)
 			}
 			continue
 		}
 		tags := tagsString.AsTags()
 		if tc.exp == "" && len(tags) > 0 {
-			t.Errorf("%d / %q: expected no %s, but got %v", i, tc.src, api.KeyTags, tags)
+			t.Errorf("%d / %q: expected no %s, but got %v", i, tc.src, meta.KeyTags, tags)
 			continue
 		}
 		got := strings.Join(tags, " ")
@@ -166,8 +165,8 @@ func TestPrecursorIDSet(t *testing.T) {
 		{"12345678901234 01234567890123", "01234567890123 12345678901234"},
 	}
 	for i, tc := range testdata {
-		m := parseMetaStr(api.KeyPrecursor + ": " + tc.inp)
-		if got, ok := m.Get(api.KeyPrecursor); (!ok && tc.exp != "") || tc.exp != got {
+		m := parseMetaStr(meta.KeyPrecursor + ": " + tc.inp)
+		if got, ok := m.Get(meta.KeyPrecursor); (!ok && tc.exp != "") || tc.exp != got {
 			t.Errorf("TC=%d: expected %q, but got %q when parsing %q", i, tc.exp, got, tc.inp)
 		}
 	}

@@ -16,7 +16,6 @@ package meta
 import (
 	"strings"
 
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/input"
 	"t73f.de/r/zsc/maps"
@@ -143,7 +142,7 @@ func addToMeta(m *Meta, key string, val Value) {
 		return
 	}
 	switch key {
-	case "", api.KeyID:
+	case "", KeyID:
 		// Empty key and 'id' key will be ignored
 		return
 	}
