@@ -14,6 +14,7 @@
 package meta
 
 import (
+	"iter"
 	"strings"
 	"testing"
 
@@ -124,15 +125,16 @@ func TestSyntax(t *testing.T) {
 	}
 }
 
-func checkHeader(t *testing.T, exp map[string]string, gotP []Pair) {
+func checkHeader(t *testing.T, exp map[string]string, gotI iter.Seq2[Key, Value]) {
 	t.Helper()
-	got := make(map[string]string, len(gotP))
-	for _, p := range gotP {
-		got[p.Key] = string(p.Value)
-		if _, ok := exp[p.Key]; !ok {
-			t.Errorf("Key %q is not expected, but has value %q", p.Key, p.Value)
+	got := make(map[string]string)
+	gotI(func(key Key, val Value) bool {
+		got[key] = string(val)
+		if _, ok := exp[key]; !ok {
+			t.Errorf("Key %q is not expected, but has value %q", key, val)
 		}
-	}
+		return true
+	})
 	for k, v := range exp {
 		if gv, ok := got[k]; !ok || v != gv {
 			if ok {
@@ -151,17 +153,17 @@ func TestDefaultHeader(t *testing.T) {
 	addToMeta(m, "H2", "D2")
 	addToMeta(m, "H1", "D1.1")
 	exp := map[string]string{"h1": "d1 D1.1", "h2": "D2"}
-	checkHeader(t, exp, m.Pairs())
+	checkHeader(t, exp, m.All())
 	addToMeta(m, "", "d0")
-	checkHeader(t, exp, m.Pairs())
+	checkHeader(t, exp, m.All())
 	addToMeta(m, "h3", "")
 	exp["h3"] = ""
-	checkHeader(t, exp, m.Pairs())
+	checkHeader(t, exp, m.All())
 	addToMeta(m, "h3", "  ")
-	checkHeader(t, exp, m.Pairs())
+	checkHeader(t, exp, m.All())
 	addToMeta(m, "h4", " ")
 	exp["h4"] = ""
-	checkHeader(t, exp, m.Pairs())
+	checkHeader(t, exp, m.All())
 }
 
 func TestDelete(t *testing.T) {

@@ -15,6 +15,7 @@
 package meta
 
 import (
+	"iter"
 	"maps"
 	"regexp"
 	"slices"
@@ -117,6 +118,9 @@ func GetSortedKeyDescriptions() []*DescriptionKey {
 	return result
 }
 
+// Key is the type of metadata keys.
+type Key = string
+
 // Predefined / supported metadata keys.
 //
 // See [Supported Metadata Keys].
@@ -211,18 +215,18 @@ const NewPrefix = "new-"
 // Meta contains all meta-data of a zettel.
 type Meta struct {
 	Zid     id.Zid
-	pairs   map[string]Value
+	pairs   map[Key]Value
 	YamlSep bool
 }
 
 // New creates a new chunk for storing metadata.
 func New(zid id.Zid) *Meta {
-	return &Meta{Zid: zid, pairs: make(map[string]Value, 5)}
+	return &Meta{Zid: zid, pairs: make(map[Key]Value, 5)}
 }
 
 // NewWithData creates metadata object with given data.
 func NewWithData(zid id.Zid, data map[string]string) *Meta {
-	pairs := make(map[string]Value, len(data))
+	pairs := make(map[Key]Value, len(data))
 	for k, v := range data {
 		pairs[k] = Value(v)
 	}
@@ -264,18 +268,7 @@ var reKey = regexp.MustCompile("^[0-9a-z][-0-9a-z]{0,254}$")
 // KeyIsValid returns true, if the string is a valid metadata key.
 func KeyIsValid(s string) bool { return reKey.MatchString(s) }
 
-// Pair is one key-value-pair of a Zettel meta.
-type Pair struct {
-	Key   string
-	Value Value
-}
-
 var firstKeys = []string{KeyTitle, KeyRole, KeyTags, KeySyntax}
-var firstKeySet strfun.Set
-
-func init() {
-	firstKeySet = strfun.NewSet(firstKeys...)
-}
 
 // Set stores the given string value under the given key.
 func (m *Meta) Set(key string, value Value) {
@@ -330,65 +323,66 @@ func (m *Meta) GetTitle() string {
 	return m.Zid.String()
 }
 
-// Pairs returns not computed key/values pairs stored, in a specific order.
-// First come the pairs with predefined keys: MetaTitleKey, MetaTagsKey, MetaSyntaxKey,
-// MetaContextKey. Then all other pairs are append to the list, ordered by key.
-func (m *Meta) Pairs() []Pair {
-	return m.doPairs(m.getFirstKeys(), notComputedKey)
+// All returns an iterator over all key/value pairs, except the zettel identifier
+// and computed values.
+func (m *Meta) All() iter.Seq2[Key, Value] {
+	return func(yield func(Key, Value) bool) {
+		m.firstKeys()(yield)
+		m.restKeys(notComputedKey)(yield)
+	}
 }
 
-// ComputedPairs returns all key/values pairs stored, in a specific order. First come
-// the pairs with predefined keys: MetaTitleKey, MetaTagsKey, MetaSyntaxKey,
-// MetaContextKey. Then all other pairs are append to the list, ordered by key.
-func (m *Meta) ComputedPairs() []Pair {
-	return m.doPairs(m.getFirstKeys(), anyKey)
+// Computed returns an iterator over all key/value pairs, except the zettel identifier.
+func (m *Meta) Computed() iter.Seq2[Key, Value] {
+	return func(yield func(Key, Value) bool) {
+		m.firstKeys()(yield)
+		m.restKeys(anyKey)(yield)
+	}
 }
 
-// PairsRest returns not computed key/values pairs stored, except the values with
-// predefined keys. The pairs are ordered by key.
-func (m *Meta) PairsRest() []Pair {
-	result := make([]Pair, 0, len(m.pairs))
-	return m.doPairs(result, notComputedKey)
+// Rest returns an iterator over all key/value pairs, except the zettel identifier,
+// the main keys, and computed values.
+func (m *Meta) Rest() iter.Seq2[Key, Value] {
+	return func(yield func(Key, Value) bool) {
+		m.restKeys(notComputedKey)(yield)
+	}
 }
 
-// ComputedPairsRest returns all key/values pairs stored, except the values with
-// predefined keys. The pairs are ordered by key.
-func (m *Meta) ComputedPairsRest() []Pair {
-	result := make([]Pair, 0, len(m.pairs))
-	return m.doPairs(result, anyKey)
+// ComputedRest returns an iterator over all key/value pairs, except the zettel identifier,
+// and the main keys.
+func (m *Meta) ComputedRest() iter.Seq2[Key, Value] {
+	return func(yield func(Key, Value) bool) {
+		m.restKeys(anyKey)(yield)
+	}
+}
+
+func (m *Meta) firstKeys() iter.Seq2[Key, Value] {
+	return func(yield func(Key, Value) bool) {
+		for _, key := range firstKeys {
+			if val, ok := m.pairs[key]; ok {
+				if !yield(key, val) {
+					return
+				}
+			}
+		}
+	}
+}
+
+func (m *Meta) restKeys(addKeyPred func(Key) bool) iter.Seq2[Key, Value] {
+	return func(yield func(Key, Value) bool) {
+		keys := slices.Sorted(maps.Keys(m.pairs))
+		for _, key := range keys {
+			if !slices.Contains(firstKeys, key) && addKeyPred(key) {
+				if !yield(key, m.pairs[key]) {
+					return
+				}
+			}
+		}
+	}
 }
 
 func notComputedKey(key string) bool { return !IsComputed(key) }
 func anyKey(string) bool             { return true }
-
-func (m *Meta) doPairs(firstKeys []Pair, addKeyPred func(string) bool) []Pair {
-	keys := m.getKeysRest(addKeyPred)
-	for _, k := range keys {
-		firstKeys = append(firstKeys, Pair{k, m.pairs[k]})
-	}
-	return firstKeys
-}
-
-func (m *Meta) getFirstKeys() []Pair {
-	result := make([]Pair, 0, len(m.pairs))
-	for _, key := range firstKeys {
-		if value, ok := m.pairs[key]; ok {
-			result = append(result, Pair{key, value})
-		}
-	}
-	return result
-}
-
-func (m *Meta) getKeysRest(addKeyPred func(string) bool) []string {
-	keys := make([]string, 0, len(m.pairs))
-	for k := range m.pairs {
-		if !firstKeySet.Has(k) && addKeyPred(k) {
-			keys = append(keys, k)
-		}
-	}
-	slices.Sort(keys)
-	return keys
-}
 
 // Delete removes a key from the data.
 func (m *Meta) Delete(key string) {

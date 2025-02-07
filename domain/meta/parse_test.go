@@ -14,6 +14,7 @@
 package meta_test
 
 import (
+	"iter"
 	"strings"
 	"testing"
 
@@ -104,23 +105,23 @@ func TestNewFromInput(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {
 		input string
-		exp   []meta.Pair
+		exp   []pair
 	}{
-		{"", []meta.Pair{}},
-		{" a:b", []meta.Pair{{"a", "b"}}},
-		{"%a:b", []meta.Pair{}},
-		{"a:b\r\n\r\nc:d", []meta.Pair{{"a", "b"}}},
-		{"a:b\r\n%c:d", []meta.Pair{{"a", "b"}}},
-		{"% a:b\r\n c:d", []meta.Pair{{"c", "d"}}},
-		{"---\r\na:b\r\n", []meta.Pair{{"a", "b"}}},
-		{"---\r\na:b\r\n--\r\nc:d", []meta.Pair{{"a", "b"}, {"c", "d"}}},
-		{"---\r\na:b\r\n---\r\nc:d", []meta.Pair{{"a", "b"}}},
-		{"---\r\na:b\r\n----\r\nc:d", []meta.Pair{{"a", "b"}}},
-		{"new-title:\nnew-url:", []meta.Pair{{"new-title", ""}, {"new-url", ""}}},
+		{"", []pair{}},
+		{" a:b", []pair{{"a", "b"}}},
+		{"%a:b", []pair{}},
+		{"a:b\r\n\r\nc:d", []pair{{"a", "b"}}},
+		{"a:b\r\n%c:d", []pair{{"a", "b"}}},
+		{"% a:b\r\n c:d", []pair{{"c", "d"}}},
+		{"---\r\na:b\r\n", []pair{{"a", "b"}}},
+		{"---\r\na:b\r\n--\r\nc:d", []pair{{"a", "b"}, {"c", "d"}}},
+		{"---\r\na:b\r\n---\r\nc:d", []pair{{"a", "b"}}},
+		{"---\r\na:b\r\n----\r\nc:d", []pair{{"a", "b"}}},
+		{"new-title:\nnew-url:", []pair{{"new-title", ""}, {"new-url", ""}}},
 	}
 	for i, tc := range testcases {
 		meta := parseMetaStr(tc.input)
-		if got := meta.Pairs(); !equalPairs(tc.exp, got) {
+		if got := iter2pairs(meta.All()); !equalPairs(tc.exp, got) {
 			t.Errorf("TC=%d: expected=%v, got=%v", i, tc.exp, got)
 		}
 	}
@@ -128,8 +129,8 @@ func TestNewFromInput(t *testing.T) {
 	// Test, whether input position is correct.
 	inp := input.NewInput([]byte("---\na:b\n---\nX"))
 	m := meta.NewFromInput(testID, inp)
-	exp := []meta.Pair{{"a", "b"}}
-	if got := m.Pairs(); !equalPairs(exp, got) {
+	exp := []pair{{"a", "b"}}
+	if got := iter2pairs(m.All()); !equalPairs(exp, got) {
 		t.Errorf("Expected=%v, got=%v", exp, got)
 	}
 	expCh := 'X'
@@ -138,12 +139,25 @@ func TestNewFromInput(t *testing.T) {
 	}
 }
 
-func equalPairs(one, two []meta.Pair) bool {
+type pair struct {
+	key meta.Key
+	val meta.Value
+}
+
+func iter2pairs(it iter.Seq2[meta.Key, meta.Value]) (result []pair) {
+	it(func(key meta.Key, val meta.Value) bool {
+		result = append(result, pair{key, val})
+		return true
+	})
+	return result
+}
+
+func equalPairs(one, two []pair) bool {
 	if len(one) != len(two) {
 		return false
 	}
 	for i := range len(one) {
-		if one[i].Key != two[i].Key || one[i].Value != two[i].Value {
+		if one[i].key != two[i].key || one[i].val != two[i].val {
 			return false
 		}
 	}
