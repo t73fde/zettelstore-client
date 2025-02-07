@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"t73f.de/r/zsc/domain/id"
+	"t73f.de/r/zsc/input"
 )
 
 // Value ist a single metadata value.
@@ -69,6 +70,11 @@ func (val Value) AsList() []string {
 
 // ToLower maps the value to lowercase runes.
 func (val Value) ToLower() Value { return Value(strings.ToLower(string(val))) }
+
+// TrimSpace removes all leading and remaining space from value
+func (val Value) TrimSpace() Value {
+	return Value(strings.TrimFunc(string(val), input.IsSpace))
+}
 
 // AsTags returns the value as a sequence of normalized tags.
 func (val Value) AsTags() []string {

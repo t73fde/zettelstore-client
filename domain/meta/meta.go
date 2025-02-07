@@ -24,7 +24,6 @@ import (
 	"unicode/utf8"
 
 	"t73f.de/r/zsc/domain/id"
-	"t73f.de/r/zsc/input"
 	mymaps "t73f.de/r/zsc/maps"
 	"t73f.de/r/zsc/strfun"
 )
@@ -285,11 +284,6 @@ func (m *Meta) SetNonEmpty(key string, value Value) {
 	} else {
 		m.Set(key, value.TrimSpace())
 	}
-}
-
-// TrimSpace removes all leading and remaining space from value
-func (val Value) TrimSpace() Value {
-	return Value(strings.TrimFunc(string(val), input.IsSpace))
 }
 
 // Get retrieves the string value of a given key. The bool value signals,
