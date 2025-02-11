@@ -23,9 +23,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"t73f.de/r/app/set"
 	"t73f.de/r/zsc/domain/id"
 	mymaps "t73f.de/r/zsc/maps"
-	"t73f.de/r/zsc/strfun"
 )
 
 type keyUsage int
@@ -393,15 +393,15 @@ func (m *Meta) Equal(o *Meta, allowComputed bool) bool {
 	if m == nil || o == nil || m.Zid != o.Zid {
 		return false
 	}
-	tested := make(strfun.Set, len(m.pairs))
+	tested := set.New[string]()
 	for k, v := range m.pairs {
-		tested.Set(k)
+		tested.Add(k)
 		if !equalValue(k, v, o, allowComputed) {
 			return false
 		}
 	}
 	for k, v := range o.pairs {
-		if !tested.Has(k) && !equalValue(k, v, m, allowComputed) {
+		if !tested.Contains(k) && !equalValue(k, v, m, allowComputed) {
 			return false
 		}
 	}

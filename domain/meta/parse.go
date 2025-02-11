@@ -14,12 +14,12 @@
 package meta
 
 import (
+	"slices"
 	"strings"
 
+	"t73f.de/r/app/set"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/input"
-	"t73f.de/r/zsc/maps"
-	"t73f.de/r/zsc/strfun"
 )
 
 // NewFromInput parses the meta data of a zettel.
@@ -102,10 +102,10 @@ func isHeader(ch rune) bool {
 
 type predValidElem func(string) bool
 
-func addToSet(set strfun.Set, elems []string, useElem predValidElem) {
+func addToSet(set *set.Set[string], elems []string, useElem predValidElem) {
 	for _, s := range elems {
 		if len(s) > 0 && useElem(s) {
-			set.Set(s)
+			set.Add(s)
 		}
 	}
 }
@@ -117,14 +117,14 @@ func addSet(m *Meta, key string, val Value, useElem predValidElem) {
 		oldElems = nil
 	}
 
-	set := make(strfun.Set, len(newElems)+len(oldElems))
-	addToSet(set, newElems, useElem)
-	if len(set) == 0 {
+	s := set.New[string]()
+	addToSet(s, newElems, useElem)
+	if s.Length() == 0 {
 		// Nothing to add. Maybe because of rejected elements.
 		return
 	}
-	addToSet(set, oldElems, useElem)
-	m.SetList(key, maps.Keys(set))
+	addToSet(s, oldElems, useElem)
+	m.SetList(key, slices.Sorted(s.Values()))
 }
 
 func addData(m *Meta, k string, v Value) {
