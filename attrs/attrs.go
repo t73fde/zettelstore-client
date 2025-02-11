@@ -15,10 +15,9 @@
 package attrs
 
 import (
+	"maps"
 	"slices"
 	"strings"
-
-	"t73f.de/r/zsc/maps"
 )
 
 // Attributes store additional information about some node types.
@@ -48,7 +47,7 @@ func (a Attributes) RemoveDefault() Attributes {
 }
 
 // Keys returns the sorted list of keys.
-func (a Attributes) Keys() []string { return maps.Keys(a) }
+func (a Attributes) Keys() []string { return slices.Sorted(maps.Keys(a)) }
 
 // Get returns the attribute value of the given key and a succes value.
 func (a Attributes) Get(key string) (string, bool) {

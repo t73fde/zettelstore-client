@@ -25,7 +25,6 @@ import (
 
 	"t73f.de/r/app/set"
 	"t73f.de/r/zsc/domain/id"
-	mymaps "t73f.de/r/zsc/maps"
 )
 
 type keyUsage int
@@ -109,7 +108,7 @@ func GetDescription(name string) DescriptionKey {
 
 // GetSortedKeyDescriptions delivers all metadata key descriptions as a slice, sorted by name.
 func GetSortedKeyDescriptions() []*DescriptionKey {
-	keys := mymaps.Keys(registeredKeys)
+	keys := slices.Sorted(maps.Keys(registeredKeys))
 	result := make([]*DescriptionKey, 0, len(keys))
 	for _, n := range keys {
 		result = append(result, registeredKeys[n])
