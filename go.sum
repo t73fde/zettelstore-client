@@ -1,5 +1,3 @@
-golang.org/x/text v0.22.0 h1:bofq7m3/HAFvbF51jz3Q9wLg3jkvSPuiZu/pD1XwgtM=
-golang.org/x/text v0.22.0/go.mod h1:YRoo4H8PVmsu+E3Ou7cqLVH8oXWIHVoX0jqUWALQhfY=
 t73f.de/r/app v0.0.0-20250211101311-8c260ae72b76 h1:6TRyoSGmvOAOo/GHHMmrdezBtMNahwzRl7iZ8vNA5+Q=
 t73f.de/r/app v0.0.0-20250211101311-8c260ae72b76/go.mod h1:dvJAyOLC4Af8/DPiNK2ceYENo5KVhTo5O1tQgeQbVWw=
 t73f.de/r/sx v0.0.0-20240814083626-4df0ec6454b5 h1:ug4hohM6pK28M8Uo0o3+XvjBure2wfEtuCnHVIdqBZY=
