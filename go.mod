@@ -1,10 +1,10 @@
 module t73f.de/r/zsc
 
-go 1.23
+go 1.24
 
 require (
-	t73f.de/r/app v0.0.0-20250211101311-8c260ae72b76
-	t73f.de/r/sx v0.0.0-20240814083626-4df0ec6454b5
-	t73f.de/r/sxwebs v0.0.0-20241031144449-53c3b2ed1a6f
-	t73f.de/r/webs v0.0.0-20241031141359-cd4f76a622cd
+	t73f.de/r/sx v0.0.0-20250212190351-f6694aacfb8b
+	t73f.de/r/sxwebs v0.0.0-20250212190616-2b5ef50a2b43
+	t73f.de/r/webs v0.0.0-20250105160757-b6b002b44f34
+	t73f.de/r/zero v0.0.0-20250212175659-d84175bc23d7
 )
