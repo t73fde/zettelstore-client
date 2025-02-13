@@ -11,25 +11,25 @@ access [https://zettelstore.de|Zettelstore] via its API.
      [/vdiff?from=v0.19.0&to=trunk|content diff]
   *  [/timeline?t=release|Timeline of all past releases]
 
-<h3>Use instructions</h3>
+<h2>Usage instructions</h2>
 
-If you want to import this library into your own [https://go.dev/|Go] software,
-you must execute a <code>go get</code> command. Since Go treats non-standard
-software and non-standard platforms quite badly, you must use some non-standard
-commands.
+To import this library into your own [https://go.dev/|Go] software, you need to
+run the <code>go get</code> command. Since Go does not handle non-standard
+software and platforms well, some additional steps are required.
 
-First, you must install the [https://fossil-scm.org|Fossil] version control
-system. In too many use cases it is a superior solution compared to Git, It is
-just a single executable, nothing more. Make sure, it is in your search path
-for commands.
+First, install the version control system [https://fossil-scm.org|Fossil],
+which is a superior alternative to Git in many use cases. Fossil is just a
+single executable, nothing more. Make sure it is included in your system's
+command search path.
 
-How you can execute the following Go command to retrieve a given version of
+Then, run the following Go command to retrieve a specific version of
 this library:
 
-<code>GOVCS=zettelstore.de:fossil go get -x t73f.de/r/zsc@HASH</code>
+<code>GOVCS=t73f.de:fossil go get t73f.de/r/zsc@HASH</code>
 
-where <code>HASH</code> is the hash value of the commit you want to use.
+Here, <code>HASH</code> represents the commit hash of the version you want to
+use.
 
-Go currently seems not to support software versions when the software is
-managed by Fossil. This explains the need for the hash value. However, this
-methods works and you can use the client software to access a Zettelstore.
+Go currently does not seem to support software versioning for projects managed
+by Fossil. This is why the hash value is required. However, this method works
+reliably.
