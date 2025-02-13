@@ -231,8 +231,8 @@ func NewWithData(zid id.Zid, data map[string]string) *Meta {
 	return &Meta{Zid: zid, pairs: pairs}
 }
 
-// Length returns the number of bytes stored for the metadata.
-func (m *Meta) Length() int {
+// ByteSize returns the number of bytes stored for the metadata.
+func (m *Meta) ByteSize() int {
 	if m == nil {
 		return 0
 	}
@@ -421,8 +421,14 @@ func (m *Meta) Sanitize() {
 	if m == nil {
 		return
 	}
-	for k, v := range m.pairs {
-		m.pairs[RemoveNonGraphic(k)] = Value(RemoveNonGraphic(string(v)))
+	for key, val := range m.pairs {
+		newKey := RemoveNonGraphic(key)
+		if key == newKey {
+			m.pairs[key] = Value(RemoveNonGraphic(string(val)))
+		} else {
+			delete(m.pairs, key)
+			m.pairs[newKey] = Value(RemoveNonGraphic(string(val)))
+		}
 	}
 }
 
