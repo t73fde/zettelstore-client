@@ -19,13 +19,12 @@ import (
 	"strings"
 
 	"t73f.de/r/zsc/domain/id"
-	"t73f.de/r/zsc/domain/id/idslice"
 	"t73f.de/r/zsc/domain/meta"
 )
 
 // Set is a set of zettel identifier
 type Set struct {
-	seq idslice.Slice
+	seq []id.Zid
 }
 
 // String returns a string representation of the set.
@@ -57,9 +56,9 @@ func New(zids ...id.Zid) *Set {
 	case 0:
 		return &Set{seq: nil}
 	case 1:
-		return &Set{seq: idslice.Slice{zids[0]}}
+		return &Set{seq: []id.Zid{zids[0]}}
 	default:
-		result := Set{seq: make(idslice.Slice, 0, l)}
+		result := Set{seq: make([]id.Zid, 0, l)}
 		result.AddSlice(zids)
 		return &result
 	}
@@ -67,7 +66,7 @@ func New(zids ...id.Zid) *Set {
 
 // NewCap returns a new set of identifier with the given capacity and initial values.
 func NewCap(c int, zids ...id.Zid) *Set {
-	result := Set{seq: make(idslice.Slice, 0, max(c, len(zids)))}
+	result := Set{seq: make([]id.Zid, 0, max(c, len(zids)))}
 	result.AddSlice(zids)
 	return &result
 }
@@ -109,7 +108,7 @@ func (s *Set) Contains(zid id.Zid) bool { return s != nil && s.contains(zid) }
 func (s *Set) ContainsOrNil(zid id.Zid) bool { return s == nil || s.contains(zid) }
 
 // AddSlice adds all identifier of the given slice to the set.
-func (s *Set) AddSlice(sl idslice.Slice) *Set {
+func (s *Set) AddSlice(sl []id.Zid) *Set {
 	if s == nil {
 		return New(sl...)
 	}
@@ -121,7 +120,7 @@ func (s *Set) AddSlice(sl idslice.Slice) *Set {
 }
 
 // SafeSorted returns the set as a new sorted slice of zettel identifier.
-func (s *Set) SafeSorted() idslice.Slice {
+func (s *Set) SafeSorted() []id.Zid {
 	if s == nil {
 		return nil
 	}
@@ -208,7 +207,7 @@ func (s *Set) Diff(other *Set) (newS, remS *Set) {
 		return nil, s.Clone()
 	}
 	seqS, seqO := s.seq, other.seq
-	var newRefs, remRefs idslice.Slice
+	var newRefs, remRefs []id.Zid
 	npos, opos := 0, 0
 	for npos < len(seqO) && opos < len(seqS) {
 		rn, ro := seqO[npos], seqS[opos]
@@ -292,7 +291,7 @@ func (s *Set) Optimize() {
 
 // ----- unchecked base operations
 
-func newFromSlice(seq idslice.Slice) *Set {
+func newFromSlice(seq []id.Zid) *Set {
 	if l := len(seq); l == 0 {
 		return nil
 	}

@@ -14,11 +14,11 @@
 package idset_test
 
 import (
+	"slices"
 	"testing"
 
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/domain/id/idset"
-	"t73f.de/r/zsc/domain/id/idslice"
 )
 
 func TestSetContainsOrNil(t *testing.T) {
@@ -47,22 +47,22 @@ func TestSetAdd(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {
 		s1, s2 *idset.Set
-		exp    idslice.Slice
+		exp    []id.Zid
 	}{
 		{nil, nil, nil},
 		{idset.New(), nil, nil},
 		{idset.New(), idset.New(), nil},
-		{nil, idset.New(1), idslice.Slice{1}},
-		{idset.New(1), nil, idslice.Slice{1}},
-		{idset.New(1), idset.New(), idslice.Slice{1}},
-		{idset.New(1), idset.New(2), idslice.Slice{1, 2}},
-		{idset.New(1), idset.New(1), idslice.Slice{1}},
+		{nil, idset.New(1), []id.Zid{1}},
+		{idset.New(1), nil, []id.Zid{1}},
+		{idset.New(1), idset.New(), []id.Zid{1}},
+		{idset.New(1), idset.New(2), []id.Zid{1, 2}},
+		{idset.New(1), idset.New(1), []id.Zid{1}},
 	}
 	for i, tc := range testcases {
 		sl1 := tc.s1.SafeSorted()
 		sl2 := tc.s2.SafeSorted()
 		got := tc.s1.IUnion(tc.s2).SafeSorted()
-		if !got.Equal(tc.exp) {
+		if !slices.Equal(got, tc.exp) {
 			t.Errorf("%d: %v.Add(%v) should be %v, but got %v", i, sl1, sl2, tc.exp, got)
 		}
 	}
@@ -72,15 +72,15 @@ func TestSetSafeSorted(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {
 		set *idset.Set
-		exp idslice.Slice
+		exp []id.Zid
 	}{
 		{nil, nil},
 		{idset.New(), nil},
-		{idset.New(9, 4, 6, 1, 7), idslice.Slice{1, 4, 6, 7, 9}},
+		{idset.New(9, 4, 6, 1, 7), []id.Zid{1, 4, 6, 7, 9}},
 	}
 	for i, tc := range testcases {
 		got := tc.set.SafeSorted()
-		if !got.Equal(tc.exp) {
+		if !slices.Equal(got, tc.exp) {
 			t.Errorf("%d: %v.SafeSorted() should be %v, but got %v", i, tc.set, tc.exp, got)
 		}
 	}
@@ -90,25 +90,25 @@ func TestSetIntersectOrSet(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {
 		s1, s2 *idset.Set
-		exp    idslice.Slice
+		exp    []id.Zid
 	}{
 		{nil, nil, nil},
 		{idset.New(), nil, nil},
 		{nil, idset.New(), nil},
 		{idset.New(), idset.New(), nil},
 		{idset.New(1), nil, nil},
-		{nil, idset.New(1), idslice.Slice{1}},
+		{nil, idset.New(1), []id.Zid{1}},
 		{idset.New(1), idset.New(), nil},
 		{idset.New(), idset.New(1), nil},
 		{idset.New(1), idset.New(2), nil},
 		{idset.New(2), idset.New(1), nil},
-		{idset.New(1), idset.New(1), idslice.Slice{1}},
+		{idset.New(1), idset.New(1), []id.Zid{1}},
 	}
 	for i, tc := range testcases {
 		sl1 := tc.s1.SafeSorted()
 		sl2 := tc.s2.SafeSorted()
 		got := tc.s1.IntersectOrSet(tc.s2).SafeSorted()
-		if !got.Equal(tc.exp) {
+		if !slices.Equal(got, tc.exp) {
 			t.Errorf("%d: %v.IntersectOrSet(%v) should be %v, but got %v", i, sl1, sl2, tc.exp, got)
 		}
 	}
@@ -148,25 +148,25 @@ func TestSetISubtract(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {
 		s1, s2 *idset.Set
-		exp    idslice.Slice
+		exp    []id.Zid
 	}{
 		{nil, nil, nil},
 		{idset.New(), nil, nil},
 		{nil, idset.New(), nil},
 		{idset.New(), idset.New(), nil},
-		{idset.New(1), nil, idslice.Slice{1}},
+		{idset.New(1), nil, []id.Zid{1}},
 		{nil, idset.New(1), nil},
-		{idset.New(1), idset.New(), idslice.Slice{1}},
+		{idset.New(1), idset.New(), []id.Zid{1}},
 		{idset.New(), idset.New(1), nil},
-		{idset.New(1), idset.New(2), idslice.Slice{1}},
-		{idset.New(2), idset.New(1), idslice.Slice{2}},
+		{idset.New(1), idset.New(2), []id.Zid{1}},
+		{idset.New(2), idset.New(1), []id.Zid{2}},
 		{idset.New(1), idset.New(1), nil},
-		{idset.New(1, 2, 3), idset.New(1), idslice.Slice{2, 3}},
-		{idset.New(1, 2, 3), idset.New(2), idslice.Slice{1, 3}},
-		{idset.New(1, 2, 3), idset.New(3), idslice.Slice{1, 2}},
-		{idset.New(1, 2, 3), idset.New(1, 2), idslice.Slice{3}},
-		{idset.New(1, 2, 3), idset.New(1, 3), idslice.Slice{2}},
-		{idset.New(1, 2, 3), idset.New(2, 3), idslice.Slice{1}},
+		{idset.New(1, 2, 3), idset.New(1), []id.Zid{2, 3}},
+		{idset.New(1, 2, 3), idset.New(2), []id.Zid{1, 3}},
+		{idset.New(1, 2, 3), idset.New(3), []id.Zid{1, 2}},
+		{idset.New(1, 2, 3), idset.New(1, 2), []id.Zid{3}},
+		{idset.New(1, 2, 3), idset.New(1, 3), []id.Zid{2}},
+		{idset.New(1, 2, 3), idset.New(2, 3), []id.Zid{1}},
 	}
 	for i, tc := range testcases {
 		s1 := tc.s1.Clone()
@@ -174,7 +174,7 @@ func TestSetISubtract(t *testing.T) {
 		sl2 := tc.s2.SafeSorted()
 		s1.ISubstract(tc.s2)
 		got := s1.SafeSorted()
-		if !got.Equal(tc.exp) {
+		if !slices.Equal(got, tc.exp) {
 			t.Errorf("%d: %v.ISubstract(%v) should be %v, but got %v", i, sl1, sl2, tc.exp, got)
 		}
 	}
@@ -211,15 +211,15 @@ func TestSetRemove(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {
 		s1, s2 *idset.Set
-		exp    idslice.Slice
+		exp    []id.Zid
 	}{
 		{nil, nil, nil},
 		{idset.New(), nil, nil},
 		{idset.New(), idset.New(), nil},
-		{idset.New(1), nil, idslice.Slice{1}},
-		{idset.New(1), idset.New(), idslice.Slice{1}},
-		{idset.New(1), idset.New(2), idslice.Slice{1}},
-		{idset.New(1), idset.New(1), idslice.Slice{}},
+		{idset.New(1), nil, []id.Zid{1}},
+		{idset.New(1), idset.New(), []id.Zid{1}},
+		{idset.New(1), idset.New(2), []id.Zid{1}},
+		{idset.New(1), idset.New(1), []id.Zid{}},
 	}
 	for i, tc := range testcases {
 		sl1 := tc.s1.SafeSorted()
@@ -227,7 +227,7 @@ func TestSetRemove(t *testing.T) {
 		newS1 := idset.New(sl1...)
 		newS1.ISubstract(tc.s2)
 		got := newS1.SafeSorted()
-		if !got.Equal(tc.exp) {
+		if !slices.Equal(got, tc.exp) {
 			t.Errorf("%d: %v.Remove(%v) should be %v, but got %v", i, sl1, sl2, tc.exp, got)
 		}
 	}

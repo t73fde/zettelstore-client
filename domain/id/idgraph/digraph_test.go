@@ -14,12 +14,12 @@
 package idgraph_test
 
 import (
+	"slices"
 	"testing"
 
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/domain/id/idgraph"
 	"t73f.de/r/zsc/domain/id/idset"
-	"t73f.de/r/zsc/domain/id/idslice"
 )
 
 type zps = idgraph.EdgeSlice
@@ -160,20 +160,20 @@ func TestDigraphSortReverse(t *testing.T) {
 	testcases := []struct {
 		name string
 		dg   idgraph.EdgeSlice
-		exp  idslice.Slice
+		exp  []id.Zid
 	}{
 		{"empty", nil, nil},
-		{"single-edge", zps{{1, 2}}, idslice.Slice{2, 1}},
+		{"single-edge", zps{{1, 2}}, []id.Zid{2, 1}},
 		{"single-loop", zps{{1, 1}}, nil},
-		{"end-loop", zps{{1, 2}, {2, 2}}, idslice.Slice{}},
-		{"long-loop", zps{{1, 2}, {2, 3}, {3, 4}, {4, 5}, {5, 2}}, idslice.Slice{}},
-		{"sect-loop", zps{{1, 2}, {2, 3}, {3, 4}, {4, 5}, {4, 2}}, idslice.Slice{5}},
-		{"two-islands", zps{{1, 2}, {2, 3}, {4, 5}}, idslice.Slice{5, 3, 4, 2, 1}},
-		{"direct-indirect", zps{{1, 2}, {1, 3}, {3, 2}}, idslice.Slice{2, 3, 1}},
+		{"end-loop", zps{{1, 2}, {2, 2}}, []id.Zid{}},
+		{"long-loop", zps{{1, 2}, {2, 3}, {3, 4}, {4, 5}, {5, 2}}, []id.Zid{}},
+		{"sect-loop", zps{{1, 2}, {2, 3}, {3, 4}, {4, 5}, {4, 2}}, []id.Zid{5}},
+		{"two-islands", zps{{1, 2}, {2, 3}, {4, 5}}, []id.Zid{5, 3, 4, 2, 1}},
+		{"direct-indirect", zps{{1, 2}, {1, 3}, {3, 2}}, []id.Zid{2, 3, 1}},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := createDigraph(tc.dg).SortReverse(); !got.Equal(tc.exp) {
+			if got := createDigraph(tc.dg).SortReverse(); !slices.Equal(got, tc.exp) {
 				t.Errorf("expected:\n%v, but got:\n%v", tc.exp, got)
 			}
 		})

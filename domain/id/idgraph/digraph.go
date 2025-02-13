@@ -20,7 +20,6 @@ import (
 
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/domain/id/idset"
-	"t73f.de/r/zsc/domain/id/idslice"
 )
 
 // Digraph relates zettel identifier in a directional way.
@@ -153,7 +152,7 @@ func (dg Digraph) TransitiveClosure(zid id.Zid) (tc Digraph) {
 		return nil
 	}
 	var marked *idset.Set
-	stack := idslice.Slice{zid}
+	stack := []id.Zid{zid}
 	for pos := len(stack) - 1; pos >= 0; pos = len(stack) - 1 {
 		curr := stack[pos]
 		stack = stack[:pos]
@@ -223,7 +222,7 @@ func (dg Digraph) Reverse() (revDg Digraph) {
 //
 // Works only if digraph is a DAG. Otherwise the algorithm will not terminate
 // or returns an arbitrary value.
-func (dg Digraph) SortReverse() (sl idslice.Slice) {
+func (dg Digraph) SortReverse() (sl []id.Zid) {
 	if len(dg) == 0 {
 		return nil
 	}
