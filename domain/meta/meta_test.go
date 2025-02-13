@@ -15,6 +15,7 @@ package meta
 
 import (
 	"iter"
+	"slices"
 	"strings"
 	"testing"
 
@@ -71,7 +72,7 @@ func TestTitleHeader(t *testing.T) {
 
 func checkTags(t *testing.T, exp []string, m *Meta) {
 	t.Helper()
-	got, _ := m.GetList(KeyTags)
+	got := slices.Collect(m.GetFields(KeyTags))
 	for i, tag := range exp {
 		if i < len(got) {
 			if tag != got[i] {

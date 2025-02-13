@@ -15,6 +15,7 @@ package meta_test
 
 import (
 	"iter"
+	"slices"
 	"strings"
 	"testing"
 
@@ -32,7 +33,7 @@ func TestEmpty(t *testing.T) {
 	if got, ok := m.Get(meta.KeySyntax); ok || got != "" {
 		t.Errorf("Syntax is not %q, but %q", "", got)
 	}
-	if got, ok := m.GetList(meta.KeyTags); ok || len(got) > 0 {
+	if got := slices.Collect(m.GetDefault(meta.KeyTags, "").Fields()); len(got) > 0 {
 		t.Errorf("Tags are not nil, but %v", got)
 	}
 }

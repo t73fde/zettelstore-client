@@ -15,9 +15,12 @@ package meta
 
 import (
 	"fmt"
+	"iter"
+	"slices"
 	"strings"
 	"time"
 
+	zeroiter "t73f.de/r/zero/iter"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/input"
 )
@@ -63,8 +66,18 @@ func ExpandTimestamp(val Value) string {
 	}
 }
 
-// AsList transforms a value into a list value.
-func (val Value) AsList() []string {
+// Fields iterates over the value as a list/set of strings.
+func (val Value) Fields() iter.Seq[string] {
+	return strings.FieldsSeq(string(val))
+}
+
+// Elems iterates over the value as a list/set of values.
+func (val Value) Elems() iter.Seq[Value] {
+	return zeroiter.MapSeq(val.Fields(), func(s string) Value { return Value(s) })
+}
+
+// AsSlice transforms a value into a slice of strings.
+func (val Value) AsSlice() []string {
 	return strings.Fields(string(val))
 }
 
@@ -78,16 +91,12 @@ func (val Value) TrimSpace() Value {
 
 // AsTags returns the value as a sequence of normalized tags.
 func (val Value) AsTags() []string {
-	tags := val.ToLower().AsList()
-	for i, tag := range tags {
-		if len(tag) > 1 && tag[0] == '#' {
-			tags[i] = tag[1:]
-		}
-	}
-	return tags
+	return slices.Collect(zeroiter.MapSeq(
+		val.Fields(),
+		func(e string) string { return string(Value(e).ToLower().CleanTag()) }))
 }
 
-// CleanTag removes the number character ('#') from a tag value and lowercases it.
+// CleanTag removes the number character ('#') from a tag value.
 func (val Value) CleanTag() Value {
 	if len(val) > 1 && val[0] == '#' {
 		return val[1:]

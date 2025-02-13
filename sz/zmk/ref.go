@@ -45,7 +45,7 @@ func ParseReference(s string) *sx.Pair {
 		return makePairRef(sz.SymRefStateInvalid, s)
 	}
 	if !externalURL(u) {
-		if _, err := id.Parse(u.Path); err == nil {
+		if _, err = id.Parse(u.Path); err == nil {
 			return makePairRef(sz.SymRefStateZettel, s)
 		}
 		if u.Path == "" && u.Fragment != "" {

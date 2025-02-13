@@ -41,10 +41,8 @@ func CreateArrangement(metaList []*Meta, key string) Arrangement {
 func createSetArrangement(metaList []*Meta, key string) Arrangement {
 	a := make(Arrangement)
 	for _, m := range metaList {
-		if vals, ok := m.GetList(key); ok {
-			for _, val := range vals {
-				a[val] = append(a[val], m)
-			}
+		for val := range m.GetFields(key) {
+			a[val] = append(a[val], m)
 		}
 	}
 	return a

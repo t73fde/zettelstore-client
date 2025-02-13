@@ -14,6 +14,7 @@
 package meta
 
 import (
+	"iter"
 	"slices"
 	"strings"
 
@@ -102,20 +103,17 @@ func isHeader(ch rune) bool {
 
 type predValidElem func(string) bool
 
-func addToSet(set *set.Set[string], elems []string, useElem predValidElem) {
-	for _, s := range elems {
-		if len(s) > 0 && useElem(s) {
-			set.Add(s)
+func addToSet(set *set.Set[string], it iter.Seq[string], useElem predValidElem) {
+	for e := range it {
+		if len(e) > 0 && useElem(e) {
+			set.Add(e)
 		}
 	}
 }
 
 func addSet(m *Meta, key string, val Value, useElem predValidElem) {
-	newElems := strings.Fields(string(val))
-	oldElems, ok := m.GetList(key)
-	if !ok {
-		oldElems = nil
-	}
+	newElems := val.Fields()
+	oldElems := m.GetFields(key)
 
 	s := set.New[string]()
 	addToSet(s, newElems, useElem)

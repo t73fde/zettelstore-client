@@ -14,11 +14,13 @@
 package meta
 
 import (
+	"iter"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	zeroiter "t73f.de/r/zero/iter"
 	"t73f.de/r/zsc/domain/id"
 )
 
@@ -140,8 +142,9 @@ func (m *Meta) SetList(key string, values []string) {
 
 // SetWord stores the given word under the given key.
 func (m *Meta) SetWord(key, word string) {
-	if slist := Value(word).AsList(); len(slist) > 0 {
-		m.Set(key, Value(slist[0]))
+	for val := range Value(word).Elems() {
+		m.Set(key, val)
+		return
 	}
 }
 
@@ -158,14 +161,13 @@ func (m *Meta) GetBool(key string) bool {
 	return false
 }
 
-// GetList retrieves the string list value of a given key. The bool value
+// GetFields returns the metadata value as a sequence of string. The bool value
 // signals, whether there was a value stored or not.
-func (m *Meta) GetList(key string) ([]string, bool) {
-	value, ok := m.Get(key)
-	if !ok {
-		return nil, false
+func (m *Meta) GetFields(key Key) iter.Seq[string] {
+	if val, ok := m.Get(key); ok {
+		return val.Fields()
 	}
-	return value.AsList(), true
+	return zeroiter.EmptySeq[string]()
 }
 
 // GetNumber retrieves the numeric value of a given key.
