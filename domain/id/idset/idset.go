@@ -134,7 +134,7 @@ func (s *Set) SafeSorted() []id.Zid {
 // If s == nil, then the other set is always returned.
 func (s *Set) IntersectOrSet(other *Set) *Set {
 	if s == nil || other == nil {
-		return other
+		return other.Clone()
 	}
 	topos, spos, opos := 0, 0, 0
 	for spos < len(s.seq) && opos < len(other.seq) {
