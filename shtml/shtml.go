@@ -254,9 +254,9 @@ func (ev *Evaluator) bindMetadata() {
 
 	evalMetaSet := func(args sx.Vector, env *Environment) sx.Object {
 		var sb strings.Builder
-		for elem := getList(args[1], env); elem != nil; elem = elem.Tail() {
+		for obj := range getList(args[1], env).Values() {
 			sb.WriteByte(' ')
-			sb.WriteString(getString(elem.Car(), env).GetValue())
+			sb.WriteString(getString(obj, env).GetValue())
 		}
 		s := sb.String()
 		if len(s) > 0 {
@@ -334,8 +334,8 @@ func (ev *Evaluator) bindBlocks() {
 			if ddBlock == nil {
 				continue
 			}
-			for ddlst := ddBlock; ddlst != nil; ddlst = ddlst.Tail() {
-				dditem := getList(ddlst.Car(), env)
+			for ddlst := range ddBlock.Values() {
+				dditem := getList(ddlst, env)
 				items.Add(dditem.Cons(symDD))
 			}
 		}
@@ -462,8 +462,8 @@ func (ev *Evaluator) makeListFn(sym *sx.Symbol) EvalFn {
 
 func (ev *Evaluator) evalDescriptionTerm(term *sx.Pair, env *Environment) *sx.Pair {
 	var result sx.ListBuilder
-	for node := term; node != nil; node = node.Tail() {
-		elem := ev.Eval(node.Car(), env)
+	for obj := range term.Values() {
+		elem := ev.Eval(obj, env)
 		result.Add(elem)
 	}
 	return result.List()
@@ -475,8 +475,8 @@ func (ev *Evaluator) evalTableRow(sym *sx.Symbol, pairs *sx.Pair, env *Environme
 	}
 	var row sx.ListBuilder
 	row.Add(symTR)
-	for pair := pairs; pair != nil; pair = pair.Tail() {
-		row.Add(sx.Cons(sym, ev.Eval(pair.Car(), env)))
+	for obj := range pairs.Values() {
+		row.Add(sx.Cons(sym, ev.Eval(obj, env)))
 	}
 	return row.List()
 }
@@ -799,8 +799,8 @@ func evalBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
 }
 
 func flattenText(sb *strings.Builder, lst *sx.Pair) {
-	for elem := lst; elem != nil; elem = elem.Tail() {
-		switch obj := elem.Car().(type) {
+	for elem := range lst.Values() {
+		switch obj := elem.(type) {
 		case sx.String:
 			sb.WriteString(obj.GetValue())
 		case *sx.Pair:
@@ -874,8 +874,8 @@ func (ev *Evaluator) evalSlice(args sx.Vector, env *Environment) *sx.Pair {
 // EvalPairList evaluates a list of lists.
 func (ev *Evaluator) EvalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
 	var result sx.ListBuilder
-	for node := pair; node != nil; node = node.Tail() {
-		elem := ev.Eval(node.Car(), env)
+	for obj := range pair.Values() {
+		elem := ev.Eval(obj, env)
 		result.Add(elem)
 	}
 	if env.err == nil {

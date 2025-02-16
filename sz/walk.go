@@ -89,7 +89,7 @@ func init() {
 
 func walkChildrenTail(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 	hasNil := false
-	for n := node.Tail(); n != nil; n = n.Tail() {
+	for n := range node.Tail().Pairs() {
 		obj := Walk(v, n.Head(), env)
 		if sx.IsNil(obj) {
 			hasNil = true
@@ -115,7 +115,7 @@ func walkChildrenTail(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 
 func walkChildrenList(v Visitor, lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	hasNil := false
-	for n := lst; n != nil; n = n.Tail() {
+	for n := range lst.Pairs() {
 		obj := Walk(v, n.Head(), env)
 		if sx.IsNil(obj) {
 			hasNil = true
@@ -126,8 +126,7 @@ func walkChildrenList(v Visitor, lst *sx.Pair, env *sx.Pair) *sx.Pair {
 		return lst
 	}
 	var result sx.ListBuilder
-	for n := lst; n != nil; n = n.Tail() {
-		obj := n.Car()
+	for obj := range lst.Values() {
 		if !sx.IsNil(obj) {
 			result.Add(obj)
 		}
@@ -172,7 +171,7 @@ func walkChildrenDescription(v Visitor, dn *sx.Pair, env *sx.Pair) *sx.Pair {
 }
 
 func walkChildrenTable(v Visitor, tn *sx.Pair, env *sx.Pair) *sx.Pair {
-	for row := tn.Tail(); row != nil; row = row.Tail() {
+	for row := range tn.Tail().Pairs() {
 		row.SetCar(walkChildrenList(v, row.Head(), env))
 	}
 	return tn

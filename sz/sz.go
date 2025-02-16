@@ -21,8 +21,8 @@ import (
 
 // GetAttributes traverses a s-expression list and returns an attribute structure.
 func GetAttributes(seq *sx.Pair) (result attrs.Attributes) {
-	for elem := seq; elem != nil; elem = elem.Tail() {
-		pair, isPair := sx.GetPair(elem.Car())
+	for obj := range seq.Values() {
+		pair, isPair := sx.GetPair(obj)
 		if !isPair || pair == nil {
 			continue
 		}
@@ -94,7 +94,7 @@ func doMakeMeta(obj sx.Object) Meta {
 		return nil
 	}
 	result := make(map[string]MetaValue)
-	for node := lst.Tail(); node != nil; node = node.Tail() {
+	for node := range lst.Tail().Pairs() {
 		if mv, found := makeMetaValue(node.Head()); found {
 			result[mv.Key] = mv
 		}

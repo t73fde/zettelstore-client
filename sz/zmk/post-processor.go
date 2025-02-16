@@ -43,7 +43,7 @@ func (pp *postProcessor) VisitAfter(lst *sx.Pair, _ *sx.Pair) (sx.Object, bool) 
 
 func (pp *postProcessor) visitPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
-	for node := lst; node != nil; node = node.Tail() {
+	for node := range lst.Pairs() {
 		if elem, isPair := sx.GetPair(sz.Walk(pp, node.Head(), env)); isPair && elem != nil {
 			pList.Add(elem)
 		}
@@ -188,7 +188,7 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair
 			newElems.Add(sx.MakeList(sz.SymBlock, newPara.List().Cons(sz.SymPara)))
 		}
 	}
-	for node := elems; node != nil; node = node.Tail() {
+	for node := range elems.Pairs() {
 		item := node.Head()
 		if !item.Car().IsEqual(sz.SymBlock) {
 			continue
@@ -215,7 +215,7 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair
 
 func (pp *postProcessor) visitListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
-	for node := ln.Tail(); node != nil; node = node.Tail() {
+	for node := range ln.Tail().Pairs() {
 		if elem := sz.Walk(pp, node.Head(), env); elem != nil {
 			pList.Add(elem)
 		}
@@ -226,7 +226,7 @@ func (pp *postProcessor) visitListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 func postProcessDescription(pp *postProcessor, dl *sx.Pair, env *sx.Pair) *sx.Pair {
 	var dList sx.ListBuilder
 	isTerm := false
-	for node := dl.Tail(); node != nil; node = node.Tail() {
+	for node := range dl.Tail().Pairs() {
 		isTerm = !isTerm
 		if isTerm {
 			dList.Add(pp.visitInlines(node.Head(), env))
@@ -252,7 +252,7 @@ func postProcessTable(pp *postProcessor, tbl *sx.Pair, env *sx.Pair) *sx.Pair {
 	}
 	header, rows, align := splitTableHeader(rows, width)
 	alignRow(header, align)
-	for node := rows; node != nil; node = node.Tail() {
+	for node := range rows.Pairs() {
 		alignRow(node.Head(), align)
 	}
 	return rows.Cons(header).Cons(sym)
@@ -261,7 +261,7 @@ func postProcessTable(pp *postProcessor, tbl *sx.Pair, env *sx.Pair) *sx.Pair {
 func (pp *postProcessor) visitRows(rows *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
 	maxWidth := 0
 	var pRows sx.ListBuilder
-	for node := rows; node != nil; node = node.Tail() {
+	for node := range rows.Pairs() {
 		row := node.Head()
 		row, width := pp.visitCells(row, env)
 		if maxWidth < width {
@@ -275,7 +275,7 @@ func (pp *postProcessor) visitRows(rows *sx.Pair, env *sx.Pair) (*sx.Pair, int) 
 func (pp *postProcessor) visitCells(cells *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
 	width := 0
 	var pCells sx.ListBuilder
-	for node := cells; node != nil; node = node.Tail() {
+	for node := range cells.Pairs() {
 		cell := node.Head()
 		ins := pp.visitInlines(cell.Tail(), env)
 		newCell := ins.Cons(cell.Car())
@@ -292,9 +292,9 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 	cellCount := 0
 
 	// assert: rows != nil (checked in postProcessTable)
-	for node := rows.Head(); node != nil; node = node.Tail() {
-		cellCount++
+	for node := range rows.Head().Pairs() {
 		cell := node.Head()
+		cellCount++
 		cellTail := cell.Tail()
 		if cellTail == nil {
 			continue
@@ -356,7 +356,7 @@ func alignRow(row *sx.Pair, align []*sx.Symbol) {
 	}
 	var lastCellNode *sx.Pair
 	cellCount := 0
-	for node := row; node != nil; node = node.Tail() {
+	for node := range row.Pairs() {
 		lastCellNode = node
 		cell := node.Head()
 		cell.SetCar(align[cellCount])
@@ -407,7 +407,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	inVerse := env.Assoc(symInVerse) != nil
 	vector := make([]*sx.Pair, 0, length)
 	// 1st phase: process all childs, ignore ' ' / '\t' at start, and merge some elements
-	for node := lst; node != nil; node = node.Tail() {
+	for node := range lst.Pairs() {
 		elem, isPair := sx.GetPair(sz.Walk(pp, node.Head(), env))
 		if !isPair || elem == nil {
 			continue

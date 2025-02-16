@@ -109,8 +109,8 @@ func ParseMeta(pair *sx.Pair) (api.ZettelMeta, error) {
 		return nil, err
 	}
 	res := api.ZettelMeta{}
-	for node := pair.Tail(); node != nil; node = node.Tail() {
-		mVals, err := ParseList(node.Car(), "ys")
+	for obj := range pair.Tail().Values() {
+		mVals, err := ParseList(obj, "ys")
 		if err != nil {
 			return nil, err
 		}

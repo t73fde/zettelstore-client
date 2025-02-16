@@ -49,8 +49,8 @@ func EvaluateInlineString(lst *sx.Pair) string {
 }
 
 func (enc *Encoder) executeList(lst *sx.Pair) {
-	for elem := lst; elem != nil; elem = elem.Tail() {
-		enc.execute(elem.Car())
+	for obj := range lst.Values() {
+		enc.execute(obj)
 	}
 }
 func (enc *Encoder) execute(obj sx.Object) {
