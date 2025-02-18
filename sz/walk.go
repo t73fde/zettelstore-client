@@ -195,13 +195,9 @@ func walkChildrenEmbed(v Visitor, en *sx.Pair, env *sx.Pair) *sx.Pair {
 	// attr := next.Car()
 	next = next.Tail()
 	// ref := next.Car()
-	next = next.Tail()
-	// syntax := next.Car()
-	next = next.Tail()
-	if next != nil {
-		// text := next.Car()
-		next.SetCar(Walk(v, next.Head(), env))
-	}
+
+	// text-list := next.Tail()
+	next.SetCdr(walkChildrenList(v, next.Tail(), env))
 	return en
 }
 

@@ -462,7 +462,7 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 			if inp.Peek() == fch {
 				inp.Next()
 				inp.Next()
-				return sx.MakeList(symLiteral, cp.parseBlockAttributes(), sx.MakeString(sb.String())), true
+				return sx.MakeList(symLiteral, cp.parseInlineAttributes(), sx.MakeString(sb.String())), true
 			}
 			sb.WriteRune(fch)
 			inp.Next()

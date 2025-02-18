@@ -454,7 +454,7 @@ func (cp *zmkP) parseDefTerm() (res *sx.Pair, success bool) {
 		res = descrl
 	}
 	lastPair, pos := lastPairPos(descrl)
-	for {
+	for first := true; ; first = false {
 		in := cp.parseInline()
 		if in == nil {
 			if pos%2 == 0 {
@@ -468,6 +468,12 @@ func (cp *zmkP) parseDefTerm() (res *sx.Pair, success bool) {
 			// lastPair is either the empty description list or the last block of definitions
 			lastPair = lastPair.AppendBang(sx.Cons(in, nil))
 			pos++
+		} else if first {
+			// Previous term had no description
+			lastPair = lastPair.
+				AppendBang(sx.MakeList(sz.SymBlock)).
+				AppendBang(sx.Cons(in, nil))
+			pos += 2
 		} else {
 			// lastPair is the term part and we need to append the inline list just read
 			lastPair.Head().LastPair().AppendBang(in)

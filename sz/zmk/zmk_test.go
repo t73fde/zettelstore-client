@@ -420,6 +420,7 @@ func TestLiteral(t *testing.T) {
 		}))
 	}
 	checkTcs(t, false, TestCases{
+		{"``<script `` abc", "(INLINE (LITERAL-CODE () \"<script \") (TEXT \" abc\"))"},
 		{"''````''", "(INLINE (LITERAL-INPUT () \"````\"))"},
 		{"''``a``''", "(INLINE (LITERAL-INPUT () \"``a``\"))"},
 		{"''``''``", "(INLINE (LITERAL-INPUT () \"``\") (TEXT \"``\"))"},
