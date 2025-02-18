@@ -123,8 +123,10 @@ func Endnotes(env *Environment) *sx.Pair {
 	}
 
 	var result sx.ListBuilder
-	result.Add(SymOL)
-	result.Add(sx.Nil().Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnotes"))).Cons(sxhtml.SymAttr))
+	result.AddN(
+		SymOL,
+		sx.Nil().Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnotes"))).Cons(sxhtml.SymAttr),
+	)
 	for i, fni := range env.endnotes {
 		noteNum := strconv.Itoa(i + 1)
 		attrs := fni.attrs.Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnote"))).
@@ -142,11 +144,9 @@ func Endnotes(env *Environment) *sx.Pair {
 			Cons(SymA)
 
 		var li sx.ListBuilder
-		li.Add(SymLI)
-		li.Add(attrs)
+		li.AddN(SymLI, attrs)
 		li.ExtendBang(fni.noteHx)
-		li.Add(sx.MakeString(" "))
-		li.Add(backref)
+		li.AddN(sx.MakeString(" "), backref)
 		result.Add(li.List())
 	}
 	return result.List()

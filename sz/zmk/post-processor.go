@@ -186,6 +186,7 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair
 	addtoParagraph := func() {
 		if !newPara.IsEmpty() {
 			newElems.Add(sx.MakeList(sz.SymBlock, newPara.List().Cons(sz.SymPara)))
+			newPara.Reset()
 		}
 	}
 	for node := range elems.Pairs() {

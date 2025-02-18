@@ -645,7 +645,7 @@ func (cp *zmkP) parseRow() *sx.Pair {
 		inp.SkipToEOL()
 		return nil
 	}
-	//var row, curr *sx.Pair
+
 	var row sx.ListBuilder
 	for {
 		inp.Next()
