@@ -158,6 +158,7 @@ func ParseList(obj sx.Object, spec string) (sx.Vector, error) {
 	specLen := len(spec)
 	result := make(sx.Vector, 0, specLen)
 	node, i := pair, 0
+loop:
 	for ; node != nil; i++ {
 		if i >= specLen {
 			return nil, ErrNoSpec
@@ -178,7 +179,9 @@ func ParseList(obj sx.Object, spec string) (sx.Vector, error) {
 			if i < specLen-1 {
 				return nil, fmt.Errorf("spec 'r' must be the last: %v", spec)
 			}
-			val, ok = node, true
+			result = append(result, node)
+			i++
+			break loop
 		case 's':
 			val, ok = sx.GetString(car)
 		case 'y':

@@ -77,4 +77,13 @@ func TestParseObject(t *testing.T) {
 	} else if !sx.IsNil(elems[1]) {
 		t.Error("must be nil, but got:", elems[1])
 	}
+	if elems, err := sexp.ParseList(sx.MakeList(sx.MakeString("a"), sx.MakeString("b"), sx.MakeString("c")), "sr"); err != nil {
+		t.Error(err)
+	} else if len(elems) != 2 {
+		t.Error("length == 2, but got: ", elems)
+	} else if !elems[0].IsEqual(sx.MakeString("a")) {
+		t.Error("0-th must be \"a\", but got:", elems[0])
+	} else if !elems[1].IsEqual(sx.MakeList(sx.MakeString("b"), sx.MakeString("c"))) {
+		t.Error("must be nil, but got:", elems[1])
+	}
 }
