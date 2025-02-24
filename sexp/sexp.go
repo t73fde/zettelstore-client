@@ -136,22 +136,30 @@ func ParseRights(obj sx.Object) (api.ZettelRights, error) {
 }
 
 // ParseList parses the given object as a proper list, based on a type specification.
+//
+// 'b' expects a boolean, 'i' an int64, 'o' any object, 'p' a pair, 's' a string,
+// and 'y' expects a symbol. A 'r' as the last type spracification matches all
+// remaining values, including a non existent object.
 func ParseList(obj sx.Object, spec string) (sx.Vector, error) {
 	pair, isPair := sx.GetPair(obj)
 	if !isPair {
 		return nil, fmt.Errorf("not a list: %T/%v", obj, obj)
 	}
 	if pair == nil {
+		if spec == "r" {
+			return sx.Vector{sx.Nil()}, nil
+		}
 		if spec == "" {
 			return nil, nil
 		}
 		return nil, ErrElementsMissing
 	}
 
-	result := make(sx.Vector, 0, len(spec))
+	specLen := len(spec)
+	result := make(sx.Vector, 0, specLen)
 	node, i := pair, 0
 	for ; node != nil; i++ {
-		if i >= len(spec) {
+		if i >= specLen {
 			return nil, ErrNoSpec
 		}
 		var val sx.Object
@@ -166,6 +174,11 @@ func ParseList(obj sx.Object, spec string) (sx.Vector, error) {
 			val, ok = car, true
 		case 'p':
 			val, ok = sx.GetPair(car)
+		case 'r':
+			if i < specLen-1 {
+				return nil, fmt.Errorf("spec 'r' must be the last: %v", spec)
+			}
+			val, ok = node, true
 		case 's':
 			val, ok = sx.GetString(car)
 		case 'y':
@@ -183,8 +196,11 @@ func ParseList(obj sx.Object, spec string) (sx.Vector, error) {
 		}
 		node = next
 	}
-	if i < len(spec) {
-		return nil, ErrElementsMissing
+	if i < specLen {
+		if lastSpec := specLen - 1; i < lastSpec || spec[lastSpec] != 'r' {
+			return nil, ErrElementsMissing
+		}
+		result = append(result, sx.Nil())
 	}
 	return result, nil
 }
