@@ -92,7 +92,7 @@ func (c *Client) QueryZettelData(ctx context.Context, query string) (string, str
 	if err != nil {
 		return "", "", nil, err
 	}
-	vals, err := sexp.ParseList(obj, "yppp")
+	vals, err := sexp.ParseList(obj, "yppr")
 	if err != nil {
 		return "", "", nil, err
 	}
@@ -109,19 +109,13 @@ func (c *Client) QueryZettelData(ctx context.Context, query string) (string, str
 }
 
 func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
-	if metaPair == nil {
-		return nil, fmt.Errorf("no zettel list")
-	}
-	if errSym := sexp.CheckSymbol(metaPair.Car(), "list"); errSym != nil {
-		return nil, errSym
-	}
 	var result []api.ZidMetaRights
-	for node := metaPair.Cdr(); !sx.IsNil(node); {
+	for node := metaPair; !sx.IsNil(node); {
 		elem, isPair := sx.GetPair(node)
 		if !isPair {
 			return nil, fmt.Errorf("meta-list not a proper list: %v", metaPair.String())
 		}
-		node = elem.Cdr()
+		node = elem.Tail()
 		vals, err := sexp.ParseList(elem.Car(), "yppp")
 		if err != nil {
 			return nil, err

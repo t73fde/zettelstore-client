@@ -2,6 +2,8 @@
 
 <a name="0_20"></a>
 <h2>Changes for Version 0.20.0 (pending)</h2>
+  *  <code>client.QueryZettelData</code> will support the new encoding of
+     result lists. This make the client incompatible to version 0.19.
 
 <a name="0_19"></a>
 <h2>Changes for Version 0.19.0 (2024-12-13)</h2>
