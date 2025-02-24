@@ -75,7 +75,7 @@ func parseInput(src string, asBlock bool) *sx.Pair {
 type astWalker struct{}
 
 func (astWalker) VisitBefore(node *sx.Pair, env *sx.Pair) (sx.Object, bool) { return sx.Nil(), false }
-func (astWalker) VisitAfter(node *sx.Pair, env *sx.Pair) (sx.Object, bool)  { return node, true }
+func (astWalker) VisitAfter(node *sx.Pair, env *sx.Pair) sx.Object          { return node }
 
 func TestEOL(t *testing.T) {
 	t.Parallel()

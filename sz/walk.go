@@ -20,7 +20,7 @@ import (
 // Visitor is walking the sx-based AST.
 type Visitor interface {
 	VisitBefore(node *sx.Pair, env *sx.Pair) (sx.Object, bool)
-	VisitAfter(node *sx.Pair, env *sx.Pair) (sx.Object, bool)
+	VisitAfter(node *sx.Pair, env *sx.Pair) sx.Object
 }
 
 // Walk a sx-based AST through a Visitor.
@@ -37,10 +37,7 @@ func Walk(v Visitor, node *sx.Pair, env *sx.Pair) sx.Object {
 			node = fn(v, node, env)
 		}
 	}
-	if result, ok := v.VisitAfter(node, env); ok {
-		return result
-	}
-	return node
+	return v.VisitAfter(node, env)
 }
 
 var mapChildrenWalk map[*sx.Symbol]func(Visitor, *sx.Pair, *sx.Pair) *sx.Pair

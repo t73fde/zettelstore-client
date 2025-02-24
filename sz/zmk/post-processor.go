@@ -39,7 +39,7 @@ func (pp *postProcessor) VisitBefore(lst *sx.Pair, env *sx.Pair) (sx.Object, boo
 	return nil, false
 }
 
-func (pp *postProcessor) VisitAfter(lst *sx.Pair, _ *sx.Pair) (sx.Object, bool) { return lst, true }
+func (pp *postProcessor) VisitAfter(lst *sx.Pair, _ *sx.Pair) sx.Object { return lst }
 
 func (pp *postProcessor) visitPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
