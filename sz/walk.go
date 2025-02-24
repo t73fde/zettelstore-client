@@ -13,7 +13,9 @@
 
 package sz
 
-import "t73f.de/r/sx"
+import (
+	"t73f.de/r/sx"
+)
 
 // Visitor is walking the sx-based AST.
 type Visitor interface {
@@ -195,6 +197,8 @@ func walkChildrenEmbed(v Visitor, en *sx.Pair, env *sx.Pair) *sx.Pair {
 	// attr := next.Car()
 	next = next.Tail()
 	// ref := next.Car()
+	next = next.Tail()
+	// syntax := next.Car()
 
 	// text-list := next.Tail()
 	next.SetCdr(walkChildrenList(v, next.Tail(), env))
