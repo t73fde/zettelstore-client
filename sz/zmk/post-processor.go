@@ -86,7 +86,7 @@ func init() {
 		sz.SymLinkQuery:    postProcessInlines4,
 		sz.SymLinkSelf:     postProcessInlines4,
 		sz.SymLinkZettel:   postProcessInlines4,
-		sz.SymEmbed:        postProcessInlines4,
+		sz.SymEmbed:        postProcessEmbed,
 		sz.SymCite:         postProcessInlines4,
 		sz.SymFormatDelete: postProcessFormat,
 		sz.SymFormatEmph:   postProcessFormat,
@@ -566,6 +566,18 @@ func postProcessInlines4(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair 
 	val3 := next.Car()
 	text := pp.visitInlines(next.Tail(), env)
 	return text.Cons(val3).Cons(attrs).Cons(sym)
+}
+
+func postProcessEmbed(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
+	sym := ln.Car()
+	next := ln.Tail()
+	attrs := next.Car()
+	next = next.Tail()
+	ref := next.Car()
+	next = next.Tail()
+	syntax := next.Car()
+	text := pp.visitInlines(next.Tail(), env)
+	return text.Cons(syntax).Cons(ref).Cons(attrs).Cons(sym)
 }
 
 func postProcessFormat(pp *postProcessor, fn *sx.Pair, env *sx.Pair) *sx.Pair {

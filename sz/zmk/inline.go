@@ -147,10 +147,11 @@ func (cp *zmkP) parseEmbed(openCh, closeCh rune) (*sx.Pair, bool) {
 	if refString, text, ok := cp.parseReference(openCh, closeCh); ok {
 		attrs := cp.parseInlineAttributes()
 		if len(refString) > 0 {
-			ln := text.
-				Cons(ParseReference(refString)).
-				Cons(attrs).
-				Cons(sz.SymEmbed)
+			ln := text. // text
+					Cons(sx.MakeString("")).         // syntax
+					Cons(ParseReference(refString)). // reference
+					Cons(attrs).                     // attributes
+					Cons(sz.SymEmbed)                // Symbol (EMBED ...)
 			return ln, true
 		}
 	}
