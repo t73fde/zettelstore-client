@@ -46,7 +46,7 @@ func (c *Client) QueryZettel(ctx context.Context, query string) ([][]byte, error
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(resp.Body)
 	switch resp.StatusCode {
 	case http.StatusOK:
@@ -79,7 +79,7 @@ func (c *Client) QueryZettelData(ctx context.Context, query string) (string, str
 	if err != nil {
 		return "", "", nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	rdr := sxreader.MakeReader(resp.Body)
 	obj, err := rdr.Read()
 	switch resp.StatusCode {
@@ -209,7 +209,7 @@ func (c *Client) fetchTagOrRoleZettel(ctx context.Context, key, val string) (id.
 	if err != nil {
 		return id.Invalid, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return id.Invalid, err
@@ -241,7 +241,7 @@ func (c *Client) GetZettel(ctx context.Context, zid id.Zid, part string) ([]byte
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(resp.Body)
 	switch resp.StatusCode {
 	case http.StatusOK:
@@ -260,7 +260,7 @@ func (c *Client) GetZettelData(ctx context.Context, zid id.Zid) (api.ZettelData,
 	ub.AppendKVQuery(api.QueryKeyPart, api.PartZettel)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err == nil {
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		if resp.StatusCode != http.StatusOK {
 			return api.ZettelData{}, statusToError(resp)
 		}
@@ -309,7 +309,7 @@ func (c *Client) getZettelString(ctx context.Context, zid id.Zid, enc api.Encodi
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	switch resp.StatusCode {
 	case http.StatusOK:
 	case http.StatusNoContent:
@@ -355,7 +355,7 @@ func (c *Client) getSz(ctx context.Context, zid id.Zid, part string, parseOnly b
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, statusToError(resp)
 	}
@@ -371,7 +371,7 @@ func (c *Client) GetMetaData(ctx context.Context, zid id.Zid) (api.MetaRights, e
 	if err != nil {
 		return api.MetaRights{}, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	rdr := sxreader.MakeReader(resp.Body)
 	obj, err := rdr.Read()
 	if resp.StatusCode != http.StatusOK {
@@ -410,7 +410,7 @@ func (c *Client) GetVersionInfo(ctx context.Context) (VersionInfo, error) {
 	if err != nil {
 		return VersionInfo{}, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return VersionInfo{}, statusToError(resp)
 	}
@@ -477,7 +477,7 @@ func (c *Client) Get(ctx context.Context, ub *api.URLBuilder) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	switch resp.StatusCode {
 	case http.StatusOK:
 	case http.StatusNoContent:

@@ -190,7 +190,7 @@ func (c *Client) executeAuthRequest(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return statusToError(resp)
 	}
@@ -258,7 +258,7 @@ func (c *Client) CreateZettel(ctx context.Context, data []byte) (id.Zid, error) 
 	if err != nil {
 		return id.Invalid, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusCreated {
 		return id.Invalid, statusToError(resp)
 	}
@@ -282,7 +282,7 @@ func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelData) (id.
 	if err != nil {
 		return id.Invalid, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	rdr := sxreader.MakeReader(resp.Body)
 	obj, err := rdr.Read()
 	if resp.StatusCode != http.StatusCreated {
@@ -321,7 +321,7 @@ func (c *Client) UpdateZettel(ctx context.Context, zid id.Zid, data []byte) erro
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusNoContent {
 		return statusToError(resp)
 	}
@@ -339,7 +339,7 @@ func (c *Client) UpdateZettelData(ctx context.Context, zid id.Zid, data api.Zett
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusNoContent {
 		return statusToError(resp)
 	}
@@ -353,7 +353,7 @@ func (c *Client) DeleteZettel(ctx context.Context, zid id.Zid) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusNoContent {
 		return statusToError(resp)
 	}
@@ -371,7 +371,7 @@ func (c *Client) ExecuteCommand(ctx context.Context, command api.Command) error 
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusNoContent {
 		return statusToError(resp)
 	}
