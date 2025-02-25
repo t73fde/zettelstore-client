@@ -80,7 +80,7 @@ func (c *Client) QueryZettelData(ctx context.Context, query string) (string, str
 		return "", "", nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
-	rdr := sxreader.MakeReader(resp.Body)
+	rdr := sxreader.MakeReader(resp.Body).SetListLimit(0) // No limit b/c number of zettel may be more than 100000. We must trust the server
 	obj, err := rdr.Read()
 	switch resp.StatusCode {
 	case http.StatusOK:
