@@ -58,16 +58,16 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 // ParseInlines tries to parse the input as an inline element.
 func ParseInlines(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
-	var ins sx.Vector
+	var ins sx.ListBuilder
 	for inp.Ch != input.EOS {
 		in := parser.parseInline()
 		if in == nil {
 			break
 		}
-		ins = append(ins, in)
+		ins.Add(in)
 	}
 
-	inl := ins.MakeList().Cons(sz.SymInline)
+	inl := sz.MakeInlineList(ins.List())
 	var pp postProcessor
 	if pair, isPair := sx.GetPair(sz.Walk(&pp, inl, nil)); isPair {
 		return pair

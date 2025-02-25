@@ -81,24 +81,32 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 	cp.clearStacked()
 	ins := cp.parsePara()
 	if startsWithSpaceSoftBreak(ins) {
-		ins = ins[2:]
+		ins = ins.Tail().Tail()
 	} else if lastPara != nil {
 		lastPair := lastPara.LastPair()
-		lastPair.ExtendBang(sx.MakeList(ins...))
+		lastPair.ExtendBang(ins)
 		return nil, true
 	}
-	return sx.MakeList(ins...).Cons(sz.SymPara), false
+	return sz.MakePara(ins), false
 }
 
-func startsWithSpaceSoftBreak(ins sx.Vector) bool {
-	if len(ins) < 2 {
+func startsWithSpaceSoftBreak(ins *sx.Pair) bool {
+	if ins == nil {
 		return false
 	}
-	pair0, isPair0 := sx.GetPair(ins[0])
-	pair1, isPair1 := sx.GetPair(ins[0])
-	if !isPair0 || !isPair1 {
+	pair0, isPair0 := sx.GetPair(ins.Car())
+	if pair0 == nil || !isPair0 {
 		return false
 	}
+	next := ins.Tail()
+	if next == nil {
+		return false
+	}
+	pair1, isPair1 := sx.GetPair(next.Car())
+	if pair1 == nil || !isPair1 {
+		return false
+	}
+
 	if pair0.Car().IsEqual(sz.SymText) && sz.IsBreakSym(pair1.Car()) {
 		if args := pair0.Tail(); args != nil {
 			if val, isString := sx.GetString(args.Car()); isString {
@@ -137,20 +145,21 @@ func (cp *zmkP) parseColon() (*sx.Pair, bool) {
 	return cp.parseDefDescr()
 }
 
-// parsePara parses paragraphed inline material as a sx.Vector.
-func (cp *zmkP) parsePara() (result sx.Vector) {
+// parsePara parses paragraphed inline material as a sx List.
+func (cp *zmkP) parsePara() *sx.Pair {
+	var lb sx.ListBuilder
 	for {
 		in := cp.parseInline()
 		if in == nil {
-			return result
+			return lb.List()
 		}
-		result = append(result, in)
+		lb.Add(in)
 		if sz.IsBreakSym(in.Car()) {
 			ch := cp.inp.Ch
 			switch ch {
 			// Must contain all cases from above switch in parseBlock.
 			case input.EOS, '\n', '\r', '@', '`', runeModGrave, '%', '~', '$', '"', '<', '=', '-', '*', '#', '>', ';', ':', ' ', '|', '{':
-				return result
+				return lb.List()
 			}
 		}
 	}
@@ -168,7 +177,7 @@ func (cp *zmkP) countDelim(delim rune) int {
 }
 
 // parseVerbatim parses a verbatim block.
-func (cp *zmkP) parseVerbatim() (rn *sx.Pair, success bool) {
+func (cp *zmkP) parseVerbatim() (*sx.Pair, bool) {
 	inp := cp.inp
 	fch := inp.Ch
 	cnt := cp.countDelim(fch)
@@ -203,8 +212,7 @@ func (cp *zmkP) parseVerbatim() (rn *sx.Pair, success bool) {
 		case fch:
 			if cp.countDelim(fch) >= cnt {
 				inp.SkipToEOL()
-				rn = sx.MakeList(sym, attrs, sx.MakeString(string(content)))
-				return rn, true
+				return sz.MakeVerbatim(sym, attrs, string(content)), true
 			}
 			inp.SetPos(posL)
 		case input.EOS:
@@ -219,7 +227,7 @@ func (cp *zmkP) parseVerbatim() (rn *sx.Pair, success bool) {
 }
 
 // parseRegion parses a block region.
-func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
+func (cp *zmkP) parseRegion() (*sx.Pair, bool) {
 	inp := cp.inp
 	fch := inp.Ch
 	cnt := cp.countDelim(fch)
@@ -252,8 +260,7 @@ func (cp *zmkP) parseRegion() (rn *sx.Pair, success bool) {
 		case fch:
 			if cp.countDelim(fch) >= cnt {
 				ins := cp.parseRegionLastLine()
-				rn = ins.Cons(blocksBuilder.List()).Cons(attrs).Cons(sym)
-				return rn, true
+				return sz.MakeRegion(sym, attrs, blocksBuilder.List(), ins), true
 			}
 			inp.SetPos(posL)
 		case input.EOS:
@@ -289,7 +296,7 @@ func (cp *zmkP) parseRegionLastLine() *sx.Pair {
 }
 
 // parseHeading parses a head line.
-func (cp *zmkP) parseHeading() (hn *sx.Pair, success bool) {
+func (cp *zmkP) parseHeading() (*sx.Pair, bool) {
 	inp := cp.inp
 	delims := cp.countDelim(inp.Ch)
 	if delims < 3 {
@@ -303,36 +310,28 @@ func (cp *zmkP) parseHeading() (hn *sx.Pair, success bool) {
 	if delims > 7 {
 		delims = 7
 	}
-	level := int64(delims - 2)
+	level := delims - 2
 	var attrs *sx.Pair
 	var text sx.ListBuilder
 	for {
 		if input.IsEOLEOS(inp.Ch) {
-			return createHeading(level, attrs, text.List()), true
+			return sz.MakeHeading(level, attrs, text.List(), "", ""), true
 		}
 		in := cp.parseInline()
 		if in == nil {
-			return createHeading(level, attrs, text.List()), true
+			return sz.MakeHeading(level, attrs, text.List(), "", ""), true
 		}
 		text.Add(in)
 		if inp.Ch == '{' && inp.Peek() != '{' {
 			attrs = cp.parseBlockAttributes()
 			inp.SkipToEOL()
-			return createHeading(level, attrs, text.List()), true
+			return sz.MakeHeading(level, attrs, text.List(), "", ""), true
 		}
 	}
 }
-func createHeading(level int64, attrs, text *sx.Pair) *sx.Pair {
-	return text.
-		Cons(sx.MakeString("")). // Fragment
-		Cons(sx.MakeString("")). // Slug
-		Cons(attrs).
-		Cons(sx.Int64(level)).
-		Cons(sz.SymHeading)
-}
 
 // parseHRule parses a horizontal rule.
-func (cp *zmkP) parseHRule() (hn *sx.Pair, success bool) {
+func (cp *zmkP) parseHRule() (*sx.Pair, bool) {
 	inp := cp.inp
 	if cp.countDelim(inp.Ch) < 3 {
 		return nil, false
@@ -340,11 +339,11 @@ func (cp *zmkP) parseHRule() (hn *sx.Pair, success bool) {
 
 	attrs := cp.parseBlockAttributes()
 	inp.SkipToEOL()
-	return sx.MakeList(sz.SymThematic, attrs), true
+	return sz.MakeThematic(attrs), true
 }
 
 // parseNestedList parses a list.
-func (cp *zmkP) parseNestedList() (res *sx.Pair, success bool) {
+func (cp *zmkP) parseNestedList() (*sx.Pair, bool) {
 	kinds := cp.parseNestedListKinds()
 	if len(kinds) == 0 {
 		return nil, false
@@ -360,9 +359,9 @@ func (cp *zmkP) parseNestedList() (res *sx.Pair, success bool) {
 	}
 	ln, newLnCount := cp.buildNestedList(kinds)
 	pv := cp.parseLinePara()
-	bn := sx.Cons(sz.SymBlock, nil)
-	if len(pv) != 0 {
-		bn.AppendBang(pv.MakeList().Cons(sz.SymPara))
+	bn := sz.MakeBlock()
+	if pv != nil {
+		bn.AppendBang(sz.MakePara(pv))
 	}
 	lastItemPair := ln.LastPair()
 	lastItemPair.AppendBang(bn)
@@ -415,7 +414,7 @@ func (cp *zmkP) buildNestedList(kinds []*sx.Symbol) (ln *sx.Pair, newLnCount int
 	return ln, newLnCount
 }
 
-func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (res *sx.Pair, success bool) {
+func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (*sx.Pair, bool) {
 	childPos := len(cp.lists) - 1
 	parentPos := childPos - 1
 	for i := 0; i < newLnCount; i++ {
@@ -430,8 +429,7 @@ func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (res *sx.Pair, success b
 			lastParent.Head().LastPair().AppendBang(childLn)
 		} else {
 			// Set list to first child of parent.
-			childBlock := sx.MakeList(sz.SymBlock, cp.lists[childPos])
-			parentLn.LastPair().AppendBang(childBlock)
+			parentLn.LastPair().AppendBang(sz.MakeBlock(cp.lists[childPos]))
 		}
 		childPos--
 		parentPos--
@@ -471,7 +469,7 @@ func (cp *zmkP) parseDefTerm() (res *sx.Pair, success bool) {
 		} else if first {
 			// Previous term had no description
 			lastPair = lastPair.
-				AppendBang(sx.MakeList(sz.SymBlock)).
+				AppendBang(sz.MakeBlock()).
 				AppendBang(sx.Cons(in, nil))
 			pos += 2
 		} else {
@@ -500,14 +498,14 @@ func (cp *zmkP) parseDefDescr() (res *sx.Pair, success bool) {
 	}
 
 	pn := cp.parseLinePara()
-	if len(pn) == 0 {
+	if pn == nil {
 		return nil, false
 	}
 
-	newDef := sx.MakeList(sz.SymBlock, pn.MakeList().Cons(sz.SymPara))
+	newDef := sz.MakeBlock(sz.MakePara(pn))
 	if lpPos%2 == 1 {
 		// Just a term, but no definitions
-		lastPair.AppendBang(sx.MakeList(sz.SymBlock, newDef))
+		lastPair.AppendBang(sz.MakeBlock(newDef))
 	} else {
 		// lastPara points a the last definition
 		lastPair.Head().LastPair().AppendBang(newDef)
@@ -556,17 +554,16 @@ func (cp *zmkP) parseIndentForList(cnt int) bool {
 		return false
 	}
 	pv := cp.parseLinePara()
-	if len(pv) == 0 {
+	if pv == nil {
 		return false
 	}
 	ln := cp.lists[cnt-1]
 	lbn := ln.LastPair().Head()
 	lpn := lbn.LastPair().Head()
-	pvList := pv.MakeList()
 	if lpn.Car().IsEqual(sz.SymPara) {
-		lpn.LastPair().SetCdr(pvList)
+		lpn.LastPair().SetCdr(pv)
 	} else {
-		lbn.LastPair().AppendBang(pvList.Cons(sz.SymPara))
+		lbn.LastPair().AppendBang(sz.MakePara(pv))
 	}
 	return true
 }
@@ -594,10 +591,9 @@ func (cp *zmkP) parseIndentForDescription(cnt int) bool {
 	// Continuation of a definition description.
 	// Either it is a continuation of a definition paragraph, or it is a new paragraph.
 	pn := cp.parseLinePara()
-	if len(pn) == 0 {
+	if pn == nil {
 		return false
 	}
-	pnList := pn.MakeList()
 
 	bn := lastPair.Head()
 
@@ -613,7 +609,7 @@ func (cp *zmkP) parseIndentForDescription(cnt int) bool {
 		}
 		if symSeparator.IsEqual(next.Head().Car()) {
 			// It is a new paragraph!
-			obj.LastPair().AppendBang(pnList.Cons(sz.SymPara))
+			obj.LastPair().AppendBang(sz.MakePara(pn))
 			return true
 		}
 		curr = next
@@ -622,24 +618,24 @@ func (cp *zmkP) parseIndentForDescription(cnt int) bool {
 	// Continuation of existing paragraph
 	para := bn.LastPair().Head().LastPair().Head()
 	if para.Car().IsEqual(sz.SymPara) {
-		para.LastPair().SetCdr(pnList)
+		para.LastPair().SetCdr(pn)
 	} else {
-		bn.LastPair().AppendBang(pnList.Cons(sz.SymPara))
+		bn.LastPair().AppendBang(sz.MakePara(pn))
 	}
 	return true
 }
 
 // parseLinePara parses one paragraph of inline material.
-func (cp *zmkP) parseLinePara() sx.Vector {
-	var ins sx.Vector
+func (cp *zmkP) parseLinePara() *sx.Pair {
+	var lb sx.ListBuilder
 	for {
 		in := cp.parseInline()
 		if in == nil {
-			return ins
+			return lb.List()
 		}
-		ins = append(ins, in)
+		lb.Add(in)
 		if sz.IsBreakSym(in.Car()) {
-			return ins
+			return lb.List()
 		}
 	}
 }
@@ -688,10 +684,10 @@ func (cp *zmkP) parseCell() *sx.Pair {
 			if cell.IsEmpty() {
 				return nil
 			}
-			return cell.List().Cons(sz.SymCell)
+			return sz.MakeCell(sz.SymCell, cell.List())
 		}
 		if inp.Ch == '|' {
-			return cell.List().Cons(sz.SymCell)
+			return sz.MakeCell(sz.SymCell, cell.List())
 		}
 
 		in := cp.parseInline()
@@ -738,9 +734,9 @@ loop:
 		inp.Next()
 	}
 	inp.Next() // consume last '}'
-	a := cp.parseBlockAttributes()
+	attrs := cp.parseBlockAttributes()
 	inp.SkipToEOL()
 	refText := string(inp.Src[posA:posE])
 	ref := ParseReference(refText)
-	return sx.MakeList(sz.SymTransclude, a, ref), true
+	return sz.MakeTransclusion(attrs, ref), true
 }

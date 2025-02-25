@@ -131,17 +131,16 @@ func postProcessRegionVerse(pp *postProcessor, rn *sx.Pair, env *sx.Pair) *sx.Pa
 }
 
 func doPostProcessRegion(pp *postProcessor, rn *sx.Pair, envBlock, envInline *sx.Pair) *sx.Pair {
-
-	sym := rn.Car()
+	sym := rn.Car().(*sx.Symbol)
 	next := rn.Tail()
-	attrs := next.Car()
+	attrs := next.Car().(*sx.Pair)
 	next = next.Tail()
 	blocks := pp.visitPairList(next.Head(), envBlock)
 	text := pp.visitInlines(next.Tail(), envInline)
 	if blocks == nil && text == nil {
 		return nil
 	}
-	return text.Cons(blocks).Cons(attrs).Cons(sym)
+	return sz.MakeRegion(sym, attrs, blocks, text)
 }
 
 func postProcessVerbatim(_ *postProcessor, verb *sx.Pair, _ *sx.Pair) *sx.Pair {
@@ -152,17 +151,16 @@ func postProcessVerbatim(_ *postProcessor, verb *sx.Pair, _ *sx.Pair) *sx.Pair {
 }
 
 func postProcessHeading(pp *postProcessor, hn *sx.Pair, env *sx.Pair) *sx.Pair {
-	sym := hn.Car()
 	next := hn.Tail()
-	level := next.Car()
+	level := next.Car().(sx.Int64)
 	next = next.Tail()
-	attrs := next.Car()
+	attrs := next.Car().(*sx.Pair)
 	next = next.Tail()
-	slug := next.Car()
+	slug := next.Car().(sx.String)
 	next = next.Tail()
-	fragment := next.Car()
+	fragment := next.Car().(sx.String)
 	if text := pp.visitInlines(next.Tail(), env); text != nil {
-		return text.Cons(fragment).Cons(slug).Cons(attrs).Cons(level).Cons(sym)
+		return sz.MakeHeading(int(level), attrs, text, slug.GetValue(), fragment.GetValue())
 	}
 	return nil
 }
@@ -337,13 +335,13 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 	}
 
 	if !foundHeader {
-		for i := 0; i < width; i++ {
+		for i := range width {
 			align[i] = sz.SymCell // Default alignment
 		}
 		return nil, rows, align
 	}
 
-	for i := 0; i < width; i++ {
+	for i := range width {
 		if align[i] == nil {
 			align[i] = sz.SymCell // Default alignment
 		}
@@ -537,25 +535,23 @@ func postProcessSoft(_ *postProcessor, sn *sx.Pair, env *sx.Pair) *sx.Pair {
 }
 
 func postProcessEndnote(pp *postProcessor, en *sx.Pair, env *sx.Pair) *sx.Pair {
-	sym := en.Car()
 	next := en.Tail()
-	attrs := next.Car()
+	attrs := next.Car().(*sx.Pair)
 	if text := pp.visitInlines(next.Tail(), env); text != nil {
-		return text.Cons(attrs).Cons(sym)
+		return sz.MakeEndnote(attrs, text)
 	}
-	return sx.MakeList(sym, attrs)
+	return sz.MakeEndnote(attrs, sx.Nil())
 }
 
 func postProcessMark(pp *postProcessor, en *sx.Pair, env *sx.Pair) *sx.Pair {
-	sym := en.Car()
 	next := en.Tail()
-	mark := next.Car()
+	mark := next.Car().(sx.String)
 	next = next.Tail()
-	slug := next.Car()
+	slug := next.Car().(sx.String)
 	next = next.Tail()
-	fragment := next.Car()
+	fragment := next.Car().(sx.String)
 	text := pp.visitInlines(next.Tail(), env)
-	return text.Cons(fragment).Cons(slug).Cons(mark).Cons(sym)
+	return sz.MakeMark(mark.GetValue(), slug.GetValue(), fragment.GetValue(), text)
 }
 
 func postProcessInlines4(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
@@ -569,25 +565,24 @@ func postProcessInlines4(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair 
 }
 
 func postProcessEmbed(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
-	sym := ln.Car()
 	next := ln.Tail()
-	attrs := next.Car()
+	attrs := next.Car().(*sx.Pair)
 	next = next.Tail()
 	ref := next.Car()
 	next = next.Tail()
-	syntax := next.Car()
+	syntax := next.Car().(sx.String)
 	text := pp.visitInlines(next.Tail(), env)
-	return text.Cons(syntax).Cons(ref).Cons(attrs).Cons(sym)
+	return sz.MakeEmbed(attrs, ref, syntax.GetValue(), text)
 }
 
 func postProcessFormat(pp *postProcessor, fn *sx.Pair, env *sx.Pair) *sx.Pair {
-	symFormat := fn.Car()
+	symFormat := fn.Car().(*sx.Symbol)
 	next := fn.Tail() // Attrs
-	attrs := next.Car()
+	attrs := next.Car().(*sx.Pair)
 	next = next.Tail() // Possible inlines
 	if next == nil {
 		return fn
 	}
 	inlines := pp.visitInlines(next, env)
-	return inlines.Cons(attrs).Cons(symFormat)
+	return sz.MakeFormat(symFormat, attrs, inlines)
 }

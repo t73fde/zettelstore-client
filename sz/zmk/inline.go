@@ -75,10 +75,7 @@ func (cp *zmkP) parseInline() *sx.Pair {
 	return cp.parseText()
 }
 
-func (cp *zmkP) parseText() *sx.Pair {
-	s := cp.parseString()
-	return sx.MakeList(sz.SymText, sx.MakeString(s))
-}
+func (cp *zmkP) parseText() *sx.Pair { return sz.MakeText(cp.parseString()) }
 
 func (cp *zmkP) parseString() string {
 	inp := cp.inp
@@ -102,9 +99,9 @@ func (cp *zmkP) parseBackslash() *sx.Pair {
 	switch inp.Next() {
 	case '\n', '\r':
 		inp.EatEOL()
-		return sx.MakeList(sz.SymHard)
+		return sz.MakeHard()
 	default:
-		return sx.MakeList(sz.SymText, sx.MakeString(cp.parseBackslashRest()))
+		return sz.MakeText(cp.parseBackslashRest())
 	}
 }
 
@@ -124,7 +121,7 @@ func (cp *zmkP) parseBackslashRest() string {
 
 func (cp *zmkP) parseSoftBreak() *sx.Pair {
 	cp.inp.EatEOL()
-	return sx.MakeList(sz.SymSoft)
+	return sz.MakeSoft()
 }
 
 func (cp *zmkP) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
@@ -134,11 +131,7 @@ func (cp *zmkP) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
 			ref := ParseReference(refString)
 			refSym, _ := sx.GetSymbol(ref.Car())
 			sym := sz.MapRefStateToLink(refSym)
-			ln := text.
-				Cons(ref.Tail().Car()). // reference value
-				Cons(attrs).
-				Cons(sym)
-			return ln, true
+			return sz.MakeLink(sym, attrs, ref.Tail().Car().(sx.String).GetValue(), text), true
 		}
 	}
 	return nil, false
@@ -147,12 +140,7 @@ func (cp *zmkP) parseEmbed(openCh, closeCh rune) (*sx.Pair, bool) {
 	if refString, text, ok := cp.parseReference(openCh, closeCh); ok {
 		attrs := cp.parseInlineAttributes()
 		if len(refString) > 0 {
-			ln := text. // text
-					Cons(sx.MakeString("")).         // syntax
-					Cons(ParseReference(refString)). // reference
-					Cons(attrs).                     // attributes
-					Cons(sz.SymEmbed)                // Symbol (EMBED ...)
-			return ln, true
+			return sz.MakeEmbed(attrs, ParseReference(refString), "", text), true
 		}
 	}
 	return nil, false
@@ -162,7 +150,7 @@ func hasQueryPrefix(src []byte) bool {
 	return len(src) > len(api.QueryPrefix) && string(src[:len(api.QueryPrefix)]) == api.QueryPrefix
 }
 
-func (cp *zmkP) parseReference(openCh, closeCh rune) (ref string, text *sx.Pair, _ bool) {
+func (cp *zmkP) parseReference(openCh, closeCh rune) (string, *sx.Pair, bool) {
 	inp := cp.inp
 	inp.Next()
 	inp.SkipSpace()
@@ -170,7 +158,7 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (ref string, text *sx.Pair,
 		// Additional opening chars result in a fail
 		return "", nil, false
 	}
-	var is sx.Vector
+	var lb sx.ListBuilder
 	pos := inp.Pos
 	if !hasQueryPrefix(inp.Src[pos:]) {
 		hasSpace, ok := cp.readReferenceToSep(closeCh)
@@ -187,7 +175,7 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (ref string, text *sx.Pair,
 				if in == nil {
 					break
 				}
-				is = append(is, in)
+				lb.Add(in)
 			}
 			cp.inp = inp
 			inp.Next()
@@ -204,15 +192,12 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (ref string, text *sx.Pair,
 	if !cp.readReferenceToClose(closeCh) {
 		return "", nil, false
 	}
-	ref = strings.TrimSpace(string(inp.Src[pos:inp.Pos]))
+	ref := strings.TrimSpace(string(inp.Src[pos:inp.Pos]))
 	if inp.Next() != closeCh {
 		return "", nil, false
 	}
 	inp.Next()
-	if len(is) == 0 {
-		return ref, nil, true
-	}
-	return ref, sx.MakeList(is...), true
+	return ref, lb.List(), true
 }
 
 func (cp *zmkP) readReferenceToSep(closeCh rune) (bool, bool) {
@@ -298,8 +283,7 @@ loop:
 		return nil, false
 	}
 	attrs := cp.parseInlineAttributes()
-	cn := ins.Cons(sx.MakeString(string(inp.Src[pos:posL]))).Cons(attrs).Cons(sz.SymCite)
-	return cn, true
+	return sz.MakeCite(attrs, string(inp.Src[pos:posL]), ins), true
 }
 
 func (cp *zmkP) parseEndnote() (*sx.Pair, bool) {
@@ -309,7 +293,7 @@ func (cp *zmkP) parseEndnote() (*sx.Pair, bool) {
 		return nil, false
 	}
 	attrs := cp.parseInlineAttributes()
-	return ins.Cons(attrs).Cons(sz.SymEndnote), true
+	return sz.MakeEndnote(attrs, ins), true
 }
 
 func (cp *zmkP) parseMark() (*sx.Pair, bool) {
@@ -322,7 +306,7 @@ func (cp *zmkP) parseMark() (*sx.Pair, bool) {
 		}
 		inp.Next()
 	}
-	mark := inp.Src[pos:inp.Pos]
+	mark := string(inp.Src[pos:inp.Pos])
 	var ins *sx.Pair
 	if inp.Ch == '|' {
 		inp.Next()
@@ -334,18 +318,13 @@ func (cp *zmkP) parseMark() (*sx.Pair, bool) {
 	} else {
 		inp.Next()
 	}
-	mn := ins.
-		Cons(sx.MakeString("")). // Fragment
-		Cons(sx.MakeString("")). // Slug
-		Cons(sx.MakeString(string(mark))).
-		Cons(sz.SymMark)
-	return mn, true
+	return sz.MakeMark(mark, "", "", ins), true
 	// Problematisch ist, dass hier noch nicht mn.Fragment und mn.Slug gesetzt werden.
 	// Evtl. muss es ein PreMark-Symbol geben
 }
 
 func (cp *zmkP) parseLinkLikeRest() (*sx.Pair, bool) {
-	var ins sx.Vector
+	var ins sx.ListBuilder
 	inp := cp.inp
 	inp.SkipSpace()
 	for inp.Ch != ']' {
@@ -353,19 +332,16 @@ func (cp *zmkP) parseLinkLikeRest() (*sx.Pair, bool) {
 		if in == nil {
 			return nil, false
 		}
-		ins = append(ins, in)
+		ins.Add(in)
 		if input.IsEOLEOS(inp.Ch) && sz.IsBreakSym(in.Car()) {
 			return nil, false
 		}
 	}
 	inp.Next()
-	if len(ins) == 0 {
-		return nil, true
-	}
-	return sx.MakeList(ins...), true
+	return ins.List(), true
 }
 
-func (cp *zmkP) parseComment() (res *sx.Pair, success bool) {
+func (cp *zmkP) parseComment() (*sx.Pair, bool) {
 	inp := cp.inp
 	if inp.Next() != '%' {
 		return nil, false
@@ -378,11 +354,7 @@ func (cp *zmkP) parseComment() (res *sx.Pair, success bool) {
 	pos := inp.Pos
 	for {
 		if input.IsEOLEOS(inp.Ch) {
-			return sx.MakeList(
-				sz.SymLiteralComment,
-				attrs,
-				sx.MakeString(string(inp.Src[pos:inp.Pos])),
-			), true
+			return sz.MakeLiteral(sz.SymLiteralComment, attrs, string(inp.Src[pos:inp.Pos])), true
 		}
 		inp.Next()
 	}
@@ -400,7 +372,7 @@ var mapRuneFormat = map[rune]*sx.Symbol{
 	':': sz.SymFormatSpan,
 }
 
-func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
+func (cp *zmkP) parseFormat() (*sx.Pair, bool) {
 	inp := cp.inp
 	fch := inp.Ch
 	symFormat, ok := mapRuneFormat[fch]
@@ -412,7 +384,7 @@ func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
 		return nil, false
 	}
 	inp.Next()
-	var inlines sx.Vector
+	var inlines sx.ListBuilder
 	for {
 		if inp.Ch == input.EOS {
 			return nil, false
@@ -421,15 +393,14 @@ func (cp *zmkP) parseFormat() (res *sx.Pair, success bool) {
 			if inp.Next() == fch {
 				inp.Next()
 				attrs := cp.parseInlineAttributes()
-				fn := sx.MakeList(inlines...).Cons(attrs).Cons(symFormat)
-				return fn, true
+				return sz.MakeFormat(symFormat, attrs, inlines.List()), true
 			}
-			inlines = append(inlines, sx.MakeList(sz.SymText, sx.MakeString(string(fch))))
+			inlines.Add(sz.MakeText(string(fch)))
 		} else if in := cp.parseInline(); in != nil {
 			if input.IsEOLEOS(inp.Ch) && sz.IsBreakSym(in.Car()) {
 				return nil, false
 			}
-			inlines = append(inlines, in)
+			inlines.Add(in)
 		}
 	}
 }
@@ -442,7 +413,7 @@ var mapRuneLiteral = map[rune]*sx.Symbol{
 	// No '$': sz.SymLiteralMath, because pairing literal math is a little different
 }
 
-func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
+func (cp *zmkP) parseLiteral() (*sx.Pair, bool) {
 	inp := cp.inp
 	fch := inp.Ch
 	symLiteral, ok := mapRuneLiteral[fch]
@@ -463,7 +434,7 @@ func (cp *zmkP) parseLiteral() (res *sx.Pair, success bool) {
 			if inp.Peek() == fch {
 				inp.Next()
 				inp.Next()
-				return sx.MakeList(symLiteral, cp.parseInlineAttributes(), sx.MakeString(sb.String())), true
+				return sz.MakeLiteral(symLiteral, cp.parseInlineAttributes(), sb.String()), true
 			}
 			sb.WriteRune(fch)
 			inp.Next()
@@ -490,26 +461,25 @@ func (cp *zmkP) parseLiteralMath() (res *sx.Pair, success bool) {
 			content := append([]byte{}, inp.Src[pos:inp.Pos]...)
 			inp.Next()
 			inp.Next()
-			fn := sx.MakeList(sz.SymLiteralMath, cp.parseInlineAttributes(), sx.MakeString(string(content)))
-			return fn, true
+			return sz.MakeLiteral(sz.SymLiteralMath, cp.parseInlineAttributes(), string(content)), true
 		}
 		inp.Next()
 	}
 }
 
-func (cp *zmkP) parseNdash() (res *sx.Pair, success bool) {
+func (cp *zmkP) parseNdash() (*sx.Pair, bool) {
 	inp := cp.inp
 	if inp.Peek() != inp.Ch {
 		return nil, false
 	}
 	inp.Next()
 	inp.Next()
-	return sx.MakeList(sz.SymText, sx.MakeString("\u2013")), true
+	return sz.MakeText("\u2013"), true
 }
 
 func (cp *zmkP) parseEntity() (res *sx.Pair, success bool) {
 	if text, ok := cp.inp.ScanEntity(); ok {
-		return sx.MakeList(sz.SymText, sx.MakeString(text)), true
+		return sz.MakeText(text), true
 	}
 	return nil, false
 }
