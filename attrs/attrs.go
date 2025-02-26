@@ -59,16 +59,7 @@ func (a Attributes) Get(key string) (string, bool) {
 }
 
 // Clone returns a duplicate of the attribute.
-func (a Attributes) Clone() Attributes {
-	if a == nil {
-		return nil
-	}
-	attrs := make(map[string]string, len(a))
-	for k, v := range a {
-		attrs[k] = v
-	}
-	return attrs
-}
+func (a Attributes) Clone() Attributes { return maps.Clone(a) }
 
 // Set changes the attribute that a given key has now a given value.
 func (a Attributes) Set(key, value string) Attributes {

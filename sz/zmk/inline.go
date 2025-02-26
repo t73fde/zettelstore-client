@@ -15,6 +15,7 @@ package zmk
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"t73f.de/r/sx"
@@ -458,7 +459,7 @@ func (cp *zmkP) parseLiteralMath() (res *sx.Pair, success bool) {
 			return nil, false
 		}
 		if inp.Ch == '$' && inp.Peek() == '$' {
-			content := append([]byte{}, inp.Src[pos:inp.Pos]...)
+			content := slices.Clone(inp.Src[pos:inp.Pos])
 			inp.Next()
 			inp.Next()
 			return sz.MakeLiteral(sz.SymLiteralMath, cp.parseInlineAttributes(), string(content)), true

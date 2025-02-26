@@ -75,7 +75,7 @@ var sResult string // to disable compiler optimization in loop below
 
 func BenchmarkString(b *testing.B) {
 	var s string
-	for range b.N {
+	for b.Loop() {
 		s = id.Zid(12345678901200).String()
 	}
 	sResult = s
@@ -85,7 +85,7 @@ var bResult []byte // to disable compiler optimization in loop below
 
 func BenchmarkBytes(b *testing.B) {
 	var bs []byte
-	for range b.N {
+	for b.Loop() {
 		bs = id.Zid(12345678901200).Bytes()
 	}
 	bResult = bs

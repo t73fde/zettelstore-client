@@ -417,7 +417,7 @@ func (cp *zmkP) buildNestedList(kinds []*sx.Symbol) (ln *sx.Pair, newLnCount int
 func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (*sx.Pair, bool) {
 	childPos := len(cp.lists) - 1
 	parentPos := childPos - 1
-	for i := 0; i < newLnCount; i++ {
+	for range newLnCount {
 		if parentPos < 0 {
 			return cp.lists[0], true
 		}
