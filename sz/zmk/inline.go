@@ -127,7 +127,7 @@ func (cp *zmkP) parseSoftBreak() *sx.Pair {
 
 func (cp *zmkP) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
 	if refString, text, ok := cp.parseReference(openCh, closeCh); ok {
-		attrs := cp.parseInlineAttributes()
+		attrs := parseInlineAttributes(cp.inp)
 		if len(refString) > 0 {
 			ref := ParseReference(refString)
 			refSym, _ := sx.GetSymbol(ref.Car())
@@ -139,7 +139,7 @@ func (cp *zmkP) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
 }
 func (cp *zmkP) parseEmbed(openCh, closeCh rune) (*sx.Pair, bool) {
 	if refString, text, ok := cp.parseReference(openCh, closeCh); ok {
-		attrs := cp.parseInlineAttributes()
+		attrs := parseInlineAttributes(cp.inp)
 		if len(refString) > 0 {
 			return sz.MakeEmbed(attrs, ParseReference(refString), "", text), true
 		}
@@ -283,7 +283,7 @@ loop:
 	if !ok {
 		return nil, false
 	}
-	attrs := cp.parseInlineAttributes()
+	attrs := parseInlineAttributes(inp)
 	return sz.MakeCite(attrs, string(inp.Src[pos:posL]), ins), true
 }
 
@@ -293,7 +293,7 @@ func (cp *zmkP) parseEndnote() (*sx.Pair, bool) {
 	if !ok {
 		return nil, false
 	}
-	attrs := cp.parseInlineAttributes()
+	attrs := parseInlineAttributes(cp.inp)
 	return sz.MakeEndnote(attrs, ins), true
 }
 
@@ -350,7 +350,7 @@ func (cp *zmkP) parseComment() (*sx.Pair, bool) {
 	for inp.Ch == '%' {
 		inp.Next()
 	}
-	attrs := cp.parseInlineAttributes()
+	attrs := parseInlineAttributes(inp)
 	inp.SkipSpace()
 	pos := inp.Pos
 	for {
@@ -393,7 +393,7 @@ func (cp *zmkP) parseFormat() (*sx.Pair, bool) {
 		if inp.Ch == fch {
 			if inp.Next() == fch {
 				inp.Next()
-				attrs := cp.parseInlineAttributes()
+				attrs := parseInlineAttributes(inp)
 				return sz.MakeFormat(symFormat, attrs, inlines.List()), true
 			}
 			inlines.Add(sz.MakeText(string(fch)))
@@ -435,7 +435,7 @@ func (cp *zmkP) parseLiteral() (*sx.Pair, bool) {
 			if inp.Peek() == fch {
 				inp.Next()
 				inp.Next()
-				return sz.MakeLiteral(symLiteral, cp.parseInlineAttributes(), sb.String()), true
+				return sz.MakeLiteral(symLiteral, parseInlineAttributes(inp), sb.String()), true
 			}
 			sb.WriteRune(fch)
 			inp.Next()
@@ -462,7 +462,7 @@ func (cp *zmkP) parseLiteralMath() (res *sx.Pair, success bool) {
 			content := slices.Clone(inp.Src[pos:inp.Pos])
 			inp.Next()
 			inp.Next()
-			return sz.MakeLiteral(sz.SymLiteralMath, cp.parseInlineAttributes(), string(content)), true
+			return sz.MakeLiteral(sz.SymLiteralMath, parseInlineAttributes(inp), string(content)), true
 		}
 		inp.Next()
 	}

@@ -15,6 +15,7 @@
 package zmk
 
 import (
+	"maps"
 	"slices"
 	"strings"
 	"unicode"
@@ -109,21 +110,14 @@ func (attrs attrMap) updateAttrs(key, val string) {
 }
 
 func (attrs attrMap) asPairAssoc() *sx.Pair {
-	names := make([]string, 0, len(attrs))
-	for n := range attrs {
-		names = append(names, n)
+	var lb sx.ListBuilder
+	for _, key := range slices.Sorted(maps.Keys(attrs)) {
+		lb.Add(sx.Cons(sx.MakeString(key), sx.MakeString(attrs[key])))
 	}
-	slices.Sort(names)
-	var assoc *sx.Pair
-	for i := len(names) - 1; i >= 0; i-- {
-		n := names[i]
-		assoc = assoc.Cons(sx.Cons(sx.MakeString(n), sx.MakeString(attrs[n])))
-	}
-	return assoc
+	return lb.List()
 }
 
-func (cp *zmkP) parseNormalAttribute(attrs attrMap) bool {
-	inp := cp.inp
+func parseNormalAttribute(inp *input.Input, attrs attrMap) bool {
 	posK := inp.Pos
 	for isNameRune(inp.Ch) {
 		inp.Next()
@@ -136,13 +130,12 @@ func (cp *zmkP) parseNormalAttribute(attrs attrMap) bool {
 		attrs[key] = ""
 		return true
 	}
-	return cp.parseAttributeValue(key, attrs)
+	return parseAttributeValue(inp, key, attrs)
 }
 
-func (cp *zmkP) parseAttributeValue(key string, attrs attrMap) bool {
-	inp := cp.inp
+func parseAttributeValue(inp *input.Input, key string, attrs attrMap) bool {
 	if inp.Next() == '"' {
-		return cp.parseQuotedAttributeValue(key, attrs)
+		return parseQuotedAttributeValue(inp, key, attrs)
 	}
 	posV := inp.Pos
 	for {
@@ -157,8 +150,7 @@ func (cp *zmkP) parseAttributeValue(key string, attrs attrMap) bool {
 	}
 }
 
-func (cp *zmkP) parseQuotedAttributeValue(key string, attrs attrMap) bool {
-	inp := cp.inp
+func parseQuotedAttributeValue(inp *input.Input, key string, attrs attrMap) bool {
 	inp.Next()
 	var sb strings.Builder
 	for {
@@ -183,8 +175,7 @@ func (cp *zmkP) parseQuotedAttributeValue(key string, attrs attrMap) bool {
 
 }
 
-func (cp *zmkP) parseBlockAttributes() *sx.Pair {
-	inp := cp.inp
+func parseBlockAttributes(inp *input.Input) *sx.Pair {
 	pos := inp.Pos
 	for isNameRune(inp.Ch) {
 		inp.Next()
@@ -195,13 +186,12 @@ func (cp *zmkP) parseBlockAttributes() *sx.Pair {
 
 	// No immediate name: skip spaces
 	inp.SkipSpace()
-	return cp.parseInlineAttributes()
+	return parseInlineAttributes(inp)
 }
 
-func (cp *zmkP) parseInlineAttributes() *sx.Pair {
-	inp := cp.inp
+func parseInlineAttributes(inp *input.Input) *sx.Pair {
 	pos := inp.Pos
-	if attrs, success := cp.doParseAttributes(); success {
+	if attrs, success := doParseAttributes(inp); success {
 		return attrs
 	}
 	inp.SetPos(pos)
@@ -209,24 +199,22 @@ func (cp *zmkP) parseInlineAttributes() *sx.Pair {
 }
 
 // doParseAttributes reads attributes.
-func (cp *zmkP) doParseAttributes() (res *sx.Pair, success bool) {
-	inp := cp.inp
+func doParseAttributes(inp *input.Input) (*sx.Pair, bool) {
 	if inp.Ch != '{' {
 		return nil, false
 	}
 	inp.Next()
 	a := attrMap{}
-	if !cp.parseAttributeValues(a) {
+	if !parseAttributeValues(inp, a) {
 		return nil, false
 	}
 	inp.Next()
 	return a.asPairAssoc(), true
 }
 
-func (cp *zmkP) parseAttributeValues(a attrMap) bool {
-	inp := cp.inp
+func parseAttributeValues(inp *input.Input, a attrMap) bool {
 	for {
-		cp.skipSpaceLine()
+		skipSpaceLine(inp)
 		switch inp.Ch {
 		case input.EOS:
 			return false
@@ -244,11 +232,11 @@ func (cp *zmkP) parseAttributeValues(a attrMap) bool {
 			a.updateAttrs("class", string(inp.Src[posC:inp.Pos]))
 		case '=':
 			delete(a, "")
-			if !cp.parseAttributeValue("", a) {
+			if !parseAttributeValue(inp, "", a) {
 				return false
 			}
 		default:
-			if !cp.parseNormalAttribute(a) {
+			if !parseNormalAttribute(inp, a) {
 				return false
 			}
 		}
@@ -265,8 +253,8 @@ func (cp *zmkP) parseAttributeValues(a attrMap) bool {
 	}
 }
 
-func (cp *zmkP) skipSpaceLine() {
-	for inp := cp.inp; ; {
+func skipSpaceLine(inp *input.Input) {
+	for {
 		switch inp.Ch {
 		case ' ':
 			inp.Next()

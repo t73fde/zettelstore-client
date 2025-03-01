@@ -184,7 +184,7 @@ func (cp *zmkP) parseVerbatim() (*sx.Pair, bool) {
 	if cnt < 3 {
 		return nil, false
 	}
-	attrs := cp.parseBlockAttributes()
+	attrs := parseBlockAttributes(inp)
 	inp.SkipToEOL()
 	if inp.Ch == input.EOS {
 		return nil, false
@@ -246,7 +246,7 @@ func (cp *zmkP) parseRegion() (*sx.Pair, bool) {
 	default:
 		panic(fmt.Sprintf("%q is not a region char", fch))
 	}
-	attrs := cp.parseBlockAttributes()
+	attrs := parseBlockAttributes(inp)
 	inp.SkipToEOL()
 	if inp.Ch == input.EOS {
 		return nil, false
@@ -323,7 +323,7 @@ func (cp *zmkP) parseHeading() (*sx.Pair, bool) {
 		}
 		text.Add(in)
 		if inp.Ch == '{' && inp.Peek() != '{' {
-			attrs = cp.parseBlockAttributes()
+			attrs = parseBlockAttributes(inp)
 			inp.SkipToEOL()
 			return sz.MakeHeading(level, attrs, text.List(), "", ""), true
 		}
@@ -337,7 +337,7 @@ func (cp *zmkP) parseHRule() (*sx.Pair, bool) {
 		return nil, false
 	}
 
-	attrs := cp.parseBlockAttributes()
+	attrs := parseBlockAttributes(inp)
 	inp.SkipToEOL()
 	return sz.MakeThematic(attrs), true
 }
@@ -734,7 +734,7 @@ loop:
 		inp.Next()
 	}
 	inp.Next() // consume last '}'
-	attrs := cp.parseBlockAttributes()
+	attrs := parseBlockAttributes(inp)
 	inp.SkipToEOL()
 	refText := string(inp.Src[posA:posE])
 	ref := ParseReference(refText)
