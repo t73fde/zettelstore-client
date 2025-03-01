@@ -89,7 +89,7 @@ func (ev *Evaluator) Evaluate(lst *sx.Pair, env *Environment) (*sx.Pair, error) 
 		return nil, fmt.Errorf("evaluation does not result in a pair, but %T/%v", result, result)
 	}
 
-	for i := range env.endnotes {
+	for i := 0; i < len(env.endnotes); i++ {
 		// May extend tr.endnotes -> do not use for i := range len(...)!!!
 
 		if env.endnotes[i].noteHx != nil {
