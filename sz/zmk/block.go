@@ -43,7 +43,7 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 			bn, success = cp.parseColon()
 		case '@', '`', runeModGrave, '%', '~', '$':
 			cp.clearStacked()
-			bn, success = cp.parseVerbatim()
+			bn, success = parseVerbatim(inp)
 		case '"', '<':
 			cp.clearStacked()
 			bn, success = cp.parseRegion()
@@ -52,7 +52,7 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 			bn, success = cp.parseHeading()
 		case '-':
 			cp.clearStacked()
-			bn, success = cp.parseHRule()
+			bn, success = parseHRule(inp)
 		case '*', '#', '>':
 			cp.lastRow = nil
 			cp.descrl = nil
@@ -70,7 +70,7 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 			bn, success = cp.parseRow(), true
 		case '{':
 			cp.clearStacked()
-			bn, success = cp.parseTransclusion()
+			bn, success = parseTransclusion(inp)
 		}
 
 		if success {
@@ -166,8 +166,7 @@ func (cp *zmkP) parsePara() *sx.Pair {
 }
 
 // countDelim read from input until a non-delimiter is found and returns number of delimiter chars.
-func (cp *zmkP) countDelim(delim rune) int {
-	inp := cp.inp
+func countDelim(inp *input.Input, delim rune) int {
 	cnt := 0
 	for inp.Ch == delim {
 		cnt++
@@ -177,10 +176,9 @@ func (cp *zmkP) countDelim(delim rune) int {
 }
 
 // parseVerbatim parses a verbatim block.
-func (cp *zmkP) parseVerbatim() (*sx.Pair, bool) {
-	inp := cp.inp
+func parseVerbatim(inp *input.Input) (*sx.Pair, bool) {
 	fch := inp.Ch
-	cnt := cp.countDelim(fch)
+	cnt := countDelim(inp, fch)
 	if cnt < 3 {
 		return nil, false
 	}
@@ -210,7 +208,7 @@ func (cp *zmkP) parseVerbatim() (*sx.Pair, bool) {
 		posL := inp.Pos
 		switch inp.Ch {
 		case fch:
-			if cp.countDelim(fch) >= cnt {
+			if countDelim(inp, fch) >= cnt {
 				inp.SkipToEOL()
 				return sz.MakeVerbatim(sym, attrs, string(content)), true
 			}
@@ -230,7 +228,7 @@ func (cp *zmkP) parseVerbatim() (*sx.Pair, bool) {
 func (cp *zmkP) parseRegion() (*sx.Pair, bool) {
 	inp := cp.inp
 	fch := inp.Ch
-	cnt := cp.countDelim(fch)
+	cnt := countDelim(inp, fch)
 	if cnt < 3 {
 		return nil, false
 	}
@@ -258,7 +256,7 @@ func (cp *zmkP) parseRegion() (*sx.Pair, bool) {
 		posL := inp.Pos
 		switch inp.Ch {
 		case fch:
-			if cp.countDelim(fch) >= cnt {
+			if countDelim(inp, fch) >= cnt {
 				ins := cp.parseRegionLastLine()
 				return sz.MakeRegion(sym, attrs, blocksBuilder.List(), ins), true
 			}
@@ -298,7 +296,7 @@ func (cp *zmkP) parseRegionLastLine() *sx.Pair {
 // parseHeading parses a head line.
 func (cp *zmkP) parseHeading() (*sx.Pair, bool) {
 	inp := cp.inp
-	delims := cp.countDelim(inp.Ch)
+	delims := countDelim(inp, inp.Ch)
 	if delims < 3 {
 		return nil, false
 	}
@@ -331,9 +329,8 @@ func (cp *zmkP) parseHeading() (*sx.Pair, bool) {
 }
 
 // parseHRule parses a horizontal rule.
-func (cp *zmkP) parseHRule() (*sx.Pair, bool) {
-	inp := cp.inp
-	if cp.countDelim(inp.Ch) < 3 {
+func parseHRule(inp *input.Input) (*sx.Pair, bool) {
+	if countDelim(inp, inp.Ch) < 3 {
 		return nil, false
 	}
 
@@ -344,11 +341,11 @@ func (cp *zmkP) parseHRule() (*sx.Pair, bool) {
 
 // parseNestedList parses a list.
 func (cp *zmkP) parseNestedList() (*sx.Pair, bool) {
-	kinds := cp.parseNestedListKinds()
+	inp := cp.inp
+	kinds := parseNestedListKinds(inp)
 	if len(kinds) == 0 {
 		return nil, false
 	}
-	inp := cp.inp
 	inp.SkipSpace()
 	if !kinds[len(kinds)-1].IsEqual(sz.SymListQuote) && input.IsEOLEOS(inp.Ch) {
 		return nil, false
@@ -368,8 +365,7 @@ func (cp *zmkP) parseNestedList() (*sx.Pair, bool) {
 	return cp.cleanupParsedNestedList(newLnCount)
 }
 
-func (cp *zmkP) parseNestedListKinds() []*sx.Symbol {
-	inp := cp.inp
+func parseNestedListKinds(inp *input.Input) []*sx.Symbol {
 	result := make([]*sx.Symbol, 0, 8)
 	for {
 		var sym *sx.Symbol
@@ -696,11 +692,10 @@ func (cp *zmkP) parseCell() *sx.Pair {
 }
 
 // parseTransclusion parses '{' '{' '{' ZID '}' '}' '}'
-func (cp *zmkP) parseTransclusion() (*sx.Pair, bool) {
-	if cp.countDelim('{') != 3 {
+func parseTransclusion(inp *input.Input) (*sx.Pair, bool) {
+	if countDelim(inp, '{') != 3 {
 		return nil, false
 	}
-	inp := cp.inp
 	posA, posE := inp.Pos, 0
 
 loop:

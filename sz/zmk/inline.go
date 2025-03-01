@@ -37,7 +37,7 @@ func (cp *zmkP) parseInline() *sx.Pair {
 		case input.EOS:
 			return nil
 		case '\n', '\r':
-			return cp.parseSoftBreak()
+			return parseSoftBreak(inp)
 		case '[':
 			switch inp.Next() {
 			case '[':
@@ -54,36 +54,35 @@ func (cp *zmkP) parseInline() *sx.Pair {
 				in, success = cp.parseEmbed('{', '}')
 			}
 		case '%':
-			in, success = cp.parseComment()
+			in, success = parseComment(inp)
 		case '_', '*', '>', '~', '^', ',', '"', '#', ':':
 			in, success = cp.parseFormat()
 		case '\'', '`', '=', runeModGrave:
-			in, success = cp.parseLiteral()
+			in, success = parseLiteral(inp)
 		case '$':
-			in, success = cp.parseLiteralMath()
+			in, success = parseLiteralMath(inp)
 		case '\\':
-			return cp.parseBackslash()
+			return parseBackslash(inp)
 		case '-':
-			in, success = cp.parseNdash()
+			in, success = parseNdash(inp)
 		case '&':
-			in, success = cp.parseEntity()
+			in, success = parseEntity(inp)
 		}
 		if success {
 			return in
 		}
 	}
 	inp.SetPos(pos)
-	return cp.parseText()
+	return parseText(inp)
 }
 
-func (cp *zmkP) parseText() *sx.Pair { return sz.MakeText(cp.parseString()) }
+func parseText(inp *input.Input) *sx.Pair { return sz.MakeText(parseString(inp)) }
 
-func (cp *zmkP) parseString() string {
-	inp := cp.inp
+func parseString(inp *input.Input) string {
 	pos := inp.Pos
 	if inp.Ch == '\\' {
-		cp.inp.Next()
-		return cp.parseBackslashRest()
+		inp.Next()
+		return parseBackslashRest(inp)
 	}
 	for {
 		switch inp.Next() {
@@ -95,19 +94,17 @@ func (cp *zmkP) parseString() string {
 	}
 }
 
-func (cp *zmkP) parseBackslash() *sx.Pair {
-	inp := cp.inp
+func parseBackslash(inp *input.Input) *sx.Pair {
 	switch inp.Next() {
 	case '\n', '\r':
 		inp.EatEOL()
 		return sz.MakeHard()
 	default:
-		return sz.MakeText(cp.parseBackslashRest())
+		return sz.MakeText(parseBackslashRest(inp))
 	}
 }
 
-func (cp *zmkP) parseBackslashRest() string {
-	inp := cp.inp
+func parseBackslashRest(inp *input.Input) string {
 	if input.IsEOLEOS(inp.Ch) {
 		return "\\"
 	}
@@ -120,8 +117,8 @@ func (cp *zmkP) parseBackslashRest() string {
 	return string(inp.Src[pos:inp.Pos])
 }
 
-func (cp *zmkP) parseSoftBreak() *sx.Pair {
-	cp.inp.EatEOL()
+func parseSoftBreak(inp *input.Input) *sx.Pair {
+	inp.EatEOL()
 	return sz.MakeSoft()
 }
 
@@ -162,7 +159,7 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (string, *sx.Pair, bool) {
 	var lb sx.ListBuilder
 	pos := inp.Pos
 	if !hasQueryPrefix(inp.Src[pos:]) {
-		hasSpace, ok := cp.readReferenceToSep(closeCh)
+		hasSpace, ok := readReferenceToSep(inp, closeCh)
 		if !ok {
 			return "", nil, false
 		}
@@ -190,7 +187,7 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (string, *sx.Pair, bool) {
 
 	inp.SkipSpace()
 	pos = inp.Pos
-	if !cp.readReferenceToClose(closeCh) {
+	if !readReferenceToClose(inp, closeCh) {
 		return "", nil, false
 	}
 	ref := strings.TrimSpace(string(inp.Src[pos:inp.Pos]))
@@ -201,9 +198,8 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (string, *sx.Pair, bool) {
 	return ref, lb.List(), true
 }
 
-func (cp *zmkP) readReferenceToSep(closeCh rune) (bool, bool) {
+func readReferenceToSep(inp *input.Input, closeCh rune) (bool, bool) {
 	hasSpace := false
-	inp := cp.inp
 	for {
 		switch inp.Ch {
 		case input.EOS:
@@ -234,8 +230,7 @@ func (cp *zmkP) readReferenceToSep(closeCh rune) (bool, bool) {
 	}
 }
 
-func (cp *zmkP) readReferenceToClose(closeCh rune) bool {
-	inp := cp.inp
+func readReferenceToClose(inp *input.Input, closeCh rune) bool {
 	pos := inp.Pos
 	for {
 		switch inp.Ch {
@@ -342,8 +337,7 @@ func (cp *zmkP) parseLinkLikeRest() (*sx.Pair, bool) {
 	return ins.List(), true
 }
 
-func (cp *zmkP) parseComment() (*sx.Pair, bool) {
-	inp := cp.inp
+func parseComment(inp *input.Input) (*sx.Pair, bool) {
 	if inp.Next() != '%' {
 		return nil, false
 	}
@@ -414,8 +408,7 @@ var mapRuneLiteral = map[rune]*sx.Symbol{
 	// No '$': sz.SymLiteralMath, because pairing literal math is a little different
 }
 
-func (cp *zmkP) parseLiteral() (*sx.Pair, bool) {
-	inp := cp.inp
+func parseLiteral(inp *input.Input) (*sx.Pair, bool) {
 	fch := inp.Ch
 	symLiteral, ok := mapRuneLiteral[fch]
 	if !ok {
@@ -440,14 +433,13 @@ func (cp *zmkP) parseLiteral() (*sx.Pair, bool) {
 			sb.WriteRune(fch)
 			inp.Next()
 		} else {
-			s := cp.parseString()
+			s := parseString(inp)
 			sb.WriteString(s)
 		}
 	}
 }
 
-func (cp *zmkP) parseLiteralMath() (res *sx.Pair, success bool) {
-	inp := cp.inp
+func parseLiteralMath(inp *input.Input) (res *sx.Pair, success bool) {
 	// read 2nd formatting character
 	if inp.Next() != '$' {
 		return nil, false
@@ -468,8 +460,7 @@ func (cp *zmkP) parseLiteralMath() (res *sx.Pair, success bool) {
 	}
 }
 
-func (cp *zmkP) parseNdash() (*sx.Pair, bool) {
-	inp := cp.inp
+func parseNdash(inp *input.Input) (*sx.Pair, bool) {
 	if inp.Peek() != inp.Ch {
 		return nil, false
 	}
@@ -478,8 +469,8 @@ func (cp *zmkP) parseNdash() (*sx.Pair, bool) {
 	return sz.MakeText("\u2013"), true
 }
 
-func (cp *zmkP) parseEntity() (res *sx.Pair, success bool) {
-	if text, ok := cp.inp.ScanEntity(); ok {
+func parseEntity(inp *input.Input) (*sx.Pair, bool) {
+	if text, ok := inp.ScanEntity(); ok {
 		return sz.MakeText(text), true
 	}
 	return nil, false
