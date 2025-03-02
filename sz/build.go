@@ -13,9 +13,7 @@
 
 package sz
 
-import (
-	"t73f.de/r/sx"
-)
+import "t73f.de/r/sx"
 
 // MakeBlock builds a block node.
 func MakeBlock(blocks ...*sx.Pair) *sx.Pair {
@@ -29,16 +27,6 @@ func MakeBlock(blocks ...*sx.Pair) *sx.Pair {
 
 // MakeBlockList builds a block node from a list of blocks.
 func MakeBlockList(blocks *sx.Pair) *sx.Pair { return blocks.Cons(SymBlock) }
-
-// MakeInline builds an inline node.
-func MakeInline(inlines ...*sx.Pair) *sx.Pair {
-	var lb sx.ListBuilder
-	lb.Add(SymInline)
-	for _, inline := range inlines {
-		lb.Add(inline)
-	}
-	return lb.List()
-}
 
 // MakeInlineList builds an inline node from a list of inlines.
 func MakeInlineList(inlines *sx.Pair) *sx.Pair { return inlines.Cons(SymInline) }

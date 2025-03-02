@@ -25,8 +25,8 @@ import (
 	"t73f.de/r/zsc/sz"
 )
 
-// ParseBlocks tries to parse the input as a block element.
-func ParseBlocks(inp *input.Input) *sx.Pair {
+// Parse tries to parse the input as a block element.
+func Parse(inp *input.Input) *sx.Pair {
 	parser := zmkP{inp: inp}
 
 	var lastPara *sx.Pair
@@ -54,26 +54,6 @@ func ParseBlocks(inp *input.Input) *sx.Pair {
 		return bs.Cons(sz.SymBlock)
 	}
 	return nil
-}
-
-// ParseInlines tries to parse the input as an inline element.
-func ParseInlines(inp *input.Input) *sx.Pair {
-	parser := zmkP{inp: inp}
-	var ins sx.ListBuilder
-	for inp.Ch != input.EOS {
-		in := parser.parseInline()
-		if in == nil {
-			break
-		}
-		ins.Add(in)
-	}
-
-	inl := sz.MakeInlineList(ins.List())
-	var pp postProcessor
-	if pair, isPair := sx.GetPair(sz.Walk(&pp, inl, nil)); isPair {
-		return pair
-	}
-	return sx.Nil()
 }
 
 type zmkP struct {
