@@ -431,6 +431,7 @@ func (ev *Evaluator) bindBlocks() {
 		if refValue := getString(ref.Tail().Car(), env); refValue.GetValue() != "" {
 			if refSym, isRefSym := sx.GetSymbol(refKind); isRefSym && refSym.IsEqualSymbol(sz.SymRefStateExternal) {
 				a := GetAttributes(args[0], env).Set("src", refValue.GetValue()).AddClass("external")
+				// TODO: if len(args) > 2, add "alt" attr based on args[2:], as in SymEmbed
 				return sx.Nil().Cons(sx.Nil().Cons(EvaluateAttrbute(a)).Cons(SymIMG)).Cons(SymP)
 			}
 			return sx.MakeList(

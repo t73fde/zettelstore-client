@@ -733,5 +733,5 @@ loop:
 	inp.SkipToEOL()
 	refText := string(inp.Src[posA:posE])
 	ref := ParseReference(refText)
-	return sz.MakeTransclusion(attrs, ref), true
+	return sz.MakeTransclusion(attrs, ref, sx.Nil()), true
 }

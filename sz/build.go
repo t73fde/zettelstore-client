@@ -65,10 +65,8 @@ func MakeCell(sym *sx.Symbol, inlines *sx.Pair) *sx.Pair {
 }
 
 // MakeTransclusion builds a transclusion node.
-func MakeTransclusion(attrs *sx.Pair, ref *sx.Pair) *sx.Pair {
-	var lb sx.ListBuilder
-	lb.AddN(SymTransclude, attrs, ref)
-	return lb.List()
+func MakeTransclusion(attrs *sx.Pair, ref *sx.Pair, text *sx.Pair) *sx.Pair {
+	return text.Cons(ref).Cons(attrs).Cons(SymTransclude)
 }
 
 // MakeBLOB builds a block BLOB node.

@@ -59,6 +59,7 @@ func init() {
 		SymCellCenter:    walkChildrenTail,
 		SymCellLeft:      walkChildrenTail,
 		SymCellRight:     walkChildrenTail,
+		SymTransclude:    walkChildrenInlines4,
 
 		SymInline:       walkChildrenTail,
 		SymEndnote:      walkChildrenInlines3,
