@@ -3,12 +3,12 @@
 This repository contains Go client software to
 access [https://zettelstore.de|Zettelstore] via its API.
 
-<h3>Latest Release: 0.19.0 (2024-12-13)</h3>
-  *  [./changes.wiki#0_19|Change summary]
-  *  [/timeline?p=v0.19.0&bt=v0.18.0&y=ci|Check-ins for version 0.19],
-     [/vdiff?to=v0.19.0&from=v0.18.0|content diff]
-  *  [/timeline?df=v0.19.0&y=ci|Check-ins derived from the 0.19 release],
-     [/vdiff?from=v0.19.0&to=trunk|content diff]
+<h3>Latest Release: 0.20.0 (2024-12-13)</h3>
+  *  [./changes.wiki#0_20|Change summary]
+  *  [/timeline?p=v0.20.0&bt=v0.19.0&y=ci|Check-ins for version 0.20],
+     [/vdiff?to=v0.20.0&from=v0.19.0|content diff]
+  *  [/timeline?df=v0.20.0&y=ci|Check-ins derived from the 0.20 release],
+     [/vdiff?from=v0.20.0&to=trunk|content diff]
   *  [/timeline?t=release|Timeline of all past releases]
 
 <h2>Usage instructions</h2>

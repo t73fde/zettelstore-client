@@ -2,6 +2,8 @@
 
 <a name="0_20"></a>
 <h2>Changes for Version 0.20.0 (pending)</h2>
+  *  Add Zettelmarkup-Parser that translates to sz expressions
+  *  Add domain specific data structure from main zettelstore
   *  <code>client.QueryZettelData</code> will support the new encoding of
      result lists. This make the client incompatible to version 0.19.
 
