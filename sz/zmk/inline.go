@@ -19,12 +19,11 @@ import (
 	"strings"
 
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/input"
 	"t73f.de/r/zsc/sz"
 )
 
-func (cp *zmkP) parseInline() *sx.Pair {
+func (cp *Parser) parseInline() *sx.Pair {
 	inp := cp.inp
 	pos := inp.Pos
 	if cp.nestingLevel <= maxNestingLevel {
@@ -122,11 +121,11 @@ func parseSoftBreak(inp *input.Input) *sx.Pair {
 	return sz.MakeSoft()
 }
 
-func (cp *zmkP) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
+func (cp *Parser) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
 	if refString, text, ok := cp.parseReference(openCh, closeCh); ok {
 		attrs := parseInlineAttributes(cp.inp)
 		if len(refString) > 0 {
-			ref := ParseReference(refString)
+			ref := cp.scanReference(refString)
 			refSym, _ := sx.GetSymbol(ref.Car())
 			sym := sz.MapRefStateToLink(refSym)
 			return sz.MakeLink(sym, attrs, ref.Tail().Car().(sx.String).GetValue(), text), true
@@ -134,21 +133,17 @@ func (cp *zmkP) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
 	}
 	return nil, false
 }
-func (cp *zmkP) parseEmbed(openCh, closeCh rune) (*sx.Pair, bool) {
+func (cp *Parser) parseEmbed(openCh, closeCh rune) (*sx.Pair, bool) {
 	if refString, text, ok := cp.parseReference(openCh, closeCh); ok {
 		attrs := parseInlineAttributes(cp.inp)
 		if len(refString) > 0 {
-			return sz.MakeEmbed(attrs, ParseReference(refString), "", text), true
+			return sz.MakeEmbed(attrs, cp.scanReference(refString), "", text), true
 		}
 	}
 	return nil, false
 }
 
-func hasQueryPrefix(src []byte) bool {
-	return len(src) > len(api.QueryPrefix) && string(src[:len(api.QueryPrefix)]) == api.QueryPrefix
-}
-
-func (cp *zmkP) parseReference(openCh, closeCh rune) (string, *sx.Pair, bool) {
+func (cp *Parser) parseReference(openCh, closeCh rune) (string, *sx.Pair, bool) {
 	inp := cp.inp
 	inp.Next()
 	inp.SkipSpace()
@@ -158,7 +153,7 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (string, *sx.Pair, bool) {
 	}
 	var lb sx.ListBuilder
 	pos := inp.Pos
-	if !hasQueryPrefix(inp.Src[pos:]) {
+	if !cp.isSpaceReference(inp.Src[pos:]) {
 		hasSpace, ok := readReferenceToSep(inp, closeCh)
 		if !ok {
 			return "", nil, false
@@ -187,7 +182,7 @@ func (cp *zmkP) parseReference(openCh, closeCh rune) (string, *sx.Pair, bool) {
 
 	inp.SkipSpace()
 	pos = inp.Pos
-	if !readReferenceToClose(inp, closeCh) {
+	if !cp.readReferenceToClose(closeCh) {
 		return "", nil, false
 	}
 	ref := strings.TrimSpace(string(inp.Src[pos:inp.Pos]))
@@ -230,14 +225,15 @@ func readReferenceToSep(inp *input.Input, closeCh rune) (bool, bool) {
 	}
 }
 
-func readReferenceToClose(inp *input.Input, closeCh rune) bool {
+func (cp *Parser) readReferenceToClose(closeCh rune) bool {
+	inp := cp.inp
 	pos := inp.Pos
 	for {
 		switch inp.Ch {
 		case input.EOS:
 			return false
 		case '\t', '\r', '\n', ' ':
-			if !hasQueryPrefix(inp.Src[pos:]) {
+			if !cp.isSpaceReference(inp.Src[pos:]) {
 				return false
 			}
 		case '\\':
@@ -252,7 +248,7 @@ func readReferenceToClose(inp *input.Input, closeCh rune) bool {
 	}
 }
 
-func (cp *zmkP) parseCite() (*sx.Pair, bool) {
+func (cp *Parser) parseCite() (*sx.Pair, bool) {
 	inp := cp.inp
 	switch inp.Next() {
 	case ' ', ',', '|', ']', '\n', '\r':
@@ -282,7 +278,7 @@ loop:
 	return sz.MakeCite(attrs, string(inp.Src[pos:posL]), ins), true
 }
 
-func (cp *zmkP) parseEndnote() (*sx.Pair, bool) {
+func (cp *Parser) parseEndnote() (*sx.Pair, bool) {
 	cp.inp.Next()
 	ins, ok := cp.parseLinkLikeRest()
 	if !ok {
@@ -292,7 +288,7 @@ func (cp *zmkP) parseEndnote() (*sx.Pair, bool) {
 	return sz.MakeEndnote(attrs, ins), true
 }
 
-func (cp *zmkP) parseMark() (*sx.Pair, bool) {
+func (cp *Parser) parseMark() (*sx.Pair, bool) {
 	inp := cp.inp
 	inp.Next()
 	pos := inp.Pos
@@ -319,7 +315,7 @@ func (cp *zmkP) parseMark() (*sx.Pair, bool) {
 	// Evtl. muss es ein PreMark-Symbol geben
 }
 
-func (cp *zmkP) parseLinkLikeRest() (*sx.Pair, bool) {
+func (cp *Parser) parseLinkLikeRest() (*sx.Pair, bool) {
 	var ins sx.ListBuilder
 	inp := cp.inp
 	inp.SkipSpace()
@@ -367,7 +363,7 @@ var mapRuneFormat = map[rune]*sx.Symbol{
 	':': sz.SymFormatSpan,
 }
 
-func (cp *zmkP) parseFormat() (*sx.Pair, bool) {
+func (cp *Parser) parseFormat() (*sx.Pair, bool) {
 	inp := cp.inp
 	fch := inp.Ch
 	symFormat, ok := mapRuneFormat[fch]

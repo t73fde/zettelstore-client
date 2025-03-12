@@ -32,7 +32,7 @@ func TestParseReference(t *testing.T) {
 	}
 
 	for i, tc := range testcases {
-		got := zmk.ParseReference(tc.link)
+		got := zmk.ScanReference(tc.link)
 		gotIsValid := zmk.ReferenceIsValid(got)
 		if gotIsValid == tc.err {
 			t.Errorf(
@@ -68,7 +68,7 @@ func TestReferenceIsZettelMaterial(t *testing.T) {
 	}
 
 	for i, tc := range testcases {
-		ref := zmk.ParseReference(tc.link)
+		ref := zmk.ScanReference(tc.link)
 		isZettel := zmk.ReferenceIsZettel(ref)
 		if isZettel != tc.isZettel {
 			t.Errorf(

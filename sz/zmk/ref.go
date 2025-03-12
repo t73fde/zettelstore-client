@@ -23,8 +23,8 @@ import (
 	"t73f.de/r/zsc/sz"
 )
 
-// ParseReference parses a string and returns a reference.
-func ParseReference(s string) *sx.Pair {
+// ScanReference scans a string and returns a reference.
+func ScanReference(s string) *sx.Pair {
 	if invalidReference(s) {
 		return makePairRef(sz.SymRefStateInvalid, s)
 	}

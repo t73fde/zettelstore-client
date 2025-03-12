@@ -22,7 +22,7 @@ import (
 )
 
 // parseBlock parses one block.
-func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
+func (cp *Parser) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 	inp := cp.inp
 	pos := inp.Pos
 	if cp.nestingLevel <= maxNestingLevel {
@@ -70,7 +70,7 @@ func (cp *zmkP) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 			bn, success = cp.parseRow(), true
 		case '{':
 			cp.clearStacked()
-			bn, success = parseTransclusion(inp)
+			bn, success = cp.parseTransclusion()
 		}
 
 		if success {
@@ -124,7 +124,7 @@ func startsWithSpaceSoftBreak(ins *sx.Pair) bool {
 
 var symSeparator = sx.MakeSymbol("sEpArAtOr")
 
-func (cp *zmkP) cleanupListsAfterEOL() {
+func (cp *Parser) cleanupListsAfterEOL() {
 	for _, l := range cp.lists {
 		l.LastPair().Head().LastPair().AppendBang(sx.Cons(symSeparator, nil))
 	}
@@ -136,7 +136,7 @@ func (cp *zmkP) cleanupListsAfterEOL() {
 }
 
 // parseColon determines which element should be parsed.
-func (cp *zmkP) parseColon() (*sx.Pair, bool) {
+func (cp *Parser) parseColon() (*sx.Pair, bool) {
 	inp := cp.inp
 	if inp.PeekN(1) == ':' {
 		cp.clearStacked()
@@ -146,7 +146,7 @@ func (cp *zmkP) parseColon() (*sx.Pair, bool) {
 }
 
 // parsePara parses paragraphed inline material as a sx List.
-func (cp *zmkP) parsePara() *sx.Pair {
+func (cp *Parser) parsePara() *sx.Pair {
 	var lb sx.ListBuilder
 	for {
 		in := cp.parseInline()
@@ -225,7 +225,7 @@ func parseVerbatim(inp *input.Input) (*sx.Pair, bool) {
 }
 
 // parseRegion parses a block region.
-func (cp *zmkP) parseRegion() (*sx.Pair, bool) {
+func (cp *Parser) parseRegion() (*sx.Pair, bool) {
 	inp := cp.inp
 	fch := inp.Ch
 	cnt := countDelim(inp, fch)
@@ -275,7 +275,7 @@ func (cp *zmkP) parseRegion() (*sx.Pair, bool) {
 }
 
 // parseRegionLastLine parses the last line of a region and returns its inline text.
-func (cp *zmkP) parseRegionLastLine() *sx.Pair {
+func (cp *Parser) parseRegionLastLine() *sx.Pair {
 	inp := cp.inp
 	cp.clearStacked() // remove any lists defined in the region
 	inp.SkipSpace()
@@ -294,7 +294,7 @@ func (cp *zmkP) parseRegionLastLine() *sx.Pair {
 }
 
 // parseHeading parses a head line.
-func (cp *zmkP) parseHeading() (*sx.Pair, bool) {
+func (cp *Parser) parseHeading() (*sx.Pair, bool) {
 	inp := cp.inp
 	delims := countDelim(inp, inp.Ch)
 	if delims < 3 {
@@ -340,7 +340,7 @@ func parseHRule(inp *input.Input) (*sx.Pair, bool) {
 }
 
 // parseNestedList parses a list.
-func (cp *zmkP) parseNestedList() (*sx.Pair, bool) {
+func (cp *Parser) parseNestedList() (*sx.Pair, bool) {
 	inp := cp.inp
 	kinds := parseNestedListKinds(inp)
 	if len(kinds) == 0 {
@@ -390,7 +390,7 @@ func parseNestedListKinds(inp *input.Input) []*sx.Symbol {
 	}
 }
 
-func (cp *zmkP) buildNestedList(kinds []*sx.Symbol) (ln *sx.Pair, newLnCount int) {
+func (cp *Parser) buildNestedList(kinds []*sx.Symbol) (ln *sx.Pair, newLnCount int) {
 	for i, kind := range kinds {
 		if i < len(cp.lists) {
 			if !cp.lists[i].Car().IsEqual(kind) {
@@ -410,7 +410,7 @@ func (cp *zmkP) buildNestedList(kinds []*sx.Symbol) (ln *sx.Pair, newLnCount int
 	return ln, newLnCount
 }
 
-func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (*sx.Pair, bool) {
+func (cp *Parser) cleanupParsedNestedList(newLnCount int) (*sx.Pair, bool) {
 	childPos := len(cp.lists) - 1
 	parentPos := childPos - 1
 	for range newLnCount {
@@ -434,7 +434,7 @@ func (cp *zmkP) cleanupParsedNestedList(newLnCount int) (*sx.Pair, bool) {
 }
 
 // parseDefTerm parses a term of a definition list.
-func (cp *zmkP) parseDefTerm() (res *sx.Pair, success bool) {
+func (cp *Parser) parseDefTerm() (res *sx.Pair, success bool) {
 	inp := cp.inp
 	if inp.Next() != ' ' {
 		return nil, false
@@ -479,7 +479,7 @@ func (cp *zmkP) parseDefTerm() (res *sx.Pair, success bool) {
 }
 
 // parseDefDescr parses a description of a definition list.
-func (cp *zmkP) parseDefDescr() (res *sx.Pair, success bool) {
+func (cp *Parser) parseDefDescr() (res *sx.Pair, success bool) {
 	inp := cp.inp
 	if inp.Next() != ' ' {
 		return nil, false
@@ -523,7 +523,7 @@ func lastPairPos(p *sx.Pair) (*sx.Pair, int) {
 }
 
 // parseIndent parses initial spaces to continue a list.
-func (cp *zmkP) parseIndent() bool {
+func (cp *Parser) parseIndent() bool {
 	inp := cp.inp
 	cnt := 0
 	for {
@@ -541,7 +541,7 @@ func (cp *zmkP) parseIndent() bool {
 	return false
 }
 
-func (cp *zmkP) parseIndentForList(cnt int) bool {
+func (cp *Parser) parseIndentForList(cnt int) bool {
 	if len(cp.lists) < cnt {
 		cnt = len(cp.lists)
 	}
@@ -564,7 +564,7 @@ func (cp *zmkP) parseIndentForList(cnt int) bool {
 	return true
 }
 
-func (cp *zmkP) parseIndentForDescription(cnt int) bool {
+func (cp *Parser) parseIndentForDescription(cnt int) bool {
 	descrl := cp.descrl
 	lastPair, pos := lastPairPos(descrl)
 	if cnt < 1 || pos < 1 {
@@ -622,7 +622,7 @@ func (cp *zmkP) parseIndentForDescription(cnt int) bool {
 }
 
 // parseLinePara parses one paragraph of inline material.
-func (cp *zmkP) parseLinePara() *sx.Pair {
+func (cp *Parser) parseLinePara() *sx.Pair {
 	var lb sx.ListBuilder
 	for {
 		in := cp.parseInline()
@@ -637,7 +637,7 @@ func (cp *zmkP) parseLinePara() *sx.Pair {
 }
 
 // parseRow parse one table row.
-func (cp *zmkP) parseRow() *sx.Pair {
+func (cp *Parser) parseRow() *sx.Pair {
 	inp := cp.inp
 	if inp.Peek() == '%' {
 		inp.SkipToEOL()
@@ -672,7 +672,7 @@ func (cp *zmkP) parseRow() *sx.Pair {
 }
 
 // parseCell parses one single cell of a table row.
-func (cp *zmkP) parseCell() *sx.Pair {
+func (cp *Parser) parseCell() *sx.Pair {
 	inp := cp.inp
 	var cell sx.ListBuilder
 	for {
@@ -692,7 +692,8 @@ func (cp *zmkP) parseCell() *sx.Pair {
 }
 
 // parseTransclusion parses '{' '{' '{' ZID '}' '}' '}'
-func parseTransclusion(inp *input.Input) (*sx.Pair, bool) {
+func (cp *Parser) parseTransclusion() (*sx.Pair, bool) {
+	inp := cp.inp
 	if countDelim(inp, '{') != 3 {
 		return nil, false
 	}
@@ -705,7 +706,7 @@ loop:
 		case input.EOS:
 			return nil, false
 		case '\n', '\r', ' ', '\t':
-			if !hasQueryPrefix(inp.Src[posA:]) {
+			if !cp.isSpaceReference(inp.Src[posA:]) {
 				return nil, false
 			}
 		case '\\':
@@ -732,6 +733,6 @@ loop:
 	attrs := parseBlockAttributes(inp)
 	inp.SkipToEOL()
 	refText := string(inp.Src[posA:posE])
-	ref := ParseReference(refText)
+	ref := cp.scanReference(refText)
 	return sz.MakeTransclusion(attrs, ref, sx.Nil()), true
 }

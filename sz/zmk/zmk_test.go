@@ -50,11 +50,13 @@ func replace(s string, sm symbolMap, tcs TestCases) TestCases {
 func checkTcs(t *testing.T, tcs TestCases) {
 	t.Helper()
 
+	var parser zmk.Parser
 	for tcn, tc := range tcs {
 		t.Run(fmt.Sprintf("TC=%02d,src=%q", tcn, tc.source), func(st *testing.T) {
 			st.Helper()
 			inp := input.NewInput([]byte(tc.source))
-			ast := zmk.Parse(inp)
+			parser.Initialize(inp)
+			ast := parser.Parse()
 			sz.Walk(astWalker{}, ast, nil)
 			got := ast.String()
 			if tc.want != got {

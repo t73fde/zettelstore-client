@@ -21,18 +21,39 @@ import (
 	"unicode"
 
 	"t73f.de/r/sx"
+	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/input"
 	"t73f.de/r/zsc/sz"
 )
 
+// Parser allows to parse its plain text input into Zettelmarkup.
+type Parser struct {
+	inp          *input.Input // Input stream
+	lists        []*sx.Pair   // Stack of lists
+	lastRow      *sx.Pair     // Last row of table, or nil if not in table.
+	descrl       *sx.Pair     // Current description list
+	nestingLevel int          // Count nesting of block and inline elements
+
+	scanReference    func(string) *sx.Pair // Builds a reference node from a given string reference
+	isSpaceReference func([]byte) bool     // Returns true, if src starts with a reference that allows white space
+}
+
+// Initialize the parser with the input stream and a reference scanner.
+func (cp *Parser) Initialize(inp *input.Input) {
+	var zeroParser Parser
+	*cp = zeroParser
+	cp.inp = inp
+	cp.scanReference = ScanReference
+	cp.isSpaceReference = withQueryPrefix
+}
+
 // Parse tries to parse the input as a block element.
-func Parse(inp *input.Input) *sx.Pair {
-	parser := zmkP{inp: inp}
+func (cp *Parser) Parse() *sx.Pair {
 
 	var lastPara *sx.Pair
 	var blkBuild sx.ListBuilder
-	for inp.Ch != input.EOS {
-		bn, cont := parser.parseBlock(lastPara)
+	for cp.inp.Ch != input.EOS {
+		bn, cont := cp.parseBlock(lastPara)
 		if bn != nil {
 			blkBuild.Add(bn)
 		}
@@ -44,7 +65,7 @@ func Parse(inp *input.Input) *sx.Pair {
 			}
 		}
 	}
-	if parser.nestingLevel != 0 {
+	if cp.nestingLevel != 0 {
 		panic("Nesting level was not decremented")
 	}
 
@@ -56,12 +77,8 @@ func Parse(inp *input.Input) *sx.Pair {
 	return nil
 }
 
-type zmkP struct {
-	inp          *input.Input // Input stream
-	lists        []*sx.Pair   // Stack of lists
-	lastRow      *sx.Pair     // Last row of table, or nil if not in table.
-	descrl       *sx.Pair     // Current description list
-	nestingLevel int          // Count nesting of block and inline elements
+func withQueryPrefix(src []byte) bool {
+	return len(src) > len(api.QueryPrefix) && string(src[:len(api.QueryPrefix)]) == api.QueryPrefix
 }
 
 // runeModGrave is Unicode code point U+02CB (715) called "MODIFIER LETTER
@@ -73,7 +90,7 @@ const runeModGrave = 'ˋ' // This is NOT '`'!
 const maxNestingLevel = 50
 
 // clearStacked removes all multi-line nodes from parser.
-func (cp *zmkP) clearStacked() {
+func (cp *Parser) clearStacked() {
 	cp.lists = nil
 	cp.lastRow = nil
 	cp.descrl = nil
