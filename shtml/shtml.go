@@ -420,26 +420,18 @@ func (ev *Evaluator) bindBlocks() {
 		return evalBLOB(getList(args[0], env), getString(args[1], env), getString(args[2], env))
 	})
 	ev.bind(sz.SymTransclude, 2, func(args sx.Vector, env *Environment) sx.Object {
-		ref, isPair := sx.GetPair(args[1])
-		if !isPair {
-			return sx.Nil()
-		}
-		refKind := ref.Car()
-		if sx.IsNil(refKind) {
-			return sx.Nil()
-		}
-		if refValue := getString(ref.Tail().Car(), env); refValue.GetValue() != "" {
-			if refSym, isRefSym := sx.GetSymbol(refKind); isRefSym && refSym.IsEqualSymbol(sz.SymRefStateExternal) {
-				a := GetAttributes(args[0], env).Set("src", refValue.GetValue()).AddClass("external")
+		if refSym, refValue := GetReference(args[1], env); refSym != nil {
+			if refSym.IsEqualSymbol(sz.SymRefStateExternal) {
+				a := GetAttributes(args[0], env).Set("src", refValue).AddClass("external")
 				// TODO: if len(args) > 2, add "alt" attr based on args[2:], as in SymEmbed
 				return sx.Nil().Cons(sx.Nil().Cons(EvaluateAttrbute(a)).Cons(SymIMG)).Cons(SymP)
 			}
 			return sx.MakeList(
 				sxhtml.SymInlineComment,
 				sx.MakeString("transclude"),
-				refKind,
+				refSym,
 				sx.MakeString("->"),
-				refValue,
+				sx.MakeString(refValue),
 			)
 		}
 		return ev.evalSlice(args, env)
@@ -543,13 +535,13 @@ func (ev *Evaluator) bindInlines() {
 		refSym, refValue := GetReference(args[1], env)
 		switch refSym {
 		case sz.SymRefStateZettel, sz.SymRefStateSelf, sz.SymRefStateFound, sz.SymRefStateHosted, sz.SymRefStateBased:
-			return ev.evalLink(a.Set("href", refValue.GetValue()), refValue, args[2:], env)
+			return ev.evalLink(a.Set("href", refValue), refValue, args[2:], env)
 
 		case sz.SymRefStateExternal:
-			return ev.evalLink(a.Set("href", refValue.GetValue()).Add("rel", "external"), refValue, args[2:], env)
+			return ev.evalLink(a.Set("href", refValue).Add("rel", "external"), refValue, args[2:], env)
 
 		case sz.SymRefStateQuery:
-			query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(refValue.GetValue())
+			query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(refValue)
 			return ev.evalLink(a.Set("href", query), refValue, args[2:], env)
 
 		case sz.SymRefStateBroken:
@@ -562,15 +554,14 @@ func (ev *Evaluator) bindInlines() {
 			inline = ev.evalSlice(args[2:], env)
 		}
 		if inline == nil {
-			inline = sx.Nil().Cons(refValue)
+			inline = sx.Nil().Cons(sx.MakeString(refValue))
 		}
 		return inline.Cons(SymSPAN)
 	})
 
 	ev.bind(sz.SymEmbed, 3, func(args sx.Vector, env *Environment) sx.Object {
-		ref := getList(args[1], env)
-		a := GetAttributes(args[0], env)
-		a = a.Set("src", getString(ref.Tail().Car(), env).GetValue())
+		_, refValue := GetReference(args[1], env)
+		a := GetAttributes(args[0], env).Set("src", refValue)
 		if len(args) > 3 {
 			var sb strings.Builder
 			flattenText(&sb, sx.MakeList(args[3:]...))
@@ -868,10 +859,10 @@ func (ev *Evaluator) EvalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
 	return nil
 }
 
-func (ev *Evaluator) evalLink(a attrs.Attributes, refValue sx.String, inline sx.Vector, env *Environment) sx.Object {
+func (ev *Evaluator) evalLink(a attrs.Attributes, refValue string, inline sx.Vector, env *Environment) sx.Object {
 	result := ev.evalSlice(inline, env)
 	if len(inline) == 0 {
-		result = sx.Nil().Cons(refValue)
+		result = sx.Nil().Cons(sx.MakeString(refValue))
 	}
 	if ev.noLinks {
 		return result.Cons(SymSPAN)
@@ -924,21 +915,17 @@ func GetAttributes(arg sx.Object, env *Environment) attrs.Attributes {
 }
 
 // GetReference returns the reference symbol and the reference value of a reference pair.
-func GetReference(val sx.Object, env *Environment) (*sx.Symbol, sx.String) {
+func GetReference(val sx.Object, env *Environment) (*sx.Symbol, string) {
 	if env.err == nil {
 		if p := getList(val, env); env.err == nil {
-			if sym := getSymbol(p.Car(), env); env.err == nil {
-				ref, isString := sx.GetString(p.Cdr())
-				if !isString {
-					ref = getString(p.Tail().Car(), env)
-				}
-				if env.err == nil {
-					return sym, ref
-				}
+			sym, val := sz.GetReference(p)
+			if sym != nil {
+				return sym, val
 			}
+			env.err = fmt.Errorf("%v/%T is not a reference", val, val)
 		}
 	}
-	return nil, sx.MakeString("")
+	return nil, ""
 }
 
 var unsafeSnippets = []string{

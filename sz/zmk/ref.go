@@ -26,10 +26,10 @@ import (
 // ScanReference scans a string and returns a reference.
 func ScanReference(s string) *sx.Pair {
 	if invalidReference(s) {
-		return makePairRef(sz.SymRefStateInvalid, s)
+		return sz.MakeReference(sz.SymRefStateInvalid, s)
 	}
 	if strings.HasPrefix(s, api.QueryPrefix) {
-		return makePairRef(sz.SymRefStateQuery, s[len(api.QueryPrefix):])
+		return sz.MakeReference(sz.SymRefStateQuery, s[len(api.QueryPrefix):])
 	}
 	if state, ok := localState(s); ok {
 		if state.IsEqualSymbol(sz.SymRefStateBased) {
@@ -37,25 +37,22 @@ func ScanReference(s string) *sx.Pair {
 		}
 		_, err := url.Parse(s)
 		if err == nil {
-			return makePairRef(state, s)
+			return sz.MakeReference(state, s)
 		}
 	}
 	u, err := url.Parse(s)
 	if err != nil {
-		return makePairRef(sz.SymRefStateInvalid, s)
+		return sz.MakeReference(sz.SymRefStateInvalid, s)
 	}
 	if !externalURL(u) {
 		if _, err = id.Parse(u.Path); err == nil {
-			return makePairRef(sz.SymRefStateZettel, s)
+			return sz.MakeReference(sz.SymRefStateZettel, s)
 		}
 		if u.Path == "" && u.Fragment != "" {
-			return makePairRef(sz.SymRefStateSelf, s)
+			return sz.MakeReference(sz.SymRefStateSelf, s)
 		}
 	}
-	return makePairRef(sz.SymRefStateExternal, s)
-}
-func makePairRef(sym *sx.Symbol, val string) *sx.Pair {
-	return sx.MakeList(sym, sx.MakeString(val))
+	return sz.MakeReference(sz.SymRefStateExternal, s)
 }
 
 func invalidReference(s string) bool { return s == "" || s == "00000000000000" }
