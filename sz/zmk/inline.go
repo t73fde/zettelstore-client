@@ -126,9 +126,7 @@ func (cp *Parser) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
 		attrs := parseInlineAttributes(cp.inp)
 		if len(refString) > 0 {
 			ref := cp.scanReference(refString)
-			refSym, _ := sx.GetSymbol(ref.Car())
-			sym := sz.MapRefStateToLink(refSym)
-			return sz.MakeLink(sym, attrs, ref.Tail().Car().(sx.String).GetValue(), text), true
+			return sz.MakeLink(attrs, ref, text), true
 		}
 	}
 	return nil, false

@@ -89,8 +89,8 @@ func MakeSoft() *sx.Pair { return sx.Cons(SymSoft, sx.Nil()) }
 func MakeHard() *sx.Pair { return sx.Cons(SymHard, sx.Nil()) }
 
 // MakeLink builds a link node.
-func MakeLink(sym *sx.Symbol, attrs *sx.Pair, ref string, text *sx.Pair) *sx.Pair {
-	return text.Cons(sx.MakeString(ref)).Cons(attrs).Cons(sym)
+func MakeLink(attrs *sx.Pair, ref *sx.Pair, text *sx.Pair) *sx.Pair {
+	return text.Cons(ref).Cons(attrs).Cons(SymLink)
 }
 
 // MakeEmbed builds a embed node.

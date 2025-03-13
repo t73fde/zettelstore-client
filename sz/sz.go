@@ -138,26 +138,6 @@ func (m Meta) GetPair(key string) *sx.Pair {
 	return nil
 }
 
-// MapRefStateToLink maps a reference state symbol to a link symbol.
-func MapRefStateToLink(symRefState *sx.Symbol) *sx.Symbol {
-	if sym, found := mapRefStateLink[symRefState]; found {
-		return sym
-	}
-	return SymLinkInvalid
-}
-
-var mapRefStateLink = map[*sx.Symbol]*sx.Symbol{
-	SymRefStateInvalid:  SymLinkInvalid,
-	SymRefStateZettel:   SymLinkZettel,
-	SymRefStateSelf:     SymLinkSelf,
-	SymRefStateFound:    SymLinkFound,
-	SymRefStateBroken:   SymLinkBroken,
-	SymRefStateHosted:   SymLinkHosted,
-	SymRefStateBased:    SymLinkBased,
-	SymRefStateQuery:    SymLinkQuery,
-	SymRefStateExternal: SymLinkExternal,
-}
-
 // IsBreakSym return true if the object is either a soft or a hard break symbol.
 func IsBreakSym(obj sx.Object) bool {
 	return SymSoft.IsEqual(obj) || SymHard.IsEqual(obj)
