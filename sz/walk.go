@@ -60,6 +60,7 @@ func init() {
 		SymCellLeft:      walkChildrenTail,
 		SymCellRight:     walkChildrenTail,
 		SymTransclude:    walkChildrenInlines4,
+		SymBLOB:          walkChildrenBLOB,
 
 		SymInline:       walkChildrenTail,
 		SymEndnote:      walkChildrenInlines3,
@@ -167,6 +168,14 @@ func walkChildrenTable(v Visitor, tn *sx.Pair, env *sx.Pair) *sx.Pair {
 		row.SetCar(walkChildrenList(v, row.Head(), env))
 	}
 	return tn
+}
+
+func walkChildrenBLOB(v Visitor, bn *sx.Pair, env *sx.Pair) *sx.Pair {
+	// sym := bn.Car()
+	next := bn.Tail()
+	// description := next.Car()
+	next.SetCar(walkChildrenList(v, next.Head(), env))
+	return bn
 }
 
 func walkChildrenMark(v Visitor, mn *sx.Pair, env *sx.Pair) *sx.Pair {
