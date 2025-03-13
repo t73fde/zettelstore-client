@@ -43,7 +43,7 @@ func (cp *Parser) Initialize(inp *input.Input) {
 	var zeroParser Parser
 	*cp = zeroParser
 	cp.inp = inp
-	cp.scanReference = ScanReference
+	cp.scanReference = sz.ScanReference
 	cp.isSpaceReference = withQueryPrefix
 }
 

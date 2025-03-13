@@ -10,12 +10,13 @@
 // SPDX-License-Identifier: EUPL-1.2
 // SPDX-FileCopyrightText: 2020-present Detlef Stern
 // -----------------------------------------------------------------------------
-package zmk_test
+
+package sz_test
 
 import (
 	"testing"
 
-	"t73f.de/r/zsc/sz/zmk"
+	"t73f.de/r/zsc/sz"
 )
 
 func TestParseReference(t *testing.T) {
@@ -32,8 +33,9 @@ func TestParseReference(t *testing.T) {
 	}
 
 	for i, tc := range testcases {
-		got := zmk.ScanReference(tc.link)
-		gotIsValid := zmk.ReferenceIsValid(got)
+		got := sz.ScanReference(tc.link)
+		refSym, _ := sz.GetReference(got)
+		gotIsValid := !refSym.IsEqual(sz.SymRefStateInvalid)
 		if gotIsValid == tc.err {
 			t.Errorf(
 				"TC=%d, expected parse error of %q: %v, but got %q", i, tc.link, tc.err, got)
@@ -68,8 +70,9 @@ func TestReferenceIsZettelMaterial(t *testing.T) {
 	}
 
 	for i, tc := range testcases {
-		ref := zmk.ScanReference(tc.link)
-		isZettel := zmk.ReferenceIsZettel(ref)
+		ref := sz.ScanReference(tc.link)
+		refSym, _ := sz.GetReference(ref)
+		isZettel := refSym.IsEqual(sz.SymRefStateZettel)
 		if isZettel != tc.isZettel {
 			t.Errorf(
 				"TC=%d, Reference %q isZettel=%v expected, but got %v",
@@ -78,7 +81,7 @@ func TestReferenceIsZettelMaterial(t *testing.T) {
 				tc.isZettel,
 				isZettel)
 		}
-		isLocal := zmk.ReferenceIsLocal(ref)
+		isLocal := refSym.IsEqual(sz.SymRefStateHosted) || refSym.IsEqual(sz.SymRefStateBased)
 		if isLocal != tc.isLocal {
 			t.Errorf(
 				"TC=%d, Reference %q isLocal=%v expected, but got %v",
@@ -86,7 +89,7 @@ func TestReferenceIsZettelMaterial(t *testing.T) {
 				tc.link,
 				tc.isLocal, isLocal)
 		}
-		isExternal := zmk.ReferenceIsExternal(ref)
+		isExternal := refSym.IsEqual(sz.SymRefStateExternal)
 		if isExternal != tc.isExternal {
 			t.Errorf(
 				"TC=%d, Reference %q isExternal=%v expected, but got %v",
