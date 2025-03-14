@@ -49,24 +49,24 @@ func init() {
 		SymRegionBlock:   walkChildrenRegion,
 		SymRegionQuote:   walkChildrenRegion,
 		SymRegionVerse:   walkChildrenRegion,
-		SymHeading:       walkChildrenHeading,
-		SymListOrdered:   walkChildrenTail,
-		SymListUnordered: walkChildrenTail,
-		SymListQuote:     walkChildrenTail,
-		SymDescription:   walkChildrenDescription,
-		SymTable:         walkChildrenTable,
+		SymHeading:       walkHeadingChildren,
+		SymListOrdered:   walkListChildren,
+		SymListUnordered: walkListChildren,
+		SymListQuote:     walkListChildren,
+		SymDescription:   walkDescriptionChildren,
+		SymTable:         walkTableChildren,
 		SymCell:          walkChildrenTail,
 		SymCellCenter:    walkChildrenTail,
 		SymCellLeft:      walkChildrenTail,
 		SymCellRight:     walkChildrenTail,
 		SymTransclude:    walkChildrenInlines4,
-		SymBLOB:          walkChildrenBLOB,
+		SymBLOB:          walkBLOBChildren,
 
 		SymInline:       walkChildrenTail,
 		SymEndnote:      walkChildrenInlines3,
-		SymMark:         walkChildrenMark,
+		SymMark:         walkMarkChildren,
 		SymLink:         walkChildrenInlines4,
-		SymEmbed:        walkChildrenEmbed,
+		SymEmbed:        walkEmbedChildren,
 		SymCite:         walkChildrenInlines4,
 		SymFormatDelete: walkChildrenInlines3,
 		SymFormatEmph:   walkChildrenInlines3,
@@ -137,7 +137,7 @@ func walkChildrenRegion(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 	return node
 }
 
-func walkChildrenHeading(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
+func walkHeadingChildren(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 	// sym := node.Car()
 	next := node.Tail()
 	// level := next.Car()
@@ -150,9 +150,16 @@ func walkChildrenHeading(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
 	next.SetCdr(walkChildrenList(v, next.Tail(), env))
 	return node
 }
+func walkListChildren(v Visitor, node *sx.Pair, env *sx.Pair) *sx.Pair {
+	// sym := node.Car()
+	next := node.Tail()
+	// attrs := next.Car()
+	next.SetCdr(walkChildrenList(v, next.Tail(), env))
+	return node
+}
 
-func walkChildrenDescription(v Visitor, dn *sx.Pair, env *sx.Pair) *sx.Pair {
-	for n := dn.Tail(); n != nil; n = n.Tail() {
+func walkDescriptionChildren(v Visitor, dn *sx.Pair, env *sx.Pair) *sx.Pair {
+	for n := dn.Tail().Tail(); n != nil; n = n.Tail() {
 		n.SetCar(walkChildrenList(v, n.Head(), env))
 		n = n.Tail()
 		if n == nil {
@@ -163,14 +170,14 @@ func walkChildrenDescription(v Visitor, dn *sx.Pair, env *sx.Pair) *sx.Pair {
 	return dn
 }
 
-func walkChildrenTable(v Visitor, tn *sx.Pair, env *sx.Pair) *sx.Pair {
+func walkTableChildren(v Visitor, tn *sx.Pair, env *sx.Pair) *sx.Pair {
 	for row := range tn.Tail().Pairs() {
 		row.SetCar(walkChildrenList(v, row.Head(), env))
 	}
 	return tn
 }
 
-func walkChildrenBLOB(v Visitor, bn *sx.Pair, env *sx.Pair) *sx.Pair {
+func walkBLOBChildren(v Visitor, bn *sx.Pair, env *sx.Pair) *sx.Pair {
 	// sym := bn.Car()
 	next := bn.Tail()
 	// description := next.Car()
@@ -178,7 +185,7 @@ func walkChildrenBLOB(v Visitor, bn *sx.Pair, env *sx.Pair) *sx.Pair {
 	return bn
 }
 
-func walkChildrenMark(v Visitor, mn *sx.Pair, env *sx.Pair) *sx.Pair {
+func walkMarkChildren(v Visitor, mn *sx.Pair, env *sx.Pair) *sx.Pair {
 	// sym := mn.Car()
 	next := mn.Tail()
 	// mark := next.Car()
@@ -190,7 +197,7 @@ func walkChildrenMark(v Visitor, mn *sx.Pair, env *sx.Pair) *sx.Pair {
 	return mn
 }
 
-func walkChildrenEmbed(v Visitor, en *sx.Pair, env *sx.Pair) *sx.Pair {
+func walkEmbedChildren(v Visitor, en *sx.Pair, env *sx.Pair) *sx.Pair {
 	// sym := en.Car()
 	next := en.Tail()
 	// attr := next.Car()

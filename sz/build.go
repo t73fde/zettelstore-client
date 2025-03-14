@@ -31,8 +31,13 @@ func MakeBlockList(blocks *sx.Pair) *sx.Pair { return blocks.Cons(SymBlock) }
 // MakeInlineList builds an inline node from a list of inlines.
 func MakeInlineList(inlines *sx.Pair) *sx.Pair { return inlines.Cons(SymInline) }
 
-// MakePara builds a paragraph node.
-func MakePara(inlines *sx.Pair) *sx.Pair { return inlines.Cons(SymPara) }
+// MakeParaList builds a paragraph node.
+func MakeParaList(inlines *sx.Pair) *sx.Pair { return inlines.Cons(SymPara) }
+
+// MakeList builds a list node.
+func MakeList(sym *sx.Symbol, attrs *sx.Pair, items *sx.Pair) *sx.Pair {
+	return items.Cons(attrs).Cons(sym)
+}
 
 // MakeVerbatim builds a node for verbatim text.
 func MakeVerbatim(sym *sx.Symbol, attrs *sx.Pair, content string) *sx.Pair {

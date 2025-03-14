@@ -59,8 +59,8 @@ func (ev *Evaluator) SetUnique(s string) { ev.unique = s }
 // IsValidName returns true, if name is a valid symbol name.
 func isValidName(s string) bool { return s != "" }
 
-// EvaluateAttrbute transforms the given attributes into a HTML s-expression.
-func EvaluateAttrbute(a attrs.Attributes) *sx.Pair {
+// EvaluateAttributes transforms the given attributes into a HTML s-expression.
+func EvaluateAttributes(a attrs.Attributes) *sx.Pair {
 	if len(a) == 0 {
 		return nil
 	}
@@ -273,7 +273,7 @@ func (ev *Evaluator) bindMetadata() {
 
 // EvaluateMeta returns HTML meta object for an attribute.
 func (ev *Evaluator) EvaluateMeta(a attrs.Attributes) *sx.Pair {
-	return sx.Nil().Cons(EvaluateAttrbute(a)).Cons(SymMeta)
+	return sx.Nil().Cons(EvaluateAttributes(a)).Cons(SymMeta)
 }
 
 func (ev *Evaluator) bindBlocks() {
@@ -299,7 +299,7 @@ func (ev *Evaluator) bindBlocks() {
 
 		if result, _ := ev.EvaluateList(args[4:], env); result != nil {
 			if len(a) > 0 {
-				result = result.Cons(EvaluateAttrbute(a))
+				result = result.Cons(EvaluateAttributes(a))
 			}
 			return result.Cons(headingSymbol)
 		}
@@ -309,23 +309,43 @@ func (ev *Evaluator) bindBlocks() {
 		result := sx.Nil()
 		if len(args) > 0 {
 			if attrList := getList(args[0], env); attrList != nil {
-				result = result.Cons(EvaluateAttrbute(sz.GetAttributes(attrList)))
+				result = result.Cons(EvaluateAttributes(sz.GetAttributes(attrList)))
 			}
 		}
 		return result.Cons(SymHR)
 	})
 
-	ev.bind(sz.SymListOrdered, 0, ev.makeListFn(SymOL))
-	ev.bind(sz.SymListUnordered, 0, ev.makeListFn(SymUL))
-	ev.bind(sz.SymDescription, 0, func(args sx.Vector, env *Environment) sx.Object {
-		if len(args) == 0 {
+	ev.bind(sz.SymListOrdered, 1, ev.makeListFn(SymOL))
+	ev.bind(sz.SymListUnordered, 1, ev.makeListFn(SymUL))
+	ev.bind(sz.SymListQuote, 1, func(args sx.Vector, env *Environment) sx.Object {
+		if len(args) == 1 {
 			return sx.Nil()
 		}
-		var items sx.ListBuilder
-		items.Add(symDL)
-		for pos := 0; pos < len(args); pos++ {
+		var result sx.ListBuilder
+		result.Add(symBLOCKQUOTE)
+		if attrs := EvaluateAttributes(GetAttributes(args[0], env)); attrs != nil {
+			result.Add(attrs)
+		}
+		for _, elem := range args[1:] {
+			if quote, isPair := sx.GetPair(ev.Eval(elem, env)); isPair {
+				result.Add(quote.Cons(sxhtml.SymListSplice))
+			}
+		}
+		return result.List()
+	})
+
+	ev.bind(sz.SymDescription, 1, func(args sx.Vector, env *Environment) sx.Object {
+		if len(args) == 1 {
+			return sx.Nil()
+		}
+		var result sx.ListBuilder
+		result.Add(symDL)
+		if attrs := EvaluateAttributes(GetAttributes(args[0], env)); attrs != nil {
+			result.Add(attrs)
+		}
+		for pos := 1; pos < len(args); pos++ {
 			term := ev.evalDescriptionTerm(getList(args[pos], env), env)
-			items.Add(term.Cons(symDT))
+			result.Add(term.Cons(symDT))
 			pos++
 			if pos >= len(args) {
 				break
@@ -336,20 +356,7 @@ func (ev *Evaluator) bindBlocks() {
 			}
 			for ddlst := range ddBlock.Values() {
 				dditem := getList(ddlst, env)
-				items.Add(dditem.Cons(symDD))
-			}
-		}
-		return items.List()
-	})
-	ev.bind(sz.SymListQuote, 0, func(args sx.Vector, env *Environment) sx.Object {
-		if args == nil {
-			return sx.Nil()
-		}
-		var result sx.ListBuilder
-		result.Add(symBLOCKQUOTE)
-		for _, elem := range args {
-			if quote, isPair := sx.GetPair(ev.Eval(elem, env)); isPair {
-				result.Add(quote.Cons(sxhtml.SymListSplice))
+				result.Add(dditem.Cons(symDD))
 			}
 		}
 		return result.List()
@@ -424,7 +431,7 @@ func (ev *Evaluator) bindBlocks() {
 			if refSym.IsEqualSymbol(sz.SymRefStateExternal) {
 				a := GetAttributes(args[0], env).Set("src", refValue).AddClass("external")
 				// TODO: if len(args) > 2, add "alt" attr based on args[2:], as in SymEmbed
-				return sx.Nil().Cons(sx.Nil().Cons(EvaluateAttrbute(a)).Cons(SymIMG)).Cons(SymP)
+				return sx.Nil().Cons(sx.Nil().Cons(EvaluateAttributes(a)).Cons(SymIMG)).Cons(SymP)
 			}
 			return sx.MakeList(
 				sxhtml.SymInlineComment,
@@ -442,12 +449,17 @@ func (ev *Evaluator) makeListFn(sym *sx.Symbol) EvalFn {
 	return func(args sx.Vector, env *Environment) sx.Object {
 		var result sx.ListBuilder
 		result.Add(sym)
-		for _, elem := range args {
-			item := sx.Nil().Cons(SymLI)
-			if res, isPair := sx.GetPair(ev.Eval(elem, env)); isPair {
-				item.ExtendBang(res)
+		if attrs := EvaluateAttributes(GetAttributes(args[0], env)); attrs != nil {
+			result.Add(attrs)
+		}
+		if len(args) > 1 {
+			for _, elem := range args[1:] {
+				item := sx.Nil().Cons(SymLI)
+				if res, isPair := sx.GetPair(ev.Eval(elem, env)); isPair {
+					item.ExtendBang(res)
+				}
+				result.Add(item)
 			}
-			result.Add(item)
 		}
 		return result.List()
 	}
@@ -477,7 +489,7 @@ func (ev *Evaluator) makeCellFn(align string) EvalFn {
 	return func(args sx.Vector, env *Environment) sx.Object {
 		tdata := ev.evalSlice(args, env)
 		if align != "" {
-			tdata = tdata.Cons(EvaluateAttrbute(attrs.Attributes{"class": align}))
+			tdata = tdata.Cons(EvaluateAttributes(attrs.Attributes{"class": align}))
 		}
 		return tdata
 	}
@@ -496,7 +508,7 @@ func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) EvalFn {
 		var result sx.ListBuilder
 		result.Add(sym)
 		if len(a) > 0 {
-			result.Add(EvaluateAttrbute(a))
+			result.Add(EvaluateAttributes(a))
 		}
 		if region, isPair := sx.GetPair(args[1]); isPair {
 			if evalRegion := ev.EvalPairList(region, env); evalRegion != nil {
@@ -515,7 +527,7 @@ func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) EvalFn {
 func evalVerbatim(a attrs.Attributes, s sx.String) sx.Object {
 	a = setProgLang(a)
 	code := sx.Nil().Cons(s)
-	if al := EvaluateAttrbute(a); al != nil {
+	if al := EvaluateAttributes(a); al != nil {
 		code = code.Cons(al)
 	}
 	code = code.Cons(symCODE)
@@ -569,7 +581,7 @@ func (ev *Evaluator) bindInlines() {
 				a = a.Set("alt", d)
 			}
 		}
-		return sx.MakeList(SymIMG, EvaluateAttrbute(a))
+		return sx.MakeList(SymIMG, EvaluateAttributes(a))
 	})
 	ev.bind(sz.SymEmbedBLOB, 3, func(args sx.Vector, env *Environment) sx.Object {
 		a, syntax, data := GetAttributes(args[0], env), getString(args[1], env), getString(args[2], env)
@@ -596,7 +608,7 @@ func (ev *Evaluator) bindInlines() {
 			result = result.Cons(key)
 		}
 		if len(a) > 0 {
-			result = result.Cons(EvaluateAttrbute(a))
+			result = result.Cons(EvaluateAttributes(a))
 		}
 		if result == nil {
 			return nil
@@ -608,7 +620,7 @@ func (ev *Evaluator) bindInlines() {
 		if !ev.noLinks {
 			if fragment := getString(args[2], env).GetValue(); fragment != "" {
 				a := attrs.Attributes{"id": fragment + ev.unique}
-				return result.Cons(EvaluateAttrbute(a)).Cons(SymA)
+				return result.Cons(EvaluateAttributes(a)).Cons(SymA)
 			}
 		}
 		return result.Cons(SymSPAN)
@@ -619,7 +631,7 @@ func (ev *Evaluator) bindInlines() {
 		defer env.popAttributes()
 		attrPlist := sx.Nil()
 		if len(a) > 0 {
-			if attrs := EvaluateAttrbute(a); attrs != nil {
+			if attrs := EvaluateAttributes(a); attrs != nil {
 				attrPlist = attrs.Tail()
 			}
 		}
@@ -682,7 +694,7 @@ func (ev *Evaluator) makeFormatFn(sym *sx.Symbol) EvalFn {
 		}
 		res := ev.evalSlice(args[1:], env)
 		if len(a) > 0 {
-			res = res.Cons(EvaluateAttrbute(a))
+			res = res.Cons(EvaluateAttributes(a))
 		}
 		return res.Cons(sym)
 	}
@@ -715,7 +727,7 @@ func (ev *Evaluator) evalQuote(args sx.Vector, env *Environment) sx.Object {
 		}
 	}
 	if len(a) > 0 {
-		res = res.Cons(EvaluateAttrbute(a))
+		res = res.Cons(EvaluateAttributes(a))
 		return res.Cons(SymSPAN)
 	}
 	return res.Cons(sxhtml.SymListSplice)
@@ -735,7 +747,7 @@ func evalLiteral(args sx.Vector, a attrs.Attributes, sym *sx.Symbol, env *Enviro
 	}
 	res := sx.Nil().Cons(sx.MakeString(literal))
 	if len(a) > 0 {
-		res = res.Cons(EvaluateAttrbute(a))
+		res = res.Cons(EvaluateAttributes(a))
 	}
 	return res.Cons(sym)
 }
@@ -867,7 +879,7 @@ func (ev *Evaluator) evalLink(a attrs.Attributes, refValue string, inline sx.Vec
 	if ev.noLinks {
 		return result.Cons(SymSPAN)
 	}
-	return result.Cons(EvaluateAttrbute(a)).Cons(SymA)
+	return result.Cons(EvaluateAttributes(a)).Cons(SymA)
 }
 
 func getSymbol(obj sx.Object, env *Environment) *sx.Symbol {

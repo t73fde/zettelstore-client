@@ -158,15 +158,17 @@ func postProcessHeading(pp *postProcessor, hn *sx.Pair, env *sx.Pair) *sx.Pair {
 }
 
 func postProcessItemList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
-	elems := pp.visitListElems(ln, env)
+	attrs := ln.Tail().Head()
+	elems := pp.visitListElems(ln.Tail(), env)
 	if elems == nil {
 		return nil
 	}
-	return elems.Cons(ln.Car())
+	return sz.MakeList(ln.Car().(*sx.Symbol), attrs, elems)
 }
 
 func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
-	elems := pp.visitListElems(ln, env.Cons(sx.Cons(symNoBlock, nil)))
+	attrs := ln.Tail().Head()
+	elems := pp.visitListElems(ln.Tail(), env.Cons(sx.Cons(symNoBlock, nil)))
 
 	// Collect multiple paragraph items into one item.
 
@@ -201,7 +203,7 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair
 		newElems.Add(item)
 	}
 	addtoParagraph()
-	return newElems.List().Cons(ln.Car())
+	return sz.MakeList(ln.Car().(*sx.Symbol), attrs, newElems.List())
 }
 
 func (pp *postProcessor) visitListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
@@ -215,9 +217,10 @@ func (pp *postProcessor) visitListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 }
 
 func postProcessDescription(pp *postProcessor, dl *sx.Pair, env *sx.Pair) *sx.Pair {
+	attrs := dl.Tail().Head()
 	var dList sx.ListBuilder
 	isTerm := false
-	for node := range dl.Tail().Pairs() {
+	for node := range dl.Tail().Tail().Pairs() {
 		isTerm = !isTerm
 		if isTerm {
 			dList.Add(pp.visitInlines(node.Head(), env))
@@ -225,7 +228,7 @@ func postProcessDescription(pp *postProcessor, dl *sx.Pair, env *sx.Pair) *sx.Pa
 			dList.Add(sz.Walk(pp, node.Head(), env))
 		}
 	}
-	return dList.List().Cons(dl.Car())
+	return dList.List().Cons(attrs).Cons(dl.Car())
 }
 
 func postProcessTable(pp *postProcessor, tbl *sx.Pair, env *sx.Pair) *sx.Pair {
