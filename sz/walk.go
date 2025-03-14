@@ -180,6 +180,8 @@ func walkTableChildren(v Visitor, tn *sx.Pair, env *sx.Pair) *sx.Pair {
 func walkBLOBChildren(v Visitor, bn *sx.Pair, env *sx.Pair) *sx.Pair {
 	// sym := bn.Car()
 	next := bn.Tail()
+	// attrs := next.Car()
+	next = next.Tail()
 	// description := next.Car()
 	next.SetCar(walkChildrenList(v, next.Head(), env))
 	return bn

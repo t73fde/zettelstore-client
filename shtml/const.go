@@ -68,7 +68,6 @@ var (
 
 // Symbols for HTML attribute keys
 var (
-	symAttrAlt    = sx.MakeSymbol("alt")
 	SymAttrClass  = sx.MakeSymbol("class")
 	SymAttrHref   = sx.MakeSymbol("href")
 	SymAttrID     = sx.MakeSymbol("id")

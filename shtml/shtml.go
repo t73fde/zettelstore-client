@@ -423,8 +423,9 @@ func (ev *Evaluator) bindBlocks() {
 		return evalVerbatim(a, content)
 	})
 	ev.bind(sz.SymVerbatimZettel, 0, nilFn)
-	ev.bind(sz.SymBLOB, 3, func(args sx.Vector, env *Environment) sx.Object {
-		return evalBLOB(getList(args[0], env), getString(args[1], env), getString(args[2], env))
+	ev.bind(sz.SymBLOB, 4, func(args sx.Vector, env *Environment) sx.Object {
+		a := GetAttributes(args[0], env)
+		return evalBLOB(a, getList(args[1], env), getString(args[2], env), getString(args[3], env))
 	})
 	ev.bind(sz.SymTransclude, 2, func(args sx.Vector, env *Environment) sx.Object {
 		if refSym, refValue := GetReference(args[1], env); refSym != nil {
@@ -590,6 +591,7 @@ func (ev *Evaluator) bindInlines() {
 			summary = ""
 		}
 		return evalBLOB(
+			a,
 			sx.MakeList(sxhtml.SymListSplice, sx.MakeString(summary)),
 			syntax,
 			data,
@@ -765,7 +767,7 @@ func (ev *Evaluator) evalHTML(args sx.Vector, env *Environment) sx.Object {
 	return nil
 }
 
-func evalBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
+func evalBLOB(a attrs.Attributes, description *sx.Pair, syntax, data sx.String) sx.Object {
 	if data.GetValue() == "" {
 		return sx.Nil()
 	}
@@ -775,13 +777,13 @@ func evalBLOB(description *sx.Pair, syntax, data sx.String) sx.Object {
 	case meta.ValueSyntaxSVG:
 		return sx.Nil().Cons(sx.Nil().Cons(data).Cons(sxhtml.SymNoEscape)).Cons(SymP)
 	default:
-		imgAttr := sx.Nil().Cons(sx.Cons(SymAttrSrc, sx.MakeString("data:image/"+syntax.GetValue()+";base64,"+data.GetValue())))
+		a = a.Add("src", "data:image/"+syntax.GetValue()+";base64,"+data.GetValue())
 		var sb strings.Builder
 		flattenText(&sb, description)
 		if d := sb.String(); d != "" {
-			imgAttr = imgAttr.Cons(sx.Cons(symAttrAlt, sx.MakeString(d)))
+			a = a.Add("alt", d)
 		}
-		return sx.Nil().Cons(sx.Nil().Cons(imgAttr.Cons(sxhtml.SymAttr)).Cons(SymIMG)).Cons(SymP)
+		return sx.Nil().Cons(sx.Nil().Cons(EvaluateAttributes(a)).Cons(SymIMG)).Cons(SymP)
 	}
 }
 

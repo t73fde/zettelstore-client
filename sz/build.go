@@ -75,11 +75,12 @@ func MakeTransclusion(attrs *sx.Pair, ref *sx.Pair, text *sx.Pair) *sx.Pair {
 }
 
 // MakeBLOB builds a block BLOB node.
-func MakeBLOB(description *sx.Pair, syntax, content string) *sx.Pair {
+func MakeBLOB(attrs, description *sx.Pair, syntax, content string) *sx.Pair {
 	return sx.Cons(SymBLOB,
-		sx.Cons(description,
-			sx.Cons(sx.MakeString(syntax),
-				sx.Cons(sx.MakeString(content), sx.Nil()))))
+		sx.Cons(attrs,
+			sx.Cons(description,
+				sx.Cons(sx.MakeString(syntax),
+					sx.Cons(sx.MakeString(content), sx.Nil())))))
 }
 
 // MakeText builds a text node.
