@@ -23,9 +23,9 @@ import (
 	"t73f.de/r/sx"
 	"t73f.de/r/sxwebs/sxhtml"
 	"t73f.de/r/zsc/api"
-	"t73f.de/r/zsc/attrs"
 	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
 )
 
 // Evaluator will transform a s-expression that encodes the zettel AST into an s-expression
@@ -60,7 +60,7 @@ func (ev *Evaluator) SetUnique(s string) { ev.unique = s }
 func isValidName(s string) bool { return s != "" }
 
 // EvaluateAttributes transforms the given attributes into a HTML s-expression.
-func EvaluateAttributes(a attrs.Attributes) *sx.Pair {
+func EvaluateAttributes(a zsx.Attributes) *sx.Pair {
 	if len(a) == 0 {
 		return nil
 	}
@@ -68,7 +68,7 @@ func EvaluateAttributes(a attrs.Attributes) *sx.Pair {
 	keys := a.Keys()
 	for i := len(keys) - 1; i >= 0; i-- {
 		key := keys[i]
-		if key != attrs.DefaultAttribute && isValidName(key) {
+		if key != zsx.DefaultAttribute && isValidName(key) {
 			plist = plist.Cons(sx.Cons(sx.MakeSymbol(key), sx.MakeString(a[key])))
 		}
 	}
@@ -187,7 +187,7 @@ func (env *Environment) Reset() {
 }
 
 // pushAttribute adds the current attributes to the environment.
-func (env *Environment) pushAttributes(a attrs.Attributes) {
+func (env *Environment) pushAttributes(a zsx.Attributes) {
 	if value, ok := a.Get("lang"); ok {
 		env.langStack.Push(value)
 	} else {
@@ -238,7 +238,7 @@ func (ev *Evaluator) Rebind(sym *sx.Symbol, fn EvalFn) {
 func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.SymMeta, 0, ev.evalList)
 	evalMetaString := func(args sx.Vector, env *Environment) sx.Object {
-		a := make(attrs.Attributes, 2).
+		a := make(zsx.Attributes, 2).
 			Set("name", getSymbol(args[0], env).GetValue()).
 			Set("content", getString(args[1], env).GetValue())
 		return ev.EvaluateMeta(a)
@@ -262,7 +262,7 @@ func (ev *Evaluator) bindMetadata() {
 		if len(s) > 0 {
 			s = s[1:]
 		}
-		a := make(attrs.Attributes, 2).
+		a := make(zsx.Attributes, 2).
 			Set("name", getSymbol(args[0], env).GetValue()).
 			Set("content", s)
 		return ev.EvaluateMeta(a)
@@ -272,7 +272,7 @@ func (ev *Evaluator) bindMetadata() {
 }
 
 // EvaluateMeta returns HTML meta object for an attribute.
-func (ev *Evaluator) EvaluateMeta(a attrs.Attributes) *sx.Pair {
+func (ev *Evaluator) EvaluateMeta(a zsx.Attributes) *sx.Pair {
 	return sx.Nil().Cons(EvaluateAttributes(a)).Cons(SymMeta)
 }
 
@@ -309,7 +309,7 @@ func (ev *Evaluator) bindBlocks() {
 		result := sx.Nil()
 		if len(args) > 0 {
 			if attrList := getList(args[0], env); attrList != nil {
-				result = result.Cons(EvaluateAttributes(sz.GetAttributes(attrList)))
+				result = result.Cons(EvaluateAttributes(zsx.GetAttributes(attrList)))
 			}
 		}
 		return result.Cons(SymHR)
@@ -393,7 +393,7 @@ func (ev *Evaluator) bindBlocks() {
 		pattrs := getList(args[0], env)
 		if alignPairs := pattrs.Assoc(sz.SymAttrAlign); alignPairs != nil {
 			if salign, isString := sx.GetString(alignPairs.Cdr()); isString {
-				a := sz.GetAttributes(pattrs.RemoveAssoc(sz.SymAttrAlign))
+				a := zsx.GetAttributes(pattrs.RemoveAssoc(sz.SymAttrAlign))
 				// Since in Sz there are attributes of align:center|left|right, we can reuse the values.
 				a = a.AddClass(salign.GetValue())
 				tdata = tdata.Cons(EvaluateAttributes(a))
@@ -525,7 +525,7 @@ func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) EvalFn {
 	}
 }
 
-func evalVerbatim(a attrs.Attributes, s sx.String) sx.Object {
+func evalVerbatim(a zsx.Attributes, s sx.String) sx.Object {
 	a = setProgLang(a)
 	code := sx.Nil().Cons(s)
 	if al := EvaluateAttributes(a); al != nil {
@@ -621,7 +621,7 @@ func (ev *Evaluator) bindInlines() {
 		result := ev.evalSlice(args[3:], env)
 		if !ev.noLinks {
 			if fragment := getString(args[2], env).GetValue(); fragment != "" {
-				a := attrs.Attributes{"id": fragment + ev.unique}
+				a := zsx.Attributes{"id": fragment + ev.unique}
 				return result.Cons(EvaluateAttributes(a)).Cons(SymA)
 			}
 		}
@@ -737,7 +737,7 @@ func (ev *Evaluator) evalQuote(args sx.Vector, env *Environment) sx.Object {
 
 var visibleReplacer = strings.NewReplacer(" ", "\u2423")
 
-func evalLiteral(args sx.Vector, a attrs.Attributes, sym *sx.Symbol, env *Environment) sx.Object {
+func evalLiteral(args sx.Vector, a zsx.Attributes, sym *sx.Symbol, env *Environment) sx.Object {
 	if a == nil {
 		a = GetAttributes(args[0], env)
 	}
@@ -753,7 +753,7 @@ func evalLiteral(args sx.Vector, a attrs.Attributes, sym *sx.Symbol, env *Enviro
 	}
 	return res.Cons(sym)
 }
-func setProgLang(a attrs.Attributes) attrs.Attributes {
+func setProgLang(a zsx.Attributes) zsx.Attributes {
 	if val, found := a.Get(""); found {
 		a = a.AddClass("language-" + val).Remove("")
 	}
@@ -767,7 +767,7 @@ func (ev *Evaluator) evalHTML(args sx.Vector, env *Environment) sx.Object {
 	return nil
 }
 
-func evalBLOB(a attrs.Attributes, description *sx.Pair, syntax, data sx.String) sx.Object {
+func evalBLOB(a zsx.Attributes, description *sx.Pair, syntax, data sx.String) sx.Object {
 	if data.GetValue() == "" {
 		return sx.Nil()
 	}
@@ -873,7 +873,7 @@ func (ev *Evaluator) EvalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
 	return nil
 }
 
-func (ev *Evaluator) evalLink(a attrs.Attributes, refValue string, inline sx.Vector, env *Environment) sx.Object {
+func (ev *Evaluator) evalLink(a zsx.Attributes, refValue string, inline sx.Vector, env *Environment) sx.Object {
 	result := ev.evalSlice(inline, env)
 	if len(inline) == 0 {
 		result = sx.Nil().Cons(sx.MakeString(refValue))
@@ -924,8 +924,8 @@ func getInt64(val sx.Object, env *Environment) int64 {
 
 // GetAttributes evaluates the given arg in the given environment and returns
 // the contained attributes.
-func GetAttributes(arg sx.Object, env *Environment) attrs.Attributes {
-	return sz.GetAttributes(getList(arg, env))
+func GetAttributes(arg sx.Object, env *Environment) zsx.Attributes {
+	return zsx.GetAttributes(getList(arg, env))
 }
 
 // GetReference returns the reference symbol and the reference value of a reference pair.

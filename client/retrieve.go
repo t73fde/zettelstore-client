@@ -26,7 +26,7 @@ import (
 	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/sexp"
-	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
 )
 
 var bsLF = []byte{'\n'}
@@ -105,7 +105,7 @@ func (c *Client) QueryZettelData(ctx context.Context, query string) (string, str
 		return "", "", nil, err
 	}
 	metaList, err := parseMetaList(vals[3].(*sx.Pair))
-	return sz.GoValue(qVals[1]), sz.GoValue(hVals[1]), metaList, err
+	return zsx.GoValue(qVals[1]), zsx.GoValue(hVals[1]), metaList, err
 }
 
 func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
