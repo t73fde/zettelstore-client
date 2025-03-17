@@ -65,9 +65,7 @@ func MakeThematic(attrs *sx.Pair) *sx.Pair {
 }
 
 // MakeCell builds a table cell node.
-func MakeCell(sym *sx.Symbol, attrs *sx.Pair, inlines *sx.Pair) *sx.Pair {
-	return inlines.Cons(attrs).Cons(sym)
-}
+func MakeCell(attrs *sx.Pair, inlines *sx.Pair) *sx.Pair { return inlines.Cons(attrs).Cons(SymCell) }
 
 // MakeTransclusion builds a transclusion node.
 func MakeTransclusion(attrs *sx.Pair, ref *sx.Pair, text *sx.Pair) *sx.Pair {

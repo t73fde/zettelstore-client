@@ -56,9 +56,6 @@ func init() {
 		SymDescription:   walkDescriptionChildren,
 		SymTable:         walkTableChildren,
 		SymCell:          walkCellChildren,
-		SymCellCenter:    walkCellChildren,
-		SymCellLeft:      walkCellChildren,
-		SymCellRight:     walkCellChildren,
 		SymTransclude:    walkChildrenInlines4,
 		SymBLOB:          walkBLOBChildren,
 

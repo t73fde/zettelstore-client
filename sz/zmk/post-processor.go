@@ -274,14 +274,14 @@ func (pp *postProcessor) visitCells(cells *sx.Pair, env *sx.Pair) (*sx.Pair, int
 		rest := cell.Tail()
 		attrs := rest.Head()
 		ins := pp.visitInlines(rest.Tail(), env)
-		pCells.Add(sz.MakeCell(cell.Car().(*sx.Symbol), attrs, ins))
+		pCells.Add(sz.MakeCell(attrs, ins))
 		width++
 	}
 	return pCells.List(), width
 }
 
-func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, align []*sx.Symbol) {
-	align = make([]*sx.Symbol, width)
+func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, align []byte) {
+	align = make([]byte, width)
 
 	foundHeader := false
 	cellCount := 0
@@ -321,32 +321,24 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 		if elem.Car().IsEqual(sz.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
-				cellAlign := getCellAlignment(str[len(str)-1])
-				if !cellAlign.IsEqualSymbol(sz.SymCell) {
+				lastByte := str[len(str)-1]
+				if cellAlign, isValid := getCellAlignment(lastByte); isValid {
 					elem.SetCdr(sx.Cons(sx.MakeString(str[0:len(str)-1]), nil))
+					rest.SetCar(makeCellAttrs(cellAlign))
 				}
-				align[cellCount-1] = cellAlign
-				cell.SetCar(cellAlign)
+				align[cellCount-1] = lastByte
 			}
 		}
 	}
 
 	if !foundHeader {
-		for i := range width {
-			align[i] = sz.SymCell // Default alignment
-		}
 		return nil, rows, align
 	}
 
-	for i := range width {
-		if align[i] == nil {
-			align[i] = sz.SymCell // Default alignment
-		}
-	}
 	return rows.Head(), rows.Tail(), align
 }
 
-func alignRow(row *sx.Pair, defaultAlign []*sx.Symbol) {
+func alignRow(row *sx.Pair, defaultAlign []byte) {
 	if row == nil {
 		return
 	}
@@ -355,9 +347,11 @@ func alignRow(row *sx.Pair, defaultAlign []*sx.Symbol) {
 	for node := range row.Pairs() {
 		lastCellNode = node
 		cell := node.Head()
-		cell.SetCar(defaultAlign[cellColumnNo])
 		cellColumnNo++
 		rest := cell.Tail() // attrs := rest.Head()
+		if cellAlign, isValid := getCellAlignment(defaultAlign[cellColumnNo-1]); isValid {
+			rest.SetCar(makeCellAttrs(cellAlign))
+		}
 		cellInlines := rest.Tail()
 		if cellInlines == nil {
 			continue
@@ -368,31 +362,39 @@ func alignRow(row *sx.Pair, defaultAlign []*sx.Symbol) {
 		if elem.Car().IsEqual(sz.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
-				cellAlign := getCellAlignment(str[0])
-				if !cellAlign.IsEqualSymbol(sz.SymCell) {
+				cellAlign, isValid := getCellAlignment(str[0])
+				if isValid {
 					elem.SetCdr(sx.Cons(sx.MakeString(str[1:]), nil))
-					cell.SetCar(cellAlign)
+					rest.SetCar(makeCellAttrs(cellAlign))
 				}
 			}
 		}
 	}
 
 	for cellColumnNo < len(defaultAlign) {
-		lastCellNode = lastCellNode.AppendBang(sz.MakeCell(defaultAlign[cellColumnNo], nil, nil))
+		var attrs *sx.Pair
+		if cellAlign, isValid := getCellAlignment(defaultAlign[cellColumnNo]); isValid {
+			attrs = makeCellAttrs(cellAlign)
+		}
+		lastCellNode = lastCellNode.AppendBang(sz.MakeCell(attrs, nil))
 		cellColumnNo++
 	}
 }
 
-func getCellAlignment(ch byte) *sx.Symbol {
+func makeCellAttrs(align sx.String) *sx.Pair {
+	return sx.Cons(sx.Cons(sz.SymAttrAlign, align), sx.Nil())
+}
+
+func getCellAlignment(ch byte) (sx.String, bool) {
 	switch ch {
 	case ':':
-		return sz.SymCellCenter
+		return sz.AttrAlignCenter, true
 	case '<':
-		return sz.SymCellLeft
+		return sz.AttrAlignLeft, true
 	case '>':
-		return sz.SymCellRight
+		return sz.AttrAlignRight, true
 	default:
-		return sz.SymCell
+		return sx.MakeString(""), false
 	}
 }
 

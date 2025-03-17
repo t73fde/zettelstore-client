@@ -388,10 +388,19 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		return table.Cons(symTABLE)
 	})
-	ev.bind(sz.SymCell, 1, ev.makeCellFn(""))
-	ev.bind(sz.SymCellCenter, 1, ev.makeCellFn("center"))
-	ev.bind(sz.SymCellLeft, 1, ev.makeCellFn("left"))
-	ev.bind(sz.SymCellRight, 1, ev.makeCellFn("right"))
+	ev.bind(sz.SymCell, 1, func(args sx.Vector, env *Environment) sx.Object {
+		tdata := ev.evalSlice(args[1:], env)
+		pattrs := getList(args[0], env)
+		if alignPairs := pattrs.Assoc(sz.SymAttrAlign); alignPairs != nil {
+			if salign, isString := sx.GetString(alignPairs.Cdr()); isString {
+				a := sz.GetAttributes(pattrs.RemoveAssoc(sz.SymAttrAlign))
+				// Since in Sz there are attributes of align:center|left|right, we can reuse the values.
+				a = a.AddClass(salign.GetValue())
+				tdata = tdata.Cons(EvaluateAttributes(a))
+			}
+		}
+		return tdata
+	})
 
 	ev.bind(sz.SymRegionBlock, 2, ev.makeRegionFn(SymDIV, true))
 	ev.bind(sz.SymRegionQuote, 2, ev.makeRegionFn(symBLOCKQUOTE, false))
@@ -485,15 +494,6 @@ func (ev *Evaluator) evalTableRow(sym *sx.Symbol, pairs *sx.Pair, env *Environme
 		row.Add(sx.Cons(sym, ev.Eval(obj, env)))
 	}
 	return row.List()
-}
-func (ev *Evaluator) makeCellFn(align string) EvalFn {
-	return func(args sx.Vector, env *Environment) sx.Object {
-		tdata := ev.evalSlice(args[1:], env)
-		if align != "" {
-			tdata = tdata.Cons(EvaluateAttributes(attrs.Attributes{"class": align}))
-		}
-		return tdata
-	}
 }
 
 func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) EvalFn {

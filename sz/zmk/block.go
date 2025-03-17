@@ -680,10 +680,10 @@ func (cp *Parser) parseCell() *sx.Pair {
 			if cell.IsEmpty() {
 				return nil
 			}
-			return sz.MakeCell(sz.SymCell, nil, cell.List())
+			return sz.MakeCell(nil, cell.List())
 		}
 		if inp.Ch == '|' {
-			return sz.MakeCell(sz.SymCell, nil, cell.List())
+			return sz.MakeCell(nil, cell.List())
 		}
 
 		in := cp.parseInline()

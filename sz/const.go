@@ -25,9 +25,6 @@ var (
 	// Symbols for Zettel noMakede types.
 	SymBLOB            = sx.MakeSymbol("BLOB")
 	SymCell            = sx.MakeSymbol("CELL")
-	SymCellCenter      = sx.MakeSymbol("CELL-CENTER")
-	SymCellLeft        = sx.MakeSymbol("CELL-LEFT")
-	SymCellRight       = sx.MakeSymbol("CELL-RIGHT")
 	SymCite            = sx.MakeSymbol("CITE")
 	SymDescription     = sx.MakeSymbol("DESCRIPTION")
 	SymEmbed           = sx.MakeSymbol("EMBED")
@@ -93,4 +90,12 @@ var (
 	SymTypeTimestamp  = sx.MakeSymbol("TIMESTAMP")
 	SymTypeURL        = sx.MakeSymbol("URL")
 	SymTypeWord       = sx.MakeSymbol("WORD")
+)
+
+// Constants for attributes and their values
+var (
+	SymAttrAlign    = sx.MakeSymbol("align")
+	AttrAlignCenter = sx.MakeString("center")
+	AttrAlignLeft   = sx.MakeString("left")
+	AttrAlignRight  = sx.MakeString("right")
 )
