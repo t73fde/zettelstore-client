@@ -271,9 +271,10 @@ func (pp *postProcessor) visitCells(cells *sx.Pair, env *sx.Pair) (*sx.Pair, int
 	var pCells sx.ListBuilder
 	for node := range cells.Pairs() {
 		cell := node.Head()
-		ins := pp.visitInlines(cell.Tail(), env)
-		newCell := ins.Cons(cell.Car())
-		pCells.Add(newCell)
+		rest := cell.Tail()
+		attrs := rest.Head()
+		ins := pp.visitInlines(rest.Tail(), env)
+		pCells.Add(sz.MakeCell(cell.Car().(*sx.Symbol), attrs, ins))
 		width++
 	}
 	return pCells.List(), width
@@ -289,13 +290,14 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 	for node := range rows.Head().Pairs() {
 		cell := node.Head()
 		cellCount++
-		cellTail := cell.Tail()
-		if cellTail == nil {
+		rest := cell.Tail() // attrs := rest.Head()
+		cellInlines := rest.Tail()
+		if cellInlines == nil {
 			continue
 		}
 
 		// elem is first cell inline element
-		elem := cellTail.Head()
+		elem := cellInlines.Head()
 		if elem.Car().IsEqual(sz.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
@@ -308,14 +310,14 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 
 		// move to the last cell inline element
 		for {
-			next := cellTail.Tail()
+			next := cellInlines.Tail()
 			if next == nil {
 				break
 			}
-			cellTail = next
+			cellInlines = next
 		}
 
-		elem = cellTail.Head()
+		elem = cellInlines.Head()
 		if elem.Car().IsEqual(sz.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
@@ -344,24 +346,25 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 	return rows.Head(), rows.Tail(), align
 }
 
-func alignRow(row *sx.Pair, align []*sx.Symbol) {
+func alignRow(row *sx.Pair, defaultAlign []*sx.Symbol) {
 	if row == nil {
 		return
 	}
 	var lastCellNode *sx.Pair
-	cellCount := 0
+	cellColumnNo := 0
 	for node := range row.Pairs() {
 		lastCellNode = node
 		cell := node.Head()
-		cell.SetCar(align[cellCount])
-		cellCount++
-		cellTail := cell.Tail()
-		if cellTail == nil {
+		cell.SetCar(defaultAlign[cellColumnNo])
+		cellColumnNo++
+		rest := cell.Tail() // attrs := rest.Head()
+		cellInlines := rest.Tail()
+		if cellInlines == nil {
 			continue
 		}
 
 		// elem is first cell inline element
-		elem := cellTail.Head()
+		elem := cellInlines.Head()
 		if elem.Car().IsEqual(sz.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
@@ -374,9 +377,9 @@ func alignRow(row *sx.Pair, align []*sx.Symbol) {
 		}
 	}
 
-	for cellCount < len(align) {
-		lastCellNode = lastCellNode.AppendBang(sx.Cons(align[cellCount], nil))
-		cellCount++
+	for cellColumnNo < len(defaultAlign) {
+		lastCellNode = lastCellNode.AppendBang(sz.MakeCell(defaultAlign[cellColumnNo], nil, nil))
+		cellColumnNo++
 	}
 }
 

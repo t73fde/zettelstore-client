@@ -388,10 +388,10 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		return table.Cons(symTABLE)
 	})
-	ev.bind(sz.SymCell, 0, ev.makeCellFn(""))
-	ev.bind(sz.SymCellCenter, 0, ev.makeCellFn("center"))
-	ev.bind(sz.SymCellLeft, 0, ev.makeCellFn("left"))
-	ev.bind(sz.SymCellRight, 0, ev.makeCellFn("right"))
+	ev.bind(sz.SymCell, 1, ev.makeCellFn(""))
+	ev.bind(sz.SymCellCenter, 1, ev.makeCellFn("center"))
+	ev.bind(sz.SymCellLeft, 1, ev.makeCellFn("left"))
+	ev.bind(sz.SymCellRight, 1, ev.makeCellFn("right"))
 
 	ev.bind(sz.SymRegionBlock, 2, ev.makeRegionFn(SymDIV, true))
 	ev.bind(sz.SymRegionQuote, 2, ev.makeRegionFn(symBLOCKQUOTE, false))
@@ -488,7 +488,7 @@ func (ev *Evaluator) evalTableRow(sym *sx.Symbol, pairs *sx.Pair, env *Environme
 }
 func (ev *Evaluator) makeCellFn(align string) EvalFn {
 	return func(args sx.Vector, env *Environment) sx.Object {
-		tdata := ev.evalSlice(args, env)
+		tdata := ev.evalSlice(args[1:], env)
 		if align != "" {
 			tdata = tdata.Cons(EvaluateAttributes(attrs.Attributes{"class": align}))
 		}
