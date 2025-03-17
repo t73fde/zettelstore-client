@@ -266,3 +266,8 @@ func skipSpaceLine(inp *input.Input) {
 func isNameRune(ch rune) bool {
 	return unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '-' || ch == '_'
 }
+
+// isBreakSym return true if the object is either a soft or a hard break symbol.
+func isBreakSym(obj sx.Object) bool {
+	return sz.SymSoft.IsEqual(obj) || sz.SymHard.IsEqual(obj)
+}

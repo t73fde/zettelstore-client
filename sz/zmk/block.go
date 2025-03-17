@@ -107,7 +107,7 @@ func startsWithSpaceSoftBreak(ins *sx.Pair) bool {
 		return false
 	}
 
-	if pair0.Car().IsEqual(sz.SymText) && sz.IsBreakSym(pair1.Car()) {
+	if pair0.Car().IsEqual(sz.SymText) && isBreakSym(pair1.Car()) {
 		if args := pair0.Tail(); args != nil {
 			if val, isString := sx.GetString(args.Car()); isString {
 				for _, ch := range val.GetValue() {
@@ -154,7 +154,7 @@ func (cp *Parser) parsePara() *sx.Pair {
 			return lb.List()
 		}
 		lb.Add(in)
-		if sz.IsBreakSym(in.Car()) {
+		if isBreakSym(in.Car()) {
 			ch := cp.inp.Ch
 			switch ch {
 			// Must contain all cases from above switch in parseBlock.
@@ -472,7 +472,7 @@ func (cp *Parser) parseDefTerm() (res *sx.Pair, success bool) {
 			// lastPair is the term part and we need to append the inline list just read
 			lastPair.Head().LastPair().AppendBang(in)
 		}
-		if sz.IsBreakSym(in.Car()) {
+		if isBreakSym(in.Car()) {
 			return res, true
 		}
 	}
@@ -578,7 +578,7 @@ func (cp *Parser) parseIndentForDescription(cnt int) bool {
 				return true
 			}
 			lastPair.Head().LastPair().AppendBang(in)
-			if sz.IsBreakSym(in.Car()) {
+			if isBreakSym(in.Car()) {
 				return true
 			}
 		}
@@ -630,7 +630,7 @@ func (cp *Parser) parseLinePara() *sx.Pair {
 			return lb.List()
 		}
 		lb.Add(in)
-		if sz.IsBreakSym(in.Car()) {
+		if isBreakSym(in.Car()) {
 			return lb.List()
 		}
 	}

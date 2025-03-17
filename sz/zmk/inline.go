@@ -323,7 +323,7 @@ func (cp *Parser) parseLinkLikeRest() (*sx.Pair, bool) {
 			return nil, false
 		}
 		ins.Add(in)
-		if input.IsEOLEOS(inp.Ch) && sz.IsBreakSym(in.Car()) {
+		if input.IsEOLEOS(inp.Ch) && isBreakSym(in.Car()) {
 			return nil, false
 		}
 	}
@@ -386,7 +386,7 @@ func (cp *Parser) parseFormat() (*sx.Pair, bool) {
 			}
 			inlines.Add(sz.MakeText(string(fch)))
 		} else if in := cp.parseInline(); in != nil {
-			if input.IsEOLEOS(inp.Ch) && sz.IsBreakSym(in.Car()) {
+			if input.IsEOLEOS(inp.Ch) && isBreakSym(in.Car()) {
 				return nil, false
 			}
 			inlines.Add(in)

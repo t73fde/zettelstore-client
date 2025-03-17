@@ -490,7 +490,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 				break
 			}
 			lastPos--
-		} else if sz.IsBreakSym(elemSym) {
+		} else if isBreakSym(elemSym) {
 			lastPos--
 		} else {
 			break
