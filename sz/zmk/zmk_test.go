@@ -20,9 +20,9 @@ import (
 	"testing"
 
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/input"
-	"t73f.de/r/zsc/sz"
 	"t73f.de/r/zsc/sz/zmk"
+	"t73f.de/r/zsx"
+	"t73f.de/r/zsx/input"
 )
 
 type TestCase struct{ source, want string }
@@ -57,7 +57,7 @@ func checkTcs(t *testing.T, tcs TestCases) {
 			inp := input.NewInput([]byte(tc.source))
 			parser.Initialize(inp)
 			ast := parser.Parse()
-			sz.Walk(astWalker{}, ast, nil)
+			zsx.Walk(astWalker{}, ast, nil)
 			got := ast.String()
 			if tc.want != got {
 				st.Errorf("\nwant=%q\n got=%q", tc.want, got)
@@ -315,14 +315,14 @@ func TestComment(t *testing.T) {
 
 func TestFormat(t *testing.T) {
 	symMap := symbolMap{
-		"_": sz.SymFormatEmph,
-		"*": sz.SymFormatStrong,
-		">": sz.SymFormatInsert,
-		"~": sz.SymFormatDelete,
-		"^": sz.SymFormatSuper,
-		",": sz.SymFormatSub,
-		"#": sz.SymFormatMark,
-		":": sz.SymFormatSpan,
+		"_": zsx.SymFormatEmph,
+		"*": zsx.SymFormatStrong,
+		">": zsx.SymFormatInsert,
+		"~": zsx.SymFormatDelete,
+		"^": zsx.SymFormatSuper,
+		",": zsx.SymFormatSub,
+		"#": zsx.SymFormatMark,
+		":": zsx.SymFormatSpan,
 	}
 	t.Parallel()
 	// Not for Insert / '>', because collision with quoted list
@@ -356,7 +356,7 @@ func TestFormat(t *testing.T) {
 			{"$$a\n\na$$", "(BLOCK (PARA (TEXT \"$$a\")) (PARA (TEXT \"a$$\")))"},
 		}))
 	}
-	checkTcs(t, replace(`"`, symbolMap{`"`: sz.SymFormatQuote}, TestCases{
+	checkTcs(t, replace(`"`, symbolMap{`"`: zsx.SymFormatQuote}, TestCases{
 		{"$", "(BLOCK (PARA (TEXT \"\\\"\")))"},
 		{"$$", "(BLOCK (PARA (TEXT \"\\\"\\\"\")))"},
 		{"$$$", "(BLOCK (PARA (TEXT \"\\\"\\\"\\\"\")))"},
@@ -385,9 +385,9 @@ func TestFormat(t *testing.T) {
 
 func TestLiteral(t *testing.T) {
 	symMap := symbolMap{
-		"`": sz.SymLiteralCode,
-		"'": sz.SymLiteralInput,
-		"=": sz.SymLiteralOutput,
+		"`": zsx.SymLiteralCode,
+		"'": zsx.SymLiteralInput,
+		"=": zsx.SymLiteralOutput,
 	}
 	t.Parallel()
 	for _, ch := range []string{"`", "'", "="} {

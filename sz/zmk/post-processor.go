@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
 )
 
 var symInVerse = sx.MakeSymbol("in-verse")
@@ -44,7 +44,7 @@ func (pp *postProcessor) VisitAfter(lst *sx.Pair, _ *sx.Pair) sx.Object { return
 func (pp *postProcessor) visitPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
 	for node := range lst.Pairs() {
-		if elem, isPair := sx.GetPair(sz.Walk(pp, node.Head(), env)); isPair && elem != nil {
+		if elem, isPair := sx.GetPair(zsx.Walk(pp, node.Head(), env)); isPair && elem != nil {
 			pList.Add(elem)
 		}
 	}
@@ -55,40 +55,40 @@ var symMap map[*sx.Symbol]func(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair
 
 func init() {
 	symMap = map[*sx.Symbol]func(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair{
-		sz.SymBlock:           postProcessBlockList,
-		sz.SymPara:            postProcessInlineList,
-		sz.SymRegionBlock:     postProcessRegion,
-		sz.SymRegionQuote:     postProcessRegion,
-		sz.SymRegionVerse:     postProcessRegionVerse,
-		sz.SymVerbatimComment: postProcessVerbatim,
-		sz.SymVerbatimEval:    postProcessVerbatim,
-		sz.SymVerbatimMath:    postProcessVerbatim,
-		sz.SymVerbatimCode:    postProcessVerbatim,
-		sz.SymVerbatimZettel:  postProcessVerbatim,
-		sz.SymHeading:         postProcessHeading,
-		sz.SymListOrdered:     postProcessItemList,
-		sz.SymListUnordered:   postProcessItemList,
-		sz.SymListQuote:       postProcessQuoteList,
-		sz.SymDescription:     postProcessDescription,
-		sz.SymTable:           postProcessTable,
+		zsx.SymBlock:           postProcessBlockList,
+		zsx.SymPara:            postProcessInlineList,
+		zsx.SymRegionBlock:     postProcessRegion,
+		zsx.SymRegionQuote:     postProcessRegion,
+		zsx.SymRegionVerse:     postProcessRegionVerse,
+		zsx.SymVerbatimComment: postProcessVerbatim,
+		zsx.SymVerbatimEval:    postProcessVerbatim,
+		zsx.SymVerbatimMath:    postProcessVerbatim,
+		zsx.SymVerbatimCode:    postProcessVerbatim,
+		zsx.SymVerbatimZettel:  postProcessVerbatim,
+		zsx.SymHeading:         postProcessHeading,
+		zsx.SymListOrdered:     postProcessItemList,
+		zsx.SymListUnordered:   postProcessItemList,
+		zsx.SymListQuote:       postProcessQuoteList,
+		zsx.SymDescription:     postProcessDescription,
+		zsx.SymTable:           postProcessTable,
 
-		sz.SymInline:       postProcessInlineList,
-		sz.SymText:         postProcessText,
-		sz.SymSoft:         postProcessSoft,
-		sz.SymEndnote:      postProcessEndnote,
-		sz.SymMark:         postProcessMark,
-		sz.SymLink:         postProcessInlines4,
-		sz.SymEmbed:        postProcessEmbed,
-		sz.SymCite:         postProcessInlines4,
-		sz.SymFormatDelete: postProcessFormat,
-		sz.SymFormatEmph:   postProcessFormat,
-		sz.SymFormatInsert: postProcessFormat,
-		sz.SymFormatMark:   postProcessFormat,
-		sz.SymFormatQuote:  postProcessFormat,
-		sz.SymFormatStrong: postProcessFormat,
-		sz.SymFormatSpan:   postProcessFormat,
-		sz.SymFormatSub:    postProcessFormat,
-		sz.SymFormatSuper:  postProcessFormat,
+		zsx.SymInline:       postProcessInlineList,
+		zsx.SymText:         postProcessText,
+		zsx.SymSoft:         postProcessSoft,
+		zsx.SymEndnote:      postProcessEndnote,
+		zsx.SymMark:         postProcessMark,
+		zsx.SymLink:         postProcessInlines4,
+		zsx.SymEmbed:        postProcessEmbed,
+		zsx.SymCite:         postProcessInlines4,
+		zsx.SymFormatDelete: postProcessFormat,
+		zsx.SymFormatEmph:   postProcessFormat,
+		zsx.SymFormatInsert: postProcessFormat,
+		zsx.SymFormatMark:   postProcessFormat,
+		zsx.SymFormatQuote:  postProcessFormat,
+		zsx.SymFormatStrong: postProcessFormat,
+		zsx.SymFormatSpan:   postProcessFormat,
+		zsx.SymFormatSub:    postProcessFormat,
+		zsx.SymFormatSuper:  postProcessFormat,
 
 		symSeparator: ignoreProcess,
 	}
@@ -132,7 +132,7 @@ func doPostProcessRegion(pp *postProcessor, rn *sx.Pair, envBlock, envInline *sx
 	if blocks == nil && text == nil {
 		return nil
 	}
-	return sz.MakeRegion(sym, attrs, blocks, text)
+	return zsx.MakeRegion(sym, attrs, blocks, text)
 }
 
 func postProcessVerbatim(_ *postProcessor, verb *sx.Pair, _ *sx.Pair) *sx.Pair {
@@ -152,7 +152,7 @@ func postProcessHeading(pp *postProcessor, hn *sx.Pair, env *sx.Pair) *sx.Pair {
 	next = next.Tail()
 	fragment := next.Car().(sx.String)
 	if text := pp.visitInlines(next.Tail(), env); text != nil {
-		return sz.MakeHeading(int(level), attrs, text, slug.GetValue(), fragment.GetValue())
+		return zsx.MakeHeading(int(level), attrs, text, slug.GetValue(), fragment.GetValue())
 	}
 	return nil
 }
@@ -163,7 +163,7 @@ func postProcessItemList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair 
 	if elems == nil {
 		return nil
 	}
-	return sz.MakeList(ln.Car().(*sx.Symbol), attrs, elems)
+	return zsx.MakeList(ln.Car().(*sx.Symbol), attrs, elems)
 }
 
 func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
@@ -177,13 +177,13 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair
 
 	addtoParagraph := func() {
 		if !newPara.IsEmpty() {
-			newElems.Add(sx.MakeList(sz.SymBlock, newPara.List().Cons(sz.SymPara)))
+			newElems.Add(sx.MakeList(zsx.SymBlock, newPara.List().Cons(zsx.SymPara)))
 			newPara.Reset()
 		}
 	}
 	for node := range elems.Pairs() {
 		item := node.Head()
-		if !item.Car().IsEqual(sz.SymBlock) {
+		if !item.Car().IsEqual(zsx.SymBlock) {
 			continue
 		}
 		itemTail := item.Tail()
@@ -192,9 +192,9 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair
 			newElems.Add(item)
 			continue
 		}
-		if pn := itemTail.Head(); pn.Car().IsEqual(sz.SymPara) {
+		if pn := itemTail.Head(); pn.Car().IsEqual(zsx.SymPara) {
 			if !newPara.IsEmpty() {
-				newPara.Add(sx.Cons(sz.SymSoft, nil))
+				newPara.Add(sx.Cons(zsx.SymSoft, nil))
 			}
 			newPara.ExtendBang(pn.Tail())
 			continue
@@ -203,13 +203,13 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair
 		newElems.Add(item)
 	}
 	addtoParagraph()
-	return sz.MakeList(ln.Car().(*sx.Symbol), attrs, newElems.List())
+	return zsx.MakeList(ln.Car().(*sx.Symbol), attrs, newElems.List())
 }
 
 func (pp *postProcessor) visitListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
 	for node := range ln.Tail().Pairs() {
-		if elem := sz.Walk(pp, node.Head(), env); elem != nil {
+		if elem := zsx.Walk(pp, node.Head(), env); elem != nil {
 			pList.Add(elem)
 		}
 	}
@@ -225,7 +225,7 @@ func postProcessDescription(pp *postProcessor, dl *sx.Pair, env *sx.Pair) *sx.Pa
 		if isTerm {
 			dList.Add(pp.visitInlines(node.Head(), env))
 		} else {
-			dList.Add(sz.Walk(pp, node.Head(), env))
+			dList.Add(zsx.Walk(pp, node.Head(), env))
 		}
 	}
 	return dList.List().Cons(attrs).Cons(dl.Car())
@@ -274,7 +274,7 @@ func (pp *postProcessor) visitCells(cells *sx.Pair, env *sx.Pair) (*sx.Pair, int
 		rest := cell.Tail()
 		attrs := rest.Head()
 		ins := pp.visitInlines(rest.Tail(), env)
-		pCells.Add(sz.MakeCell(attrs, ins))
+		pCells.Add(zsx.MakeCell(attrs, ins))
 		width++
 	}
 	return pCells.List(), width
@@ -298,7 +298,7 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 
 		// elem is first cell inline element
 		elem := cellInlines.Head()
-		if elem.Car().IsEqual(sz.SymText) {
+		if elem.Car().IsEqual(zsx.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
 				if str[0] == '=' {
@@ -318,7 +318,7 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 		}
 
 		elem = cellInlines.Head()
-		if elem.Car().IsEqual(sz.SymText) {
+		if elem.Car().IsEqual(zsx.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
 				lastByte := str[len(str)-1]
@@ -359,7 +359,7 @@ func alignRow(row *sx.Pair, defaultAlign []byte) {
 
 		// elem is first cell inline element
 		elem := cellInlines.Head()
-		if elem.Car().IsEqual(sz.SymText) {
+		if elem.Car().IsEqual(zsx.SymText) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
 				cellAlign, isValid := getCellAlignment(str[0])
@@ -376,23 +376,23 @@ func alignRow(row *sx.Pair, defaultAlign []byte) {
 		if cellAlign, isValid := getCellAlignment(defaultAlign[cellColumnNo]); isValid {
 			attrs = makeCellAttrs(cellAlign)
 		}
-		lastCellNode = lastCellNode.AppendBang(sz.MakeCell(attrs, nil))
+		lastCellNode = lastCellNode.AppendBang(zsx.MakeCell(attrs, nil))
 		cellColumnNo++
 	}
 }
 
 func makeCellAttrs(align sx.String) *sx.Pair {
-	return sx.Cons(sx.Cons(sz.SymAttrAlign, align), sx.Nil())
+	return sx.Cons(sx.Cons(zsx.SymAttrAlign, align), sx.Nil())
 }
 
 func getCellAlignment(ch byte) (sx.String, bool) {
 	switch ch {
 	case ':':
-		return sz.AttrAlignCenter, true
+		return zsx.AttrAlignCenter, true
 	case '<':
-		return sz.AttrAlignLeft, true
+		return zsx.AttrAlignLeft, true
 	case '>':
-		return sz.AttrAlignRight, true
+		return zsx.AttrAlignRight, true
 	default:
 		return sx.MakeString(""), false
 	}
@@ -407,14 +407,14 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	vector := make([]*sx.Pair, 0, length)
 	// 1st phase: process all childs, ignore ' ' / '\t' at start, and merge some elements
 	for node := range lst.Pairs() {
-		elem, isPair := sx.GetPair(sz.Walk(pp, node.Head(), env))
+		elem, isPair := sx.GetPair(zsx.Walk(pp, node.Head(), env))
 		if !isPair || elem == nil {
 			continue
 		}
 		elemSym := elem.Car()
 		elemTail := elem.Tail()
 
-		if inVerse && elemSym.IsEqual(sz.SymText) {
+		if inVerse && elemSym.IsEqual(zsx.SymText) {
 			if s, isString := sx.GetString(elemTail.Car()); isString {
 				verseText := s.GetValue()
 				verseText = strings.ReplaceAll(verseText, " ", "\u00a0")
@@ -424,7 +424,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 
 		if len(vector) == 0 {
 			// If the 1st element is a TEXT, remove all ' ', '\t' at the beginning, if outside a verse block.
-			if !elemSym.IsEqual(sz.SymText) {
+			if !elemSym.IsEqual(zsx.SymText) {
 				vector = append(vector, elem)
 				continue
 			}
@@ -447,7 +447,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 		last := vector[len(vector)-1]
 		lastSym := last.Car()
 
-		if lastSym.IsEqual(sz.SymText) && elemSym.IsEqual(sz.SymText) {
+		if lastSym.IsEqual(zsx.SymText) && elemSym.IsEqual(zsx.SymText) {
 			// Merge two TEXT elements into one
 			lastText := last.Tail().Car().(sx.String).GetValue()
 			elemText := elem.Tail().Car().(sx.String).GetValue()
@@ -455,17 +455,17 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 			continue
 		}
 
-		if lastSym.IsEqual(sz.SymText) && elemSym.IsEqual(sz.SymSoft) {
+		if lastSym.IsEqual(zsx.SymText) && elemSym.IsEqual(zsx.SymSoft) {
 			// Merge (TEXT "... ") (SOFT) to (TEXT "...") (HARD)
 			lastTail := last.Tail()
 			if lastText := lastTail.Car().(sx.String).GetValue(); strings.HasSuffix(lastText, " ") {
 				newText := removeTrailingSpaces(lastText)
 				if newText == "" {
-					vector[len(vector)-1] = sx.Cons(sz.SymHard, sx.Nil())
+					vector[len(vector)-1] = sx.Cons(zsx.SymHard, sx.Nil())
 					continue
 				}
 				lastTail.SetCar(sx.MakeString(newText))
-				elemSym = sz.SymHard
+				elemSym = zsx.SymHard
 				elem.SetCar(elemSym)
 			}
 		}
@@ -481,7 +481,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
 	for lastPos >= 0 {
 		elem := vector[lastPos]
 		elemSym := elem.Car()
-		if elemSym.IsEqual(sz.SymText) {
+		if elemSym.IsEqual(zsx.SymText) {
 			elemTail := elem.Tail()
 			elemText := elemTail.Car().(sx.String).GetValue()
 			newText := removeTrailingSpaces(elemText)
@@ -531,16 +531,16 @@ func postProcessSoft(_ *postProcessor, sn *sx.Pair, env *sx.Pair) *sx.Pair {
 	if env.Assoc(symInVerse) == nil {
 		return sn
 	}
-	return sx.Cons(sz.SymHard, nil)
+	return sx.Cons(zsx.SymHard, nil)
 }
 
 func postProcessEndnote(pp *postProcessor, en *sx.Pair, env *sx.Pair) *sx.Pair {
 	next := en.Tail()
 	attrs := next.Car().(*sx.Pair)
 	if text := pp.visitInlines(next.Tail(), env); text != nil {
-		return sz.MakeEndnote(attrs, text)
+		return zsx.MakeEndnote(attrs, text)
 	}
-	return sz.MakeEndnote(attrs, sx.Nil())
+	return zsx.MakeEndnote(attrs, sx.Nil())
 }
 
 func postProcessMark(pp *postProcessor, en *sx.Pair, env *sx.Pair) *sx.Pair {
@@ -551,7 +551,7 @@ func postProcessMark(pp *postProcessor, en *sx.Pair, env *sx.Pair) *sx.Pair {
 	next = next.Tail()
 	fragment := next.Car().(sx.String)
 	text := pp.visitInlines(next.Tail(), env)
-	return sz.MakeMark(mark.GetValue(), slug.GetValue(), fragment.GetValue(), text)
+	return zsx.MakeMark(mark.GetValue(), slug.GetValue(), fragment.GetValue(), text)
 }
 
 func postProcessInlines4(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
@@ -572,7 +572,7 @@ func postProcessEmbed(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
 	next = next.Tail()
 	syntax := next.Car().(sx.String)
 	text := pp.visitInlines(next.Tail(), env)
-	return sz.MakeEmbed(attrs, ref, syntax.GetValue(), text)
+	return zsx.MakeEmbed(attrs, ref, syntax.GetValue(), text)
 }
 
 func postProcessFormat(pp *postProcessor, fn *sx.Pair, env *sx.Pair) *sx.Pair {
@@ -584,5 +584,5 @@ func postProcessFormat(pp *postProcessor, fn *sx.Pair, env *sx.Pair) *sx.Pair {
 		return fn
 	}
 	inlines := pp.visitInlines(next, env)
-	return sz.MakeFormat(symFormat, attrs, inlines)
+	return zsx.MakeFormat(symFormat, attrs, inlines)
 }

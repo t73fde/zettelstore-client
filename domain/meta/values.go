@@ -22,7 +22,7 @@ import (
 
 	zeroiter "t73f.de/r/zero/iter"
 	"t73f.de/r/zsc/domain/id"
-	"t73f.de/r/zsc/input"
+	"t73f.de/r/zsx/input"
 )
 
 // Value ist a single metadata value.

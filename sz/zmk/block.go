@@ -17,8 +17,8 @@ import (
 	"fmt"
 
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/input"
-	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
+	"t73f.de/r/zsx/input"
 )
 
 // parseBlock parses one block.
@@ -87,7 +87,7 @@ func (cp *Parser) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 		lastPair.ExtendBang(ins)
 		return nil, true
 	}
-	return sz.MakeParaList(ins), false
+	return zsx.MakeParaList(ins), false
 }
 
 func startsWithSpaceSoftBreak(ins *sx.Pair) bool {
@@ -107,7 +107,7 @@ func startsWithSpaceSoftBreak(ins *sx.Pair) bool {
 		return false
 	}
 
-	if pair0.Car().IsEqual(sz.SymText) && isBreakSym(pair1.Car()) {
+	if pair0.Car().IsEqual(zsx.SymText) && isBreakSym(pair1.Car()) {
 		if args := pair0.Tail(); args != nil {
 			if val, isString := sx.GetString(args.Car()); isString {
 				for _, ch := range val.GetValue() {
@@ -190,15 +190,15 @@ func parseVerbatim(inp *input.Input) (*sx.Pair, bool) {
 	var sym *sx.Symbol
 	switch fch {
 	case '@':
-		sym = sz.SymVerbatimZettel
+		sym = zsx.SymVerbatimZettel
 	case '`', runeModGrave:
-		sym = sz.SymVerbatimCode
+		sym = zsx.SymVerbatimCode
 	case '%':
-		sym = sz.SymVerbatimComment
+		sym = zsx.SymVerbatimComment
 	case '~':
-		sym = sz.SymVerbatimEval
+		sym = zsx.SymVerbatimEval
 	case '$':
-		sym = sz.SymVerbatimMath
+		sym = zsx.SymVerbatimMath
 	default:
 		panic(fmt.Sprintf("%q is not a verbatim char", fch))
 	}
@@ -210,7 +210,7 @@ func parseVerbatim(inp *input.Input) (*sx.Pair, bool) {
 		case fch:
 			if countDelim(inp, fch) >= cnt {
 				inp.SkipToEOL()
-				return sz.MakeVerbatim(sym, attrs, string(content)), true
+				return zsx.MakeVerbatim(sym, attrs, string(content)), true
 			}
 			inp.SetPos(posL)
 		case input.EOS:
@@ -236,11 +236,11 @@ func (cp *Parser) parseRegion() (*sx.Pair, bool) {
 	var sym *sx.Symbol
 	switch fch {
 	case ':':
-		sym = sz.SymRegionBlock
+		sym = zsx.SymRegionBlock
 	case '<':
-		sym = sz.SymRegionQuote
+		sym = zsx.SymRegionQuote
 	case '"':
-		sym = sz.SymRegionVerse
+		sym = zsx.SymRegionVerse
 	default:
 		panic(fmt.Sprintf("%q is not a region char", fch))
 	}
@@ -258,7 +258,7 @@ func (cp *Parser) parseRegion() (*sx.Pair, bool) {
 		case fch:
 			if countDelim(inp, fch) >= cnt {
 				ins := cp.parseRegionLastLine()
-				return sz.MakeRegion(sym, attrs, blocksBuilder.List(), ins), true
+				return zsx.MakeRegion(sym, attrs, blocksBuilder.List(), ins), true
 			}
 			inp.SetPos(posL)
 		case input.EOS:
@@ -313,17 +313,17 @@ func (cp *Parser) parseHeading() (*sx.Pair, bool) {
 	var text sx.ListBuilder
 	for {
 		if input.IsEOLEOS(inp.Ch) {
-			return sz.MakeHeading(level, attrs, text.List(), "", ""), true
+			return zsx.MakeHeading(level, attrs, text.List(), "", ""), true
 		}
 		in := cp.parseInline()
 		if in == nil {
-			return sz.MakeHeading(level, attrs, text.List(), "", ""), true
+			return zsx.MakeHeading(level, attrs, text.List(), "", ""), true
 		}
 		text.Add(in)
 		if inp.Ch == '{' && inp.Peek() != '{' {
 			attrs = parseBlockAttributes(inp)
 			inp.SkipToEOL()
-			return sz.MakeHeading(level, attrs, text.List(), "", ""), true
+			return zsx.MakeHeading(level, attrs, text.List(), "", ""), true
 		}
 	}
 }
@@ -336,7 +336,7 @@ func parseHRule(inp *input.Input) (*sx.Pair, bool) {
 
 	attrs := parseBlockAttributes(inp)
 	inp.SkipToEOL()
-	return sz.MakeThematic(attrs), true
+	return zsx.MakeThematic(attrs), true
 }
 
 // parseNestedList parses a list.
@@ -347,7 +347,7 @@ func (cp *Parser) parseNestedList() (*sx.Pair, bool) {
 		return nil, false
 	}
 	inp.SkipSpace()
-	if !kinds[len(kinds)-1].IsEqual(sz.SymListQuote) && input.IsEOLEOS(inp.Ch) {
+	if !kinds[len(kinds)-1].IsEqual(zsx.SymListQuote) && input.IsEOLEOS(inp.Ch) {
 		return nil, false
 	}
 
@@ -356,9 +356,9 @@ func (cp *Parser) parseNestedList() (*sx.Pair, bool) {
 	}
 	ln, newLnCount := cp.buildNestedList(kinds)
 	pv := cp.parseLinePara()
-	bn := sz.MakeBlock()
+	bn := zsx.MakeBlock()
 	if pv != nil {
-		bn.AppendBang(sz.MakeParaList(pv))
+		bn.AppendBang(zsx.MakeParaList(pv))
 	}
 	lastItemPair := ln.LastPair()
 	lastItemPair.AppendBang(bn)
@@ -371,11 +371,11 @@ func parseNestedListKinds(inp *input.Input) []*sx.Symbol {
 		var sym *sx.Symbol
 		switch inp.Ch {
 		case '*':
-			sym = sz.SymListUnordered
+			sym = zsx.SymListUnordered
 		case '#':
-			sym = sz.SymListOrdered
+			sym = zsx.SymListOrdered
 		case '>':
-			sym = sz.SymListQuote
+			sym = zsx.SymListQuote
 		default:
 			panic(fmt.Sprintf("%q is not a region char", inp.Ch))
 		}
@@ -425,7 +425,7 @@ func (cp *Parser) cleanupParsedNestedList(newLnCount int) (*sx.Pair, bool) {
 			lastParent.Head().LastPair().AppendBang(childLn)
 		} else {
 			// Set list to first child of parent.
-			parentLn.LastPair().AppendBang(sz.MakeBlock(cp.lists[childPos]))
+			parentLn.LastPair().AppendBang(zsx.MakeBlock(cp.lists[childPos]))
 		}
 		childPos--
 		parentPos--
@@ -443,7 +443,7 @@ func (cp *Parser) parseDefTerm() (res *sx.Pair, success bool) {
 	inp.SkipSpace()
 	descrl := cp.descrl
 	if descrl == nil {
-		descrl = sx.Cons(sz.SymDescription, sx.Cons(sx.Nil(), sx.Nil()))
+		descrl = sx.Cons(zsx.SymDescription, sx.Cons(sx.Nil(), sx.Nil()))
 		cp.descrl = descrl
 		res = descrl
 	}
@@ -465,7 +465,7 @@ func (cp *Parser) parseDefTerm() (res *sx.Pair, success bool) {
 		} else if first {
 			// Previous term had no description
 			lastPair = lastPair.
-				AppendBang(sz.MakeBlock()).
+				AppendBang(zsx.MakeBlock()).
 				AppendBang(sx.Cons(in, nil))
 			pos += 2
 		} else {
@@ -498,10 +498,10 @@ func (cp *Parser) parseDefDescr() (res *sx.Pair, success bool) {
 		return nil, false
 	}
 
-	newDef := sz.MakeBlock(sz.MakeParaList(pn))
+	newDef := zsx.MakeBlock(zsx.MakeParaList(pn))
 	if lpPos%2 == 0 {
 		// Just a term, but no definitions
-		lastPair.AppendBang(sz.MakeBlock(newDef))
+		lastPair.AppendBang(zsx.MakeBlock(newDef))
 	} else {
 		// lastPara points a the last definition
 		lastPair.Head().LastPair().AppendBang(newDef)
@@ -556,10 +556,10 @@ func (cp *Parser) parseIndentForList(cnt int) bool {
 	ln := cp.lists[cnt-1]
 	lbn := ln.LastPair().Head()
 	lpn := lbn.LastPair().Head()
-	if lpn.Car().IsEqual(sz.SymPara) {
+	if lpn.Car().IsEqual(zsx.SymPara) {
 		lpn.LastPair().SetCdr(pv)
 	} else {
-		lbn.LastPair().AppendBang(sz.MakeParaList(pv))
+		lbn.LastPair().AppendBang(zsx.MakeParaList(pv))
 	}
 	return true
 }
@@ -605,7 +605,7 @@ func (cp *Parser) parseIndentForDescription(cnt int) bool {
 		}
 		if symSeparator.IsEqual(next.Head().Car()) {
 			// It is a new paragraph!
-			obj.LastPair().AppendBang(sz.MakeParaList(pn))
+			obj.LastPair().AppendBang(zsx.MakeParaList(pn))
 			return true
 		}
 		curr = next
@@ -613,10 +613,10 @@ func (cp *Parser) parseIndentForDescription(cnt int) bool {
 
 	// Continuation of existing paragraph
 	para := bn.LastPair().Head().LastPair().Head()
-	if para.Car().IsEqual(sz.SymPara) {
+	if para.Car().IsEqual(zsx.SymPara) {
 		para.LastPair().SetCdr(pn)
 	} else {
-		bn.LastPair().AppendBang(sz.MakeParaList(pn))
+		bn.LastPair().AppendBang(zsx.MakeParaList(pn))
 	}
 	return true
 }
@@ -662,7 +662,7 @@ func (cp *Parser) parseRow() *sx.Pair {
 					return nil
 				}
 				cp.lastRow = sx.Cons(row.List(), nil)
-				return cp.lastRow.Cons(nil).Cons(sz.SymTable)
+				return cp.lastRow.Cons(nil).Cons(zsx.SymTable)
 			}
 			cp.lastRow = cp.lastRow.AppendBang(row.List())
 			return nil
@@ -680,10 +680,10 @@ func (cp *Parser) parseCell() *sx.Pair {
 			if cell.IsEmpty() {
 				return nil
 			}
-			return sz.MakeCell(nil, cell.List())
+			return zsx.MakeCell(nil, cell.List())
 		}
 		if inp.Ch == '|' {
-			return sz.MakeCell(nil, cell.List())
+			return zsx.MakeCell(nil, cell.List())
 		}
 
 		in := cp.parseInline()
@@ -734,5 +734,5 @@ loop:
 	inp.SkipToEOL()
 	refText := string(inp.Src[posA:posE])
 	ref := cp.scanReference(refText)
-	return sz.MakeTransclusion(attrs, ref, sx.Nil()), true
+	return zsx.MakeTransclusion(attrs, ref, sx.Nil()), true
 }

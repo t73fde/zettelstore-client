@@ -22,8 +22,9 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/zsc/api"
-	"t73f.de/r/zsc/input"
 	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
+	"t73f.de/r/zsx/input"
 )
 
 // Parser allows to parse its plain text input into Zettelmarkup.
@@ -58,7 +59,7 @@ func (cp *Parser) Parse() *sx.Pair {
 			blkBuild.Add(bn)
 		}
 		if !cont {
-			if bn.Car().IsEqual(sz.SymPara) {
+			if bn.Car().IsEqual(zsx.SymPara) {
 				lastPara = bn
 			} else {
 				lastPara = nil
@@ -72,7 +73,7 @@ func (cp *Parser) Parse() *sx.Pair {
 	bnl := blkBuild.List()
 	var pp postProcessor
 	if bs := pp.visitPairList(bnl, nil); bs != nil {
-		return bs.Cons(sz.SymBlock)
+		return bs.Cons(zsx.SymBlock)
 	}
 	return nil
 }
@@ -269,5 +270,5 @@ func isNameRune(ch rune) bool {
 
 // isBreakSym return true if the object is either a soft or a hard break symbol.
 func isBreakSym(obj sx.Object) bool {
-	return sz.SymSoft.IsEqual(obj) || sz.SymHard.IsEqual(obj)
+	return zsx.SymSoft.IsEqual(obj) || zsx.SymHard.IsEqual(obj)
 }

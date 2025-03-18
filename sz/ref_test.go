@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
 )
 
 func TestParseReference(t *testing.T) {
@@ -35,7 +36,7 @@ func TestParseReference(t *testing.T) {
 	for i, tc := range testcases {
 		got := sz.ScanReference(tc.link)
 		refSym, _ := sz.GetReference(got)
-		gotIsValid := !refSym.IsEqual(sz.SymRefStateInvalid)
+		gotIsValid := !refSym.IsEqual(zsx.SymRefStateInvalid)
 		if gotIsValid == tc.err {
 			t.Errorf(
 				"TC=%d, expected parse error of %q: %v, but got %q", i, tc.link, tc.err, got)
@@ -81,7 +82,7 @@ func TestReferenceIsZettelMaterial(t *testing.T) {
 				tc.isZettel,
 				isZettel)
 		}
-		isLocal := refSym.IsEqual(sz.SymRefStateHosted) || refSym.IsEqual(sz.SymRefStateBased)
+		isLocal := refSym.IsEqual(zsx.SymRefStateHosted) || refSym.IsEqual(sz.SymRefStateBased)
 		if isLocal != tc.isLocal {
 			t.Errorf(
 				"TC=%d, Reference %q isLocal=%v expected, but got %v",
@@ -89,7 +90,7 @@ func TestReferenceIsZettelMaterial(t *testing.T) {
 				tc.link,
 				tc.isLocal, isLocal)
 		}
-		isExternal := refSym.IsEqual(sz.SymRefStateExternal)
+		isExternal := refSym.IsEqual(zsx.SymRefStateExternal)
 		if isExternal != tc.isExternal {
 			t.Errorf(
 				"TC=%d, Reference %q isExternal=%v expected, but got %v",

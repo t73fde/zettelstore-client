@@ -16,8 +16,8 @@ package sz_test
 import (
 	"testing"
 
-	"t73f.de/r/zsc/input"
 	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx/input"
 )
 
 func TestParseNone(t *testing.T) {

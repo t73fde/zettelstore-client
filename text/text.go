@@ -18,8 +18,8 @@ import (
 	"strings"
 
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/input"
-	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
+	"t73f.de/r/zsx/input"
 )
 
 // Encoder is the structure to hold relevant data to execute the encoding.
@@ -62,7 +62,7 @@ func (enc *Encoder) execute(obj sx.Object) {
 	if sx.IsNil(sym) {
 		return
 	}
-	if sym.IsEqual(sz.SymText) {
+	if sym.IsEqual(zsx.SymText) {
 		args := cmd.Tail()
 		if args == nil {
 			return
@@ -81,9 +81,9 @@ func (enc *Encoder) execute(obj sx.Object) {
 				}
 			}
 		}
-	} else if sym.IsEqual(sz.SymSoft) {
+	} else if sym.IsEqual(zsx.SymSoft) {
 		enc.sb.WriteByte(' ')
-	} else if sym.IsEqual(sz.SymHard) {
+	} else if sym.IsEqual(zsx.SymHard) {
 		enc.sb.WriteByte('\n')
 	} else if !sym.IsEqual(sx.SymbolQuote) {
 		enc.executeList(cmd.Tail())

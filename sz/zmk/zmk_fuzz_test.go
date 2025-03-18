@@ -16,8 +16,8 @@ package zmk_test
 import (
 	"testing"
 
-	"t73f.de/r/zsc/input"
 	"t73f.de/r/zsc/sz/zmk"
+	"t73f.de/r/zsx/input"
 )
 
 func FuzzParseBlocks(f *testing.F) {

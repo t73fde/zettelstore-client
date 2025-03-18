@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"t73f.de/r/zsc/domain/meta"
-	"t73f.de/r/zsc/input"
+	"t73f.de/r/zsx/input"
 )
 
 func parseMetaStr(src string) *meta.Meta {

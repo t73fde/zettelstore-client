@@ -19,8 +19,8 @@ import (
 	"strings"
 
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/input"
-	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
+	"t73f.de/r/zsx/input"
 )
 
 func (cp *Parser) parseInline() *sx.Pair {
@@ -75,7 +75,7 @@ func (cp *Parser) parseInline() *sx.Pair {
 	return parseText(inp)
 }
 
-func parseText(inp *input.Input) *sx.Pair { return sz.MakeText(parseString(inp)) }
+func parseText(inp *input.Input) *sx.Pair { return zsx.MakeText(parseString(inp)) }
 
 func parseString(inp *input.Input) string {
 	pos := inp.Pos
@@ -97,9 +97,9 @@ func parseBackslash(inp *input.Input) *sx.Pair {
 	switch inp.Next() {
 	case '\n', '\r':
 		inp.EatEOL()
-		return sz.MakeHard()
+		return zsx.MakeHard()
 	default:
-		return sz.MakeText(parseBackslashRest(inp))
+		return zsx.MakeText(parseBackslashRest(inp))
 	}
 }
 
@@ -118,7 +118,7 @@ func parseBackslashRest(inp *input.Input) string {
 
 func parseSoftBreak(inp *input.Input) *sx.Pair {
 	inp.EatEOL()
-	return sz.MakeSoft()
+	return zsx.MakeSoft()
 }
 
 func (cp *Parser) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
@@ -126,7 +126,7 @@ func (cp *Parser) parseLink(openCh, closeCh rune) (*sx.Pair, bool) {
 		attrs := parseInlineAttributes(cp.inp)
 		if len(refString) > 0 {
 			ref := cp.scanReference(refString)
-			return sz.MakeLink(attrs, ref, text), true
+			return zsx.MakeLink(attrs, ref, text), true
 		}
 	}
 	return nil, false
@@ -135,7 +135,7 @@ func (cp *Parser) parseEmbed(openCh, closeCh rune) (*sx.Pair, bool) {
 	if refString, text, ok := cp.parseReference(openCh, closeCh); ok {
 		attrs := parseInlineAttributes(cp.inp)
 		if len(refString) > 0 {
-			return sz.MakeEmbed(attrs, cp.scanReference(refString), "", text), true
+			return zsx.MakeEmbed(attrs, cp.scanReference(refString), "", text), true
 		}
 	}
 	return nil, false
@@ -273,7 +273,7 @@ loop:
 		return nil, false
 	}
 	attrs := parseInlineAttributes(inp)
-	return sz.MakeCite(attrs, string(inp.Src[pos:posL]), ins), true
+	return zsx.MakeCite(attrs, string(inp.Src[pos:posL]), ins), true
 }
 
 func (cp *Parser) parseEndnote() (*sx.Pair, bool) {
@@ -283,7 +283,7 @@ func (cp *Parser) parseEndnote() (*sx.Pair, bool) {
 		return nil, false
 	}
 	attrs := parseInlineAttributes(cp.inp)
-	return sz.MakeEndnote(attrs, ins), true
+	return zsx.MakeEndnote(attrs, ins), true
 }
 
 func (cp *Parser) parseMark() (*sx.Pair, bool) {
@@ -308,7 +308,7 @@ func (cp *Parser) parseMark() (*sx.Pair, bool) {
 	} else {
 		inp.Next()
 	}
-	return sz.MakeMark(mark, "", "", ins), true
+	return zsx.MakeMark(mark, "", "", ins), true
 	// Problematisch ist, dass hier noch nicht mn.Fragment und mn.Slug gesetzt werden.
 	// Evtl. muss es ein PreMark-Symbol geben
 }
@@ -343,22 +343,22 @@ func parseComment(inp *input.Input) (*sx.Pair, bool) {
 	pos := inp.Pos
 	for {
 		if input.IsEOLEOS(inp.Ch) {
-			return sz.MakeLiteral(sz.SymLiteralComment, attrs, string(inp.Src[pos:inp.Pos])), true
+			return zsx.MakeLiteral(zsx.SymLiteralComment, attrs, string(inp.Src[pos:inp.Pos])), true
 		}
 		inp.Next()
 	}
 }
 
 var mapRuneFormat = map[rune]*sx.Symbol{
-	'_': sz.SymFormatEmph,
-	'*': sz.SymFormatStrong,
-	'>': sz.SymFormatInsert,
-	'~': sz.SymFormatDelete,
-	'^': sz.SymFormatSuper,
-	',': sz.SymFormatSub,
-	'"': sz.SymFormatQuote,
-	'#': sz.SymFormatMark,
-	':': sz.SymFormatSpan,
+	'_': zsx.SymFormatEmph,
+	'*': zsx.SymFormatStrong,
+	'>': zsx.SymFormatInsert,
+	'~': zsx.SymFormatDelete,
+	'^': zsx.SymFormatSuper,
+	',': zsx.SymFormatSub,
+	'"': zsx.SymFormatQuote,
+	'#': zsx.SymFormatMark,
+	':': zsx.SymFormatSpan,
 }
 
 func (cp *Parser) parseFormat() (*sx.Pair, bool) {
@@ -382,9 +382,9 @@ func (cp *Parser) parseFormat() (*sx.Pair, bool) {
 			if inp.Next() == fch {
 				inp.Next()
 				attrs := parseInlineAttributes(inp)
-				return sz.MakeFormat(symFormat, attrs, inlines.List()), true
+				return zsx.MakeFormat(symFormat, attrs, inlines.List()), true
 			}
-			inlines.Add(sz.MakeText(string(fch)))
+			inlines.Add(zsx.MakeText(string(fch)))
 		} else if in := cp.parseInline(); in != nil {
 			if input.IsEOLEOS(inp.Ch) && isBreakSym(in.Car()) {
 				return nil, false
@@ -395,10 +395,10 @@ func (cp *Parser) parseFormat() (*sx.Pair, bool) {
 }
 
 var mapRuneLiteral = map[rune]*sx.Symbol{
-	'`':          sz.SymLiteralCode,
-	runeModGrave: sz.SymLiteralCode,
-	'\'':         sz.SymLiteralInput,
-	'=':          sz.SymLiteralOutput,
+	'`':          zsx.SymLiteralCode,
+	runeModGrave: zsx.SymLiteralCode,
+	'\'':         zsx.SymLiteralInput,
+	'=':          zsx.SymLiteralOutput,
 	// No '$': sz.SymLiteralMath, because pairing literal math is a little different
 }
 
@@ -422,7 +422,7 @@ func parseLiteral(inp *input.Input) (*sx.Pair, bool) {
 			if inp.Peek() == fch {
 				inp.Next()
 				inp.Next()
-				return sz.MakeLiteral(symLiteral, parseInlineAttributes(inp), sb.String()), true
+				return zsx.MakeLiteral(symLiteral, parseInlineAttributes(inp), sb.String()), true
 			}
 			sb.WriteRune(fch)
 			inp.Next()
@@ -448,7 +448,7 @@ func parseLiteralMath(inp *input.Input) (res *sx.Pair, success bool) {
 			content := slices.Clone(inp.Src[pos:inp.Pos])
 			inp.Next()
 			inp.Next()
-			return sz.MakeLiteral(sz.SymLiteralMath, parseInlineAttributes(inp), string(content)), true
+			return zsx.MakeLiteral(zsx.SymLiteralMath, parseInlineAttributes(inp), string(content)), true
 		}
 		inp.Next()
 	}
@@ -460,12 +460,12 @@ func parseNdash(inp *input.Input) (*sx.Pair, bool) {
 	}
 	inp.Next()
 	inp.Next()
-	return sz.MakeText("\u2013"), true
+	return zsx.MakeText("\u2013"), true
 }
 
 func parseEntity(inp *input.Input) (*sx.Pair, bool) {
 	if text, ok := inp.ScanEntity(); ok {
-		return sz.MakeText(text), true
+		return zsx.MakeText(text), true
 	}
 	return nil, false
 }

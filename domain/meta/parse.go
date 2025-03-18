@@ -20,7 +20,7 @@ import (
 
 	"t73f.de/r/zero/set"
 	"t73f.de/r/zsc/domain/id"
-	"t73f.de/r/zsc/input"
+	"t73f.de/r/zsx/input"
 )
 
 // NewFromInput parses the meta data of a zettel.
