@@ -19,7 +19,6 @@ import (
 	"strings"
 
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/sz"
 	"t73f.de/r/zsx"
 	"t73f.de/r/zsx/input"
 )
@@ -465,7 +464,7 @@ func parseNdash(inp *input.Input) (*sx.Pair, bool) {
 }
 
 func parseEntity(inp *input.Input) (*sx.Pair, bool) {
-	if text, ok := sz.ScanEntity(inp); ok {
+	if text, ok := zsx.ScanEntity(inp); ok {
 		return zsx.MakeText(text), true
 	}
 	return nil, false
