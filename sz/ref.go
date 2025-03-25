@@ -90,7 +90,11 @@ func ScanReference(s string) *sx.Pair {
 	}
 	sym := zsx.SymRefStateExternal
 	if u.Scheme == "" && u.Opaque == "" && u.Host == "" && u.User == nil {
-		sym = zsx.SymRefStateHosted
+		if s[0] == '#' {
+			sym = zsx.SymRefStateSelf
+		} else {
+			sym = zsx.SymRefStateHosted
+		}
 	}
 	return MakeReference(sym, s)
 }
