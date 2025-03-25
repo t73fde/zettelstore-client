@@ -48,54 +48,49 @@ func GetReference(ref *sx.Pair) (*sx.Symbol, string) {
 //
 // This function is very specific for Zettelstore.
 func ScanReference(s string) *sx.Pair {
-	if invalidReference(s) {
-		return MakeReference(zsx.SymRefStateInvalid, s)
+	if len(s) == id.LengthZid {
+		if _, err := id.Parse(s); err == nil {
+			return MakeReference(SymRefStateZettel, s)
+		}
+		if s == "00000000000000" {
+			return MakeReference(zsx.SymRefStateInvalid, s)
+		}
+	} else if len(s) > id.LengthZid && s[id.LengthZid] == '#' {
+		zidPart := s[:id.LengthZid]
+		if _, err := id.Parse(zidPart); err == nil {
+			if u, err := url.Parse(s); err != nil || u.String() != s {
+				return MakeReference(zsx.SymRefStateInvalid, s)
+			}
+			return MakeReference(SymRefStateZettel, s)
+		}
+		if zidPart == "00000000000000" {
+			return MakeReference(zsx.SymRefStateInvalid, s)
+		}
 	}
 	if strings.HasPrefix(s, api.QueryPrefix) {
 		return MakeReference(SymRefStateQuery, s[len(api.QueryPrefix):])
 	}
-	if state, ok := localState(s); ok {
-		if state.IsEqualSymbol(SymRefStateBased) {
-			s = s[1:]
-		}
-		_, err := url.Parse(s)
-		if err == nil {
-			return MakeReference(state, s)
+	if strings.HasPrefix(s, "//") {
+		if u, err := url.Parse(s[1:]); err == nil {
+			if u.Scheme == "" && u.Opaque == "" && u.Host == "" && u.User == nil {
+				if u.String() == s[1:] {
+					return MakeReference(SymRefStateBased, s[1:])
+				}
+				return MakeReference(zsx.SymRefStateInvalid, s)
+			}
 		}
 	}
-	u, err := url.Parse(s)
-	if err != nil {
+
+	if s == "" {
 		return MakeReference(zsx.SymRefStateInvalid, s)
 	}
-	if !externalURL(u) {
-		if _, err = id.Parse(u.Path); err == nil {
-			return MakeReference(SymRefStateZettel, s)
-		}
-		if u.Path == "" && u.Fragment != "" {
-			return MakeReference(zsx.SymRefStateSelf, s)
-		}
+	u, err := url.Parse(s)
+	if err != nil || u.String() != s {
+		return MakeReference(zsx.SymRefStateInvalid, s)
 	}
-	return MakeReference(zsx.SymRefStateExternal, s)
-}
-
-func invalidReference(s string) bool { return s == "" || s == "00000000000000" }
-
-func externalURL(u *url.URL) bool {
-	return u.Scheme != "" || u.Opaque != "" || u.Host != "" || u.User != nil
-}
-
-func localState(path string) (*sx.Symbol, bool) {
-	if len(path) > 0 && path[0] == '/' {
-		if len(path) > 1 && path[1] == '/' {
-			return SymRefStateBased, true
-		}
-		return zsx.SymRefStateHosted, true
+	sym := zsx.SymRefStateExternal
+	if u.Scheme == "" && u.Opaque == "" && u.Host == "" && u.User == nil {
+		sym = zsx.SymRefStateHosted
 	}
-	if len(path) > 1 && path[0] == '.' {
-		if len(path) > 2 && path[1] == '.' && path[2] == '/' {
-			return zsx.SymRefStateHosted, true
-		}
-		return zsx.SymRefStateHosted, path[1] == '/'
-	}
-	return zsx.SymRefStateInvalid, false
+	return MakeReference(sym, s)
 }

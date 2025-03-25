@@ -17,87 +17,57 @@ import (
 	"testing"
 
 	"t73f.de/r/zsc/sz"
-	"t73f.de/r/zsx"
 )
 
 func TestParseReference(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {
-		link string
-		err  bool
-		exp  string
+		s   string
+		exp string
 	}{
-		{"", true, ""},
-		{"12345678901234", false, "(ZETTEL \"12345678901234\")"},
-		{"123", false, "(EXTERNAL \"123\")"},
-		{",://", true, ""},
-	}
+		{"", `(INVALID "")`},
+		{"abc", `(HOSTED "abc")`},
+		{"abc def", `(INVALID "abc def")`},
+		{"/hosted", `(HOSTED "/hosted")`},
+		{"/hosted ref", `(INVALID "/hosted ref")`},
+		{"./", `(HOSTED "./")`},
+		{"./12345678901234", `(HOSTED "./12345678901234")`},
+		{"../", `(HOSTED "../")`},
+		{"../12345678901234", `(HOSTED "../12345678901234")`},
+		{"abc#frag", `(HOSTED "abc#frag")`},
+		{"abc#frag space", `(INVALID "abc#frag space")`},
+		{"abc#", `(INVALID "abc#")`},
+		{"abc# ", `(INVALID "abc# ")`},
+		{"/hosted#frag", `(HOSTED "/hosted#frag")`},
+		{"./#frag", `(HOSTED "./#frag")`},
+		{"./12345678901234#frag", `(HOSTED "./12345678901234#frag")`},
+		{"../#frag", `(HOSTED "../#frag")`},
+		{"../12345678901234#frag", `(HOSTED "../12345678901234#frag")`},
+		{"https://t73f.de", `(EXTERNAL "https://t73f.de")`},
+		{"https://t73f.de/12345678901234", `(EXTERNAL "https://t73f.de/12345678901234")`},
+		{"http://t73f.de/1234567890", `(EXTERNAL "http://t73f.de/1234567890")`},
+		{"mailto:ds@zettelstore.de", `(EXTERNAL "mailto:ds@zettelstore.de")`},
+		{",://", `(INVALID ",://")`},
 
-	for i, tc := range testcases {
-		got := sz.ScanReference(tc.link)
-		refSym, _ := sz.GetReference(got)
-		gotIsValid := !refSym.IsEqual(zsx.SymRefStateInvalid)
-		if gotIsValid == tc.err {
-			t.Errorf(
-				"TC=%d, expected parse error of %q: %v, but got %q", i, tc.link, tc.err, got)
-		}
-		if gotIsValid && got.String() != tc.exp {
-			t.Errorf("TC=%d, Reference of %q is %q, but got %q", i, tc.link, tc.exp, got)
-		}
+		// ZS specific
+		{"00000000000000", `(INVALID "00000000000000")`},
+		{"00000000000000#frag", `(INVALID "00000000000000#frag")`},
+		{"12345678901234", `(ZETTEL "12345678901234")`},
+		{"12345678901234#frag", `(ZETTEL "12345678901234#frag")`},
+		{"12345678901234#", `(INVALID "12345678901234#")`},
+		{"12345678901234# space", `(INVALID "12345678901234# space")`},
+		{"12345678901234#frag ", `(INVALID "12345678901234#frag ")`},
+		{"12345678901234#frag space", `(INVALID "12345678901234#frag space")`},
+		{"query:role:zettel LIMIT 13", `(QUERY "role:zettel LIMIT 13")`},
+		{"//based", `(BASED "/based")`},
+		{"//based#frag", `(BASED "/based#frag")`},
+		{"//based#", `(INVALID "//based#")`},
 	}
-}
-
-func TestReferenceIsZettelMaterial(t *testing.T) {
-	t.Parallel()
-	testcases := []struct {
-		link       string
-		isZettel   bool
-		isExternal bool
-		isLocal    bool
-	}{
-		{"", false, false, false},
-		{"00000000000000", false, false, false},
-		{"http://zettelstore.de/z/ast", false, true, false},
-		{"12345678901234", true, false, false},
-		{"12345678901234#local", true, false, false},
-		{"http://12345678901234", false, true, false},
-		{"http://zettelstore.de/z/12345678901234", false, true, false},
-		{"http://zettelstore.de/12345678901234", false, true, false},
-		{"/12345678901234", false, false, true},
-		{"//12345678901234", false, false, true},
-		{"./12345678901234", false, false, true},
-		{"../12345678901234", false, false, true},
-		{".../12345678901234", false, true, false},
-	}
-
-	for i, tc := range testcases {
-		ref := sz.ScanReference(tc.link)
-		refSym, _ := sz.GetReference(ref)
-		isZettel := refSym.IsEqual(sz.SymRefStateZettel)
-		if isZettel != tc.isZettel {
-			t.Errorf(
-				"TC=%d, Reference %q isZettel=%v expected, but got %v",
-				i,
-				tc.link,
-				tc.isZettel,
-				isZettel)
-		}
-		isLocal := refSym.IsEqual(zsx.SymRefStateHosted) || refSym.IsEqual(sz.SymRefStateBased)
-		if isLocal != tc.isLocal {
-			t.Errorf(
-				"TC=%d, Reference %q isLocal=%v expected, but got %v",
-				i,
-				tc.link,
-				tc.isLocal, isLocal)
-		}
-		isExternal := refSym.IsEqual(zsx.SymRefStateExternal)
-		if isExternal != tc.isExternal {
-			t.Errorf(
-				"TC=%d, Reference %q isExternal=%v expected, but got %v",
-				i,
-				tc.link,
-				tc.isExternal,
-				isExternal)
-		}
+	for _, tc := range testcases {
+		t.Run(tc.s, func(t *testing.T) {
+			if got := sz.ScanReference(tc.s); got.String() != tc.exp {
+				t.Errorf("%q should be %q, but got %q", tc.s, tc.exp, got)
+			}
+		})
 	}
 }
