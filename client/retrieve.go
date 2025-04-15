@@ -404,6 +404,40 @@ func (c *Client) GetMetaData(ctx context.Context, zid id.Zid) (api.MetaRights, e
 	}, nil
 }
 
+// GetReferences returns all references / URIs of a given zettel.
+//
+// part must be one of "meta", "content", or "zettel".
+func (c *Client) GetReferences(ctx context.Context, zid id.Zid, part string) (urls []string, err error) {
+	ub := c.NewURLBuilder('r').SetZid(zid)
+	if part != "" {
+		ub.AppendKVQuery(api.QueryKeyPart, part)
+	}
+	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData) // data encoding is more robust.
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	rdr := sxreader.MakeReader(resp.Body)
+	obj, err := rdr.Read()
+	if resp.StatusCode != http.StatusOK {
+		return nil, statusToError(resp)
+	}
+	if err != nil {
+		return nil, err
+	}
+	seq, isSeq := sx.GetSequence(obj)
+	if !isSeq {
+		return nil, fmt.Errorf("not a sequence: %T/%v", obj, obj)
+	}
+	for val := range seq.Values() {
+		if s, isString := sx.GetString(val); isString {
+			urls = append(urls, s.GetValue())
+		}
+	}
+	return urls, nil
+}
+
 // GetVersionInfo returns version information of the Zettelstore that is used.
 func (c *Client) GetVersionInfo(ctx context.Context) (VersionInfo, error) {
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, c.NewURLBuilder('x'), nil)
