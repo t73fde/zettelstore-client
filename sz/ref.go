@@ -58,7 +58,7 @@ func ScanReference(s string) *sx.Pair {
 	} else if len(s) > id.LengthZid && s[id.LengthZid] == '#' {
 		zidPart := s[:id.LengthZid]
 		if _, err := id.Parse(zidPart); err == nil {
-			if u, err := url.Parse(s); err != nil || u.String() != s {
+			if u, err2 := url.Parse(s); err2 != nil || u.String() != s {
 				return MakeReference(zsx.SymRefStateInvalid, s)
 			}
 			return MakeReference(SymRefStateZettel, s)
