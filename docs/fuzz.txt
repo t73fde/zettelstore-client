@@ -1,0 +1,4 @@
+The source code contains some simple fuzzing tests. You should call them
+regulary to make sure the the software will cope with unusual input.
+
+go test -fuzz=FuzzParseBlocks t73f.de/r/zsc/sz/zmk

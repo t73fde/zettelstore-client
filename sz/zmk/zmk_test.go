@@ -71,6 +71,13 @@ type astWalker struct{}
 func (astWalker) VisitBefore(node *sx.Pair, env *sx.Pair) (sx.Object, bool) { return sx.Nil(), false }
 func (astWalker) VisitAfter(node *sx.Pair, env *sx.Pair) sx.Object          { return node }
 
+func TestEdges(t *testing.T) {
+	t.Parallel()
+	checkTcs(t, TestCases{
+		{"\"\"\"\n; \n0{{0}}{0}\n\"\"\"", "(BLOCK (REGION-VERSE () ((DESCRIPTION () ()) (PARA (TEXT \"0\") (EMBED ((\"0\" . \"\")) (HOSTED \"0\") \"\")))))"},
+	})
+}
+
 func TestEOL(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{

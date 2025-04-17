@@ -22,7 +22,21 @@ import (
 )
 
 // parseBlock parses one block.
-func (cp *Parser) parseBlock(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
+func (cp *Parser) parseBlock(blocksBuilder *sx.ListBuilder, lastPara *sx.Pair) *sx.Pair {
+	bn, cont := cp.parseBlock0(lastPara)
+	if bn != nil {
+		blocksBuilder.Add(bn)
+	}
+	if cont {
+		return lastPara
+	}
+	if bn.Car().IsEqual(zsx.SymPara) {
+		return bn
+	}
+	return nil
+}
+
+func (cp *Parser) parseBlock0(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 	inp := cp.inp
 	pos := inp.Pos
 	if cp.nestingLevel <= maxNestingLevel {
@@ -264,13 +278,8 @@ func (cp *Parser) parseRegion() (*sx.Pair, bool) {
 		case input.EOS:
 			return nil, false
 		}
-		bn, cont := cp.parseBlock(lastPara)
-		if bn != nil {
-			blocksBuilder.Add(bn)
-		}
-		if !cont {
-			lastPara = bn
-		}
+
+		lastPara = cp.parseBlock(&blocksBuilder, lastPara)
 	}
 }
 

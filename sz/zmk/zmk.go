@@ -54,25 +54,14 @@ func (cp *Parser) Parse() *sx.Pair {
 	var lastPara *sx.Pair
 	var blkBuild sx.ListBuilder
 	for cp.inp.Ch != input.EOS {
-		bn, cont := cp.parseBlock(lastPara)
-		if bn != nil {
-			blkBuild.Add(bn)
-		}
-		if !cont {
-			if bn.Car().IsEqual(zsx.SymPara) {
-				lastPara = bn
-			} else {
-				lastPara = nil
-			}
-		}
+		lastPara = cp.parseBlock(&blkBuild, lastPara)
 	}
 	if cp.nestingLevel != 0 {
 		panic("Nesting level was not decremented")
 	}
 
-	bnl := blkBuild.List()
 	var pp postProcessor
-	if bs := pp.visitPairList(bnl, nil); bs != nil {
+	if bs := pp.visitPairList(blkBuild.List(), nil); bs != nil {
 		return bs.Cons(zsx.SymBlock)
 	}
 	return nil
