@@ -5,6 +5,8 @@
   *  Sz encoding changed (LINK-* -> LINK, lists, descriptions, block BLOBs,
      tables and its cells got attributes; cell attributes now defines cell
      alignment).
+  *  Add API call to retrieve external references from a zettel.
+  *  Move some code to package t73f.de/r/zsx
 
 <a name="0_20"></a>
 <h2>Changes for Version 0.20.0 (2025-03-07)</h2>
