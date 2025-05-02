@@ -89,7 +89,6 @@ const (
 	ZidEmoji = Zid(40001)
 
 	// Other sxn code zettel are in the range 50000..59999
-	ZidSxnPrelude = Zid(59900)
 
 	// Predefined Zettelmarkup zettel are in the range 60000..69999
 	ZidRoleZettelZettel        = Zid(60010)
