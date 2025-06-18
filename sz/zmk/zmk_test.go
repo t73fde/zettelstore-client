@@ -68,8 +68,8 @@ func checkTcs(t *testing.T, tcs TestCases) {
 
 type astWalker struct{}
 
-func (astWalker) VisitBefore(node *sx.Pair, env *sx.Pair) (sx.Object, bool) { return sx.Nil(), false }
-func (astWalker) VisitAfter(node *sx.Pair, env *sx.Pair) sx.Object          { return node }
+func (astWalker) VisitBefore(*sx.Pair, *sx.Pair) (sx.Object, bool) { return sx.Nil(), false }
+func (astWalker) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object   { return node }
 
 func TestEdges(t *testing.T) {
 	t.Parallel()

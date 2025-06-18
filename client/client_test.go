@@ -27,23 +27,17 @@ import (
 
 func TestZettelList(t *testing.T) {
 	c := getClient()
-	_, err := c.QueryZettel(context.Background(), "")
-	if err != nil {
+	if _, err := c.QueryZettel(context.Background(), ""); err != nil {
 		t.Error(err)
-		return
 	}
 }
 
 func TestGetProtectedZettel(t *testing.T) {
 	c := getClient()
-	_, err := c.GetZettel(context.Background(), id.ZidStartupConfiguration, api.PartZettel)
-	if err != nil {
-		if cErr, ok := err.(*client.Error); ok && cErr.StatusCode == http.StatusForbidden {
-			return
-		} else {
+	if _, err := c.GetZettel(context.Background(), id.ZidStartupConfiguration, api.PartZettel); err != nil {
+		if cErr, ok := err.(*client.Error); !ok || cErr.StatusCode != http.StatusForbidden {
 			t.Error(err)
 		}
-		return
 	}
 }
 
