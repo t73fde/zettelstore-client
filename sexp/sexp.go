@@ -21,6 +21,7 @@ import (
 	"sort"
 
 	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxbuiltins"
 	"t73f.de/r/zsc/api"
 )
 
@@ -82,7 +83,7 @@ func ParseZettel(obj sx.Object) (api.ZettelData, error) {
 // EncodeMetaRights translates metadata/rights into a sx object.
 func EncodeMetaRights(mr api.MetaRights) *sx.Pair {
 	return sx.MakeList(
-		sx.SymbolList,
+		sx.MakeSymbol(sxbuiltins.List.Name),
 		meta2sz(mr.Meta),
 		sx.MakeList(sx.MakeSymbol("rights"), sx.Int64(int64(mr.Rights))),
 	)
