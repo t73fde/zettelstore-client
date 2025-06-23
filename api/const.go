@@ -119,14 +119,15 @@ const (
 
 // Supported search operator representations.
 const (
-	BackwardDirective = "BACKWARD" // Backward-only context
+	BackwardDirective = "BACKWARD" // Backward-only context / thread
 	ContextDirective  = "CONTEXT"  // Context directive
 	CostDirective     = "COST"     // Maximum cost of a context operation
-	ForwardDirective  = "FORWARD"  // Forward-only context
+	FolgeDirective    = "FOLGE"    // Folge thread
+	ForwardDirective  = "FORWARD"  // Forward-only context / thread
 	FullDirective     = "FULL"     // Include tags in context
 	IdentDirective    = "IDENT"    // Use only specified zettel
 	ItemsDirective    = "ITEMS"    // Select list elements in a zettel
-	MaxDirective      = "MAX"      // Maximum number of context results
+	MaxDirective      = "MAX"      // Maximum number of context / thread results
 	MinDirective      = "MIN"      // Minimum number of context results
 	LimitDirective    = "LIMIT"    // Maximum number of zettel
 	OffsetDirective   = "OFFSET"   // Offset to start returned zettel list
@@ -136,6 +137,8 @@ const (
 	PickDirective     = "PICK"     // Pick some random zettel
 	RandomDirective   = "RANDOM"   // Order zettel list randomly
 	ReverseDirective  = "REVERSE"  // Reverse the order of a zettel list
+	SequelThread      = "SEQUEL"   // Sequel / branching thread
+	ThreadDirective   = "THREAD"   // Both folge and Sequel thread
 	UnlinkedDirective = "UNLINKED" // Search for zettel that contain a phase(s) but do not link
 
 	ActionSeparator = "|" // Separates action list of previous elements of query expression
