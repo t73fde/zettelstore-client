@@ -137,7 +137,7 @@ const (
 	PickDirective     = "PICK"     // Pick some random zettel
 	RandomDirective   = "RANDOM"   // Order zettel list randomly
 	ReverseDirective  = "REVERSE"  // Reverse the order of a zettel list
-	SequelThread      = "SEQUEL"   // Sequel / branching thread
+	SequelDirective   = "SEQUEL"   // Sequel / branching thread
 	ThreadDirective   = "THREAD"   // Both folge and Sequel thread
 	UnlinkedDirective = "UNLINKED" // Search for zettel that contain a phase(s) but do not link
 
