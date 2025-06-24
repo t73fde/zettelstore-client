@@ -279,23 +279,36 @@ func (m *Meta) Set(key string, value Value) {
 // An empty value will delete the previous association.
 func (m *Meta) SetNonEmpty(key string, value Value) {
 	if value == "" {
-		delete(m.pairs, key) // TODO: key != KeyID
+		if key != KeyID {
+			delete(m.pairs, key)
+		}
 	} else {
 		m.Set(key, value.TrimSpace())
 	}
 }
 
+// Has returns true, if the given key is used in the metadata.
+func (m *Meta) Has(key string) bool {
+	if m != nil {
+		if _, found := m.pairs[key]; found || key == KeyID {
+			return true
+		}
+	}
+	return false
+}
+
 // Get retrieves the string value of a given key. The bool value signals,
 // whether there was a value stored or not.
 func (m *Meta) Get(key string) (Value, bool) {
-	if m == nil {
-		return "", false
+	if m != nil {
+		if value, found := m.pairs[key]; found {
+			return value, true
+		}
+		if key == KeyID {
+			return Value(m.Zid.String()), true
+		}
 	}
-	if key == KeyID {
-		return Value(m.Zid.String()), true
-	}
-	value, ok := m.pairs[key]
-	return value, ok
+	return "", false
 }
 
 // GetDefault retrieves the string value of the given key. If no value was
