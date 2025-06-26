@@ -122,6 +122,7 @@ const (
 	BackwardDirective = "BACKWARD" // Backward-only context / thread
 	ContextDirective  = "CONTEXT"  // Context directive
 	CostDirective     = "COST"     // Maximum cost of a context operation
+	DirectedDirective = "DIRECTED" // Context/thread collection can have general directions
 	FolgeDirective    = "FOLGE"    // Folge thread
 	ForwardDirective  = "FORWARD"  // Forward-only context / thread
 	FullDirective     = "FULL"     // Include tags in context

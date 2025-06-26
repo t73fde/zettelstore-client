@@ -94,6 +94,8 @@ var (
 	suffixTypes     = map[string]*DescriptionType{
 		"-date":       TypeTimestamp,
 		"-number":     TypeNumber,
+		"-ref":        TypeID,
+		"-refs":       TypeIDSet,
 		SuffixKeyRole: TypeWord,
 		"-time":       TypeTimestamp,
 		SuffixKeyURL:  TypeURL,
