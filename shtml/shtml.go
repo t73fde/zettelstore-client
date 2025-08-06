@@ -72,10 +72,7 @@ func EvaluateAttributes(a zsx.Attributes) *sx.Pair {
 			plist = plist.Cons(sx.Cons(sx.MakeSymbol(key), sx.MakeString(a[key])))
 		}
 	}
-	if plist == nil {
-		return nil
-	}
-	return plist.Cons(sxhtml.SymAttr)
+	return plist
 }
 
 // Evaluate a metadata s-expression into a list of HTML s-expressions.
@@ -125,22 +122,20 @@ func Endnotes(env *Environment) *sx.Pair {
 	var result sx.ListBuilder
 	result.AddN(
 		SymOL,
-		sx.Nil().Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnotes"))).Cons(sxhtml.SymAttr),
+		sx.Nil().Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnotes"))),
 	)
 	for i, fni := range env.endnotes {
 		noteNum := strconv.Itoa(i + 1)
 		attrs := fni.attrs.Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnote"))).
 			Cons(sx.Cons(SymAttrValue, sx.MakeString(noteNum))).
 			Cons(sx.Cons(SymAttrID, sx.MakeString("fn:"+fni.noteID))).
-			Cons(sx.Cons(SymAttrRole, sx.MakeString("doc-endnote"))).
-			Cons(sxhtml.SymAttr)
+			Cons(sx.Cons(SymAttrRole, sx.MakeString("doc-endnote")))
 
 		backref := sx.Nil().Cons(sx.MakeString("\u21a9\ufe0e")).
 			Cons(sx.Nil().
 				Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-endnote-backref"))).
 				Cons(sx.Cons(SymAttrHref, sx.MakeString("#fnref:"+fni.noteID))).
-				Cons(sx.Cons(SymAttrRole, sx.MakeString("doc-backlink"))).
-				Cons(sxhtml.SymAttr)).
+				Cons(sx.Cons(SymAttrRole, sx.MakeString("doc-backlink")))).
 			Cons(SymA)
 
 		var li sx.ListBuilder
@@ -644,10 +639,9 @@ func (ev *Evaluator) bindInlines() {
 			noteID: noteID, noteAST: args[1:], noteHx: nil, attrs: attrPlist})
 		hrefAttr := sx.Nil().Cons(sx.Cons(SymAttrRole, sx.MakeString("doc-noteref"))).
 			Cons(sx.Cons(SymAttrHref, sx.MakeString("#fn:"+noteID))).
-			Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-noteref"))).
-			Cons(sxhtml.SymAttr)
+			Cons(sx.Cons(SymAttrClass, sx.MakeString("zs-noteref")))
 		href := sx.Nil().Cons(sx.MakeString(noteNum)).Cons(hrefAttr).Cons(SymA)
-		supAttr := sx.Nil().Cons(sx.Cons(SymAttrID, sx.MakeString("fnref:"+noteID))).Cons(sxhtml.SymAttr)
+		supAttr := sx.Nil().Cons(sx.Cons(SymAttrID, sx.MakeString("fnref:"+noteID)))
 		return sx.Nil().Cons(href).Cons(supAttr).Cons(symSUP)
 	})
 
