@@ -69,7 +69,7 @@ func EvaluateAttributes(a zsx.Attributes) *sx.Pair {
 	for i := len(keys) - 1; i >= 0; i-- {
 		key := keys[i]
 		if key != zsx.DefaultAttribute && isValidName(key) {
-			plist = plist.Cons(sx.Cons(sx.MakeSymbol(key), sx.MakeString(a[key])))
+			plist = plist.Cons(sx.Cons(sxhtml.MakeSymbol(key), sx.MakeString(a[key])))
 		}
 	}
 	return plist
@@ -233,10 +233,7 @@ func (ev *Evaluator) Rebind(sym *sx.Symbol, fn EvalFn) {
 func (ev *Evaluator) bindMetadata() {
 	ev.bind(sz.SymMeta, 0, ev.evalList)
 	evalMetaString := func(args sx.Vector, env *Environment) sx.Object {
-		a := make(zsx.Attributes, 2).
-			Set("name", getSymbol(args[0], env).GetValue()).
-			Set("content", getString(args[1], env).GetValue())
-		return ev.EvaluateMeta(a)
+		return ev.evalMetaString(args[0], getString(args[1], env).GetValue(), env)
 	}
 	ev.bind(sz.SymTypeCredential, 2, evalMetaString)
 	ev.bind(sz.SymTypeEmpty, 2, evalMetaString)
@@ -257,13 +254,23 @@ func (ev *Evaluator) bindMetadata() {
 		if len(s) > 0 {
 			s = s[1:]
 		}
-		a := make(zsx.Attributes, 2).
-			Set("name", getSymbol(args[0], env).GetValue()).
-			Set("content", s)
-		return ev.EvaluateMeta(a)
+		return ev.evalMetaString(args[0], s, env)
 	}
 	ev.bind(sz.SymTypeIDSet, 2, evalMetaSet)
 	ev.bind(sz.SymTypeTagSet, 2, evalMetaSet)
+}
+
+func (ev *Evaluator) evalMetaString(nameObj sx.Object, content string, env *Environment) sx.Object {
+	if env.err == nil {
+		if nameSym, ok := sx.GetSymbol(nameObj); ok {
+			a := make(zsx.Attributes, 2).
+				Set("name", nameSym.GetValue()).
+				Set("content", content)
+			return ev.EvaluateMeta(a)
+		}
+		env.err = fmt.Errorf("%v/%T is not a symbol", nameObj, nameObj)
+	}
+	return sx.Nil()
 }
 
 // EvaluateMeta returns HTML meta object for an attribute.
@@ -282,8 +289,13 @@ func (ev *Evaluator) bindBlocks() {
 			env.err = fmt.Errorf("%v is a negative heading level", nLevel)
 			return sx.Nil()
 		}
-		level := strconv.FormatInt(nLevel+ev.headingOffset, 10)
-		headingSymbol := sx.MakeSymbol("h" + level)
+		hLevel := nLevel + ev.headingOffset
+		if hLevel > 6 {
+			env.err = fmt.Errorf("%v is a too large heading level", hLevel)
+			return sx.Nil()
+		}
+		sLevel := strconv.FormatInt(hLevel, 10)
+		headingSymbol := sxhtml.MakeSymbol("h" + sLevel)
 
 		a := GetAttributes(args[1], env)
 		env.pushAttributes(a)
@@ -878,15 +890,6 @@ func (ev *Evaluator) evalLink(a zsx.Attributes, refValue string, inline sx.Vecto
 	return result.Cons(EvaluateAttributes(a)).Cons(SymA)
 }
 
-func getSymbol(obj sx.Object, env *Environment) *sx.Symbol {
-	if env.err == nil {
-		if sym, ok := sx.GetSymbol(obj); ok {
-			return sym
-		}
-		env.err = fmt.Errorf("%v/%T is not a symbol", obj, obj)
-	}
-	return sx.MakeSymbol("???")
-}
 func getString(val sx.Object, env *Environment) sx.String {
 	if env.err == nil {
 		if s, ok := sx.GetString(val); ok {
