@@ -743,5 +743,5 @@ loop:
 	inp.SkipToEOL()
 	refText := string(inp.Src[posA:posE])
 	ref := cp.scanReference(refText)
-	return zsx.MakeTransclusion(attrs, ref, sx.Nil()), true
+	return zsx.MakeTransclusion(attrs, ref, nil), true
 }

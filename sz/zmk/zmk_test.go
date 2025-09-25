@@ -57,10 +57,20 @@ func checkTcs(t *testing.T, tcs TestCases) {
 			inp := input.NewInput([]byte(tc.source))
 			parser.Initialize(inp)
 			ast := parser.Parse()
-			zsx.Walk(astWalker{}, ast, nil)
-			got := ast.String()
-			if tc.want != got {
-				st.Errorf("\nwant=%q\n got=%q", tc.want, got)
+			if got := ast.String(); tc.want != got {
+				st.Errorf("none\nwant=%q\n got=%q", tc.want, got)
+			}
+			copyAST := zsx.Walk(astWalker{}, ast, nil)
+			if got := copyAST.String(); tc.want != got {
+				st.Errorf("copy\nwant=%q\n got=%q", tc.want, got)
+			}
+			bangAST := zsx.WalkBang(astWalker{}, ast, nil)
+			if got := bangAST.String(); tc.want != got {
+				st.Errorf("bang\nwant=%q\n got=%q", tc.want, got)
+			}
+			zsx.WalkIt(astWalkerIt{}, ast, nil)
+			if got := ast.String(); tc.want != got {
+				st.Errorf("itit\nwant=%q\n got=%q", tc.want, got)
 			}
 		})
 	}
@@ -70,6 +80,11 @@ type astWalker struct{}
 
 func (astWalker) VisitBefore(*sx.Pair, *sx.Pair) (sx.Object, bool) { return sx.Nil(), false }
 func (astWalker) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object   { return node }
+
+type astWalkerIt struct{}
+
+func (astWalkerIt) VisitBefore(*sx.Pair, *sx.Pair) bool { return false }
+func (astWalkerIt) VisitAfter(*sx.Pair, *sx.Pair)       {}
 
 func TestEdges(t *testing.T) {
 	t.Parallel()
