@@ -671,7 +671,7 @@ func (cp *Parser) parseRow() *sx.Pair {
 					return nil
 				}
 				cp.lastRow = sx.Cons(row.List(), nil)
-				return cp.lastRow.Cons(nil).Cons(zsx.SymTable)
+				return cp.lastRow.Cons(nil).Cons(nil).Cons(zsx.SymTable)
 			}
 			cp.lastRow = cp.lastRow.AppendBang(row.List())
 			return nil

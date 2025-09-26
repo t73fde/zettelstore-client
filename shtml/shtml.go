@@ -369,16 +369,16 @@ func (ev *Evaluator) bindBlocks() {
 		return result.List()
 	})
 
-	ev.bind(zsx.SymTable, 1, func(args sx.Vector, env *Environment) sx.Object {
+	ev.bind(zsx.SymTable, 2, func(args sx.Vector, env *Environment) sx.Object {
 		thead := sx.Nil()
-		if header := getList(args[0], env); !sx.IsNil(header) {
+		if header := getList(args[1], env); !sx.IsNil(header) {
 			thead = sx.Nil().Cons(ev.evalTableRow(symTH, header, env)).Cons(symTHEAD)
 		}
 
 		var tbody sx.ListBuilder
-		if len(args) > 1 {
+		if len(args) > 2 {
 			tbody.Add(symTBODY)
-			for _, row := range args[1:] {
+			for _, row := range args[2:] {
 				tbody.Add(ev.evalTableRow(symTD, getList(row, env), env))
 			}
 		}

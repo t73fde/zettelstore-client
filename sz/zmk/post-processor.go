@@ -232,8 +232,9 @@ func postProcessDescription(pp *postProcessor, dl *sx.Pair, env *sx.Pair) *sx.Pa
 }
 
 func postProcessTable(pp *postProcessor, tbl *sx.Pair, env *sx.Pair) *sx.Pair {
-	sym := tbl.Car()
-	next := tbl.Tail()
+	sym, next := tbl.Car(), tbl.Tail()
+	attrs := next.Head()
+	next = next.Tail()
 	header := next.Head()
 	if header != nil {
 		// Already post-processed
@@ -249,7 +250,7 @@ func postProcessTable(pp *postProcessor, tbl *sx.Pair, env *sx.Pair) *sx.Pair {
 	for node := range rows.Pairs() {
 		alignRow(node.Head(), align)
 	}
-	return rows.Cons(header).Cons(sym)
+	return rows.Cons(header).Cons(attrs).Cons(sym)
 }
 
 func (pp *postProcessor) visitRows(rows *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
