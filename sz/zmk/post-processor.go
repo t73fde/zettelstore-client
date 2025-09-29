@@ -25,7 +25,7 @@ var symNoBlock = sx.MakeSymbol("no-block")
 
 type postProcessor struct{}
 
-func (pp *postProcessor) VisitBefore(lst *sx.Pair, env *sx.Pair) (sx.Object, bool) {
+func (pp *postProcessor) VisitBefore(lst *sx.Pair, alst *sx.Pair) (sx.Object, bool) {
 	if lst == nil {
 		return nil, true
 	}
@@ -34,17 +34,17 @@ func (pp *postProcessor) VisitBefore(lst *sx.Pair, env *sx.Pair) (sx.Object, boo
 		panic(lst)
 	}
 	if fn, found := symMap[sym]; found {
-		return fn(pp, lst, env), true
+		return fn(pp, lst, alst), true
 	}
 	return nil, false
 }
 
 func (pp *postProcessor) VisitAfter(lst *sx.Pair, _ *sx.Pair) sx.Object { return lst }
 
-func (pp *postProcessor) visitPairList(lst *sx.Pair, env *sx.Pair) *sx.Pair {
+func (pp *postProcessor) visitPairList(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
 	for node := range lst.Pairs() {
-		if elem, isPair := sx.GetPair(zsx.WalkBang(pp, node.Head(), env)); isPair && elem != nil {
+		if elem, isPair := sx.GetPair(zsx.WalkBang(pp, node.Head(), alst)); isPair && elem != nil {
 			pList.Add(elem)
 		}
 	}
@@ -96,39 +96,39 @@ func init() {
 
 func ignoreProcess(*postProcessor, *sx.Pair, *sx.Pair) *sx.Pair { return nil }
 
-func postProcessBlockList(pp *postProcessor, lst *sx.Pair, env *sx.Pair) *sx.Pair {
-	result := pp.visitPairList(lst.Tail(), env)
+func postProcessBlockList(pp *postProcessor, lst *sx.Pair, alst *sx.Pair) *sx.Pair {
+	result := pp.visitPairList(lst.Tail(), alst)
 	if result == nil {
-		if noBlockPair := env.Assoc(symNoBlock); noBlockPair == nil || sx.IsTrue(noBlockPair.Cdr()) {
+		if noBlockPair := alst.Assoc(symNoBlock); noBlockPair == nil || sx.IsTrue(noBlockPair.Cdr()) {
 			return nil
 		}
 	}
 	return result.Cons(lst.Car())
 }
 
-func postProcessInlineList(pp *postProcessor, lst *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessInlineList(pp *postProcessor, lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 	sym := lst.Car()
-	if rest := pp.visitInlines(lst.Tail(), env); rest != nil {
+	if rest := pp.visitInlines(lst.Tail(), alst); rest != nil {
 		return rest.Cons(sym)
 	}
 	return nil
 }
 
-func postProcessRegion(pp *postProcessor, rn *sx.Pair, env *sx.Pair) *sx.Pair {
-	return doPostProcessRegion(pp, rn, env, env)
+func postProcessRegion(pp *postProcessor, rn *sx.Pair, alst *sx.Pair) *sx.Pair {
+	return doPostProcessRegion(pp, rn, alst, alst)
 }
 
-func postProcessRegionVerse(pp *postProcessor, rn *sx.Pair, env *sx.Pair) *sx.Pair {
-	return doPostProcessRegion(pp, rn, env.Cons(sx.Cons(symInVerse, nil)), env)
+func postProcessRegionVerse(pp *postProcessor, rn *sx.Pair, alst *sx.Pair) *sx.Pair {
+	return doPostProcessRegion(pp, rn, alst.Cons(sx.Cons(symInVerse, nil)), alst)
 }
 
-func doPostProcessRegion(pp *postProcessor, rn *sx.Pair, envBlock, envInline *sx.Pair) *sx.Pair {
+func doPostProcessRegion(pp *postProcessor, rn *sx.Pair, alstBlock, alstInline *sx.Pair) *sx.Pair {
 	sym := rn.Car().(*sx.Symbol)
 	next := rn.Tail()
 	attrs := next.Car().(*sx.Pair)
 	next = next.Tail()
-	blocks := pp.visitPairList(next.Head(), envBlock)
-	text := pp.visitInlines(next.Tail(), envInline)
+	blocks := pp.visitPairList(next.Head(), alstBlock)
+	text := pp.visitInlines(next.Tail(), alstInline)
 	if blocks == nil && text == nil {
 		return nil
 	}
@@ -142,7 +142,7 @@ func postProcessVerbatim(_ *postProcessor, verb *sx.Pair, _ *sx.Pair) *sx.Pair {
 	return nil
 }
 
-func postProcessHeading(pp *postProcessor, hn *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessHeading(pp *postProcessor, hn *sx.Pair, alst *sx.Pair) *sx.Pair {
 	next := hn.Tail()
 	level := next.Car().(sx.Int64)
 	next = next.Tail()
@@ -151,24 +151,24 @@ func postProcessHeading(pp *postProcessor, hn *sx.Pair, env *sx.Pair) *sx.Pair {
 	slug := next.Car().(sx.String)
 	next = next.Tail()
 	fragment := next.Car().(sx.String)
-	if text := pp.visitInlines(next.Tail(), env); text != nil {
+	if text := pp.visitInlines(next.Tail(), alst); text != nil {
 		return zsx.MakeHeading(int(level), attrs, text, slug.GetValue(), fragment.GetValue())
 	}
 	return nil
 }
 
-func postProcessItemList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessItemList(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pair {
 	attrs := ln.Tail().Head()
-	elems := pp.visitListElems(ln.Tail(), env)
+	elems := pp.visitListElems(ln.Tail(), alst)
 	if elems == nil {
 		return nil
 	}
 	return zsx.MakeList(ln.Car().(*sx.Symbol), attrs, elems)
 }
 
-func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pair {
 	attrs := ln.Tail().Head()
-	elems := pp.visitListElems(ln.Tail(), env.Cons(sx.Cons(symNoBlock, nil)))
+	elems := pp.visitListElems(ln.Tail(), alst.Cons(sx.Cons(symNoBlock, nil)))
 
 	// Collect multiple paragraph items into one item.
 
@@ -206,32 +206,32 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair
 	return zsx.MakeList(ln.Car().(*sx.Symbol), attrs, newElems.List())
 }
 
-func (pp *postProcessor) visitListElems(ln *sx.Pair, env *sx.Pair) *sx.Pair {
+func (pp *postProcessor) visitListElems(ln *sx.Pair, alst *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
 	for node := range ln.Tail().Pairs() {
-		if elem := zsx.WalkBang(pp, node.Head(), env); elem != nil {
+		if elem := zsx.WalkBang(pp, node.Head(), alst); elem != nil {
 			pList.Add(elem)
 		}
 	}
 	return pList.List()
 }
 
-func postProcessDescription(pp *postProcessor, dl *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessDescription(pp *postProcessor, dl *sx.Pair, alst *sx.Pair) *sx.Pair {
 	attrs := dl.Tail().Head()
 	var dList sx.ListBuilder
 	isTerm := false
 	for node := range dl.Tail().Tail().Pairs() {
 		isTerm = !isTerm
 		if isTerm {
-			dList.Add(pp.visitInlines(node.Head(), env))
+			dList.Add(pp.visitInlines(node.Head(), alst))
 		} else {
-			dList.Add(zsx.WalkBang(pp, node.Head(), env))
+			dList.Add(zsx.WalkBang(pp, node.Head(), alst))
 		}
 	}
 	return dList.List().Cons(attrs).Cons(dl.Car())
 }
 
-func postProcessTable(pp *postProcessor, tbl *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessTable(pp *postProcessor, tbl *sx.Pair, alst *sx.Pair) *sx.Pair {
 	sym, next := tbl.Car(), tbl.Tail()
 	attrs := next.Head()
 	next = next.Tail()
@@ -240,7 +240,7 @@ func postProcessTable(pp *postProcessor, tbl *sx.Pair, env *sx.Pair) *sx.Pair {
 		// Already post-processed
 		return tbl
 	}
-	rows, width := pp.visitRows(next.Tail(), env)
+	rows, width := pp.visitRows(next.Tail(), alst)
 	if rows == nil {
 		// Header and row are nil -> no table
 		return nil
@@ -253,12 +253,12 @@ func postProcessTable(pp *postProcessor, tbl *sx.Pair, env *sx.Pair) *sx.Pair {
 	return rows.Cons(header).Cons(attrs).Cons(sym)
 }
 
-func (pp *postProcessor) visitRows(rows *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
+func (pp *postProcessor) visitRows(rows *sx.Pair, alst *sx.Pair) (*sx.Pair, int) {
 	maxWidth := 0
 	var pRows sx.ListBuilder
 	for node := range rows.Pairs() {
 		row := node.Head()
-		row, width := pp.visitCells(row, env)
+		row, width := pp.visitCells(row, alst)
 		if maxWidth < width {
 			maxWidth = width
 		}
@@ -267,14 +267,14 @@ func (pp *postProcessor) visitRows(rows *sx.Pair, env *sx.Pair) (*sx.Pair, int) 
 	return pRows.List(), maxWidth
 }
 
-func (pp *postProcessor) visitCells(cells *sx.Pair, env *sx.Pair) (*sx.Pair, int) {
+func (pp *postProcessor) visitCells(cells *sx.Pair, alst *sx.Pair) (*sx.Pair, int) {
 	width := 0
 	var pCells sx.ListBuilder
 	for node := range cells.Pairs() {
 		cell := node.Head()
 		rest := cell.Tail()
 		attrs := rest.Head()
-		ins := pp.visitInlines(rest.Tail(), env)
+		ins := pp.visitInlines(rest.Tail(), alst)
 		pCells.Add(zsx.MakeCell(attrs, ins))
 		width++
 	}
@@ -399,16 +399,16 @@ func getCellAlignment(ch byte) (sx.String, bool) {
 	}
 }
 
-func (pp *postProcessor) visitInlines(lst *sx.Pair, env *sx.Pair) *sx.Pair {
+func (pp *postProcessor) visitInlines(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 	length := lst.Length()
 	if length <= 0 {
 		return nil
 	}
-	inVerse := env.Assoc(symInVerse) != nil
+	inVerse := alst.Assoc(symInVerse) != nil
 	vector := make([]*sx.Pair, 0, length)
 	// 1st phase: process all childs, ignore ' ' / '\t' at start, and merge some elements
 	for node := range lst.Pairs() {
-		elem, isPair := sx.GetPair(zsx.WalkBang(pp, node.Head(), env))
+		elem, isPair := sx.GetPair(zsx.WalkBang(pp, node.Head(), alst))
 		if !isPair || elem == nil {
 			continue
 		}
@@ -528,55 +528,55 @@ func postProcessText(_ *postProcessor, txt *sx.Pair, _ *sx.Pair) *sx.Pair {
 	return nil
 }
 
-func postProcessSoft(_ *postProcessor, sn *sx.Pair, env *sx.Pair) *sx.Pair {
-	if env.Assoc(symInVerse) == nil {
+func postProcessSoft(_ *postProcessor, sn *sx.Pair, alst *sx.Pair) *sx.Pair {
+	if alst.Assoc(symInVerse) == nil {
 		return sn
 	}
 	return sx.Cons(zsx.SymHard, nil)
 }
 
-func postProcessEndnote(pp *postProcessor, en *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessEndnote(pp *postProcessor, en *sx.Pair, alst *sx.Pair) *sx.Pair {
 	next := en.Tail()
 	attrs := next.Car().(*sx.Pair)
-	if text := pp.visitInlines(next.Tail(), env); text != nil {
+	if text := pp.visitInlines(next.Tail(), alst); text != nil {
 		return zsx.MakeEndnote(attrs, text)
 	}
 	return zsx.MakeEndnote(attrs, sx.Nil())
 }
 
-func postProcessMark(pp *postProcessor, en *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessMark(pp *postProcessor, en *sx.Pair, alst *sx.Pair) *sx.Pair {
 	next := en.Tail()
 	mark := next.Car().(sx.String)
 	next = next.Tail()
 	slug := next.Car().(sx.String)
 	next = next.Tail()
 	fragment := next.Car().(sx.String)
-	text := pp.visitInlines(next.Tail(), env)
+	text := pp.visitInlines(next.Tail(), alst)
 	return zsx.MakeMark(mark.GetValue(), slug.GetValue(), fragment.GetValue(), text)
 }
 
-func postProcessInlines4(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessInlines4(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pair {
 	sym := ln.Car()
 	next := ln.Tail()
 	attrs := next.Car()
 	next = next.Tail()
 	val3 := next.Car()
-	text := pp.visitInlines(next.Tail(), env)
+	text := pp.visitInlines(next.Tail(), alst)
 	return text.Cons(val3).Cons(attrs).Cons(sym)
 }
 
-func postProcessEmbed(pp *postProcessor, ln *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessEmbed(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pair {
 	next := ln.Tail()
 	attrs := next.Car().(*sx.Pair)
 	next = next.Tail()
 	ref := next.Car()
 	next = next.Tail()
 	syntax := next.Car().(sx.String)
-	text := pp.visitInlines(next.Tail(), env)
+	text := pp.visitInlines(next.Tail(), alst)
 	return zsx.MakeEmbed(attrs, ref, syntax.GetValue(), text)
 }
 
-func postProcessFormat(pp *postProcessor, fn *sx.Pair, env *sx.Pair) *sx.Pair {
+func postProcessFormat(pp *postProcessor, fn *sx.Pair, alst *sx.Pair) *sx.Pair {
 	symFormat := fn.Car().(*sx.Symbol)
 	next := fn.Tail() // Attrs
 	attrs := next.Car().(*sx.Pair)
@@ -584,6 +584,6 @@ func postProcessFormat(pp *postProcessor, fn *sx.Pair, env *sx.Pair) *sx.Pair {
 	if next == nil {
 		return fn
 	}
-	inlines := pp.visitInlines(next, env)
+	inlines := pp.visitInlines(next, alst)
 	return zsx.MakeFormat(symFormat, attrs, inlines)
 }
