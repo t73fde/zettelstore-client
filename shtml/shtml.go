@@ -333,8 +333,9 @@ func (ev *Evaluator) bindBlocks() {
 		if attrs := EvaluateAttributes(GetAttributes(args[0], env)); attrs != nil {
 			result.Add(attrs)
 		}
+		isCompact := isCompactList(args[1:])
 		for _, elem := range args[1:] {
-			if quote, isPair := sx.GetPair(ev.Eval(elem, env)); isPair {
+			if quote, isPair := sx.GetPair(ev.Eval(makeCompactItem(isCompact, elem), env)); isPair {
 				result.Add(quote.Cons(sxhtml.SymListSplice))
 			}
 		}
@@ -470,16 +471,46 @@ func (ev *Evaluator) makeListFn(sym *sx.Symbol) EvalFn {
 			result.Add(attrs)
 		}
 		if len(args) > 1 {
+			isCompact := isCompactList(args[1:])
 			for _, elem := range args[1:] {
-				item := sx.Nil().Cons(SymLI)
-				if res, isPair := sx.GetPair(ev.Eval(elem, env)); isPair {
-					item.ExtendBang(res)
+				var itemLb sx.ListBuilder
+				itemLb.Add(SymLI)
+				if res, isPair := sx.GetPair(ev.Eval(makeCompactItem(isCompact, elem), env)); isPair {
+					itemLb.ExtendBang(res)
 				}
-				result.Add(item)
+				result.Add(itemLb.List())
 			}
 		}
 		return result.List()
 	}
+}
+func isCompactList(elems sx.Vector) bool {
+	for _, elem := range elems {
+		item, isPair := sx.GetPair(elem)
+		if !isPair {
+			return false
+		}
+		if !zsx.SymBlock.IsEqual(item.Car()) {
+			return false
+		}
+		item = item.Tail()
+		if item.Tail() != nil { // more than two elements -> multiple paragraphs in item
+			return false
+		}
+		head := item.Head()
+		if !zsx.SymPara.IsEqual(head.Car()) {
+			return false
+		}
+	}
+	return true
+}
+func makeCompactItem(isCompact bool, elem sx.Object) sx.Object {
+	if isCompact {
+		if item, isPair := sx.GetPair(elem); isPair {
+			elem = item.Tail().Head().Tail().Cons(zsx.SymInline)
+		}
+	}
+	return elem
 }
 
 func (ev *Evaluator) evalDescriptionTerm(term *sx.Pair, env *Environment) *sx.Pair {
