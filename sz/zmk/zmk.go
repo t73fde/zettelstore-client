@@ -61,10 +61,7 @@ func (cp *Parser) Parse() *sx.Pair {
 	}
 
 	var pp postProcessor
-	if bs := pp.visitPairList(blkBuild.List(), nil); bs != nil {
-		return bs.Cons(zsx.SymBlock)
-	}
-	return nil
+	return pp.visitPairList(blkBuild.List(), nil).Cons(zsx.SymBlock)
 }
 
 func withQueryPrefix(src []byte) bool {

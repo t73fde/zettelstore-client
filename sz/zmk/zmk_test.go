@@ -758,6 +758,7 @@ func TestDefinition(t *testing.T) {
 
 		// Empty description
 		{"; abc\n: ", "(BLOCK (DESCRIPTION () ((TEXT \"abc\"))) (PARA (TEXT \":\")))"},
+		{"; abc\n; def\n: ghi", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK) ((TEXT \"def\")) (BLOCK (BLOCK (PARA (TEXT \"ghi\"))))))"},
 		// Empty continuation of definition
 		{"; abc\n: def\n  ", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))))))"},
 	})

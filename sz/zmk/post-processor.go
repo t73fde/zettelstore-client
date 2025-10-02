@@ -225,7 +225,7 @@ func postProcessDescription(pp *postProcessor, dl *sx.Pair, alst *sx.Pair) *sx.P
 		if isTerm {
 			dList.Add(pp.visitInlines(node.Head(), alst))
 		} else {
-			dList.Add(zsx.WalkBang(pp, node.Head(), alst))
+			dList.Add(zsx.WalkBang(pp, node.Head(), alst.Cons(sx.Cons(symNoBlock, nil))))
 		}
 	}
 	return dList.List().Cons(attrs).Cons(dl.Car())
