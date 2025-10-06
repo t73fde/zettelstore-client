@@ -96,11 +96,11 @@ func TestEdges(t *testing.T) {
 func TestEOL(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"", "()"},
-		{"\n", "()"},
-		{"\r", "()"},
-		{"\r\n", "()"},
-		{"\n\n", "()"},
+		{"", "(BLOCK)"},
+		{"\n", "(BLOCK)"},
+		{"\r", "(BLOCK)"},
+		{"\r\n", "(BLOCK)"},
+		{"\n\n", "(BLOCK)"},
 	})
 }
 
@@ -112,11 +112,11 @@ func TestText(t *testing.T) {
 		{"abcd ", "(BLOCK (PARA (TEXT \"abcd\")))"},
 		{" abcd", "(BLOCK (PARA (TEXT \"abcd\")))"},
 		{"\\", "(BLOCK (PARA (TEXT \"\\\\\")))"},
-		{"\\\n", "()"},
+		{"\\\n", "(BLOCK)"},
 		{"\\\ndef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
-		{"\\\r", "()"},
+		{"\\\r", "(BLOCK)"},
 		{"\\\rdef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
-		{"\\\r\n", "()"},
+		{"\\\r\n", "(BLOCK)"},
 		{"\\\r\ndef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
 		{"\\a", "(BLOCK (PARA (TEXT \"a\")))"},
 		{"\\aa", "(BLOCK (PARA (TEXT \"aa\")))"},
@@ -130,9 +130,9 @@ func TestText(t *testing.T) {
 func TestSpace(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{" ", "()"},
-		{"\t", "()"},
-		{"  ", "()"},
+		{" ", "(BLOCK)"},
+		{"\t", "(BLOCK)"},
+		{"  ", "(BLOCK)"},
 	})
 }
 
@@ -141,8 +141,8 @@ func TestSoftBreak(t *testing.T) {
 	checkTcs(t, TestCases{
 		{"x\ny", "(BLOCK (PARA (TEXT \"x\") (SOFT) (TEXT \"y\")))"},
 		{"z\n", "(BLOCK (PARA (TEXT \"z\")))"},
-		{" \n ", "()"},
-		{" \n", "()"},
+		{" \n ", "(BLOCK)"},
+		{" \n", "(BLOCK)"},
 	})
 }
 
@@ -151,8 +151,8 @@ func TestHardBreak(t *testing.T) {
 	checkTcs(t, TestCases{
 		{"x  \ny", "(BLOCK (PARA (TEXT \"x\") (HARD) (TEXT \"y\")))"},
 		{"z  \n", "(BLOCK (PARA (TEXT \"z\")))"},
-		{"   \n ", "()"},
-		{"   \n", "()"},
+		{"   \n ", "(BLOCK)"},
+		{"   \n", "(BLOCK)"},
 	})
 }
 
@@ -510,7 +510,7 @@ func TestEntity(t *testing.T) {
 func TestVerbatimZettel(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"@@@\n@@@", "()"},
+		{"@@@\n@@@", "(BLOCK)"},
 		{"@@@\nabc\n@@@", "(BLOCK (VERBATIM-ZETTEL () \"abc\"))"},
 		{"@@@@def\nabc\n@@@@", "(BLOCK (VERBATIM-ZETTEL ((\"\" . \"def\")) \"abc\"))"},
 	})
@@ -519,7 +519,7 @@ func TestVerbatimZettel(t *testing.T) {
 func TestVerbatimCode(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"```\n```", "()"},
+		{"```\n```", "(BLOCK)"},
 		{"```\nabc\n```", "(BLOCK (VERBATIM-CODE () \"abc\"))"},
 		{"```\nabc\n````", "(BLOCK (VERBATIM-CODE () \"abc\"))"},
 		{"````\nabc\n````", "(BLOCK (VERBATIM-CODE () \"abc\"))"},
@@ -531,7 +531,7 @@ func TestVerbatimCode(t *testing.T) {
 func TestVerbatimEval(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"~~~\n~~~", "()"},
+		{"~~~\n~~~", "(BLOCK)"},
 		{"~~~\nabc\n~~~", "(BLOCK (VERBATIM-EVAL () \"abc\"))"},
 		{"~~~\nabc\n~~~~", "(BLOCK (VERBATIM-EVAL () \"abc\"))"},
 		{"~~~~\nabc\n~~~~", "(BLOCK (VERBATIM-EVAL () \"abc\"))"},
@@ -543,7 +543,7 @@ func TestVerbatimEval(t *testing.T) {
 func TestVerbatimMath(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"$$$\n$$$", "()"},
+		{"$$$\n$$$", "(BLOCK)"},
 		{"$$$\nabc\n$$$", "(BLOCK (VERBATIM-MATH () \"abc\"))"},
 		{"$$$\nabc\n$$$$", "(BLOCK (VERBATIM-MATH () \"abc\"))"},
 		{"$$$$\nabc\n$$$$", "(BLOCK (VERBATIM-MATH () \"abc\"))"},
@@ -555,7 +555,7 @@ func TestVerbatimMath(t *testing.T) {
 func TestVerbatimComment(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"%%%\n%%%", "()"},
+		{"%%%\n%%%", "(BLOCK)"},
 		{"%%%\nabc\n%%%", "(BLOCK (VERBATIM-COMMENT () \"abc\"))"},
 		{"%%%%go\nabc\n%%%%", "(BLOCK (VERBATIM-COMMENT ((\"\" . \"go\")) \"abc\"))"},
 	})
@@ -572,7 +572,7 @@ func TestPara(t *testing.T) {
 func TestSpanRegion(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{":::\n:::", "()"},
+		{":::\n:::", "(BLOCK)"},
 		{":::\nabc\n:::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"abc\")))))"},
 		{":::\nabc\n::::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"abc\")))))"},
 		{"::::\nabc\n::::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"abc\")))))"},
@@ -585,7 +585,7 @@ func TestSpanRegion(t *testing.T) {
 func TestQuoteRegion(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"<<<\n<<<", "()"},
+		{"<<<\n<<<", "(BLOCK)"},
 		{"<<<\nabc\n<<<", "(BLOCK (REGION-QUOTE () ((PARA (TEXT \"abc\")))))"},
 		{"<<<\nabc\n<<<<", "(BLOCK (REGION-QUOTE () ((PARA (TEXT \"abc\")))))"},
 		{"<<<<\nabc\n<<<<", "(BLOCK (REGION-QUOTE () ((PARA (TEXT \"abc\")))))"},
@@ -598,7 +598,7 @@ func TestQuoteRegion(t *testing.T) {
 func TestVerseRegion(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, replace("\"", nil, TestCases{
-		{"$$$\n$$$", "()"},
+		{"$$$\n$$$", "(BLOCK)"},
 		{"$$$\nabc\n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\")))))"},
 		{"$$$\nabc\n$$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\")))))"},
 		{"$$$$\nabc\n$$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\")))))"},
@@ -767,7 +767,7 @@ func TestDefinition(t *testing.T) {
 func TestTable(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"|", "()"},
+		{"|", "(BLOCK)"},
 		{"||", "(BLOCK (TABLE () () ((CELL ()))))"},
 		{"| |", "(BLOCK (TABLE () () ((CELL ()))))"},
 		{"|a", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")))))"},
@@ -776,7 +776,7 @@ func TestTable(t *testing.T) {
 		{"|a|b", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")) (CELL () (TEXT \"b\")))))"},
 		{"|a\n|b", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\"))) ((CELL () (TEXT \"b\")))))"},
 		{"|a|b\n|c|d", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")) (CELL () (TEXT \"b\"))) ((CELL () (TEXT \"c\")) (CELL () (TEXT \"d\")))))"},
-		{"|%", "()"},
+		{"|%", "(BLOCK)"},
 		{"|=a", "(BLOCK (TABLE () ((CELL () (TEXT \"a\")))))"},
 		{"|=a\n|b", "(BLOCK (TABLE () ((CELL () (TEXT \"a\"))) ((CELL () (TEXT \"b\")))))"},
 		{"|a|b\n|%---\n|c|d", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")) (CELL () (TEXT \"b\"))) ((CELL () (TEXT \"c\")) (CELL () (TEXT \"d\")))))"},
@@ -872,6 +872,6 @@ func TestInlineAttr(t *testing.T) {
 func TestTemp(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
-		{"", "()"},
+		{"", "(BLOCK)"},
 	})
 }

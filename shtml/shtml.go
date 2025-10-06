@@ -440,9 +440,9 @@ func (ev *Evaluator) bindBlocks() {
 		return evalVerbatim(a, content)
 	})
 	ev.bind(zsx.SymVerbatimZettel, 0, nilFn)
-	ev.bind(zsx.SymBLOB, 4, func(args sx.Vector, env *Environment) sx.Object {
+	ev.bind(zsx.SymBLOB, 3, func(args sx.Vector, env *Environment) sx.Object {
 		a := GetAttributes(args[0], env)
-		return evalBLOB(a, getList(args[1], env), getString(args[2], env), getString(args[3], env))
+		return evalBLOB(a, ev.evalSlice(args[3:], env), getString(args[1], env), getString(args[2], env))
 	})
 	ev.bind(zsx.SymTransclude, 2, func(args sx.Vector, env *Environment) sx.Object {
 		if refSym, refValue := GetReference(args[1], env); refSym != nil {
@@ -960,7 +960,7 @@ func GetAttributes(arg sx.Object, env *Environment) zsx.Attributes {
 func GetReference(val sx.Object, env *Environment) (*sx.Symbol, string) {
 	if env.err == nil {
 		if p := getList(val, env); env.err == nil {
-			sym, val := sz.GetReference(p)
+			sym, val := zsx.GetReference(p)
 			if sym != nil {
 				return sym, val
 			}
