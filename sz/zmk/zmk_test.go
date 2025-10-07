@@ -64,10 +64,6 @@ func checkTcs(t *testing.T, tcs TestCases) {
 			if got := copyAST.String(); tc.want != got {
 				st.Errorf("copy\nwant=%q\n got=%q", tc.want, got)
 			}
-			bangAST := zsx.WalkBang(astWalker{}, ast, nil)
-			if got := bangAST.String(); tc.want != got {
-				st.Errorf("bang\nwant=%q\n got=%q", tc.want, got)
-			}
 			zsx.WalkIt(astWalkerIt{}, ast, nil)
 			if got := ast.String(); tc.want != got {
 				st.Errorf("itit\nwant=%q\n got=%q", tc.want, got)

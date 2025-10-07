@@ -22,6 +22,7 @@ import (
 
 	zeroiter "t73f.de/r/zero/iter"
 	"t73f.de/r/zsc/domain/id"
+	"t73f.de/r/zsx"
 	"t73f.de/r/zsx/input"
 )
 
@@ -132,7 +133,7 @@ const (
 	ValueSyntaxNone        = "none"          // Syntax: no syntax / content, just metadata
 	ValueSyntaxPlain       = "plain"         // Syntax: plain text
 	ValueSyntaxPNG         = "png"           // Syntax: PNG image
-	ValueSyntaxSVG         = "svg"           // Syntax: SVG
+	ValueSyntaxSVG         = zsx.SyntaxSVG   // Syntax: SVG
 	ValueSyntaxSxn         = "sxn"           // Syntax: S-Expression
 	ValueSyntaxText        = "text"          // Syntax: plain text
 	ValueSyntaxTxt         = "txt"           // Syntax: plain text

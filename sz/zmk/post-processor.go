@@ -44,7 +44,7 @@ func (pp *postProcessor) VisitAfter(lst *sx.Pair, _ *sx.Pair) sx.Object { return
 func (pp *postProcessor) visitPairList(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
 	for node := range lst.Pairs() {
-		if elem, isPair := sx.GetPair(zsx.WalkBang(pp, node.Head(), alst)); isPair && elem != nil {
+		if elem, isPair := sx.GetPair(zsx.Walk(pp, node.Head(), alst)); isPair && elem != nil {
 			pList.Add(elem)
 		}
 	}
@@ -209,7 +209,7 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pai
 func (pp *postProcessor) visitListElems(ln *sx.Pair, alst *sx.Pair) *sx.Pair {
 	var pList sx.ListBuilder
 	for node := range ln.Tail().Pairs() {
-		if elem := zsx.WalkBang(pp, node.Head(), alst); elem != nil {
+		if elem := zsx.Walk(pp, node.Head(), alst); elem != nil {
 			pList.Add(elem)
 		}
 	}
@@ -225,7 +225,7 @@ func postProcessDescription(pp *postProcessor, dl *sx.Pair, alst *sx.Pair) *sx.P
 		if isTerm {
 			dList.Add(pp.visitInlines(node.Head(), alst))
 		} else {
-			dList.Add(zsx.WalkBang(pp, node.Head(), alst.Cons(sx.Cons(symNoBlock, nil))))
+			dList.Add(zsx.Walk(pp, node.Head(), alst.Cons(sx.Cons(symNoBlock, nil))))
 		}
 	}
 	return dList.List().Cons(attrs).Cons(dl.Car())
@@ -408,7 +408,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 	vector := make([]*sx.Pair, 0, length)
 	// 1st phase: process all childs, ignore ' ' / '\t' at start, and merge some elements
 	for node := range lst.Pairs() {
-		elem, isPair := sx.GetPair(zsx.WalkBang(pp, node.Head(), alst))
+		elem, isPair := sx.GetPair(zsx.Walk(pp, node.Head(), alst))
 		if !isPair || elem == nil {
 			continue
 		}
