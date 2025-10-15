@@ -25,21 +25,19 @@ import (
 // ---- Syntax: none
 
 // ParseNoneBlocks parses no block.
-func ParseNoneBlocks(*input.Input) *sx.Pair { return nil }
+func ParseNoneBlocks(*input.Input) *sx.Pair { return zsx.MakeBlock() }
 
 // ---- Some plain text syntaxes
 
 // ParsePlainBlocks parses the block as plain text with the given syntax.
 func ParsePlainBlocks(inp *input.Input, syntax string) *sx.Pair {
-	var sym *sx.Symbol
+	sym := zsx.SymVerbatimCode
 	if syntax == meta.ValueSyntaxHTML {
 		sym = zsx.SymVerbatimHTML
-	} else {
-		sym = zsx.SymVerbatimCode
 	}
-	return sx.MakeList(
+	return zsx.MakeBlock(zsx.MakeVerbatim(
 		sym,
 		sx.MakeList(sx.Cons(sx.MakeString(""), sx.MakeString(syntax))),
-		sx.MakeString(string(inp.ScanLineContent())),
-	)
+		string(inp.ScanLineContent()),
+	))
 }

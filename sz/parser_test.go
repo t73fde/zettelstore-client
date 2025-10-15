@@ -17,16 +17,18 @@ import (
 	"testing"
 
 	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
 	"t73f.de/r/zsx/input"
 )
 
 func TestParseNone(t *testing.T) {
-	if got := sz.ParseNoneBlocks(nil); got != nil {
+	exp := zsx.MakeBlock()
+	if got := sz.ParseNoneBlocks(nil); !exp.IsEqual(got) {
 		t.Error("GOTB", got)
 	}
 
 	inp := input.NewInput([]byte("1234\n6789"))
-	if got := sz.ParseNoneBlocks(inp); got != nil {
+	if got := sz.ParseNoneBlocks(inp); !exp.IsEqual(got) {
 		t.Error("GOTI", got)
 	}
 }
@@ -37,10 +39,10 @@ func TestParsePlani(t *testing.T) {
 		syntax    string
 		expBlocks string
 	}{
-		{"abc", "html", "(VERBATIM-HTML ((\"\" . \"html\")) \"abc\")"},
-		{"abc\ndef", "html", "(VERBATIM-HTML ((\"\" . \"html\")) \"abc\\ndef\")"},
-		{"abc", "text", "(VERBATIM-CODE ((\"\" . \"text\")) \"abc\")"},
-		{"abc\nDEF", "text", "(VERBATIM-CODE ((\"\" . \"text\")) \"abc\\nDEF\")"},
+		{"abc", "html", "(BLOCK (VERBATIM-HTML ((\"\" . \"html\")) \"abc\"))"},
+		{"abc\ndef", "html", "(BLOCK (VERBATIM-HTML ((\"\" . \"html\")) \"abc\\ndef\"))"},
+		{"abc", "text", "(BLOCK (VERBATIM-CODE ((\"\" . \"text\")) \"abc\"))"},
+		{"abc\nDEF", "text", "(BLOCK (VERBATIM-CODE ((\"\" . \"text\")) \"abc\\nDEF\"))"},
 	}
 	for i, tc := range testcases {
 		t.Run(tc.syntax+":"+tc.src, func(t *testing.T) {
