@@ -15,6 +15,8 @@
 package sz
 
 import (
+	"strings"
+
 	"t73f.de/r/sx"
 	"t73f.de/r/zsx"
 )
@@ -103,3 +105,6 @@ func (m Meta) GetPair(key string) *sx.Pair {
 	}
 	return nil
 }
+
+// NormalizedSpacedText returns the given string, but normalize multiple spaces to one space.
+func NormalizedSpacedText(s string) string { return strings.Join(strings.Fields(s), " ") }
