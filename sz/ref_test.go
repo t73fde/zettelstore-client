@@ -14,9 +14,12 @@
 package sz_test
 
 import (
+	"strings"
 	"testing"
 
+	"t73f.de/r/sx"
 	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
 )
 
 func TestParseReference(t *testing.T) {
@@ -70,6 +73,41 @@ func TestParseReference(t *testing.T) {
 		t.Run(tc.s, func(t *testing.T) {
 			if got := sz.ScanReference(tc.s); got.String() != tc.exp {
 				t.Errorf("%q should be %q, but got %q", tc.s, tc.exp, got)
+			}
+		})
+	}
+}
+
+func TestWriteReference(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		src *sx.Pair
+		exp string
+	}{
+		{nil, ""},
+		{zsx.MakeReference(sz.SymRefStateZettel, "12345678901234"), "12345678901234"},
+		{zsx.MakeReference(sz.SymRefStateQuery, "12345678901234"), "query:12345678901234"},
+		{zsx.MakeReference(sz.SymRefStateBased, "/based"), "//based"},
+		{zsx.MakeReference(zsx.SymRefStateHosted, "/hosted"), "/hosted"},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.src.String(), func(t *testing.T) {
+			var sb strings.Builder
+			err := sz.WriteReference(&sb, tc.src)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if got := sb.String(); got != tc.exp {
+				t.Errorf("expect %q, but got %q", tc.exp, got)
+			}
+			if got := sz.ReferenceString(tc.src); got != tc.exp {
+				t.Errorf("expect %q, but got %q", tc.exp, got)
+			}
+			if tc.src != nil {
+				if got := sz.ScanReference(tc.exp); !got.IsEqual(tc.src) {
+					t.Errorf("expect %v, but got %v", tc.src, got)
+				}
 			}
 		})
 	}

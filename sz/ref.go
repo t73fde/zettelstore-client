@@ -14,6 +14,7 @@
 package sz
 
 import (
+	"io"
 	"net/url"
 	"strings"
 
@@ -76,4 +77,28 @@ func ScanReference(s string) *sx.Pair {
 		}
 	}
 	return zsx.MakeReference(sym, s)
+}
+
+// WriteReference writes the given reference to the writer. If the output is
+// scanned via [ScanReference], the given reference should be returned.
+func WriteReference(w io.Writer, ref *sx.Pair) (err error) {
+	refSym, refVal := zsx.GetReference(ref)
+	if SymRefStateBased.IsEqualSymbol(refSym) {
+		_, err = io.WriteString(w, "/")
+	} else if SymRefStateQuery.IsEqualSymbol(refSym) {
+		_, err = io.WriteString(w, api.QueryPrefix)
+	}
+	if err == nil {
+		_, err = io.WriteString(w, refVal)
+	}
+	return err
+}
+
+// ReferenceString returns the reference as a string.
+func ReferenceString(ref *sx.Pair) string {
+	var sb strings.Builder
+	if err := WriteReference(&sb, ref); err != nil {
+		return ""
+	}
+	return sb.String()
 }
