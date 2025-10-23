@@ -112,3 +112,31 @@ func TestWriteReference(t *testing.T) {
 		})
 	}
 }
+
+func TestSplitFragment(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		value string
+		base  string
+		frag  string
+	}{
+		{"", "", ""},
+		{"#", "", ""},
+		{"123", "123", ""},
+		{"123#", "123", ""},
+		{"#123", "", "123"},
+		{"123#456", "123", "456"},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.value, func(t *testing.T) {
+			if gotBase, gotFrag := sz.SplitFragment(tc.value); gotBase != tc.base || gotFrag != tc.frag {
+				if gotBase != tc.base {
+					t.Errorf("base %q expected, but got %q", tc.base, gotBase)
+				}
+				if gotFrag != tc.frag {
+					t.Errorf("frag %q expected, but got %q", tc.frag, gotFrag)
+				}
+			}
+		})
+	}
+}

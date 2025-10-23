@@ -102,3 +102,10 @@ func ReferenceString(ref *sx.Pair) string {
 	}
 	return sb.String()
 }
+
+// SplitFragment slices a reference value into the base value and the
+// (optional) fragment. Both are separated by the first "#".
+func SplitFragment(refValue string) (string, string) {
+	baseRef, fragment, _ := strings.Cut(refValue, "#")
+	return baseRef, fragment
+}
