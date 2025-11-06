@@ -1,10 +1,10 @@
-t73f.de/r/sx v0.0.0-20251017161911-2f8291157520 h1:XtiOULaPBescy4AI1MgrE/klJca1gtVDK9awrW6zjCc=
-t73f.de/r/sx v0.0.0-20251017161911-2f8291157520/go.mod h1:qOhNY+S+pcINETviISh5YIEfNUMk81QTDij78fIVa+Q=
-t73f.de/r/sxwebs v0.0.0-20251106132845-8ccf5ce799af h1:ic3eNaQEcwd9WIQ7fKGtu14LLEfPlfmZyiiBGmXIOlg=
-t73f.de/r/sxwebs v0.0.0-20251106132845-8ccf5ce799af/go.mod h1:tj/uvmQMuer2RHSMiNfRL8d484a1Wirh9QX8Ehxu4jY=
+t73f.de/r/sx v0.0.0-20251106134512-57bd2ba0e8e3 h1:8EQK+viyafJrYKprKFjxv8KO80XLjH2Av5gaI24298g=
+t73f.de/r/sx v0.0.0-20251106134512-57bd2ba0e8e3/go.mod h1:4hTEMWfmRB4ocR4ir0WuVoV+q0ed58pwGZwsznSXt1Q=
+t73f.de/r/sxwebs v0.0.0-20251106134640-a792e6dfefd8 h1:4I4hAwUuMb4bDNqttF1ZXGbZRnTTBvgHeWZOdELUZw8=
+t73f.de/r/sxwebs v0.0.0-20251106134640-a792e6dfefd8/go.mod h1:0rjepPI8mKx3vIe3+IVN3qJVr25uma2A6ozUDpnqbwY=
 t73f.de/r/webs v0.0.0-20251106132628-d89a2b2c2373 h1:puhtswOd5A9+RzeTBRfuSsvhs0Nsn9e3PHM7zM4Yges=
 t73f.de/r/webs v0.0.0-20251106132628-d89a2b2c2373/go.mod h1:n6yEgRO4XVZYi8F5ilHWgv7oFzVsRDZrXorCdXxdVqk=
 t73f.de/r/zero v0.0.0-20251106132433-8bb93fc3269f h1:v334GYGrruo8wr9Wh9R/KahJr8gMX/Nbysg/wpgtAC8=
 t73f.de/r/zero v0.0.0-20251106132433-8bb93fc3269f/go.mod h1:6TIoFD0Qn7oEE4GYUzA1cQzwrvhGAADYsm930FK6Yz0=
-t73f.de/r/zsx v0.0.0-20251026111929-14a2ffbc29f5 h1:iPv5+h3dy962u0Jbq+5nYI0dOaCbXcamwe8FAZLTfAU=
-t73f.de/r/zsx v0.0.0-20251026111929-14a2ffbc29f5/go.mod h1:/wqH6y+cX2WnLYs8sqFydWPPiht90Jm1KTg12Rn33jU=
+t73f.de/r/zsx v0.0.0-20251106134735-30b13dc3ce8a h1:hPo18TPk3Wlmh34Vuj0DVGJN13TiZ8Mule18EvwYs1Y=
+t73f.de/r/zsx v0.0.0-20251106134735-30b13dc3ce8a/go.mod h1:sQaYZqc37hSYmHENHrBqIiazhuoZc4Q4dpP9Wc6AM/I=
