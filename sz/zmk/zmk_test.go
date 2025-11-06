@@ -79,8 +79,8 @@ func (astWalker) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object   { return node
 
 type astWalkerIt struct{}
 
-func (astWalkerIt) VisitBefore(*sx.Pair, *sx.Pair) bool { return false }
-func (astWalkerIt) VisitAfter(*sx.Pair, *sx.Pair)       {}
+func (astWalkerIt) VisitItBefore(*sx.Pair, *sx.Pair) bool { return false }
+func (astWalkerIt) VisitItAfter(*sx.Pair, *sx.Pair)       {}
 
 func TestEdges(t *testing.T) {
 	t.Parallel()
