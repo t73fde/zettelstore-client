@@ -94,6 +94,9 @@ func (cp *Parser) parseBlock0(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 	inp.SetPos(pos)
 	cp.clearStacked()
 	ins := cp.parsePara()
+	if ins == nil {
+		return nil, true
+	}
 	if startsWithSpaceSoftBreak(ins) {
 		ins = ins.Tail().Tail()
 	} else if lastPara != nil {

@@ -283,6 +283,9 @@ func (cp *Parser) parseEndnote() (*sx.Pair, bool) {
 		return nil, false
 	}
 	attrs := parseInlineAttributes(cp.inp)
+	if ins == nil {
+		return nil, true
+	}
 	return zsx.MakeEndnote(attrs, ins), true
 }
 

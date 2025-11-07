@@ -274,7 +274,7 @@ func TestEndnote(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, TestCases{
 		{"[^", "(BLOCK (PARA (TEXT \"[^\")))"},
-		{"[^]", "(BLOCK (PARA (ENDNOTE ())))"},
+		{"[^]", "(BLOCK)"},
 		{"[^abc]", "(BLOCK (PARA (ENDNOTE () (TEXT \"abc\"))))"},
 		{"[^abc ]", "(BLOCK (PARA (ENDNOTE () (TEXT \"abc\"))))"},
 		{"[^abc\ndef]", "(BLOCK (PARA (ENDNOTE () (TEXT \"abc\") (SOFT) (TEXT \"def\"))))"},
