@@ -147,9 +147,9 @@ func TestSetIUnion(t *testing.T) {
 		exp    *idset.Set
 	}{
 		{nil, nil, nil},
-		{idset.New(), nil, nil},
+		{idset.New(), nil, idset.New()},
 		{nil, idset.New(), nil},
-		{idset.New(), idset.New(), nil},
+		{idset.New(), idset.New(), idset.New()},
 		{idset.New(1), nil, idset.New(1)},
 		{nil, idset.New(1), idset.New(1)},
 		{idset.New(1), idset.New(), idset.New(1)},

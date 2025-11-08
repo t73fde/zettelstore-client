@@ -86,7 +86,7 @@ func (s *Set) Length() int {
 
 // Clone returns a copy of the given set.
 func (s *Set) Clone() *Set {
-	if s == nil || len(s.seq) == 0 {
+	if s == nil {
 		return nil
 	}
 	return &Set{seq: slices.Clone(s.seq)}
@@ -134,7 +134,10 @@ func (s *Set) SafeSorted() []id.Zid {
 // If s == nil, then the other set is always returned.
 func (s *Set) IntersectOrSet(other *Set) *Set {
 	if s == nil {
-		return other // no other.Clone(), since other != nil, i.e. "not found"
+		if other == nil {
+			return nil
+		}
+		return other.Clone() // must call other.Clone(), otherwise poss. race
 	}
 	if other == nil {
 		s.seq = s.seq[:0]
