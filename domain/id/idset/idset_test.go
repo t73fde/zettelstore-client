@@ -43,6 +43,32 @@ func TestSetContainsOrNil(t *testing.T) {
 	}
 }
 
+func TestSetContains(t *testing.T) {
+	testcases := []id.Zid{2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22}
+	var s *idset.Set
+	for _, tc := range testcases {
+		if s.Contains(tc) {
+			t.Errorf("nil set contains %v", tc)
+		}
+	}
+	s = idset.New()
+	data := slices.Clone(testcases)
+	slices.Reverse(data)
+	s = s.AddSlice(data)
+	for _, tc := range testcases {
+		if !s.Contains(tc) {
+			t.Errorf("set does not contain %v", tc)
+		}
+	}
+	notFounds := []id.Zid{0, 1, 3, 5, 23}
+	for _, zid := range notFounds {
+		if s.Contains(zid) {
+			t.Errorf("set does contain %v", zid)
+
+		}
+	}
+}
+
 func TestSetAdd(t *testing.T) {
 	t.Parallel()
 	testcases := []struct {

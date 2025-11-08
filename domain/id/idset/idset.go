@@ -242,7 +242,7 @@ func (s *Set) Remove(zid id.Zid) *Set {
 	if s == nil || len(s.seq) == 0 {
 		return nil
 	}
-	if pos, found := s.find(zid); found {
+	if pos, found := slices.BinarySearch(s.seq, zid); found {
 		copy(s.seq[pos:], s.seq[pos+1:])
 		s.seq = s.seq[:len(s.seq)-1]
 	}
@@ -303,27 +303,12 @@ func newFromSlice(seq []id.Zid) *Set {
 }
 
 func (s *Set) add(zid id.Zid) {
-	if pos, found := s.find(zid); !found {
+	if pos, found := slices.BinarySearch(s.seq, zid); !found {
 		s.seq = slices.Insert(s.seq, pos, zid)
 	}
 }
 
 func (s *Set) contains(zid id.Zid) bool {
-	_, found := s.find(zid)
+	_, found := slices.BinarySearch(s.seq, zid)
 	return found
-}
-
-func (s *Set) find(zid id.Zid) (int, bool) {
-	hi := len(s.seq)
-	for lo := 0; lo < hi; {
-		m := lo + (hi-lo)/2
-		if z := s.seq[m]; z == zid {
-			return m, true
-		} else if z < zid {
-			lo = m + 1
-		} else {
-			hi = m
-		}
-	}
-	return hi, false
 }
