@@ -281,7 +281,10 @@ func (ev *Evaluator) EvaluateMeta(a zsx.Attributes) *sx.Pair {
 func (ev *Evaluator) bindBlocks() {
 	ev.bind(zsx.SymBlock, 0, ev.evalList)
 	ev.bind(zsx.SymPara, 0, func(args sx.Vector, env *Environment) sx.Object {
-		return ev.evalSlice(args, env).Cons(SymP)
+		if sl := ev.evalSlice(args, env); sl != nil {
+			return sl.Cons(SymP)
+		}
+		return nil
 	})
 	ev.bind(zsx.SymHeading, 5, func(args sx.Vector, env *Environment) sx.Object {
 		nLevel := getInt64(args[0], env)
@@ -640,10 +643,12 @@ func (ev *Evaluator) bindInlines() {
 		a := GetAttributes(args[0], env)
 		env.pushAttributes(a)
 		defer env.popAttributes()
-		result := sx.Nil()
+		var result *sx.Pair
 		if key := getString(args[1], env); key.GetValue() != "" {
 			if len(args) > 2 {
-				result = ev.evalSlice(args[2:], env).Cons(sx.MakeString(", "))
+				if sl := ev.evalSlice(args[2:], env); sl != nil {
+					result = sl.Cons(sx.MakeString(", "))
+				}
 			}
 			result = result.Cons(key)
 		}
@@ -663,7 +668,10 @@ func (ev *Evaluator) bindInlines() {
 				return result.Cons(EvaluateAttributes(a)).Cons(SymA)
 			}
 		}
-		return result.Cons(SymSPAN)
+		if result != nil {
+			return result.Cons(SymSPAN)
+		}
+		return nil
 	})
 	ev.bind(zsx.SymEndnote, 1, func(args sx.Vector, env *Environment) sx.Object {
 		a := GetAttributes(args[0], env)
@@ -735,7 +743,10 @@ func (ev *Evaluator) makeFormatFn(sym *sx.Symbol) EvalFn {
 		if len(a) > 0 {
 			res = res.Cons(EvaluateAttributes(a))
 		}
-		return res.Cons(sym)
+		if res != nil {
+			return res.Cons(sym)
+		}
+		return nil
 	}
 }
 
@@ -769,7 +780,10 @@ func (ev *Evaluator) evalQuote(args sx.Vector, env *Environment) sx.Object {
 		res = res.Cons(EvaluateAttributes(a))
 		return res.Cons(SymSPAN)
 	}
-	return res.Cons(sxhtml.SymListSplice)
+	if res != nil {
+		return res.Cons(sxhtml.SymListSplice)
+	}
+	return nil
 }
 
 var visibleReplacer = strings.NewReplacer(" ", "\u2423")
@@ -912,7 +926,7 @@ func (ev *Evaluator) EvalPairList(pair *sx.Pair, env *Environment) *sx.Pair {
 
 func (ev *Evaluator) evalLink(a zsx.Attributes, refValue string, inline sx.Vector, env *Environment) sx.Object {
 	result := ev.evalSlice(inline, env)
-	if len(inline) == 0 {
+	if result == nil {
 		result = sx.Nil().Cons(sx.MakeString(refValue))
 	}
 	if ev.noLinks {
