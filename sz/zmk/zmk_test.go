@@ -25,7 +25,7 @@ import (
 	"t73f.de/r/zsx/input"
 )
 
-type testCase struct{ source, want string }
+type testCase struct{ src, exp string }
 type testCases []testCase
 type symbolMap map[string]*sx.Symbol
 
@@ -36,8 +36,8 @@ func replace(s string, sm symbolMap, tcs testCases) testCases {
 	}
 	var testCases testCases
 	for _, tc := range tcs {
-		source := strings.ReplaceAll(tc.source, "$", s)
-		want := tc.want
+		source := strings.ReplaceAll(tc.src, "$", s)
+		want := tc.exp
 		if sym != "" {
 			want = strings.ReplaceAll(want, "$%", sym)
 		}
@@ -52,21 +52,24 @@ func checkTcs(t *testing.T, tcs testCases) {
 
 	var parser zmk.Parser
 	for tcn, tc := range tcs {
-		t.Run(fmt.Sprintf("TC=%02d,src=%q", tcn, tc.source), func(st *testing.T) {
+		t.Run(fmt.Sprintf("TC=%02d,src=%q", tcn, tc.src), func(st *testing.T) {
 			st.Helper()
-			inp := input.NewInput([]byte(tc.source))
+			inp := input.NewInput([]byte(tc.src))
 			parser.Initialize(inp)
 			ast := parser.Parse()
-			if got := ast.String(); tc.want != got {
-				st.Errorf("none\nwant=%q\n got=%q", tc.want, got)
+			found := false
+			if got := ast.String(); tc.exp != got {
+				st.Errorf("none\nwant=%q\n got=%q", tc.exp, got)
+				found = true
 			}
 			copyAST := zsx.Walk(astWalker{}, ast, nil)
-			if got := copyAST.String(); tc.want != got {
-				st.Errorf("copy\nwant=%q\n got=%q", tc.want, got)
+			if got := copyAST.String(); tc.exp != got && !found {
+				st.Errorf("copy\nwant=%q\n got=%q", tc.exp, got)
+				found = true
 			}
 			zsx.WalkIt(astWalkerIt{}, ast, nil)
-			if got := ast.String(); tc.want != got {
-				st.Errorf("itit\nwant=%q\n got=%q", tc.want, got)
+			if got := ast.String(); tc.exp != got && !found {
+				st.Errorf("itit\nwant=%q\n got=%q", tc.exp, got)
 			}
 		})
 	}
@@ -729,7 +732,7 @@ func TestEnumAfterPara(t *testing.T) {
 	})
 }
 
-func TestDefinition(t *testing.T) {
+func TestDescription(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, testCases{
 		{";", "(BLOCK (PARA (TEXT \";\")))"},
