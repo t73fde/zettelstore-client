@@ -25,16 +25,16 @@ import (
 	"t73f.de/r/zsx/input"
 )
 
-type TestCase struct{ source, want string }
-type TestCases []TestCase
+type testCase struct{ source, want string }
+type testCases []testCase
 type symbolMap map[string]*sx.Symbol
 
-func replace(s string, sm symbolMap, tcs TestCases) TestCases {
+func replace(s string, sm symbolMap, tcs testCases) testCases {
 	var sym string
 	if len(sm) > 0 {
 		sym = sm[s].GetValue()
 	}
-	var testCases TestCases
+	var testCases testCases
 	for _, tc := range tcs {
 		source := strings.ReplaceAll(tc.source, "$", s)
 		want := tc.want
@@ -42,12 +42,12 @@ func replace(s string, sm symbolMap, tcs TestCases) TestCases {
 			want = strings.ReplaceAll(want, "$%", sym)
 		}
 		want = strings.ReplaceAll(want, "$", s)
-		testCases = append(testCases, TestCase{source, want})
+		testCases = append(testCases, testCase{source, want})
 	}
 	return testCases
 }
 
-func checkTcs(t *testing.T, tcs TestCases) {
+func checkTcs(t *testing.T, tcs testCases) {
 	t.Helper()
 
 	var parser zmk.Parser
@@ -84,14 +84,14 @@ func (astWalkerIt) VisitItAfter(*sx.Pair, *sx.Pair)       {}
 
 func TestEdges(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"\"\"\"\n; \n0{{0}}{0}\n\"\"\"", "(BLOCK (REGION-VERSE () ((DESCRIPTION () ()) (PARA (TEXT \"0\") (EMBED ((\"0\" . \"\")) (HOSTED \"0\") \"\")))))"},
 	})
 }
 
 func TestEOL(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"", "(BLOCK)"},
 		{"\n", "(BLOCK)"},
 		{"\r", "(BLOCK)"},
@@ -102,7 +102,7 @@ func TestEOL(t *testing.T) {
 
 func TestText(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"abcd", "(BLOCK (PARA (TEXT \"abcd\")))"},
 		{"ab cd", "(BLOCK (PARA (TEXT \"ab cd\")))"},
 		{"abcd ", "(BLOCK (PARA (TEXT \"abcd\")))"},
@@ -125,7 +125,7 @@ func TestText(t *testing.T) {
 
 func TestSpace(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{" ", "(BLOCK)"},
 		{"\t", "(BLOCK)"},
 		{"  ", "(BLOCK)"},
@@ -134,7 +134,7 @@ func TestSpace(t *testing.T) {
 
 func TestSoftBreak(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"x\ny", "(BLOCK (PARA (TEXT \"x\") (SOFT) (TEXT \"y\")))"},
 		{"z\n", "(BLOCK (PARA (TEXT \"z\")))"},
 		{" \n ", "(BLOCK)"},
@@ -144,7 +144,7 @@ func TestSoftBreak(t *testing.T) {
 
 func TestHardBreak(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"x  \ny", "(BLOCK (PARA (TEXT \"x\") (HARD) (TEXT \"y\")))"},
 		{"z  \n", "(BLOCK (PARA (TEXT \"z\")))"},
 		{"   \n ", "(BLOCK)"},
@@ -154,7 +154,7 @@ func TestHardBreak(t *testing.T) {
 
 func TestLink(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"[", "(BLOCK (PARA (TEXT \"[\")))"},
 		{"[[", "(BLOCK (PARA (TEXT \"[[\")))"},
 		{"[[|", "(BLOCK (PARA (TEXT \"[[|\")))"},
@@ -208,7 +208,7 @@ func TestLink(t *testing.T) {
 
 func TestEmbed(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"{", "(BLOCK (PARA (TEXT \"{\")))"},
 		{"{{", "(BLOCK (PARA (TEXT \"{{\")))"},
 		{"{{|", "(BLOCK (PARA (TEXT \"{{|\")))"},
@@ -249,7 +249,7 @@ func TestEmbed(t *testing.T) {
 
 func TestCite(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"[@", "(BLOCK (PARA (TEXT \"[@\")))"},
 		{"[@]", "(BLOCK (PARA (TEXT \"[@]\")))"},
 		{"[@a]", "(BLOCK (PARA (CITE () \"a\")))"},
@@ -265,14 +265,14 @@ func TestCite(t *testing.T) {
 		{"[@a,[@b]]", "(BLOCK (PARA (CITE () \"a\" (CITE () \"b\"))))"},
 		{"[@a]{color=green}", "(BLOCK (PARA (CITE ((\"color\" . \"green\")) \"a\")))"},
 	})
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"[@a\n\n]", "(BLOCK (PARA (TEXT \"[@a\")) (PARA (TEXT \"]\")))"},
 	})
 }
 
 func TestEndnote(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"[^", "(BLOCK (PARA (TEXT \"[^\")))"},
 		{"[^]", "(BLOCK)"},
 		{"[^abc]", "(BLOCK (PARA (ENDNOTE () (TEXT \"abc\"))))"},
@@ -282,14 +282,14 @@ func TestEndnote(t *testing.T) {
 		{"[^abc[^def]]", "(BLOCK (PARA (ENDNOTE () (TEXT \"abc\") (ENDNOTE () (TEXT \"def\")))))"},
 		{"[^abc]{-}", "(BLOCK (PARA (ENDNOTE ((\"-\" . \"\")) (TEXT \"abc\"))))"},
 	})
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"[^abc\n\ndef]", "(BLOCK (PARA (TEXT \"[^abc\")) (PARA (TEXT \"def]\")))"},
 	})
 }
 
 func TestMark(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"[!", "(BLOCK (PARA (TEXT \"[!\")))"},
 		{"[!\n", "(BLOCK (PARA (TEXT \"[!\")))"},
 		{"[!]", "(BLOCK (PARA (MARK \"\" \"\" \"\")))"},
@@ -311,7 +311,7 @@ func TestMark(t *testing.T) {
 
 func TestComment(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"%", "(BLOCK (PARA (TEXT \"%\")))"},
 		{"%%", "(BLOCK (PARA (LITERAL-COMMENT () \"\")))"},
 		{"%\n", "(BLOCK (PARA (TEXT \"%\")))"},
@@ -346,7 +346,7 @@ func TestFormat(t *testing.T) {
 	// Not for Insert / '>', because collision with quoted list
 	// Not for Quote / '"', because escaped representation.
 	for _, ch := range []string{"_", "*", "~", "^", ",", "#", ":"} {
-		checkTcs(t, replace(ch, symMap, TestCases{
+		checkTcs(t, replace(ch, symMap, testCases{
 			{"$", "(BLOCK (PARA (TEXT \"$\")))"},
 			{"$$", "(BLOCK (PARA (TEXT \"$$\")))"},
 			{"$$$", "(BLOCK (PARA (TEXT \"$$$\")))"},
@@ -355,7 +355,7 @@ func TestFormat(t *testing.T) {
 	}
 	// Not for Quote / '"', because escaped representation.
 	for _, ch := range []string{"_", "*", ">", "~", "^", ",", "#", ":"} {
-		checkTcs(t, replace(ch, symMap, TestCases{
+		checkTcs(t, replace(ch, symMap, testCases{
 			{"$$a$$", "(BLOCK (PARA ($% () (TEXT \"a\"))))"},
 			{"$$a$$$", "(BLOCK (PARA ($% () (TEXT \"a\")) (TEXT \"$\")))"},
 			{"$$$a$$", "(BLOCK (PARA ($% () (TEXT \"$a\"))))"},
@@ -370,11 +370,11 @@ func TestFormat(t *testing.T) {
 			{"$$a\n\na$$", "(BLOCK (PARA (TEXT \"$$a\")) (PARA (TEXT \"a$$\")))"},
 			{"$$a$${go}", "(BLOCK (PARA ($% ((\"go\" . \"\")) (TEXT \"a\"))))"},
 		}))
-		checkTcs(t, replace(ch, symMap, TestCases{
+		checkTcs(t, replace(ch, symMap, testCases{
 			{"$$a\n\na$$", "(BLOCK (PARA (TEXT \"$$a\")) (PARA (TEXT \"a$$\")))"},
 		}))
 	}
-	checkTcs(t, replace(`"`, symbolMap{`"`: zsx.SymFormatQuote}, TestCases{
+	checkTcs(t, replace(`"`, symbolMap{`"`: zsx.SymFormatQuote}, testCases{
 		{"$", "(BLOCK (PARA (TEXT \"\\\"\")))"},
 		{"$$", "(BLOCK (PARA (TEXT \"\\\"\\\"\")))"},
 		{"$$$", "(BLOCK (PARA (TEXT \"\\\"\\\"\\\"\")))"},
@@ -394,7 +394,7 @@ func TestFormat(t *testing.T) {
 		{"$$a\n\na$$", "(BLOCK (PARA (TEXT \"\\\"\\\"a\")) (PARA (TEXT \"a\\\"\\\"\")))"},
 		{"$$a$${go}", "(BLOCK (PARA ($% ((\"go\" . \"\")) (TEXT \"a\"))))"},
 	}))
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"__****__", "(BLOCK (PARA (FORMAT-EMPH () (FORMAT-STRONG ()))))"},
 		{"__**a**__", "(BLOCK (PARA (FORMAT-EMPH () (FORMAT-STRONG () (TEXT \"a\")))))"},
 		{"__**__**", "(BLOCK (PARA (TEXT \"__\") (FORMAT-STRONG () (TEXT \"__\"))))"},
@@ -409,7 +409,7 @@ func TestLiteral(t *testing.T) {
 	}
 	t.Parallel()
 	for _, ch := range []string{"`", "'", "="} {
-		checkTcs(t, replace(ch, symMap, TestCases{
+		checkTcs(t, replace(ch, symMap, testCases{
 			{"$", "(BLOCK (PARA (TEXT \"$\")))"},
 			{"$$", "(BLOCK (PARA (TEXT \"$$\")))"},
 			{"$$$", "(BLOCK (PARA (TEXT \"$$$\")))"},
@@ -427,7 +427,7 @@ func TestLiteral(t *testing.T) {
 			{"$$a$${go}", "(BLOCK (PARA ($% ((\"go\" . \"\")) \"a\")))"},
 		}))
 	}
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"``<script `` abc", "(BLOCK (PARA (LITERAL-CODE () \"<script \") (TEXT \" abc\")))"},
 		{"''````''", "(BLOCK (PARA (LITERAL-INPUT () \"````\")))"},
 		{"''``a``''", "(BLOCK (PARA (LITERAL-INPUT () \"``a``\")))"},
@@ -438,7 +438,7 @@ func TestLiteral(t *testing.T) {
 
 func TestLiteralMath(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"$", "(BLOCK (PARA (TEXT \"$\")))"},
 		{"$$", "(BLOCK (PARA (TEXT \"$$\")))"},
 		{"$$$", "(BLOCK (PARA (TEXT \"$$$\")))"},
@@ -459,7 +459,7 @@ func TestLiteralMath(t *testing.T) {
 
 func TestMixFormatCode(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"__abc__\n**def**", "(BLOCK (PARA (FORMAT-EMPH () (TEXT \"abc\")) (SOFT) (FORMAT-STRONG () (TEXT \"def\"))))"},
 		{"''abc''\n==def==", "(BLOCK (PARA (LITERAL-INPUT () \"abc\") (SOFT) (LITERAL-OUTPUT () \"def\")))"},
 		{"__abc__\n==def==", "(BLOCK (PARA (FORMAT-EMPH () (TEXT \"abc\")) (SOFT) (LITERAL-OUTPUT () \"def\")))"},
@@ -473,7 +473,7 @@ func TestMixFormatCode(t *testing.T) {
 
 func TestNDash(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"--", "(BLOCK (PARA (TEXT \"\u2013\")))"},
 		{"a--b", "(BLOCK (PARA (TEXT \"a\u2013b\")))"},
 	})
@@ -481,7 +481,7 @@ func TestNDash(t *testing.T) {
 
 func TestEntity(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"&", "(BLOCK (PARA (TEXT \"&\")))"},
 		{"&;", "(BLOCK (PARA (TEXT \"&;\")))"},
 		{"&#;", "(BLOCK (PARA (TEXT \"&#;\")))"},
@@ -505,7 +505,7 @@ func TestEntity(t *testing.T) {
 
 func TestVerbatimZettel(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"@@@\n@@@", "(BLOCK)"},
 		{"@@@\nabc\n@@@", "(BLOCK (VERBATIM-ZETTEL () \"abc\"))"},
 		{"@@@@def\nabc\n@@@@", "(BLOCK (VERBATIM-ZETTEL ((\"\" . \"def\")) \"abc\"))"},
@@ -514,7 +514,7 @@ func TestVerbatimZettel(t *testing.T) {
 
 func TestVerbatimCode(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"```\n```", "(BLOCK)"},
 		{"```\nabc\n```", "(BLOCK (VERBATIM-CODE () \"abc\"))"},
 		{"```\nabc\n````", "(BLOCK (VERBATIM-CODE () \"abc\"))"},
@@ -526,7 +526,7 @@ func TestVerbatimCode(t *testing.T) {
 
 func TestVerbatimEval(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"~~~\n~~~", "(BLOCK)"},
 		{"~~~\nabc\n~~~", "(BLOCK (VERBATIM-EVAL () \"abc\"))"},
 		{"~~~\nabc\n~~~~", "(BLOCK (VERBATIM-EVAL () \"abc\"))"},
@@ -538,7 +538,7 @@ func TestVerbatimEval(t *testing.T) {
 
 func TestVerbatimMath(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"$$$\n$$$", "(BLOCK)"},
 		{"$$$\nabc\n$$$", "(BLOCK (VERBATIM-MATH () \"abc\"))"},
 		{"$$$\nabc\n$$$$", "(BLOCK (VERBATIM-MATH () \"abc\"))"},
@@ -550,7 +550,7 @@ func TestVerbatimMath(t *testing.T) {
 
 func TestVerbatimComment(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"%%%\n%%%", "(BLOCK)"},
 		{"%%%\nabc\n%%%", "(BLOCK (VERBATIM-COMMENT () \"abc\"))"},
 		{"%%%%go\nabc\n%%%%", "(BLOCK (VERBATIM-COMMENT ((\"\" . \"go\")) \"abc\"))"},
@@ -559,7 +559,7 @@ func TestVerbatimComment(t *testing.T) {
 
 func TestPara(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"a\n\nb", "(BLOCK (PARA (TEXT \"a\")) (PARA (TEXT \"b\")))"},
 		{"a\n \nb", "(BLOCK (PARA (TEXT \"a\")) (PARA (TEXT \"b\")))"},
 	})
@@ -567,7 +567,7 @@ func TestPara(t *testing.T) {
 
 func TestSpanRegion(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{":::\n:::", "(BLOCK)"},
 		{":::\nabc\n:::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"abc\")))))"},
 		{":::\nabc\n::::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"abc\")))))"},
@@ -580,7 +580,7 @@ func TestSpanRegion(t *testing.T) {
 
 func TestQuoteRegion(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"<<<\n<<<", "(BLOCK)"},
 		{"<<<\nabc\n<<<", "(BLOCK (REGION-QUOTE () ((PARA (TEXT \"abc\")))))"},
 		{"<<<\nabc\n<<<<", "(BLOCK (REGION-QUOTE () ((PARA (TEXT \"abc\")))))"},
@@ -593,7 +593,7 @@ func TestQuoteRegion(t *testing.T) {
 
 func TestVerseRegion(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, replace("\"", nil, TestCases{
+	checkTcs(t, replace("\"", nil, testCases{
 		{"$$$\n$$$", "(BLOCK)"},
 		{"$$$\nabc\n$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\")))))"},
 		{"$$$\nabc\n$$$$", "(BLOCK (REGION-VERSE () ((PARA (TEXT \"abc\")))))"},
@@ -611,7 +611,7 @@ func TestVerseRegion(t *testing.T) {
 
 func TestHeading(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"=h", "(BLOCK (PARA (TEXT \"=h\")))"},
 		{"= h", "(BLOCK (PARA (TEXT \"= h\")))"},
 		{"==h", "(BLOCK (PARA (TEXT \"==h\")))"},
@@ -645,7 +645,7 @@ func TestHeading(t *testing.T) {
 
 func TestHRule(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"-", "(BLOCK (PARA (TEXT \"-\")))"},
 		{"---", "(BLOCK (THEMATIC ()))"},
 		{"----", "(BLOCK (THEMATIC ()))"},
@@ -664,7 +664,7 @@ func TestList(t *testing.T) {
 	t.Parallel()
 	// No ">" in the following, because quotation lists may have empty items.
 	for _, ch := range []string{"*", "#"} {
-		checkTcs(t, replace(ch, nil, TestCases{
+		checkTcs(t, replace(ch, nil, testCases{
 			{"$", "(BLOCK (PARA (TEXT \"$\")))"},
 			{"$$", "(BLOCK (PARA (TEXT \"$$\")))"},
 			{"$$$", "(BLOCK (PARA (TEXT \"$$$\")))"},
@@ -673,7 +673,7 @@ func TestList(t *testing.T) {
 			{"$$$ ", "(BLOCK (PARA (TEXT \"$$$\")))"},
 		}))
 	}
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"* abc", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))))"},
 		{"** abc", "(BLOCK (UNORDERED () (BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))))))"},
 		{"*** abc", "(BLOCK (UNORDERED () (BLOCK (UNORDERED () (BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))))))))"},
@@ -712,7 +712,7 @@ func TestList(t *testing.T) {
 
 func TestQuoteList(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"> w1 w2", "(BLOCK (QUOTATION () (BLOCK (PARA (TEXT \"w1 w2\")))))"},
 		{"> w1\n> w2", "(BLOCK (QUOTATION () (BLOCK (PARA (TEXT \"w1\") (SOFT) (TEXT \"w2\")))))"},
 		{"> w1\n>w2", "(BLOCK (QUOTATION () (BLOCK (PARA (TEXT \"w1\")))) (PARA (TEXT \">w2\")))"},
@@ -723,7 +723,7 @@ func TestQuoteList(t *testing.T) {
 
 func TestEnumAfterPara(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"abc\n* def", "(BLOCK (PARA (TEXT \"abc\")) (UNORDERED () (BLOCK (PARA (TEXT \"def\")))))"},
 		{"abc\n*def", "(BLOCK (PARA (TEXT \"abc\") (SOFT) (TEXT \"*def\")))"},
 	})
@@ -731,7 +731,7 @@ func TestEnumAfterPara(t *testing.T) {
 
 func TestDefinition(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{";", "(BLOCK (PARA (TEXT \";\")))"},
 		{"; ", "(BLOCK (PARA (TEXT \";\")))"},
 		{"; abc", "(BLOCK (DESCRIPTION () ((TEXT \"abc\"))))"},
@@ -762,7 +762,7 @@ func TestDefinition(t *testing.T) {
 
 func TestTable(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"|", "(BLOCK)"},
 		{"||", "(BLOCK (TABLE () () ((CELL ()))))"},
 		{"| |", "(BLOCK (TABLE () () ((CELL ()))))"},
@@ -784,7 +784,7 @@ func TestTable(t *testing.T) {
 
 func TestTransclude(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"{{{a}}}", "(BLOCK (TRANSCLUDE () (HOSTED \"a\")))"},
 		{"{{{a}}}b", "(BLOCK (TRANSCLUDE ((\"\" . \"b\")) (HOSTED \"a\")))"},
 		{"{{{a}}}}", "(BLOCK (TRANSCLUDE () (HOSTED \"a\")))"},
@@ -797,7 +797,7 @@ func TestTransclude(t *testing.T) {
 
 func TestBlockAttr(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{":::go\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) ((PARA (TEXT \"a\")))))"},
 		{":::go=\na\n:::", "(BLOCK (REGION-BLOCK ((\"\" . \"go\")) ((PARA (TEXT \"a\")))))"},
 		{":::{}\na\n:::", "(BLOCK (REGION-BLOCK () ((PARA (TEXT \"a\")))))"},
@@ -817,7 +817,7 @@ func TestBlockAttr(t *testing.T) {
 		{":::  {  go  }  \na\n:::", "(BLOCK (REGION-BLOCK ((\"go\" . \"\")) ((PARA (TEXT \"a\")))))"},
 		{":::  {  .go  }  \na\n:::", "(BLOCK (REGION-BLOCK ((\"class\" . \"go\")) ((PARA (TEXT \"a\")))))"},
 	})
-	checkTcs(t, replace("\"", nil, TestCases{
+	checkTcs(t, replace("\"", nil, testCases{
 		{":::{py=3}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"3\")) ((PARA (TEXT \"a\")))))"},
 		{":::{py=$2 3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2 3\")) ((PARA (TEXT \"a\")))))"},
 		{":::{py=$2\\$3$}\na\n:::", "(BLOCK (REGION-BLOCK ((\"py\" . \"2\\\"3\")) ((PARA (TEXT \"a\")))))"},
@@ -833,7 +833,7 @@ func TestBlockAttr(t *testing.T) {
 
 func TestInlineAttr(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"::a::{}", "(BLOCK (PARA (FORMAT-SPAN () (TEXT \"a\"))))"},
 		{"::a::{ }", "(BLOCK (PARA (FORMAT-SPAN () (TEXT \"a\"))))"},
 		{"::a::{.go}", "(BLOCK (PARA (FORMAT-SPAN ((\"class\" . \"go\")) (TEXT \"a\"))))"},
@@ -851,7 +851,7 @@ func TestInlineAttr(t *testing.T) {
 		{"::a::{  \n go \n .py\n\n}", "(BLOCK (PARA (FORMAT-SPAN ((\"class\" . \"py\") (\"go\" . \"\")) (TEXT \"a\"))))"},
 		{"::a::{\ngo\n}", "(BLOCK (PARA (FORMAT-SPAN ((\"go\" . \"\")) (TEXT \"a\"))))"},
 	})
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"::a::{py=3}", "(BLOCK (PARA (FORMAT-SPAN ((\"py\" . \"3\")) (TEXT \"a\"))))"},
 		{"::a::{py=\"2 3\"}", "(BLOCK (PARA (FORMAT-SPAN ((\"py\" . \"2 3\")) (TEXT \"a\"))))"},
 		{"::a::{py=\"2\\\"3\"}", "(BLOCK (PARA (FORMAT-SPAN ((\"py\" . \"2\\\"3\")) (TEXT \"a\"))))"},
@@ -859,7 +859,7 @@ func TestInlineAttr(t *testing.T) {
 		{"::a::{py=\"2\n3\"}", "(BLOCK (PARA (FORMAT-SPAN ((\"py\" . \"2\\n3\")) (TEXT \"a\"))))"},
 		{"::a::{py=\"2 3}", "(BLOCK (PARA (FORMAT-SPAN () (TEXT \"a\")) (TEXT \"{py=\\\"2 3}\")))"},
 	})
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"::a::{py=2 py=3}", "(BLOCK (PARA (FORMAT-SPAN ((\"py\" . \"2 3\")) (TEXT \"a\"))))"},
 		{"::a::{.go .py}", "(BLOCK (PARA (FORMAT-SPAN ((\"class\" . \"go py\")) (TEXT \"a\"))))"},
 	})
@@ -867,7 +867,7 @@ func TestInlineAttr(t *testing.T) {
 
 func TestTemp(t *testing.T) {
 	t.Parallel()
-	checkTcs(t, TestCases{
+	checkTcs(t, testCases{
 		{"", "(BLOCK)"},
 	})
 }
