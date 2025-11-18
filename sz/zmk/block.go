@@ -30,7 +30,7 @@ func (cp *Parser) parseBlock(blocksBuilder *sx.ListBuilder, lastPara *sx.Pair) *
 	if cont {
 		return lastPara
 	}
-	if bn.Car().IsEqual(zsx.SymPara) {
+	if zsx.SymPara.IsEqual(bn.Car()) {
 		return bn
 	}
 	return nil
@@ -124,7 +124,7 @@ func startsWithSpaceSoftBreak(ins *sx.Pair) bool {
 		return false
 	}
 
-	if pair0.Car().IsEqual(zsx.SymText) && isBreakSym(pair1.Car()) {
+	if zsx.SymText.IsEqual(pair0.Car()) && isBreakSym(pair1.Car()) {
 		if args := pair0.Tail(); args != nil {
 			if val, isString := sx.GetString(args.Car()); isString {
 				for _, ch := range val.GetValue() {
@@ -359,7 +359,7 @@ func (cp *Parser) parseNestedList() (*sx.Pair, bool) {
 		return nil, false
 	}
 	inp.SkipSpace()
-	if !kinds[len(kinds)-1].IsEqual(zsx.SymListQuote) && input.IsEOLEOS(inp.Ch) {
+	if !zsx.SymListQuote.IsEqual(kinds[len(kinds)-1]) && input.IsEOLEOS(inp.Ch) {
 		return nil, false
 	}
 
@@ -405,7 +405,7 @@ func parseNestedListKinds(inp *input.Input) []*sx.Symbol {
 func (cp *Parser) buildNestedList(kinds []*sx.Symbol) (ln *sx.Pair, newLnCount int) {
 	for i, kind := range kinds {
 		if i < len(cp.lists) {
-			if !cp.lists[i].Car().IsEqual(kind) {
+			if !kind.IsEqual(cp.lists[i].Car()) {
 				ln = sx.Cons(kind, sx.Cons(sx.Nil(), sx.Nil()))
 				newLnCount++
 				cp.lists[i] = ln
@@ -516,7 +516,13 @@ func (cp *Parser) parseDefDescr() (res *sx.Pair, success bool) {
 		lastPair.AppendBang(zsx.MakeBlock(newDef))
 	} else {
 		// lastPara points a the last definition
-		lastPair.Head().LastPair().AppendBang(newDef)
+		lp := lastPair.Head().LastPair()
+		if symSeparator.IsEqual(lp.Head().Car()) {
+			// Separator now not needed any more. Replace it with newDef
+			lp.SetCar(newDef)
+		} else {
+			lp.AppendBang(newDef)
+		}
 	}
 	return nil, true
 }
@@ -568,7 +574,7 @@ func (cp *Parser) parseIndentForList(cnt int) bool {
 	ln := cp.lists[cnt-1]
 	lbn := ln.LastPair().Head()
 	lpn := lbn.LastPair().Head()
-	if lpn.Car().IsEqual(zsx.SymPara) {
+	if zsx.SymPara.IsEqual(lpn.Car()) {
 		lpn.LastPair().SetCdr(pv)
 	} else {
 		lbn.LastPair().AppendBang(zsx.MakeParaList(pv))
@@ -625,7 +631,7 @@ func (cp *Parser) parseIndentForDescription(cnt int) bool {
 
 	// Continuation of existing paragraph
 	para := bn.LastPair().Head().LastPair().Head()
-	if para.Car().IsEqual(zsx.SymPara) {
+	if zsx.SymPara.IsEqual(para.Car()) {
 		para.LastPair().SetCdr(pn)
 	} else {
 		bn.LastPair().AppendBang(zsx.MakeParaList(pn))

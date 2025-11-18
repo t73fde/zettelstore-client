@@ -760,6 +760,9 @@ func TestDescription(t *testing.T) {
 		{"; abc\n; def\n: ghi", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK) ((TEXT \"def\")) (BLOCK (BLOCK (PARA (TEXT \"ghi\"))))))"},
 		// Empty continuation of definition
 		{"; abc\n: def\n  ", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))))))"},
+
+		{src: "; T1\n: D1\n\n  D2\n: T2\n  T3",
+			exp: `(BLOCK (DESCRIPTION () ((TEXT "T1")) (BLOCK (BLOCK (PARA (TEXT "D1")) (PARA (TEXT "D2"))) (BLOCK (PARA (TEXT "T2") (SOFT) (TEXT "T3"))))))`},
 	})
 }
 

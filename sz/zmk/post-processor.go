@@ -183,7 +183,7 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pai
 	}
 	for node := range elems.Pairs() {
 		item := node.Head()
-		if !item.Car().IsEqual(zsx.SymBlock) {
+		if !zsx.SymBlock.IsEqual(item.Car()) {
 			continue
 		}
 		itemTail := item.Tail()
@@ -192,7 +192,7 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pai
 			newElems.Add(item)
 			continue
 		}
-		if pn := itemTail.Head(); pn.Car().IsEqual(zsx.SymPara) {
+		if pn := itemTail.Head(); zsx.SymPara.IsEqual(pn.Car()) {
 			if !newPara.IsEmpty() {
 				newPara.Add(sx.Cons(zsx.SymSoft, nil))
 			}
@@ -299,7 +299,7 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 
 		// elem is first cell inline element
 		elem := cellInlines.Head()
-		if elem.Car().IsEqual(zsx.SymText) {
+		if zsx.SymText.IsEqual(elem.Car()) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
 				if str[0] == '=' {
@@ -319,7 +319,7 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 		}
 
 		elem = cellInlines.Head()
-		if elem.Car().IsEqual(zsx.SymText) {
+		if zsx.SymText.IsEqual(elem.Car()) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
 				lastByte := str[len(str)-1]
@@ -360,7 +360,7 @@ func alignRow(row *sx.Pair, defaultAlign []byte) {
 
 		// elem is first cell inline element
 		elem := cellInlines.Head()
-		if elem.Car().IsEqual(zsx.SymText) {
+		if zsx.SymText.IsEqual(elem.Car()) {
 			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
 				str := s.GetValue()
 				cellAlign, isValid := getCellAlignment(str[0])
@@ -415,7 +415,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 		elemSym := elem.Car()
 		elemTail := elem.Tail()
 
-		if inVerse && elemSym.IsEqual(zsx.SymText) {
+		if inVerse && zsx.SymText.IsEqual(elemSym) {
 			if s, isString := sx.GetString(elemTail.Car()); isString {
 				verseText := s.GetValue()
 				verseText = strings.ReplaceAll(verseText, " ", "\u00a0")
@@ -425,7 +425,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 
 		if len(vector) == 0 {
 			// If the 1st element is a TEXT, remove all ' ', '\t' at the beginning, if outside a verse block.
-			if !elemSym.IsEqual(zsx.SymText) {
+			if !zsx.SymText.IsEqual(elemSym) {
 				vector = append(vector, elem)
 				continue
 			}
@@ -448,7 +448,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 		last := vector[len(vector)-1]
 		lastSym := last.Car()
 
-		if lastSym.IsEqual(zsx.SymText) && elemSym.IsEqual(zsx.SymText) {
+		if zsx.SymText.IsEqual(lastSym) && zsx.SymText.IsEqual(elemSym) {
 			// Merge two TEXT elements into one
 			lastText := last.Tail().Car().(sx.String).GetValue()
 			elemText := elem.Tail().Car().(sx.String).GetValue()
@@ -456,7 +456,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 			continue
 		}
 
-		if lastSym.IsEqual(zsx.SymText) && elemSym.IsEqual(zsx.SymSoft) {
+		if zsx.SymText.IsEqual(lastSym) && zsx.SymSoft.IsEqual(elemSym) {
 			// Merge (TEXT "... ") (SOFT) to (TEXT "...") (HARD)
 			lastTail := last.Tail()
 			if lastText := lastTail.Car().(sx.String).GetValue(); strings.HasSuffix(lastText, " ") {
@@ -482,7 +482,7 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 	for lastPos >= 0 {
 		elem := vector[lastPos]
 		elemSym := elem.Car()
-		if elemSym.IsEqual(zsx.SymText) {
+		if zsx.SymText.IsEqual(elemSym) {
 			elemTail := elem.Tail()
 			elemText := elemTail.Car().(sx.String).GetValue()
 			newText := removeTrailingSpaces(elemText)
