@@ -34,7 +34,7 @@ func replace(s string, sm symbolMap, tcs testCases) testCases {
 	if len(sm) > 0 {
 		sym = sm[s].GetValue()
 	}
-	var testCases testCases
+	var testcases testCases
 	for _, tc := range tcs {
 		source := strings.ReplaceAll(tc.src, "$", s)
 		want := tc.exp
@@ -42,9 +42,9 @@ func replace(s string, sm symbolMap, tcs testCases) testCases {
 			want = strings.ReplaceAll(want, "$%", sym)
 		}
 		want = strings.ReplaceAll(want, "$", s)
-		testCases = append(testCases, testCase{source, want})
+		testcases = append(testcases, testCase{source, want})
 	}
-	return testCases
+	return testcases
 }
 
 func checkTcs(t *testing.T, tcs testCases) {
@@ -763,6 +763,8 @@ func TestDescription(t *testing.T) {
 
 		{src: "; T1\n: D1\n\n  D2\n: T2\n  T3",
 			exp: `(BLOCK (DESCRIPTION () ((TEXT "T1")) (BLOCK (BLOCK (PARA (TEXT "D1")) (PARA (TEXT "D2"))) (BLOCK (PARA (TEXT "T2") (SOFT) (TEXT "T3"))))))`},
+		{src: "; T1\n: D1\n\n  D2\n\n  D3\n: T2\n  T3",
+			exp: `(BLOCK (DESCRIPTION () ((TEXT "T1")) (BLOCK (BLOCK (PARA (TEXT "D1")) (PARA (TEXT "D2")) (PARA (TEXT "D3"))) (BLOCK (PARA (TEXT "T2") (SOFT) (TEXT "T3"))))))`},
 	})
 }
 

@@ -147,7 +147,9 @@ func (cp *Parser) cleanupListsAfterEOL() {
 	}
 	if descrl := cp.descrl; descrl != nil {
 		if lastPair, pos := lastPairPos(descrl); pos > 2 && pos%2 != 0 {
-			lastPair.Head().LastPair().AppendBang(sx.Cons(symSeparator, nil))
+			if lp := lastPair.Head().LastPair(); !symSeparator.IsEqual(lp.Head().Car()) {
+				lp.AppendBang(sx.Cons(symSeparator, nil))
+			}
 		}
 	}
 }
@@ -528,16 +530,16 @@ func (cp *Parser) parseDefDescr() (res *sx.Pair, success bool) {
 }
 
 func lastPairPos(p *sx.Pair) (*sx.Pair, int) {
-	cnt := 0
-	for node := p; node != nil; {
+	if p == nil {
+		return nil, -1
+	}
+	for node, cnt := p, 0; ; cnt++ {
 		next := node.Tail()
 		if next == nil {
 			return node, cnt
 		}
 		node = next
-		cnt++
 	}
-	return nil, -1
 }
 
 // parseIndent parses initial spaces to continue a list.
