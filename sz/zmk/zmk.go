@@ -29,11 +29,12 @@ import (
 
 // Parser allows to parse its plain text input into Zettelmarkup.
 type Parser struct {
-	inp          *input.Input // Input stream
-	lists        []*sx.Pair   // Stack of lists
-	lastRow      *sx.Pair     // Last row of table, or nil if not in table.
-	descrl       *sx.Pair     // Current description list
-	nestingLevel int          // Count nesting of block and inline elements
+	inp               *input.Input // Input stream
+	lists             []*sx.Pair   // Stack of lists
+	lastRow           *sx.Pair     // Last row of table, or nil if not in table.
+	descrl            *sx.Pair     // Current description list
+	nestingLevel      int          // Count nesting of block and inline elements
+	linkLikeRestLevel int          // Count nesting of link-like rests
 
 	scanReference    func(string) *sx.Pair // Builds a reference node from a given string reference
 	isSpaceReference func([]byte) bool     // Returns true, if src starts with a reference that allows white space
@@ -41,8 +42,6 @@ type Parser struct {
 
 // Initialize the parser with the input stream and a reference scanner.
 func (cp *Parser) Initialize(inp *input.Input) {
-	var zeroParser Parser
-	*cp = zeroParser
 	cp.inp = inp
 	cp.scanReference = sz.ScanReference
 	cp.isSpaceReference = withQueryPrefix
@@ -50,6 +49,11 @@ func (cp *Parser) Initialize(inp *input.Input) {
 
 // Parse tries to parse the input as a block element.
 func (cp *Parser) Parse() *sx.Pair {
+	cp.lists = nil
+	cp.lastRow = nil
+	cp.descrl = nil
+	cp.nestingLevel = 0
+	cp.linkLikeRestLevel = 0
 
 	var lastPara *sx.Pair
 	var blkBuild sx.ListBuilder
@@ -58,6 +62,9 @@ func (cp *Parser) Parse() *sx.Pair {
 	}
 	if cp.nestingLevel != 0 {
 		panic("Nesting level was not decremented")
+	}
+	if cp.linkLikeRestLevel != 0 {
+		panic("Link nesting level was not decremented")
 	}
 
 	var pp postProcessor
@@ -75,6 +82,7 @@ func withQueryPrefix(src []byte) bool {
 const runeModGrave = 'ˋ' // This is NOT '`'!
 
 const maxNestingLevel = 50
+const maxLinkLikeRest = 8
 
 // clearStacked removes all multi-line nodes from parser.
 func (cp *Parser) clearStacked() {

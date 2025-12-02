@@ -21,11 +21,11 @@ import (
 )
 
 func FuzzParseBlocks(f *testing.F) {
-	var parser zmk.Parser
 	f.Fuzz(func(t *testing.T, src []byte) {
 		t.Parallel()
 		inp := input.NewInput(src)
+		var parser zmk.Parser
 		parser.Initialize(inp)
-		parser.Parse()
+		_ = parser.Parse()
 	})
 }

@@ -180,7 +180,7 @@ func (cp *Parser) parseReference(openCh, closeCh rune) (string, *sx.Pair, bool) 
 
 	inp.SkipSpace()
 	pos = inp.Pos
-	if !cp.readReferenceToClose(closeCh) {
+	if pos >= len(inp.Src) || !cp.readReferenceToClose(closeCh) {
 		return "", nil, false
 	}
 	ref := strings.TrimSpace(string(inp.Src[pos:inp.Pos]))
@@ -317,20 +317,28 @@ func (cp *Parser) parseMark() (*sx.Pair, bool) {
 }
 
 func (cp *Parser) parseLinkLikeRest() (*sx.Pair, bool) {
+	if cp.linkLikeRestLevel > maxLinkLikeRest {
+		return nil, false
+	}
+	cp.linkLikeRestLevel++
+
 	var ins sx.ListBuilder
 	inp := cp.inp
 	inp.SkipSpace()
 	for inp.Ch != ']' {
 		in := cp.parseInline()
 		if in == nil {
+			cp.linkLikeRestLevel--
 			return nil, false
 		}
 		ins.Add(in)
 		if input.IsEOLEOS(inp.Ch) && isBreakSym(in.Car()) {
+			cp.linkLikeRestLevel--
 			return nil, false
 		}
 	}
 	inp.Next()
+	cp.linkLikeRestLevel--
 	return ins.List(), true
 }
 

@@ -143,7 +143,9 @@ var symSeparator = sx.MakeSymbol("sEpArAtOr")
 
 func (cp *Parser) cleanupListsAfterEOL() {
 	for _, l := range cp.lists {
-		l.LastPair().Head().LastPair().AppendBang(sx.Cons(symSeparator, nil))
+		if lp := l.LastPair().Head().LastPair(); !symSeparator.IsEqual(lp.Head().Car()) {
+			lp.AppendBang(sx.Cons(symSeparator, nil))
+		}
 	}
 	if descrl := cp.descrl; descrl != nil {
 		if lastPair, pos := lastPairPos(descrl); pos > 2 && pos%2 != 0 {
@@ -376,7 +378,7 @@ func (cp *Parser) parseNestedList() (*sx.Pair, bool) {
 	}
 	lastItemPair := ln.LastPair()
 	lastItemPair.AppendBang(bn)
-	return cp.cleanupParsedNestedList(newLnCount)
+	return cp.cleanupParsedNestedList(newLnCount), true
 }
 
 func parseNestedListKinds(inp *input.Input) []*sx.Symbol {
@@ -424,12 +426,15 @@ func (cp *Parser) buildNestedList(kinds []*sx.Symbol) (ln *sx.Pair, newLnCount i
 	return ln, newLnCount
 }
 
-func (cp *Parser) cleanupParsedNestedList(newLnCount int) (*sx.Pair, bool) {
+func (cp *Parser) cleanupParsedNestedList(newLnCount int) *sx.Pair {
 	childPos := len(cp.lists) - 1
 	parentPos := childPos - 1
 	for range newLnCount {
 		if parentPos < 0 {
-			return cp.lists[0], true
+			if len(cp.lists) > 0 {
+				return cp.lists[0]
+			}
+			return nil
 		}
 		parentLn := cp.lists[parentPos]
 		childLn := cp.lists[childPos]
@@ -444,7 +449,7 @@ func (cp *Parser) cleanupParsedNestedList(newLnCount int) (*sx.Pair, bool) {
 		childPos--
 		parentPos--
 	}
-	return nil, true
+	return nil
 }
 
 // parseDefTerm parses a term of a definition list.
