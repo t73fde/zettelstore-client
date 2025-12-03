@@ -82,7 +82,7 @@ func withQueryPrefix(src []byte) bool {
 const runeModGrave = 'ˋ' // This is NOT '`'!
 
 const maxNestingLevel = 50
-const maxLinkLikeRest = 8
+const maxLinkLikeRest = 5
 
 // clearStacked removes all multi-line nodes from parser.
 func (cp *Parser) clearStacked() {
