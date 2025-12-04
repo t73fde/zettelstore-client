@@ -277,8 +277,16 @@ loop:
 }
 
 func (cp *Parser) parseEndnote() (*sx.Pair, bool) {
+	if lvl := cp.endnoteLevel; lvl >= testEndnoteLevel {
+		if lvl >= maxEndnoteLevel || !hasCountBytes(cp.inp.Src[cp.inp.Pos:], ']', lvl) {
+			return nil, false
+		}
+	}
 	cp.inp.Next()
+	cp.endnoteLevel++
 	ins, ok := cp.parseLinkLikeRest()
+	cp.endnoteLevel--
+
 	if !ok {
 		return nil, false
 	}
@@ -287,6 +295,19 @@ func (cp *Parser) parseEndnote() (*sx.Pair, bool) {
 		return nil, true
 	}
 	return zsx.MakeEndnote(attrs, ins), true
+}
+
+func hasCountBytes(s []byte, c byte, n int) bool {
+	cnt := 0
+	for _, b := range s {
+		if b == c {
+			cnt++
+		}
+		if cnt >= n {
+			return true
+		}
+	}
+	return false
 }
 
 func (cp *Parser) parseMark() (*sx.Pair, bool) {
@@ -317,28 +338,20 @@ func (cp *Parser) parseMark() (*sx.Pair, bool) {
 }
 
 func (cp *Parser) parseLinkLikeRest() (*sx.Pair, bool) {
-	if cp.linkLikeRestLevel > maxLinkLikeRest {
-		return nil, false
-	}
-	cp.linkLikeRestLevel++
-
 	var ins sx.ListBuilder
 	inp := cp.inp
 	inp.SkipSpace()
 	for inp.Ch != ']' {
 		in := cp.parseInline()
 		if in == nil {
-			cp.linkLikeRestLevel--
 			return nil, false
 		}
 		ins.Add(in)
 		if input.IsEOLEOS(inp.Ch) && isBreakSym(in.Car()) {
-			cp.linkLikeRestLevel--
 			return nil, false
 		}
 	}
 	inp.Next()
-	cp.linkLikeRestLevel--
 	return ins.List(), true
 }
 

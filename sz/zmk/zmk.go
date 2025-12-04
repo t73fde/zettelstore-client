@@ -29,12 +29,12 @@ import (
 
 // Parser allows to parse its plain text input into Zettelmarkup.
 type Parser struct {
-	inp               *input.Input // Input stream
-	lists             []*sx.Pair   // Stack of lists
-	lastRow           *sx.Pair     // Last row of table, or nil if not in table.
-	descrl            *sx.Pair     // Current description list
-	nestingLevel      int          // Count nesting of block and inline elements
-	linkLikeRestLevel int          // Count nesting of link-like rests
+	inp          *input.Input // Input stream
+	lists        []*sx.Pair   // Stack of lists
+	lastRow      *sx.Pair     // Last row of table, or nil if not in table.
+	descrl       *sx.Pair     // Current description list
+	nestingLevel int          // Count nesting of block and inline elements
+	endnoteLevel int          // Count nesting of link-like rests
 
 	scanReference    func(string) *sx.Pair // Builds a reference node from a given string reference
 	isSpaceReference func([]byte) bool     // Returns true, if src starts with a reference that allows white space
@@ -53,7 +53,7 @@ func (cp *Parser) Parse() *sx.Pair {
 	cp.lastRow = nil
 	cp.descrl = nil
 	cp.nestingLevel = 0
-	cp.linkLikeRestLevel = 0
+	cp.endnoteLevel = 0
 
 	var lastPara *sx.Pair
 	var blkBuild sx.ListBuilder
@@ -63,7 +63,7 @@ func (cp *Parser) Parse() *sx.Pair {
 	if cp.nestingLevel != 0 {
 		panic("Nesting level was not decremented")
 	}
-	if cp.linkLikeRestLevel != 0 {
+	if cp.endnoteLevel != 0 {
 		panic("Link nesting level was not decremented")
 	}
 
@@ -82,7 +82,10 @@ func withQueryPrefix(src []byte) bool {
 const runeModGrave = 'ˋ' // This is NOT '`'!
 
 const maxNestingLevel = 50
-const maxLinkLikeRest = 5
+const (
+	testEndnoteLevel = 3  // if more nested end notes found, check if there are enough end markers
+	maxEndnoteLevel  = 16 // more nested end notes are not allowed
+)
 
 // clearStacked removes all multi-line nodes from parser.
 func (cp *Parser) clearStacked() {
