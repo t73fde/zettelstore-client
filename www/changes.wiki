@@ -1,7 +1,17 @@
 <title>Change Log</title>
 
-<a name="0_22"></a>
-<h2>Changes for Version 0.22.0 (pending)</h2>
+<a name="1_1"></a>
+<h2>Changes for Version 1.1.0 (pending)</h2>
+
+<a name="1_0"></a>
+<h2>Changes for Version 1.0.0 (2025-12-05)</h2>
+  *  Add constants for query directives: FOLGE, SEQUEL, THREAD, DIRECTED
+  *  Remove zettel ID for sxn prelude
+  *  Make SZ AST more consistent
+  *  SHTML: detect compact lists
+  *  Add various functions, e.g. NormalizeSpacedText, sz.WriteReference,
+     sz.ReferenceString
+  *  Various bug fixes, mostly for ZMK parser
 
 <a name="0_21"></a>
 <h2>Changes for Version 0.21.0 (2025-04-17)</h2>
