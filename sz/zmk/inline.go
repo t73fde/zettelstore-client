@@ -278,7 +278,7 @@ loop:
 
 func (cp *Parser) parseEndnote() (*sx.Pair, bool) {
 	if lvl := cp.endnoteLevel; lvl >= testEndnoteLevel {
-		if lvl >= maxEndnoteLevel || !hasCountBytes(cp.inp.Src[cp.inp.Pos:], ']', lvl) {
+		if lvl >= maxEndnoteLevel || !hasCountBytes(cp.inp.Src[cp.inp.Pos:], '[', ']', lvl) {
 			return nil, false
 		}
 	}
@@ -297,10 +297,13 @@ func (cp *Parser) parseEndnote() (*sx.Pair, bool) {
 	return zsx.MakeEndnote(attrs, ins), true
 }
 
-func hasCountBytes(s []byte, c byte, n int) bool {
+func hasCountBytes(s []byte, c0, c1 byte, n int) bool {
 	cnt := 0
 	for _, b := range s {
-		if b == c {
+		switch b {
+		case c0:
+			cnt--
+		case c1:
 			cnt++
 		}
 		if cnt >= n {
