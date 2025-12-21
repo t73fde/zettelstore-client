@@ -4,6 +4,10 @@
 <h2>Changes for Version 1.1.0 (pending)</h2>
 
 <a name="1_0"></a>
+<h2>Changes for Version 1.0.2 (2025-12-21)</h2>
+  *  Fix some performance regressions when parsing ZMK text.
+  *  (v1.0.1 was just an internal version)
+
 <h2>Changes for Version 1.0.0 (2025-12-05)</h2>
   *  Add constants for query directives: FOLGE, SEQUEL, THREAD, DIRECTED
   *  Remove zettel ID for sxn prelude
