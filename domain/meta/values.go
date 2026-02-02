@@ -127,7 +127,8 @@ const (
 	ValueSyntaxGif         = "gif"           // Syntax: GIF image
 	ValueSyntaxHTML        = "html"          // Syntax: HTML
 	ValueSyntaxJPEG        = "jpeg"          // Syntax: JPEG image
-	ValueSyntaxJPG         = "jpg"           // Syntax: PEG image
+	ValueSyntaxJPG         = "jpg"           // Syntax: JPEG image
+	ValueSyntaxJS          = "js"            // Syntax: JavaScript
 	ValueSyntaxMarkdown    = "markdown"      // Syntax: Markdown / CommonMark
 	ValueSyntaxMD          = "md"            // Syntax: Markdown / CommonMark
 	ValueSyntaxNone        = "none"          // Syntax: no syntax / content, just metadata
