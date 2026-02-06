@@ -125,42 +125,42 @@ type Key = string
 //
 // [Supported Metadata Keys]: https://zettelstore.de/manual/h/00001006020000
 const (
-	KeyID           = "id"
-	KeyTitle        = "title"
-	KeyRole         = "role"
-	KeyTags         = "tags"
-	KeySyntax       = "syntax"
-	KeyAuthor       = "author"
-	KeyBack         = "back"
-	KeyBackward     = "backward"
-	KeyBoxNumber    = "box-number"
-	KeyCopyright    = "copyright"
-	KeyCreated      = "created"
-	KeyCredential   = "credential"
-	KeyDead         = "dead"
-	KeyExpire       = "expire"
-	KeyFolge        = "folge"
-	KeyFolgeRole    = "folge-role"
-	KeyForward      = "forward"
-	KeyLang         = "lang"
-	KeyLicense      = "license"
-	KeyModified     = "modified"
-	KeyPrecursor    = "precursor"
-	KeyPredecessor  = "predecessor"
-	KeyPrequel      = "prequel"
-	KeyPublished    = "published"
-	KeyQuery        = "query"
-	KeyReadOnly     = "read-only"
-	KeySequel       = "sequel"
-	KeySubordinates = "subordinates"
-	KeySuccessor    = "successor"
-	KeySummary      = "summary"
-	KeySuperior     = "superior"
-	KeyURL          = "url"
-	KeyUselessFiles = "useless-files"
-	KeyUserID       = "user-id"
-	KeyUserRole     = "user-role"
-	KeyVisibility   = "visibility"
+	KeyID            = "id"
+	KeyTitle         = "title"
+	KeyRole          = "role"
+	KeyTags          = "tags"
+	KeySyntax        = "syntax"
+	KeyAuthor        = "author"
+	KeyBack          = "back"
+	KeyBackward      = "backward"
+	KeyBoxNumber     = "box-number"
+	KeyCopyright     = "copyright"
+	KeyCreated       = "created"
+	KeyCredential    = "credential"
+	KeyDead          = "dead"
+	KeyExpire        = "expire"
+	KeyFolge         = "folge"
+	KeyFolgeRole     = "folge-role"
+	KeyForward       = "forward"
+	KeyLang          = "lang"
+	KeyLicense       = "license"
+	KeyModified      = "modified"
+	KeyPrecursor     = "precursor"
+	KeyPredecessor   = "predecessor"
+	KeyPrequel       = "prequel"
+	KeyPublished     = "published"
+	KeyQuery         = "query"
+	KeyReadOnly      = "read-only"
+	KeySequel        = "sequel"
+	KeySubordinate   = "subordinate"
+	KeySuccessor     = "successor"
+	KeySummary       = "summary"
+	KeySuperordinate = "superordinate"
+	KeyURL           = "url"
+	KeyUselessFiles  = "useless-files"
+	KeyUserID        = "user-id"
+	KeyUserRole      = "user-role"
+	KeyVisibility    = "visibility"
 )
 
 // Supported keys.
@@ -174,7 +174,7 @@ func init() {
 	// Properties that are inverse keys
 	registerKey(KeyFolge, TypeIDSet, usageProperty, "")
 	registerKey(KeySequel, TypeIDSet, usageProperty, "")
-	registerKey(KeySubordinates, TypeIDSet, usageProperty, "")
+	registerKey(KeySubordinate, TypeIDSet, usageProperty, "")
 	registerKey(KeySuccessor, TypeIDSet, usageProperty, "")
 
 	// Non-inverse keys
@@ -199,7 +199,7 @@ func init() {
 	registerKey(KeyQuery, TypeEmpty, usageUser, "")
 	registerKey(KeyReadOnly, TypeWord, usageUser, "")
 	registerKey(KeySummary, TypeString, usageUser, "")
-	registerKey(KeySuperior, TypeIDSet, usageUser, KeySubordinates)
+	registerKey(KeySuperordinate, TypeIDSet, usageUser, KeySubordinate)
 	registerKey(KeyURL, TypeURL, usageUser, "")
 	registerKey(KeyUselessFiles, TypeString, usageProperty, "")
 	registerKey(KeyUserID, TypeWord, usageUser, "")
