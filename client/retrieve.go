@@ -23,9 +23,9 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxreader"
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/sexp"
+	"t73f.de/r/zsc/webapi"
 	"t73f.de/r/zsx"
 )
 
@@ -73,8 +73,8 @@ func (c *Client) QueryZettel(ctx context.Context, query string) ([][]byte, error
 // its first two result values.
 //
 // [Query the list of all zettel]: https://zettelstore.de/manual/h/00001012051400
-func (c *Client) QueryZettelData(ctx context.Context, query string) (string, string, []api.ZidMetaRights, error) {
-	ub := c.NewURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingData).AppendQuery(query)
+func (c *Client) QueryZettelData(ctx context.Context, query string) (string, string, []webapi.ZidMetaRights, error) {
+	ub := c.NewURLBuilder('z').AppendKVQuery(webapi.QueryKeyEncoding, webapi.EncodingData).AppendQuery(query)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err != nil {
 		return "", "", nil, err
@@ -108,8 +108,8 @@ func (c *Client) QueryZettelData(ctx context.Context, query string) (string, str
 	return zsx.GoValue(qVals[1]), zsx.GoValue(hVals[1]), metaList, err
 }
 
-func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
-	var result []api.ZidMetaRights
+func parseMetaList(metaPair *sx.Pair) ([]webapi.ZidMetaRights, error) {
+	var result []webapi.ZidMetaRights
 	for node := metaPair; !sx.IsNil(node); {
 		elem, isPair := sx.GetPair(node)
 		if !isPair {
@@ -147,7 +147,7 @@ func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
 			return nil, err
 		}
 
-		result = append(result, api.ZidMetaRights{
+		result = append(result, webapi.ZidMetaRights{
 			ID:     zid,
 			Meta:   meta,
 			Rights: rights,
@@ -164,7 +164,7 @@ func parseMetaList(metaPair *sx.Pair) ([]api.ZidMetaRights, error) {
 // It must contain an aggregate action.
 //
 // [Query the list of all zettel]: https://zettelstore.de/manual/h/00001012051400
-func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregate, error) {
+func (c *Client) QueryAggregate(ctx context.Context, query string) (webapi.Aggregate, error) {
 	lines, err := c.QueryZettel(ctx, query)
 	if err != nil {
 		return nil, err
@@ -172,7 +172,7 @@ func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregat
 	if len(lines) == 0 {
 		return nil, nil
 	}
-	agg := make(api.Aggregate, len(lines))
+	agg := make(webapi.Aggregate, len(lines))
 	for _, line := range lines {
 		if fields := bytes.Fields(line); len(fields) > 1 {
 			key := string(fields[0])
@@ -190,14 +190,14 @@ func (c *Client) QueryAggregate(ctx context.Context, query string) (api.Aggregat
 //
 // This method only works if c.AllowRedirect(true) was called.
 func (c *Client) TagZettel(ctx context.Context, tag string) (id.Zid, error) {
-	return c.fetchTagOrRoleZettel(ctx, api.QueryKeyTag, tag)
+	return c.fetchTagOrRoleZettel(ctx, webapi.QueryKeyTag, tag)
 }
 
 // RoleZettel returns the identifier of the tag zettel for a given role.
 //
 // This method only works if c.AllowRedirect(true) was called.
 func (c *Client) RoleZettel(ctx context.Context, role string) (id.Zid, error) {
-	return c.fetchTagOrRoleZettel(ctx, api.QueryKeyRole, role)
+	return c.fetchTagOrRoleZettel(ctx, webapi.QueryKeyRole, role)
 }
 
 func (c *Client) fetchTagOrRoleZettel(ctx context.Context, key, val string) (id.Zid, error) {
@@ -234,8 +234,8 @@ func (c *Client) fetchTagOrRoleZettel(ctx context.Context, key, val string) (id.
 // [Layout of a zettel]: https://zettelstore.de/manual/h/00001006000000
 func (c *Client) GetZettel(ctx context.Context, zid id.Zid, part string) ([]byte, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
-	if part != "" && part != api.PartContent {
-		ub.AppendKVQuery(api.QueryKeyPart, part)
+	if part != "" && part != webapi.PartContent {
+		ub.AppendKVQuery(webapi.QueryKeyPart, part)
 	}
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err != nil {
@@ -254,15 +254,15 @@ func (c *Client) GetZettel(ctx context.Context, zid id.Zid, part string) ([]byte
 }
 
 // GetZettelData returns a zettel as a struct of its parts.
-func (c *Client) GetZettelData(ctx context.Context, zid id.Zid) (api.ZettelData, error) {
+func (c *Client) GetZettelData(ctx context.Context, zid id.Zid) (webapi.ZettelData, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
-	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
-	ub.AppendKVQuery(api.QueryKeyPart, api.PartZettel)
+	ub.AppendKVQuery(webapi.QueryKeyEncoding, webapi.EncodingData)
+	ub.AppendKVQuery(webapi.QueryKeyPart, webapi.PartZettel)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err == nil {
 		defer func() { _ = resp.Body.Close() }()
 		if resp.StatusCode != http.StatusOK {
-			return api.ZettelData{}, statusToError(resp)
+			return webapi.ZettelData{}, statusToError(resp)
 		}
 		rdr := sxreader.MakeReader(resp.Body)
 		obj, err2 := rdr.Read()
@@ -270,7 +270,7 @@ func (c *Client) GetZettelData(ctx context.Context, zid id.Zid) (api.ZettelData,
 			return sexp.ParseZettel(obj)
 		}
 	}
-	return api.ZettelData{}, err
+	return webapi.ZettelData{}, err
 }
 
 // GetParsedZettel return a parsed zettel in a specified text-based encoding.
@@ -281,7 +281,7 @@ func (c *Client) GetZettelData(ctx context.Context, zid id.Zid) (api.ZettelData,
 // detail in [Encodings available via the API].
 //
 // [Encodings available via the API]: https://zettelstore.de/manual/h/00001012920500
-func (c *Client) GetParsedZettel(ctx context.Context, zid id.Zid, enc api.EncodingEnum) ([]byte, error) {
+func (c *Client) GetParsedZettel(ctx context.Context, zid id.Zid, enc webapi.EncodingEnum) ([]byte, error) {
 	return c.getZettelString(ctx, zid, enc, true)
 }
 
@@ -294,16 +294,16 @@ func (c *Client) GetParsedZettel(ctx context.Context, zid id.Zid, enc api.Encodi
 // detail in [Encodings available via the API].
 //
 // [Encodings available via the API]: https://zettelstore.de/manual/h/00001012920500
-func (c *Client) GetEvaluatedZettel(ctx context.Context, zid id.Zid, enc api.EncodingEnum) ([]byte, error) {
+func (c *Client) GetEvaluatedZettel(ctx context.Context, zid id.Zid, enc webapi.EncodingEnum) ([]byte, error) {
 	return c.getZettelString(ctx, zid, enc, false)
 }
 
-func (c *Client) getZettelString(ctx context.Context, zid id.Zid, enc api.EncodingEnum, parseOnly bool) ([]byte, error) {
+func (c *Client) getZettelString(ctx context.Context, zid id.Zid, enc webapi.EncodingEnum, parseOnly bool) ([]byte, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
-	ub.AppendKVQuery(api.QueryKeyEncoding, enc.String())
-	ub.AppendKVQuery(api.QueryKeyPart, api.PartContent)
+	ub.AppendKVQuery(webapi.QueryKeyEncoding, enc.String())
+	ub.AppendKVQuery(webapi.QueryKeyPart, webapi.PartContent)
 	if parseOnly {
-		ub.AppendKVQuery(api.QueryKeyParseOnly, "")
+		ub.AppendKVQuery(webapi.QueryKeyParseOnly, "")
 	}
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err != nil {
@@ -344,12 +344,12 @@ func (c *Client) GetEvaluatedSz(ctx context.Context, zid id.Zid, part string) (s
 
 func (c *Client) getSz(ctx context.Context, zid id.Zid, part string, parseOnly bool) (sx.Object, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
-	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingSz)
+	ub.AppendKVQuery(webapi.QueryKeyEncoding, webapi.EncodingSz)
 	if part != "" {
-		ub.AppendKVQuery(api.QueryKeyPart, part)
+		ub.AppendKVQuery(webapi.QueryKeyPart, part)
 	}
 	if parseOnly {
-		ub.AppendKVQuery(api.QueryKeyParseOnly, "")
+		ub.AppendKVQuery(webapi.QueryKeyParseOnly, "")
 	}
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err != nil {
@@ -363,42 +363,42 @@ func (c *Client) getSz(ctx context.Context, zid id.Zid, part string, parseOnly b
 }
 
 // GetMetaData returns the metadata of a zettel.
-func (c *Client) GetMetaData(ctx context.Context, zid id.Zid) (api.MetaRights, error) {
+func (c *Client) GetMetaData(ctx context.Context, zid id.Zid) (webapi.MetaRights, error) {
 	ub := c.NewURLBuilder('z').SetZid(zid)
-	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
-	ub.AppendKVQuery(api.QueryKeyPart, api.PartMeta)
+	ub.AppendKVQuery(webapi.QueryKeyEncoding, webapi.EncodingData)
+	ub.AppendKVQuery(webapi.QueryKeyPart, webapi.PartMeta)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err != nil {
-		return api.MetaRights{}, err
+		return webapi.MetaRights{}, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 	rdr := sxreader.MakeReader(resp.Body)
 	obj, err := rdr.Read()
 	if resp.StatusCode != http.StatusOK {
-		return api.MetaRights{}, statusToError(resp)
+		return webapi.MetaRights{}, statusToError(resp)
 	}
 	if err != nil {
-		return api.MetaRights{}, err
+		return webapi.MetaRights{}, err
 	}
 	vals, err := sexp.ParseList(obj, "ypp")
 	if err != nil {
-		return api.MetaRights{}, err
+		return webapi.MetaRights{}, err
 	}
 	if errSym := sexp.CheckSymbol(vals[0], "list"); errSym != nil {
-		return api.MetaRights{}, err
+		return webapi.MetaRights{}, err
 	}
 
 	meta, err := sexp.ParseMeta(vals[1].(*sx.Pair))
 	if err != nil {
-		return api.MetaRights{}, err
+		return webapi.MetaRights{}, err
 	}
 
 	rights, err := sexp.ParseRights(vals[2])
 	if err != nil {
-		return api.MetaRights{}, err
+		return webapi.MetaRights{}, err
 	}
 
-	return api.MetaRights{
+	return webapi.MetaRights{
 		Meta:   meta,
 		Rights: rights,
 	}, nil
@@ -410,9 +410,9 @@ func (c *Client) GetMetaData(ctx context.Context, zid id.Zid) (api.MetaRights, e
 func (c *Client) GetReferences(ctx context.Context, zid id.Zid, part string) (urls []string, err error) {
 	ub := c.NewURLBuilder('r').SetZid(zid)
 	if part != "" {
-		ub.AppendKVQuery(api.QueryKeyPart, part)
+		ub.AppendKVQuery(webapi.QueryKeyPart, part)
 	}
-	ub.AppendKVQuery(api.QueryKeyEncoding, api.EncodingData) // data encoding is more robust.
+	ub.AppendKVQuery(webapi.QueryKeyEncoding, webapi.EncodingData) // data encoding is more robust.
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err != nil {
 		return nil, err
@@ -506,7 +506,7 @@ func (c *Client) GetApplicationZid(ctx context.Context, appname string) (id.Zid,
 }
 
 // Get executes a GET request to the given URL and returns the read data.
-func (c *Client) Get(ctx context.Context, ub *api.URLBuilder) ([]byte, error) {
+func (c *Client) Get(ctx context.Context, ub *webapi.URLBuilder) ([]byte, error) {
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err != nil {
 		return nil, err

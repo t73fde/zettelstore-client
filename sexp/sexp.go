@@ -22,11 +22,11 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxbuiltins"
-	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/webapi"
 )
 
 // EncodeZettel transforms zettel data into a sx object.
-func EncodeZettel(zettel api.ZettelData) sx.Object {
+func EncodeZettel(zettel webapi.ZettelData) sx.Object {
 	return sx.MakeList(
 		sx.MakeSymbol("zettel"),
 		meta2sz(zettel.Meta),
@@ -37,42 +37,42 @@ func EncodeZettel(zettel api.ZettelData) sx.Object {
 }
 
 // ParseZettel parses an object to contain all needed data for a zettel.
-func ParseZettel(obj sx.Object) (api.ZettelData, error) {
+func ParseZettel(obj sx.Object) (webapi.ZettelData, error) {
 	vals, err := ParseList(obj, "ypppp")
 	if err != nil {
-		return api.ZettelData{}, err
+		return webapi.ZettelData{}, err
 	}
 	if errSym := CheckSymbol(vals[0], "zettel"); errSym != nil {
-		return api.ZettelData{}, errSym
+		return webapi.ZettelData{}, errSym
 	}
 
 	meta, err := ParseMeta(vals[1].(*sx.Pair))
 	if err != nil {
-		return api.ZettelData{}, err
+		return webapi.ZettelData{}, err
 	}
 
 	rights, err := ParseRights(vals[2])
 	if err != nil {
-		return api.ZettelData{}, err
+		return webapi.ZettelData{}, err
 	}
 
 	encVals, err := ParseList(vals[3], "ys")
 	if err != nil {
-		return api.ZettelData{}, err
+		return webapi.ZettelData{}, err
 	}
 	if errSym := CheckSymbol(encVals[0], "encoding"); errSym != nil {
-		return api.ZettelData{}, errSym
+		return webapi.ZettelData{}, errSym
 	}
 
 	contentVals, err := ParseList(vals[4], "ys")
 	if err != nil {
-		return api.ZettelData{}, err
+		return webapi.ZettelData{}, err
 	}
 	if errSym := CheckSymbol(contentVals[0], "content"); errSym != nil {
-		return api.ZettelData{}, errSym
+		return webapi.ZettelData{}, errSym
 	}
 
-	return api.ZettelData{
+	return webapi.ZettelData{
 		Meta:     meta,
 		Rights:   rights,
 		Encoding: encVals[1].(sx.String).GetValue(),
@@ -81,7 +81,7 @@ func ParseZettel(obj sx.Object) (api.ZettelData, error) {
 }
 
 // EncodeMetaRights translates metadata/rights into a sx object.
-func EncodeMetaRights(mr api.MetaRights) *sx.Pair {
+func EncodeMetaRights(mr webapi.MetaRights) *sx.Pair {
 	return sx.MakeList(
 		sx.MakeSymbol(sxbuiltins.List.Name),
 		meta2sz(mr.Meta),
@@ -89,7 +89,7 @@ func EncodeMetaRights(mr api.MetaRights) *sx.Pair {
 	)
 }
 
-func meta2sz(m api.ZettelMeta) sx.Object {
+func meta2sz(m webapi.ZettelMeta) sx.Object {
 	var result sx.ListBuilder
 	result.Add(sx.MakeSymbol("meta"))
 	keys := make([]string, 0, len(m))
@@ -105,11 +105,11 @@ func meta2sz(m api.ZettelMeta) sx.Object {
 }
 
 // ParseMeta translates the given list to metadata.
-func ParseMeta(pair *sx.Pair) (api.ZettelMeta, error) {
+func ParseMeta(pair *sx.Pair) (webapi.ZettelMeta, error) {
 	if err := CheckSymbol(pair.Car(), "meta"); err != nil {
 		return nil, err
 	}
-	res := api.ZettelMeta{}
+	res := webapi.ZettelMeta{}
 	for obj := range pair.Tail().Values() {
 		mVals, err := ParseList(obj, "ys")
 		if err != nil {
@@ -121,19 +121,19 @@ func ParseMeta(pair *sx.Pair) (api.ZettelMeta, error) {
 }
 
 // ParseRights returns the rights values of the given object.
-func ParseRights(obj sx.Object) (api.ZettelRights, error) {
+func ParseRights(obj sx.Object) (webapi.ZettelRights, error) {
 	rVals, err := ParseList(obj, "yi")
 	if err != nil {
-		return api.ZettelMaxRight, err
+		return webapi.ZettelMaxRight, err
 	}
 	if errSym := CheckSymbol(rVals[0], "rights"); errSym != nil {
-		return api.ZettelMaxRight, errSym
+		return webapi.ZettelMaxRight, errSym
 	}
 	i64 := int64(rVals[1].(sx.Int64))
-	if i64 < 0 && i64 >= int64(api.ZettelMaxRight) {
-		return api.ZettelMaxRight, fmt.Errorf("invalid zettel right value: %v", i64)
+	if i64 < 0 && i64 >= int64(webapi.ZettelMaxRight) {
+		return webapi.ZettelMaxRight, fmt.Errorf("invalid zettel right value: %v", i64)
 	}
-	return api.ZettelRights(i64), nil
+	return webapi.ZettelRights(i64), nil
 }
 
 // ParseList parses the given object as a proper list, based on a type specification.

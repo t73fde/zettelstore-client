@@ -11,8 +11,8 @@
 // SPDX-FileCopyrightText: 2021-present Detlef Stern
 //-----------------------------------------------------------------------------
 
-// Package api contains common definitions used for client and server.
-package api
+// Package webapi contains common definitions used for client and server.
+package webapi
 
 import "t73f.de/r/zsc/domain/id"
 

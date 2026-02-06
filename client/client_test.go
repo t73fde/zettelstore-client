@@ -20,9 +20,9 @@ import (
 	"net/url"
 	"testing"
 
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/client"
 	"t73f.de/r/zsc/domain/id"
+	"t73f.de/r/zsc/webapi"
 )
 
 func TestZettelList(t *testing.T) {
@@ -34,7 +34,7 @@ func TestZettelList(t *testing.T) {
 
 func TestGetProtectedZettel(t *testing.T) {
 	c := getClient()
-	if _, err := c.GetZettel(context.Background(), id.ZidStartupConfiguration, api.PartZettel); err != nil {
+	if _, err := c.GetZettel(context.Background(), id.ZidStartupConfiguration, webapi.PartZettel); err != nil {
 		if cErr, ok := err.(*client.Error); !ok || cErr.StatusCode != http.StatusForbidden {
 			t.Error(err)
 		}
@@ -43,7 +43,7 @@ func TestGetProtectedZettel(t *testing.T) {
 
 func TestGetSzZettel(t *testing.T) {
 	c := getClient()
-	value, err := c.GetEvaluatedSz(context.Background(), id.ZidDefaultHome, api.PartContent)
+	value, err := c.GetEvaluatedSz(context.Background(), id.ZidDefaultHome, webapi.PartContent)
 	if err != nil {
 		t.Error(err)
 		return

@@ -19,8 +19,8 @@ import (
 	"strings"
 
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
+	"t73f.de/r/zsc/webapi"
 	"t73f.de/r/zsx"
 )
 
@@ -47,8 +47,8 @@ func ScanReference(s string) *sx.Pair {
 			return zsx.MakeReference(zsx.SymRefStateInvalid, s)
 		}
 	}
-	if strings.HasPrefix(s, api.QueryPrefix) {
-		return zsx.MakeReference(SymRefStateQuery, s[len(api.QueryPrefix):])
+	if strings.HasPrefix(s, webapi.QueryPrefix) {
+		return zsx.MakeReference(SymRefStateQuery, s[len(webapi.QueryPrefix):])
 	}
 	if strings.HasPrefix(s, "//") {
 		if u, err := url.Parse(s[1:]); err == nil {
@@ -86,7 +86,7 @@ func WriteReference(w io.Writer, ref *sx.Pair) (err error) {
 	if SymRefStateBased.IsEqualSymbol(refSym) {
 		_, err = io.WriteString(w, "/")
 	} else if SymRefStateQuery.IsEqualSymbol(refSym) {
-		_, err = io.WriteString(w, api.QueryPrefix)
+		_, err = io.WriteString(w, webapi.QueryPrefix)
 	}
 	if err == nil {
 		_, err = io.WriteString(w, refVal)

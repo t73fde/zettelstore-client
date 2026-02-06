@@ -22,9 +22,9 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sxwebs/sxhtml"
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsc/webapi"
 	"t73f.de/r/zsx"
 )
 
@@ -595,7 +595,7 @@ func (ev *Evaluator) bindInlines() {
 			return ev.evalLink(a.Set("href", refValue).Add("rel", "external"), refValue, args[2:], env)
 
 		case sz.SymRefStateQuery:
-			query := "?" + api.QueryKeyQuery + "=" + url.QueryEscape(refValue)
+			query := "?" + webapi.QueryKeyQuery + "=" + url.QueryEscape(refValue)
 			return ev.evalLink(a.Set("href", query), refValue, args[2:], env)
 
 		case sz.SymRefStateBroken:

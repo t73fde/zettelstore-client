@@ -28,9 +28,9 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxreader"
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/sexp"
+	"t73f.de/r/zsc/webapi"
 )
 
 // Client contains all data to execute requests.
@@ -136,10 +136,10 @@ func statusToError(resp *http.Response) error {
 // See [Endpoints used by the API] for details.
 //
 // [Endpoints used by the API]: https://zettelstore.de/manual/h/00001012920000
-func (c *Client) NewURLBuilder(key byte) *api.URLBuilder {
-	return api.NewURLBuilder(c.base, key)
+func (c *Client) NewURLBuilder(key byte) *webapi.URLBuilder {
+	return webapi.NewURLBuilder(c.base, key)
 }
-func (*Client) newRequest(ctx context.Context, method string, ub *api.URLBuilder, body io.Reader) (*http.Request, error) {
+func (*Client) newRequest(ctx context.Context, method string, ub *webapi.URLBuilder, body io.Reader) (*http.Request, error) {
 	return http.NewRequestWithContext(ctx, method, ub.String(), body)
 }
 
@@ -160,7 +160,7 @@ func (c *Client) executeRequest(req *http.Request) (*http.Response, error) {
 func (c *Client) buildAndExecuteRequest(
 	ctx context.Context,
 	method string,
-	ub *api.URLBuilder,
+	ub *webapi.URLBuilder,
 	body io.Reader,
 ) (*http.Response, error) {
 	req, err := c.newRequest(ctx, method, ub, body)
@@ -272,12 +272,12 @@ func (c *Client) CreateZettel(ctx context.Context, data []byte) (id.Zid, error) 
 // CreateZettelData creates a new zettel and returns its URL.
 //
 // data contains the zettel date, encoded as explicit struct.
-func (c *Client) CreateZettelData(ctx context.Context, data api.ZettelData) (id.Zid, error) {
+func (c *Client) CreateZettelData(ctx context.Context, data webapi.ZettelData) (id.Zid, error) {
 	var buf bytes.Buffer
 	if _, err := sx.Print(&buf, sexp.EncodeZettel(data)); err != nil {
 		return id.Invalid, err
 	}
-	ub := c.NewURLBuilder('z').AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
+	ub := c.NewURLBuilder('z').AppendKVQuery(webapi.QueryKeyEncoding, webapi.EncodingData)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, &buf)
 	if err != nil {
 		return id.Invalid, err
@@ -329,12 +329,12 @@ func (c *Client) UpdateZettel(ctx context.Context, zid id.Zid, data []byte) erro
 }
 
 // UpdateZettelData updates an existing zettel, specified by its zettel identifier.
-func (c *Client) UpdateZettelData(ctx context.Context, zid id.Zid, data api.ZettelData) error {
+func (c *Client) UpdateZettelData(ctx context.Context, zid id.Zid, data webapi.ZettelData) error {
 	var buf bytes.Buffer
 	if _, err := sx.Print(&buf, sexp.EncodeZettel(data)); err != nil {
 		return err
 	}
-	ub := c.NewURLBuilder('z').SetZid(zid).AppendKVQuery(api.QueryKeyEncoding, api.EncodingData)
+	ub := c.NewURLBuilder('z').SetZid(zid).AppendKVQuery(webapi.QueryKeyEncoding, webapi.EncodingData)
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPut, ub, &buf)
 	if err != nil {
 		return err
@@ -365,8 +365,8 @@ func (c *Client) DeleteZettel(ctx context.Context, zid id.Zid) error {
 // See [API commands] for a list of valid commands.
 //
 // [API commands]: https://zettelstore.de/manual/h/00001012080100
-func (c *Client) ExecuteCommand(ctx context.Context, command api.Command) error {
-	ub := c.NewURLBuilder('x').AppendKVQuery(api.QueryKeyCommand, string(command))
+func (c *Client) ExecuteCommand(ctx context.Context, command webapi.Command) error {
+	ub := c.NewURLBuilder('x').AppendKVQuery(webapi.QueryKeyCommand, string(command))
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodPost, ub, nil)
 	if err != nil {
 		return err

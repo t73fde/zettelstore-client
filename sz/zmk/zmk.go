@@ -21,8 +21,8 @@ import (
 	"unicode"
 
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsc/webapi"
 	"t73f.de/r/zsx"
 	"t73f.de/r/zsx/input"
 )
@@ -72,7 +72,7 @@ func (cp *Parser) Parse() *sx.Pair {
 }
 
 func withQueryPrefix(src []byte) bool {
-	return len(src) > len(api.QueryPrefix) && string(src[:len(api.QueryPrefix)]) == api.QueryPrefix
+	return len(src) > len(webapi.QueryPrefix) && string(src[:len(webapi.QueryPrefix)]) == webapi.QueryPrefix
 }
 
 // runeModGrave is Unicode code point U+02CB (715) called "MODIFIER LETTER

@@ -11,7 +11,7 @@
 // SPDX-FileCopyrightText: 2020-present Detlef Stern
 //-----------------------------------------------------------------------------
 
-package api
+package webapi
 
 import (
 	"t73f.de/r/webs/urlbuilder"
