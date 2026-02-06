@@ -84,7 +84,8 @@ const (
 	ZidUserCSS = Zid(25001)
 
 	// WebUI JS zettel are in the range 30000..39999
-	ZidBaseJS = Zid(30001)
+	ZidBaseJS    = Zid(30001)
+	ZidCopyRefJS = Zid(30101)
 
 	// WebUI image zettel are in the range 40000..49999
 	ZidEmoji = Zid(40001)

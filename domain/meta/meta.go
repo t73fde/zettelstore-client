@@ -146,12 +146,14 @@ const (
 	KeyLicense      = "license"
 	KeyModified     = "modified"
 	KeyPrecursor    = "precursor"
+	KeyPredecessor  = "predecessor"
 	KeyPrequel      = "prequel"
 	KeyPublished    = "published"
 	KeyQuery        = "query"
 	KeyReadOnly     = "read-only"
 	KeySequel       = "sequel"
 	KeySubordinates = "subordinates"
+	KeySuccessor    = "successor"
 	KeySummary      = "summary"
 	KeySuperior     = "superior"
 	KeyURL          = "url"
@@ -173,6 +175,7 @@ func init() {
 	registerKey(KeyFolge, TypeIDSet, usageProperty, "")
 	registerKey(KeySequel, TypeIDSet, usageProperty, "")
 	registerKey(KeySubordinates, TypeIDSet, usageProperty, "")
+	registerKey(KeySuccessor, TypeIDSet, usageProperty, "")
 
 	// Non-inverse keys
 	registerKey(KeyAuthor, TypeString, usageUser, "")
@@ -190,6 +193,7 @@ func init() {
 	registerKey(KeyLicense, TypeEmpty, usageUser, "")
 	registerKey(KeyModified, TypeTimestamp, usageComputed, "")
 	registerKey(KeyPrecursor, TypeIDSet, usageUser, KeyFolge)
+	registerKey(KeyPredecessor, TypeIDSet, usageUser, KeySuccessor)
 	registerKey(KeyPrequel, TypeIDSet, usageUser, KeySequel)
 	registerKey(KeyPublished, TypeTimestamp, usageProperty, "")
 	registerKey(KeyQuery, TypeEmpty, usageUser, "")
