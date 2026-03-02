@@ -716,6 +716,10 @@ func TestList(t *testing.T) {
 
 		// Empty continuation
 		{"* abc\n  ", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))))"},
+
+		// a thematic break and a hard break separate two lists
+		{"* abc\n* def\n---\n* ghi", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\"))) (BLOCK (PARA (TEXT \"def\")))) (THEMATIC ()) (UNORDERED () (BLOCK (PARA (TEXT \"ghi\")))))"},
+		{"* abc\n* def\n%%\n* ghi", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\"))) (BLOCK (PARA (TEXT \"def\")))) (UNORDERED () (BLOCK (PARA (TEXT \"ghi\")))))"},
 	})
 }
 
