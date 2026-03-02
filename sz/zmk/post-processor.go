@@ -18,6 +18,7 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/zsx"
+	"t73f.de/r/zsx/input"
 )
 
 var symInVerse = sx.MakeSymbol("in-verse")
@@ -456,18 +457,12 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 			continue
 		}
 
-		if zsx.SymText.IsEqual(lastSym) && zsx.SymSoft.IsEqual(elemSym) {
-			// Merge (TEXT "... ") (SOFT) to (TEXT "...") (HARD)
-			lastTail := last.Tail()
-			if lastText := lastTail.Car().(sx.String).GetValue(); strings.HasSuffix(lastText, " ") {
-				newText := removeTrailingSpaces(lastText)
-				if newText == "" {
-					vector[len(vector)-1] = sx.Cons(zsx.SymHard, sx.Nil())
-					continue
-				}
-				lastTail.SetCar(sx.MakeString(newText))
-				elemSym = zsx.SymHard
-				elem.SetCar(elemSym)
+		if zsx.SymLiteralComment.IsEqual(lastSym) && zsx.SymSoft.IsEqual(elemSym) {
+			// Merge (LITERAL-COMMENT attr text) (SOFT) to (HARD) if text is only spaces
+			_, _, comment := zsx.GetLiteral(last)
+			if input.IsOnlySpace(comment) {
+				vector[len(vector)-1] = sx.Cons(zsx.SymHard, sx.Nil())
+				continue
 			}
 		}
 

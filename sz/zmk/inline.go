@@ -61,7 +61,7 @@ func (cp *Parser) parseInline() *sx.Pair {
 		case '$':
 			in, success = parseLiteralMath(inp)
 		case '\\':
-			return parseBackslash(inp)
+			return zsx.MakeText(scanBackslash(inp))
 		case '-':
 			in, success = parseNdash(inp)
 		case '&':
@@ -75,13 +75,12 @@ func (cp *Parser) parseInline() *sx.Pair {
 	return parseText(inp)
 }
 
-func parseText(inp *input.Input) *sx.Pair { return zsx.MakeText(parseString(inp)) }
+func parseText(inp *input.Input) *sx.Pair { return zsx.MakeText(scanString(inp)) }
 
-func parseString(inp *input.Input) string {
+func scanString(inp *input.Input) string {
 	pos := inp.Pos
 	if inp.Ch == '\\' {
-		inp.Next()
-		return parseBackslashRest(inp)
+		return scanBackslash(inp)
 	}
 	for {
 		switch inp.Next() {
@@ -93,17 +92,8 @@ func parseString(inp *input.Input) string {
 	}
 }
 
-func parseBackslash(inp *input.Input) *sx.Pair {
-	switch inp.Next() {
-	case '\n', '\r':
-		inp.EatEOL()
-		return zsx.MakeHard()
-	default:
-		return zsx.MakeText(parseBackslashRest(inp))
-	}
-}
-
-func parseBackslashRest(inp *input.Input) string {
+func scanBackslash(inp *input.Input) string {
+	inp.Next()
 	if input.IsEOLEOS(inp.Ch) {
 		return "\\"
 	}
@@ -454,7 +444,7 @@ func parseLiteral(inp *input.Input) (*sx.Pair, bool) {
 			sb.WriteRune(fch)
 			inp.Next()
 		} else {
-			s := parseString(inp)
+			s := scanString(inp)
 			sb.WriteString(s)
 		}
 	}

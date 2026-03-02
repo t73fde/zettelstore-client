@@ -111,12 +111,12 @@ func TestText(t *testing.T) {
 		{"abcd ", "(BLOCK (PARA (TEXT \"abcd\")))"},
 		{" abcd", "(BLOCK (PARA (TEXT \"abcd\")))"},
 		{"\\", "(BLOCK (PARA (TEXT \"\\\\\")))"},
-		{"\\\n", "(BLOCK)"},
-		{"\\\ndef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
-		{"\\\r", "(BLOCK)"},
-		{"\\\rdef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
-		{"\\\r\n", "(BLOCK)"},
-		{"\\\r\ndef", "(BLOCK (PARA (HARD) (TEXT \"def\")))"},
+		{"\\\n", "(BLOCK (PARA (TEXT \"\\\\\")))"},
+		{"\\\ndef", "(BLOCK (PARA (TEXT \"\\\\\") (SOFT) (TEXT \"def\")))"},
+		{"\\\r", "(BLOCK (PARA (TEXT \"\\\\\")))"},
+		{"\\\rdef", "(BLOCK (PARA (TEXT \"\\\\\") (SOFT) (TEXT \"def\")))"},
+		{"\\\r\n", "(BLOCK (PARA (TEXT \"\\\\\")))"},
+		{"\\\r\ndef", "(BLOCK (PARA (TEXT \"\\\\\") (SOFT) (TEXT \"def\")))"},
 		{"\\a", "(BLOCK (PARA (TEXT \"a\")))"},
 		{"\\aa", "(BLOCK (PARA (TEXT \"aa\")))"},
 		{"a\\a", "(BLOCK (PARA (TEXT \"aa\")))"},
@@ -148,10 +148,14 @@ func TestSoftBreak(t *testing.T) {
 func TestHardBreak(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, testCases{
-		{"x  \ny", "(BLOCK (PARA (TEXT \"x\") (HARD) (TEXT \"y\")))"},
-		{"z  \n", "(BLOCK (PARA (TEXT \"z\")))"},
-		{"   \n ", "(BLOCK)"},
-		{"   \n", "(BLOCK)"},
+		{"x%%\ny", "(BLOCK (PARA (TEXT \"x\") (HARD) (TEXT \"y\")))"},
+		{"%%\ny", "(BLOCK (PARA (HARD) (TEXT \"y\")))"},
+		{"x%\ny", "(BLOCK (PARA (TEXT \"x%\") (SOFT) (TEXT \"y\")))"},
+		{"x%% \ny", "(BLOCK (PARA (TEXT \"x\") (HARD) (TEXT \"y\")))"},
+		{"x%%%\ny", "(BLOCK (PARA (TEXT \"x\") (HARD) (TEXT \"y\")))"},
+		{"x%%%    \ny", "(BLOCK (PARA (TEXT \"x\") (HARD) (TEXT \"y\")))"},
+		{"x%\\%\ny", "(BLOCK (PARA (TEXT \"x%%\") (SOFT) (TEXT \"y\")))"},
+		{"%%\n", "(BLOCK)"},
 	})
 }
 
@@ -318,7 +322,9 @@ func TestComment(t *testing.T) {
 		{"%", "(BLOCK (PARA (TEXT \"%\")))"},
 		{"%%", "(BLOCK (PARA (LITERAL-COMMENT () \"\")))"},
 		{"%\n", "(BLOCK (PARA (TEXT \"%\")))"},
-		{"%%\n", "(BLOCK (PARA (LITERAL-COMMENT () \"\")))"},
+		{"%%\n", "(BLOCK)"},
+		{"%%\r", "(BLOCK)"},
+		{"%%\r\n", "(BLOCK)"},
 		{"%%a", "(BLOCK (PARA (LITERAL-COMMENT () \"a\")))"},
 		{"%%%a", "(BLOCK (PARA (LITERAL-COMMENT () \"a\")))"},
 		{"%% a", "(BLOCK (PARA (LITERAL-COMMENT () \"a\")))"},
