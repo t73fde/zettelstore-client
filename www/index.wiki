@@ -3,12 +3,12 @@
 This repository contains Go client software to
 access [https://zettelstore.de|Zettelstore] via its API.
 
-<h3>Latest Release: 1.0.2 (2025-12-21)</h3>
-  *  [./changes.wiki#1_0|Change summary]
-  *  [/timeline?p=v1.0.2&bt=v0.21.0&y=ci|Check-ins for version 1.0],
-     [/vdiff?to=v1.0.2&from=v0.21.0|content diff]
-  *  [/timeline?df=v1.0.2&y=ci|Check-ins derived from the 1.0 release],
-     [/vdiff?from=v1.0.2&to=trunk|content diff]
+<h3>Latest Release: 2.0.0 (2026-03-06)</h3>
+  *  [./changes.wiki#2_0|Change summary]
+  *  [/timeline?p=v2.0.0&bt=v1.0.0.0&y=ci|Check-ins for version 2.0],
+     [/vdiff?to=v2.0.0&from=v1.0.0|content diff]
+  *  [/timeline?df=v2.0.0&y=ci|Check-ins derived from the 2.0 release],
+     [/vdiff?from=v2.0.0&to=trunk|content diff]
   *  [/timeline?t=release|Timeline of all past releases]
 
 <h2>Usage instructions</h2>
@@ -27,8 +27,10 @@ this library:
 
 <code>GOVCS=t73f.de:fossil go get t73f.de/r/zsc@HASH</code>
 
-Here, <code>HASH</code> represents the commit hash of the version you want to
-use.
+Here, <code>HASH</code> represents the commit hash value of the version you
+want to use. For example, version 2.0.0 has the commit hash value
+<code>d191307f2b</code>. Use above timeline of past releases to obtain the
+correct hash value.
 
 Go currently does not seem to support software versioning for projects managed
 by Fossil. This is why the hash value is required. However, this method works

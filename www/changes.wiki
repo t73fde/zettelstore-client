@@ -1,7 +1,13 @@
 <title>Change Log</title>
 
-<a name="1_1"></a>
-<h2>Changes for Version 1.1.0 (pending)</h2>
+<a name="2_1"></a>
+<h2>Changes for Version 2.1.0 (pending)</h2>
+
+<a name="2_0"></a>
+<h2>Changes for Version 2.0.0 (2026-03-06)</h2>
+  *  Change syntax of hard line breaks to "%%\n" (zmk, breaking)
+  *  Add constants, e.g. for predefined zettel "ZidBaseJS", syntax "JavaScript"
+  *  Some smaller fixes, refactorings, constants
 
 <a name="1_0"></a>
 <h2>Changes for Version 1.0.2 (2025-12-21)</h2>
