@@ -785,6 +785,7 @@ func TestTable(t *testing.T) {
 		{"||", "(BLOCK (TABLE () () ((CELL ()))))"},
 		{"| |", "(BLOCK (TABLE () () ((CELL ()))))"},
 		{"|a", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")))))"},
+		{"| a", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")))))"},
 		{"|a|", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")))))"},
 		{"|a| ", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")) (CELL ()))))"},
 		{"|a|b", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")) (CELL () (TEXT \"b\")))))"},
@@ -792,11 +793,20 @@ func TestTable(t *testing.T) {
 		{"|a|b\n|c|d", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")) (CELL () (TEXT \"b\"))) ((CELL () (TEXT \"c\")) (CELL () (TEXT \"d\")))))"},
 		{"|%", "(BLOCK)"},
 		{"|=a", "(BLOCK (TABLE () ((CELL () (TEXT \"a\")))))"},
+		{"|= a", "(BLOCK (TABLE () ((CELL () (TEXT \"a\")))))"},
+		{"|=< a", "(BLOCK (TABLE () ((CELL ((align . \"left\")) (TEXT \"a\")))))"},
+		{"|= <a", "(BLOCK (TABLE () ((CELL () (TEXT \"<a\")))))"},
 		{"|=a\n|b", "(BLOCK (TABLE () ((CELL () (TEXT \"a\"))) ((CELL () (TEXT \"b\")))))"},
 		{"|a|b\n|%---\n|c|d", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")) (CELL () (TEXT \"b\"))) ((CELL () (TEXT \"c\")) (CELL () (TEXT \"d\")))))"},
 		{"|a|b\n|c", "(BLOCK (TABLE () () ((CELL () (TEXT \"a\")) (CELL () (TEXT \"b\"))) ((CELL () (TEXT \"c\")) (CELL ()))))"},
 		{"|=<a>\n|b|c", "(BLOCK (TABLE () ((CELL ((align . \"left\")) (TEXT \"a\")) (CELL ())) ((CELL ((align . \"right\")) (TEXT \"b\")) (CELL () (TEXT \"c\")))))"},
 		{"|=<a|=b>\n||", "(BLOCK (TABLE () ((CELL ((align . \"left\")) (TEXT \"a\")) (CELL ((align . \"right\")) (TEXT \"b\"))) ((CELL ()) (CELL ((align . \"right\"))))))"},
+		{"|=a\n|:b", "(BLOCK (TABLE () ((CELL () (TEXT \"a\"))) ((CELL ((align . \"center\")) (TEXT \"b\")))))"},
+		{"|=a\n|: b", "(BLOCK (TABLE () ((CELL () (TEXT \"a\"))) ((CELL ((align . \"center\")) (TEXT \"b\")))))"},
+		{"|=a\n|:b|:c", "(BLOCK (TABLE () ((CELL () (TEXT \"a\")) (CELL ())) ((CELL ((align . \"center\")) (TEXT \"b\")) (CELL ((align . \"center\")) (TEXT \"c\")))))"},
+		{"|=a\n|: b|: c", "(BLOCK (TABLE () ((CELL () (TEXT \"a\")) (CELL ())) ((CELL ((align . \"center\")) (TEXT \"b\")) (CELL ((align . \"center\")) (TEXT \"c\")))))"},
+		{"|=a <\n|:b", "(BLOCK (TABLE () ((CELL ((align . \"left\")) (TEXT \"a\"))) ((CELL ((align . \"center\")) (TEXT \"b\")))))"},
+		{"|=a <\n|: b", "(BLOCK (TABLE () ((CELL ((align . \"left\")) (TEXT \"a\"))) ((CELL ((align . \"center\")) (TEXT \"b\")))))"},
 	})
 }
 

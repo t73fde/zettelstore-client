@@ -282,6 +282,8 @@ func (pp *postProcessor) visitCells(cells *sx.Pair, alst *sx.Pair) (*sx.Pair, in
 	return pCells.List(), width
 }
 
+const trimCutSet = "\t "
+
 func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, align []byte) {
 	align = make([]byte, width)
 
@@ -301,11 +303,18 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 		// elem is first cell inline element
 		elem := cellInlines.Head()
 		if zsx.SymText.IsEqual(elem.Car()) {
-			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
-				str := s.GetValue()
-				if str[0] == '=' {
+			if s, isString := sx.GetString(elem.Tail().Car()); isString {
+				if str := s.GetValue(); str != "" && str[0] == '=' {
 					foundHeader = true
-					elem.SetCdr(sx.Cons(sx.MakeString(str[1:]), nil))
+					str = str[1:]
+					if str != "" && strings.ContainsAny(str[0:1], trimCutSet) {
+						if cutStr := strings.TrimLeft(str, trimCutSet); cutStr != "" {
+							if _, isValid := getCellAlignment(cutStr[0]); !isValid {
+								str = cutStr
+							}
+						}
+					}
+					elem.SetCdr(sx.Cons(sx.MakeString(str), nil))
 				}
 			}
 		}
@@ -321,14 +330,15 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 
 		elem = cellInlines.Head()
 		if zsx.SymText.IsEqual(elem.Car()) {
-			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
-				str := s.GetValue()
-				lastByte := str[len(str)-1]
-				if cellAlign, isValid := getCellAlignment(lastByte); isValid {
-					elem.SetCdr(sx.Cons(sx.MakeString(str[0:len(str)-1]), nil))
-					rest.SetCar(makeCellAttrs(cellAlign))
+			if s, isString := sx.GetString(elem.Tail().Car()); isString {
+				if str := s.GetValue(); str != "" {
+					lastByte := str[len(str)-1]
+					if cellAlign, isValid := getCellAlignment(lastByte); isValid {
+						elem.SetCdr(sx.Cons(sx.MakeString(strings.TrimRight(str[0:len(str)-1], trimCutSet)), nil))
+						rest.SetCar(makeCellAttrs(cellAlign))
+					}
+					align[cellCount-1] = lastByte
 				}
-				align[cellCount-1] = lastByte
 			}
 		}
 	}
@@ -362,12 +372,14 @@ func alignRow(row *sx.Pair, defaultAlign []byte) {
 		// elem is first cell inline element
 		elem := cellInlines.Head()
 		if zsx.SymText.IsEqual(elem.Car()) {
-			if s, isString := sx.GetString(elem.Tail().Car()); isString && s.GetValue() != "" {
-				str := s.GetValue()
-				cellAlign, isValid := getCellAlignment(str[0])
-				if isValid {
-					elem.SetCdr(sx.Cons(sx.MakeString(str[1:]), nil))
-					rest.SetCar(makeCellAttrs(cellAlign))
+			if s, isString := sx.GetString(elem.Tail().Car()); isString {
+				if str := s.GetValue(); str != "" {
+					if cellAlign, isValid := getCellAlignment(str[0]); isValid {
+						elem.SetCdr(sx.Cons(sx.MakeString(strings.TrimLeft(str[1:], trimCutSet)), nil))
+						rest.SetCar(makeCellAttrs(cellAlign))
+					} else {
+						elem.SetCdr(sx.Cons(sx.MakeString(strings.TrimLeft(str, trimCutSet)), nil))
+					}
 				}
 			}
 		}
