@@ -672,8 +672,7 @@ func (cp *Parser) parseRow() *sx.Pair {
 	var row sx.ListBuilder
 	for {
 		inp.Next()
-		cell := cp.parseCell()
-		if cell != nil {
+		if cell, empty := cp.parseCell(); cell != nil && (cp.lastRow != nil || !empty) {
 			row.Add(cell)
 		}
 		switch inp.Ch {
@@ -682,14 +681,17 @@ func (cp *Parser) parseRow() *sx.Pair {
 			fallthrough
 		case input.EOS:
 			// add to table
+			lst := row.List()
 			if cp.lastRow == nil {
-				if row.IsEmpty() {
+				if lst == nil {
 					return nil
 				}
-				cp.lastRow = sx.Cons(row.List(), nil)
+				cp.lastRow = sx.Cons(lst, nil)
 				return cp.lastRow.Cons(nil).Cons(nil).Cons(zsx.SymTable)
 			}
-			cp.lastRow = cp.lastRow.AppendBang(row.List())
+			if lst != nil {
+				cp.lastRow = cp.lastRow.AppendBang(lst)
+			}
 			return nil
 		}
 		// inp.Ch must be '|'
@@ -697,18 +699,15 @@ func (cp *Parser) parseRow() *sx.Pair {
 }
 
 // parseCell parses one single cell of a table row.
-func (cp *Parser) parseCell() *sx.Pair {
+func (cp *Parser) parseCell() (*sx.Pair, bool) {
 	inp := cp.inp
 	var cell sx.ListBuilder
 	for {
 		if input.IsEOLEOS(inp.Ch) {
-			if cell.IsEmpty() {
-				return nil
-			}
-			return zsx.MakeCell(nil, cell.List())
+			return zsx.MakeCell(nil, cell.List()), cell.IsEmpty()
 		}
 		if inp.Ch == '|' {
-			return zsx.MakeCell(nil, cell.List())
+			return zsx.MakeCell(nil, cell.List()), false
 		}
 
 		in := cp.parseInline()
