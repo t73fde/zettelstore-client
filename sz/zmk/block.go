@@ -670,9 +670,10 @@ func (cp *Parser) parseRow() *sx.Pair {
 	}
 
 	var row sx.ListBuilder
+	first := true
 	for {
 		inp.Next()
-		if cell, empty := cp.parseCell(); cell != nil && (cp.lastRow != nil || !empty) {
+		if cell, empty := cp.parseCell(); !empty || (cp.lastRow != nil && first) {
 			row.Add(cell)
 		}
 		switch inp.Ch {
@@ -695,6 +696,7 @@ func (cp *Parser) parseRow() *sx.Pair {
 			return nil
 		}
 		// inp.Ch must be '|'
+		first = false
 	}
 }
 
