@@ -123,6 +123,7 @@ const (
 	ValueRoleRole          = "role"          // A role for role zettel
 	ValueRoleZettel        = "zettel"        // A role for zettel
 	ValueSyntaxCMark       = "cmark"         // Syntax: CommonMark
+	ValueSyntaxCommonMark  = "commonmark"    // Syntax: CommonMark
 	ValueSyntaxCSS         = "css"           // Syntax: CSS
 	ValueSyntaxDraw        = "draw"          // Syntax: Drawing
 	ValueSyntaxEMark       = "emark"         // Syntax: extended CommonMark
