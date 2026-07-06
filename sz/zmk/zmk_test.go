@@ -775,6 +775,8 @@ func TestDescription(t *testing.T) {
 			exp: `(BLOCK (DESCRIPTION () ((TEXT "T1")) (BLOCK (BLOCK (PARA (TEXT "D1")) (PARA (TEXT "D2"))) (BLOCK (PARA (TEXT "T2") (SOFT) (TEXT "T3"))))))`},
 		{src: "; T1\n: D1\n\n  D2\n\n  D3\n: T2\n  T3",
 			exp: `(BLOCK (DESCRIPTION () ((TEXT "T1")) (BLOCK (BLOCK (PARA (TEXT "D1")) (PARA (TEXT "D2")) (PARA (TEXT "D3"))) (BLOCK (PARA (TEXT "T2") (SOFT) (TEXT "T3"))))))`},
+		{src: "; Word\n: Definition\n\n  Para\n  Line",
+			exp: `(BLOCK (DESCRIPTION () ((TEXT "Word")) (BLOCK (BLOCK (PARA (TEXT "Definition")) (PARA (TEXT "Para") (SOFT) (TEXT "Line"))))))`},
 	})
 }
 

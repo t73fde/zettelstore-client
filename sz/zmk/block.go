@@ -631,6 +631,7 @@ func (cp *Parser) parseIndentForDescription(cnt int) bool {
 		if symSeparator.IsEqual(next.Head().Car()) {
 			// It is a new paragraph!
 			obj.LastPair().AppendBang(zsx.MakeParaList(pn))
+			curr.SetCdr(sx.Nil()) // remove symSeparator
 			return true
 		}
 		curr = next
