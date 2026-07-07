@@ -30,7 +30,7 @@ func (cp *Parser) parseBlock(blocksBuilder *sx.ListBuilder, lastPara *sx.Pair) *
 	if cont {
 		return lastPara
 	}
-	if zsx.SymPara.IsEqual(bn.Car()) {
+	if bn != nil && zsx.SymPara.IsEqual(bn.Car()) {
 		return bn
 	}
 	return nil
