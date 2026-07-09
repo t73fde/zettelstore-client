@@ -5,7 +5,7 @@ access [https://zettelstore.de|Zettelstore] via its API.
 
 <h3>Latest Release: 2.1.0 (2026-07-07)</h3>
   *  [./changes.wiki#2_1|Change summary]
-  *  [/timeline?p=v2.1.0&bt=v2.0.0.0&y=ci|Check-ins for version 2.1],
+  *  [/timeline?p=v2.1.0&bt=v2.0.0&y=ci|Check-ins for version 2.1],
      [/vdiff?to=v2.1.0&from=v2.0.0|content diff]
   *  [/timeline?df=v2.1.0&y=ci|Check-ins derived from the 2.1 release],
      [/vdiff?from=v2.1.0&to=trunk|content diff]
