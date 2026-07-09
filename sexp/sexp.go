@@ -178,7 +178,7 @@ loop:
 			val, ok = sx.GetPair(car)
 		case 'r':
 			if i < specLen-1 {
-				return nil, fmt.Errorf("spec 'r' must be the last: %v", spec)
+				return nil, fmt.Errorf("spec 'r' must be the last: %q", spec)
 			}
 			result = append(result, node)
 			i++
@@ -188,10 +188,10 @@ loop:
 		case 'y':
 			val, ok = sx.GetSymbol(car)
 		default:
-			return nil, fmt.Errorf("unknown spec '%c'", spec[i])
+			return nil, fmt.Errorf("unknown spec %d: '%c'", i, spec[i])
 		}
 		if !ok {
-			return nil, fmt.Errorf("does not match spec '%v': %v", spec[i], car)
+			return nil, fmt.Errorf("does not match spec %d '%c': %v", i, spec[i], car)
 		}
 		result = append(result, val)
 		next, isNextPair := sx.GetPair(node.Cdr())

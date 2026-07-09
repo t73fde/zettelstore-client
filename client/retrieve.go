@@ -116,7 +116,7 @@ func parseMetaList(metaPair *sx.Pair) ([]webapi.ZidMetaRights, error) {
 			return nil, fmt.Errorf("meta-list not a proper list: %v", metaPair.String())
 		}
 		node = elem.Tail()
-		vals, err := sexp.ParseList(elem.Car(), "yppp")
+		vals, err := sexp.ParseList(elem.Car(), "yspp")
 		if err != nil {
 			return nil, err
 		}
@@ -125,14 +125,7 @@ func parseMetaList(metaPair *sx.Pair) ([]webapi.ZidMetaRights, error) {
 			return nil, errSym
 		}
 
-		idVals, err := sexp.ParseList(vals[1], "yi")
-		if err != nil {
-			return nil, err
-		}
-		if errSym := sexp.CheckSymbol(idVals[0], "id"); errSym != nil {
-			return nil, errSym
-		}
-		zid, err := makeZettelID(idVals[1])
+		zid, err := id.Parse(vals[1].(sx.String).GetValue())
 		if err != nil {
 			return nil, err
 		}

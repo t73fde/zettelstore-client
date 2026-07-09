@@ -2,6 +2,7 @@
 
 <a name="3_0"></a>
 <h2>Changes for Version 3.0.0 (pending)</h2>
+  * New format for list query with data encoding (breaking)
 
 <a name="2_1"></a>
 <h2>Changes for Version 2.1.0 (2026-07-07)</h2>
