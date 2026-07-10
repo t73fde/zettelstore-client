@@ -3,12 +3,15 @@
 <a name="3_0"></a>
 <h2>Changes for Version 3.0.0 (pending)</h2>
   * New format for list query with data encoding (breaking)
+  * Change data encoding of zettel data: content part now containg encoding
+    too (breaking)
 
 <a name="2_1"></a>
 <h2>Changes for Version 2.1.0 (2026-07-07)</h2>
   * Rename packages: api -> webapi
   * Add constants for new zettel ids
-  * Add metadata keys predecessor and successor; rename superior -> superordinate
+  * Add metadata keys predecessor and successor; rename superior ->
+    superordinate
   * Add syntax value js
   * Fix some zmk parsing errors
 
