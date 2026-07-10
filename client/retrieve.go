@@ -266,6 +266,26 @@ func (c *Client) GetZettelData(ctx context.Context, zid id.Zid) (webapi.ZettelDa
 	return webapi.ZettelData{}, err
 }
 
+// GetContentData returns content and its encoding of a given zettel.
+func (c *Client) GetContentData(ctx context.Context, zid id.Zid) (content string, encoding string, err error) {
+	ub := c.NewURLBuilder('z').SetZid(zid)
+	ub.AppendKVQuery(webapi.QueryKeyEncoding, webapi.EncodingData)
+	ub.AppendKVQuery(webapi.QueryKeyPart, webapi.PartContent)
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
+	if err == nil {
+		defer func() { _ = resp.Body.Close() }()
+		if resp.StatusCode != http.StatusOK {
+			return "", "", statusToError(resp)
+		}
+		rdr := sxreader.MakeReader(resp.Body)
+		obj, err2 := rdr.Read()
+		if err2 == nil {
+			return sexp.ParseContent(obj)
+		}
+	}
+	return "", "", err
+}
+
 // GetParsedZettel return a parsed zettel in a specified text-based encoding.
 //
 // A parsed zettel is just read from its box and is not processed any further.

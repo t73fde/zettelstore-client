@@ -40,7 +40,7 @@ func EncodeZettel(zettel webapi.ZettelData) sx.Object {
 		SymZettel,
 		meta2sz(zettel.Meta),
 		sx.MakeList(symRights, sx.Int64(int64(zettel.Rights))),
-		sx.MakeList(symContent, sx.MakeString(zettel.Encoding), sx.MakeString(zettel.Content)),
+		EncodeContent(zettel.Content, zettel.Encoding),
 	)
 }
 
@@ -64,19 +64,16 @@ func ParseZettel(obj sx.Object) (webapi.ZettelData, error) {
 		return webapi.ZettelData{}, err
 	}
 
-	contentVals, err := ParseList(vals[3], "yss")
+	content, encoding, err := ParseContent(vals[3])
 	if err != nil {
 		return webapi.ZettelData{}, err
-	}
-	if errSym := CheckSymbol(contentVals[0], symContent.GetValue()); errSym != nil {
-		return webapi.ZettelData{}, errSym
 	}
 
 	return webapi.ZettelData{
 		Meta:     meta,
 		Rights:   rights,
-		Encoding: contentVals[1].(sx.String).GetValue(),
-		Content:  contentVals[2].(sx.String).GetValue(),
+		Encoding: encoding,
+		Content:  content,
 	}, nil
 }
 
@@ -134,6 +131,23 @@ func ParseRights(obj sx.Object) (webapi.ZettelRights, error) {
 		return webapi.ZettelMaxRight, fmt.Errorf("invalid zettel right value: %v", i64)
 	}
 	return webapi.ZettelRights(i64), nil
+}
+
+// EncodeContent transforms zettel content into a sx object.
+func EncodeContent(content, encoding string) sx.Object {
+	return sx.MakeList(symContent, sx.MakeString(encoding), sx.MakeString(content))
+}
+
+// ParseContent translates the given list to zettel content and encoding.
+func ParseContent(obj sx.Object) (content string, encoding string, err error) {
+	vals, err := ParseList(obj, "yss")
+	if err != nil {
+		return "", "", err
+	}
+	if errSym := CheckSymbol(vals[0], symContent.GetValue()); errSym != nil {
+		return "", "", errSym
+	}
+	return vals[2].(sx.String).GetValue(), vals[1].(sx.String).GetValue(), nil
 }
 
 // ParseList parses the given object as a proper list, based on a type specification.
