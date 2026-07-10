@@ -121,7 +121,7 @@ func parseMetaList(metaPair *sx.Pair) ([]webapi.ZidMetaRights, error) {
 			return nil, err
 		}
 
-		if errSym := sexp.CheckSymbol(vals[0], "zettel"); errSym != nil {
+		if errSym := sexp.CheckSymbol(vals[0], sexp.SymZettel); errSym != nil {
 			return nil, errSym
 		}
 
@@ -397,7 +397,7 @@ func (c *Client) GetMetaData(ctx context.Context, zid id.Zid) (webapi.MetaRights
 	if err != nil {
 		return webapi.MetaRights{}, err
 	}
-	if errSym := sexp.CheckSymbol(vals[0], "list"); errSym != nil {
+	if errSym := sexp.CheckSymbol(vals[0], sexp.SymList); errSym != nil {
 		return webapi.MetaRights{}, err
 	}
 

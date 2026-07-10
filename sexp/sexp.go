@@ -30,7 +30,7 @@ var (
 	SymZettel  = sx.MakeSymbol("zettel")
 	symRights  = sx.MakeSymbol("rights")
 	symContent = sx.MakeSymbol("content")
-	symList    = sx.MakeSymbol(sxbuiltins.List.Name)
+	SymList    = sx.MakeSymbol(sxbuiltins.List.Name)
 	symMeta    = sx.MakeSymbol("meta")
 )
 
@@ -50,7 +50,7 @@ func ParseZettel(obj sx.Object) (webapi.ZettelData, error) {
 	if err != nil {
 		return webapi.ZettelData{}, err
 	}
-	if errSym := CheckSymbol(vals[0], SymZettel.GetValue()); errSym != nil {
+	if errSym := CheckSymbol(vals[0], SymZettel); errSym != nil {
 		return webapi.ZettelData{}, errSym
 	}
 
@@ -80,7 +80,7 @@ func ParseZettel(obj sx.Object) (webapi.ZettelData, error) {
 // EncodeMetaRights translates metadata/rights into a sx object.
 func EncodeMetaRights(mr webapi.MetaRights) *sx.Pair {
 	return sx.MakeList(
-		symList,
+		SymList,
 		meta2sz(mr.Meta),
 		sx.MakeList(symRights, sx.Int64(int64(mr.Rights))),
 	)
@@ -103,7 +103,7 @@ func meta2sz(m webapi.ZettelMeta) sx.Object {
 
 // ParseMeta translates the given list to metadata.
 func ParseMeta(pair *sx.Pair) (webapi.ZettelMeta, error) {
-	if err := CheckSymbol(pair.Car(), symMeta.GetValue()); err != nil {
+	if err := CheckSymbol(pair.Car(), symMeta); err != nil {
 		return nil, err
 	}
 	res := webapi.ZettelMeta{}
@@ -123,7 +123,7 @@ func ParseRights(obj sx.Object) (webapi.ZettelRights, error) {
 	if err != nil {
 		return webapi.ZettelMaxRight, err
 	}
-	if errSym := CheckSymbol(rVals[0], symRights.GetValue()); errSym != nil {
+	if errSym := CheckSymbol(rVals[0], symRights); errSym != nil {
 		return webapi.ZettelMaxRight, errSym
 	}
 	i64 := int64(rVals[1].(sx.Int64))
@@ -144,7 +144,7 @@ func ParseContent(obj sx.Object) (content string, encoding string, err error) {
 	if err != nil {
 		return "", "", err
 	}
-	if errSym := CheckSymbol(vals[0], symContent.GetValue()); errSym != nil {
+	if errSym := CheckSymbol(vals[0], symContent); errSym != nil {
 		return "", "", errSym
 	}
 	return vals[2].(sx.String).GetValue(), vals[1].(sx.String).GetValue(), nil
@@ -232,13 +232,9 @@ var ErrElementsMissing = errors.New("spec contains more data")
 var ErrNoSpec = errors.New("no spec for elements")
 
 // CheckSymbol ensures that the given object is a symbol with the given name.
-func CheckSymbol(obj sx.Object, name string) error {
-	sym, isSymbol := sx.GetSymbol(obj)
-	if !isSymbol {
-		return fmt.Errorf("object %v/%T is not a symbol", obj, obj)
-	}
-	if got := sym.GetValue(); got != name {
-		return fmt.Errorf("symbol %q expected, but got: %q", name, got)
+func CheckSymbol(obj sx.Object, sym *sx.Symbol) error {
+	if !sym.IsEqual(obj) {
+		return fmt.Errorf("symbol %q expected, but got %v/%T is not a symbol", sym.GetValue(), obj, obj)
 	}
 	return nil
 }
