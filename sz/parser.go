@@ -22,11 +22,6 @@ import (
 
 // --- Contains some simple parsers
 
-// ---- Syntax: none
-
-// ParseNoneBlocks parses no block.
-func ParseNoneBlocks(*input.Input) *sx.Pair { return zsx.MakeBlock() }
-
 // ---- Some plain text syntaxes
 
 // ParsePlainBlocks parses the block as plain text with the given syntax.

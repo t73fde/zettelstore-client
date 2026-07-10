@@ -17,21 +17,8 @@ import (
 	"testing"
 
 	"t73f.de/r/zsc/sz"
-	"t73f.de/r/zsx"
 	"t73f.de/r/zsx/input"
 )
-
-func TestParseNone(t *testing.T) {
-	exp := zsx.MakeBlock()
-	if got := sz.ParseNoneBlocks(nil); !exp.IsEqual(got) {
-		t.Error("GOTB", got)
-	}
-
-	inp := input.NewInput([]byte("1234\n6789"))
-	if got := sz.ParseNoneBlocks(inp); !exp.IsEqual(got) {
-		t.Error("GOTI", got)
-	}
-}
 
 func TestParsePlani(t *testing.T) {
 	testcases := []struct {
