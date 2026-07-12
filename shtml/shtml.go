@@ -287,7 +287,7 @@ func (ev *Evaluator) bindBlocks() {
 		return nil
 	})
 	ev.bind(zsx.SymHeading, 5, func(args sx.Vector, env *Environment) sx.Object {
-		nLevel := getInt64(args[0], env)
+		nLevel := getInt64(args[1], env)
 		if nLevel <= 0 {
 			env.err = fmt.Errorf("%v is a negative heading level", nLevel)
 			return sx.Nil()
@@ -300,7 +300,7 @@ func (ev *Evaluator) bindBlocks() {
 		sLevel := strconv.FormatInt(hLevel, 10)
 		headingSymbol := sxhtml.MakeSymbol("h" + sLevel)
 
-		a := GetAttributes(args[1], env)
+		a := GetAttributes(args[0], env)
 		env.pushAttributes(a)
 		defer env.popAttributes()
 		if fragment := getString(args[3], env).GetValue(); fragment != "" {

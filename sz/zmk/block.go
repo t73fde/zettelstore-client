@@ -329,17 +329,17 @@ func (cp *Parser) parseHeading() (*sx.Pair, bool) {
 	var text sx.ListBuilder
 	for {
 		if input.IsEOLEOS(inp.Ch) {
-			return zsx.MakeHeading(level, attrs, text.List(), "", ""), true
+			return zsx.MakeHeading(attrs, level, text.List(), "", ""), true
 		}
 		in := cp.parseInline()
 		if in == nil {
-			return zsx.MakeHeading(level, attrs, text.List(), "", ""), true
+			return zsx.MakeHeading(attrs, level, text.List(), "", ""), true
 		}
 		text.Add(in)
 		if inp.Ch == '{' && inp.Peek() != '{' {
 			attrs = parseBlockAttributes(inp)
 			inp.SkipToEOL()
-			return zsx.MakeHeading(level, attrs, text.List(), "", ""), true
+			return zsx.MakeHeading(attrs, level, text.List(), "", ""), true
 		}
 	}
 }

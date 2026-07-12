@@ -145,15 +145,15 @@ func postProcessVerbatim(_ *postProcessor, verb *sx.Pair, _ *sx.Pair) *sx.Pair {
 
 func postProcessHeading(pp *postProcessor, hn *sx.Pair, alst *sx.Pair) *sx.Pair {
 	next := hn.Tail()
-	level := next.Car().(sx.Int64)
-	next = next.Tail()
 	attrs := next.Car().(*sx.Pair)
+	next = next.Tail()
+	level := next.Car().(sx.Int64)
 	next = next.Tail()
 	slug := next.Car().(sx.String)
 	next = next.Tail()
 	fragment := next.Car().(sx.String)
 	if text := pp.visitInlines(next.Tail(), alst); text != nil {
-		return zsx.MakeHeading(int(level), attrs, text, slug.GetValue(), fragment.GetValue())
+		return zsx.MakeHeading(attrs, int(level), text, slug.GetValue(), fragment.GetValue())
 	}
 	return nil
 }
