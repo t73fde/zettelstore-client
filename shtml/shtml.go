@@ -354,7 +354,8 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		isCompact := isCompactList(args[1:])
 		for _, elem := range args[1:] {
-			if quote, isPair := sx.GetPair(ev.Eval(makeCompactItem(isCompact, elem), env)); isPair {
+			_, elements := zsx.GetListItem(elem.(*sx.Pair))
+			if quote, isPair := sx.GetPair(ev.makeCompactItem(isCompact, elements, env)); isPair {
 				result.Add(quote.Cons(sxhtml.SymListSplice))
 			}
 		}
@@ -492,9 +493,13 @@ func (ev *Evaluator) makeListFn(sym *sx.Symbol) EvalFn {
 		if len(args) > 1 {
 			isCompact := isCompactList(args[1:])
 			for _, elem := range args[1:] {
+				attrs, elements := zsx.GetListItem(elem.(*sx.Pair))
 				var itemLb sx.ListBuilder
 				itemLb.Add(SymLI)
-				if res, isPair := sx.GetPair(ev.Eval(makeCompactItem(isCompact, elem), env)); isPair {
+				if att := EvaluateAttributes(GetAttributes(attrs, env)); att != nil {
+					itemLb.Add(att)
+				}
+				if res, isPair := sx.GetPair(ev.makeCompactItem(isCompact, elements, env)); isPair {
 					itemLb.ExtendBang(res)
 				}
 				result.Add(itemLb.List())
@@ -509,10 +514,10 @@ func isCompactList(elems sx.Vector) bool {
 		if !isPair {
 			return false
 		}
-		if !zsx.SymBlock.IsEqual(item.Car()) {
+		if !zsx.SymListItem.IsEqual(item.Car()) {
 			return false
 		}
-		item = item.Tail()
+		item = item.Tail().Tail()
 		if item.Tail() != nil { // more than two elements -> multiple paragraphs in item
 			return false
 		}
@@ -523,13 +528,11 @@ func isCompactList(elems sx.Vector) bool {
 	}
 	return true
 }
-func makeCompactItem(isCompact bool, elem sx.Object) sx.Object {
+func (ev *Evaluator) makeCompactItem(isCompact bool, elements *sx.Pair, env *Environment) sx.Object {
 	if isCompact {
-		if item, isPair := sx.GetPair(elem); isPair {
-			elem = item.Tail().Head().Tail().Cons(zsx.SymInline)
-		}
+		return ev.Eval(zsx.MakeInlineList(elements.Head().Tail()), env)
 	}
-	return elem
+	return ev.Eval(zsx.MakeBlockList(elements), env)
 }
 
 func (ev *Evaluator) evalDescriptionTerm(term *sx.Pair, env *Environment) *sx.Pair {

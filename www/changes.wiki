@@ -6,6 +6,7 @@
   * Change data encoding of zettel data: content part now containg encoding
     too (breaking)
   * Change sz encoding of headings and marks (breaking).
+  * Change sz encoding of lists: use "ITEM ()" instead of "BLOCK" (breaking)
   * Allow data encoding for content (minor)
 
 <a name="2_1"></a>

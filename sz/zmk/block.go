@@ -363,7 +363,7 @@ func (cp *Parser) parseNestedList() (*sx.Pair, bool) {
 		return nil, false
 	}
 	inp.SkipSpace()
-	if !zsx.SymListQuote.IsEqual(kinds[len(kinds)-1]) && input.IsEOLEOS(inp.Ch) {
+	if !zsx.SymListQuote.IsEqualSymbol(kinds[len(kinds)-1]) && input.IsEOLEOS(inp.Ch) {
 		return nil, false
 	}
 
@@ -372,12 +372,9 @@ func (cp *Parser) parseNestedList() (*sx.Pair, bool) {
 	}
 	ln, newLnCount := cp.buildNestedList(kinds)
 	pv := cp.parseLinePara()
-	bn := zsx.MakeBlock()
-	if pv != nil {
-		bn.AppendBang(zsx.MakeParaList(pv))
-	}
+	item := zsx.MakeListItem(nil, sx.MakeList(zsx.MakeParaList(pv)))
 	lastItemPair := ln.LastPair()
-	lastItemPair.AppendBang(bn)
+	lastItemPair.AppendBang(item)
 	return cp.cleanupParsedNestedList(newLnCount), true
 }
 
@@ -444,7 +441,7 @@ func (cp *Parser) cleanupParsedNestedList(newLnCount int) *sx.Pair {
 			lastParent.Head().LastPair().AppendBang(childLn)
 		} else {
 			// Set list to first child of parent.
-			parentLn.LastPair().AppendBang(zsx.MakeBlock(cp.lists[childPos]))
+			parentLn.LastPair().AppendBang(zsx.MakeListItem(nil, sx.MakeList(childLn)))
 		}
 		childPos--
 		parentPos--

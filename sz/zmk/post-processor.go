@@ -70,6 +70,7 @@ func init() {
 		zsx.SymListOrdered:     postProcessItemList,
 		zsx.SymListUnordered:   postProcessItemList,
 		zsx.SymListQuote:       postProcessQuoteList,
+		zsx.SymListItem:        postProcessListItem,
 		zsx.SymDescription:     postProcessDescription,
 		zsx.SymTable:           postProcessTable,
 
@@ -155,8 +156,9 @@ func postProcessHeading(pp *postProcessor, hn *sx.Pair, alst *sx.Pair) *sx.Pair 
 }
 
 func postProcessItemList(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pair {
-	attrs := ln.Tail().Head()
-	elems := pp.visitListElems(ln.Tail(), alst)
+	attrsNode := ln.Tail()
+	attrs := attrsNode.Head()
+	elems := pp.visitListElems(attrsNode, alst)
 	if elems == nil {
 		return nil
 	}
@@ -164,8 +166,9 @@ func postProcessItemList(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pair
 }
 
 func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pair {
-	attrs := ln.Tail().Head()
-	elems := pp.visitListElems(ln.Tail(), alst.Cons(sx.Cons(symNoBlock, nil)))
+	attrsNode := ln.Tail()
+	attrs := attrsNode.Head()
+	elems := pp.visitListElems(attrsNode, alst.Cons(sx.Cons(symNoBlock, nil)))
 
 	// Collect multiple paragraph items into one item.
 
@@ -174,16 +177,17 @@ func postProcessQuoteList(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pai
 
 	addtoParagraph := func() {
 		if !newPara.IsEmpty() {
-			newElems.Add(sx.MakeList(zsx.SymBlock, newPara.List().Cons(zsx.SymPara)))
+			newElems.Add(sx.MakeList(zsx.SymListItem, nil, newPara.List().Cons(zsx.SymPara)))
 			newPara.Reset()
 		}
 	}
 	for node := range elems.Pairs() {
 		item := node.Head()
-		if !zsx.SymBlock.IsEqual(item.Car()) {
+		if !zsx.SymListItem.IsEqual(item.Car()) {
 			continue
 		}
-		itemTail := item.Tail()
+		itemAttr := item.Tail()
+		itemTail := itemAttr.Tail()
 		if itemTail == nil || itemTail.Tail() != nil {
 			addtoParagraph()
 			newElems.Add(item)
@@ -211,6 +215,17 @@ func (pp *postProcessor) visitListElems(ln *sx.Pair, alst *sx.Pair) *sx.Pair {
 		}
 	}
 	return pList.List()
+}
+
+func postProcessListItem(pp *postProcessor, li *sx.Pair, alst *sx.Pair) *sx.Pair {
+	next := li.Tail()
+	attrs := next.Car().(*sx.Pair)
+	next = next.Tail()
+	elements := pp.visitPairList(next, alst)
+	if elements == nil {
+		return nil
+	}
+	return zsx.MakeListItem(attrs, elements)
 }
 
 func postProcessDescription(pp *postProcessor, dl *sx.Pair, alst *sx.Pair) *sx.Pair {

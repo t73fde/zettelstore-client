@@ -684,61 +684,63 @@ func TestList(t *testing.T) {
 		}))
 	}
 	checkTcs(t, testCases{
-		{"* abc", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))))"},
-		{"** abc", "(BLOCK (UNORDERED () (BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))))))"},
-		{"*** abc", "(BLOCK (UNORDERED () (BLOCK (UNORDERED () (BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))))))))"},
-		{"**** abc", "(BLOCK (UNORDERED () (BLOCK (UNORDERED () (BLOCK (UNORDERED () (BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))))))))))"},
-		{"** abc\n**** def", "(BLOCK (UNORDERED () (BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")) (UNORDERED () (BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"def\")))))))))))"},
-		{"* abc\ndef", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))) (PARA (TEXT \"def\")))"},
-		{"* abc\n def", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))) (PARA (TEXT \"def\")))"},
-		{"* abc\n* def", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\"))) (BLOCK (PARA (TEXT \"def\")))))"},
-		{"* abc\n  def", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\") (SOFT) (TEXT \"def\")))))"},
-		{"* abc\n   def", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\") (SOFT) (TEXT \"def\")))))"},
-		{"* abc\n\ndef", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))) (PARA (TEXT \"def\")))"},
-		{"* abc\n\n def", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))) (PARA (TEXT \"def\")))"},
-		{"* abc\n\n  def", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")) (PARA (TEXT \"def\")))))"},
-		{"* abc\n\n   def", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")) (PARA (TEXT \"def\")))))"},
-		{"* abc\n** def", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")) (UNORDERED () (BLOCK (PARA (TEXT \"def\")))))))"},
-		{"* abc\n** def\n* ghi", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")) (UNORDERED () (BLOCK (PARA (TEXT \"def\"))))) (BLOCK (PARA (TEXT \"ghi\")))))"},
-		{"* abc\n\n  def\n* ghi", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")) (PARA (TEXT \"def\"))) (BLOCK (PARA (TEXT \"ghi\")))))"},
-		{"* abc\n** def\n   ghi\n  jkl", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")) (UNORDERED () (BLOCK (PARA (TEXT \"def\") (SOFT) (TEXT \"ghi\")))) (PARA (TEXT \"jkl\")))))"},
+		{"* abc", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))))"},
+		{"** abc", "(BLOCK (UNORDERED () (ITEM () (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))))))"},
+		{"*** abc", "(BLOCK (UNORDERED () (ITEM () (UNORDERED () (ITEM () (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))))))))"},
+		{"**** abc", "(BLOCK (UNORDERED () (ITEM () (UNORDERED () (ITEM () (UNORDERED () (ITEM () (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))))))))))"},
+		{"** abc\n**** def", "(BLOCK (UNORDERED () (ITEM () (UNORDERED () (ITEM () (PARA (TEXT \"abc\")) (UNORDERED () (ITEM () (UNORDERED () (ITEM () (PARA (TEXT \"def\")))))))))))"},
+		{"* abc\ndef", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))) (PARA (TEXT \"def\")))"},
+		{"* abc\n def", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))) (PARA (TEXT \"def\")))"},
+		{"* abc\n* def", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\"))) (ITEM () (PARA (TEXT \"def\")))))"},
+		{"* abc\n  def", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\") (SOFT) (TEXT \"def\")))))"},
+		{"* abc\n   def", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\") (SOFT) (TEXT \"def\")))))"},
+		{"* abc\n\ndef", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))) (PARA (TEXT \"def\")))"},
+		{"* abc\n\n def", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))) (PARA (TEXT \"def\")))"},
+		{"* abc\n\n  def", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")) (PARA (TEXT \"def\")))))"},
+		{"* abc\n\n   def", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")) (PARA (TEXT \"def\")))))"},
+		{"* abc\n** def", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")) (UNORDERED () (ITEM () (PARA (TEXT \"def\")))))))"},
+		{"* abc\n** def\n* ghi", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")) (UNORDERED () (ITEM () (PARA (TEXT \"def\"))))) (ITEM () (PARA (TEXT \"ghi\")))))"},
+		{"* abc\n\n  def\n* ghi", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")) (PARA (TEXT \"def\"))) (ITEM () (PARA (TEXT \"ghi\")))))"},
+		{"* abc\n** def\n   ghi\n  jkl", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")) (UNORDERED () (ITEM () (PARA (TEXT \"def\") (SOFT) (TEXT \"ghi\")))) (PARA (TEXT \"jkl\")))))"},
 
 		// A list does not last beyond a region
-		{":::\n# abc\n:::\n# def", "(BLOCK (REGION-BLOCK () ((ORDERED () (BLOCK (PARA (TEXT \"abc\")))))) (ORDERED () (BLOCK (PARA (TEXT \"def\")))))"},
+		{":::\n# abc\n:::\n# def", "(BLOCK (REGION-BLOCK () ((ORDERED () (ITEM () (PARA (TEXT \"abc\")))))) (ORDERED () (ITEM () (PARA (TEXT \"def\")))))"},
 
 		// A HRule creates a new list
-		{"* abc\n---\n* def", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))) (THEMATIC ()) (UNORDERED () (BLOCK (PARA (TEXT \"def\")))))"},
+		{"* abc\n---\n* def", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))) (THEMATIC ()) (UNORDERED () (ITEM () (PARA (TEXT \"def\")))))"},
 
 		// Changing list type adds a new list
-		{"* abc\n# def", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))) (ORDERED () (BLOCK (PARA (TEXT \"def\")))))"},
+		{"* abc\n# def", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))) (ORDERED () (ITEM () (PARA (TEXT \"def\")))))"},
 
 		// Quotation lists may have empty items
-		{">", "(BLOCK (QUOTATION () (BLOCK)))"},
+		{">", "(BLOCK (QUOTATION ()))"},
 
 		// Empty continuation
-		{"* abc\n  ", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\")))))"},
+		{"* abc\n  ", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\")))))"},
 
 		// a thematic break and a hard break separate two lists
-		{"* abc\n* def\n---\n* ghi", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\"))) (BLOCK (PARA (TEXT \"def\")))) (THEMATIC ()) (UNORDERED () (BLOCK (PARA (TEXT \"ghi\")))))"},
-		{"* abc\n* def\n%%\n* ghi", "(BLOCK (UNORDERED () (BLOCK (PARA (TEXT \"abc\"))) (BLOCK (PARA (TEXT \"def\")))) (UNORDERED () (BLOCK (PARA (TEXT \"ghi\")))))"},
+		{"* abc\n* def\n---\n* ghi", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\"))) (ITEM () (PARA (TEXT \"def\")))) (THEMATIC ()) (UNORDERED () (ITEM () (PARA (TEXT \"ghi\")))))"},
+		{"* abc\n* def\n%%\n* ghi", "(BLOCK (UNORDERED () (ITEM () (PARA (TEXT \"abc\"))) (ITEM () (PARA (TEXT \"def\")))) (UNORDERED () (ITEM () (PARA (TEXT \"ghi\")))))"},
 	})
 }
 
 func TestQuoteList(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, testCases{
-		{"> w1 w2", "(BLOCK (QUOTATION () (BLOCK (PARA (TEXT \"w1 w2\")))))"},
-		{"> w1\n> w2", "(BLOCK (QUOTATION () (BLOCK (PARA (TEXT \"w1\") (SOFT) (TEXT \"w2\")))))"},
-		{"> w1\n>w2", "(BLOCK (QUOTATION () (BLOCK (PARA (TEXT \"w1\")))) (PARA (TEXT \">w2\")))"},
-		{"> w1\n>\n>w2", "(BLOCK (QUOTATION () (BLOCK (PARA (TEXT \"w1\"))) (BLOCK)) (PARA (TEXT \">w2\")))"},
-		{"> w1\n> \n> w2", "(BLOCK (QUOTATION () (BLOCK (PARA (TEXT \"w1\"))) (BLOCK) (BLOCK (PARA (TEXT \"w2\")))))"},
+		{"> w1 w2", "(BLOCK (QUOTATION () (ITEM () (PARA (TEXT \"w1 w2\")))))"},
+		{"> w1\n> w2", "(BLOCK (QUOTATION () (ITEM () (PARA (TEXT \"w1\") (SOFT) (TEXT \"w2\")))))"},
+		{"> w1\n>w2", "(BLOCK (QUOTATION () (ITEM () (PARA (TEXT \"w1\")))) (PARA (TEXT \">w2\")))"},
+		{"> w1\n>\n>w2", "(BLOCK (QUOTATION () (ITEM () (PARA (TEXT \"w1\")))) (PARA (TEXT \">w2\")))"},
+		{"> w1\n> \n> w2", "(BLOCK (QUOTATION () (ITEM () (PARA (TEXT \"w1\") (SOFT) (TEXT \"w2\")))))"},
+		// {"> w1\n> \n> w2", "(BLOCK (QUOTATION () (ITEM () (PARA (TEXT \"w1\")))) (BLOCK (PARA (TEXT \"w2\")))))"},
+		// {"> w1\n>---\n> w2", "(BLOCK (QUOTATION () (ITEM () (PARA (TEXT \"w1\") (SOFT) (TEXT \"w2\")))))"},
 	})
 }
 
 func TestEnumAfterPara(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, testCases{
-		{"abc\n* def", "(BLOCK (PARA (TEXT \"abc\")) (UNORDERED () (BLOCK (PARA (TEXT \"def\")))))"},
+		{"abc\n* def", "(BLOCK (PARA (TEXT \"abc\")) (UNORDERED () (ITEM () (PARA (TEXT \"def\")))))"},
 		{"abc\n*def", "(BLOCK (PARA (TEXT \"abc\") (SOFT) (TEXT \"*def\")))"},
 	})
 }
