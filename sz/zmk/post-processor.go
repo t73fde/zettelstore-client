@@ -148,12 +148,8 @@ func postProcessHeading(pp *postProcessor, hn *sx.Pair, alst *sx.Pair) *sx.Pair 
 	attrs := next.Car().(*sx.Pair)
 	next = next.Tail()
 	level := next.Car().(sx.Int64)
-	next = next.Tail()
-	slug := next.Car().(sx.String)
-	next = next.Tail()
-	fragment := next.Car().(sx.String)
 	if text := pp.visitInlines(next.Tail(), alst); text != nil {
-		return zsx.MakeHeading(attrs, int(level), text, slug.GetValue(), fragment.GetValue())
+		return zsx.MakeHeading(attrs, int(level), text)
 	}
 	return nil
 }
@@ -553,13 +549,11 @@ func postProcessEndnote(pp *postProcessor, en *sx.Pair, alst *sx.Pair) *sx.Pair 
 
 func postProcessMark(pp *postProcessor, en *sx.Pair, alst *sx.Pair) *sx.Pair {
 	next := en.Tail()
+	attrs := next.Head()
+	next = next.Tail()
 	mark := next.Car().(sx.String)
-	next = next.Tail()
-	slug := next.Car().(sx.String)
-	next = next.Tail()
-	fragment := next.Car().(sx.String)
 	text := pp.visitInlines(next.Tail(), alst)
-	return zsx.MakeMark(mark.GetValue(), slug.GetValue(), fragment.GetValue(), text)
+	return zsx.MakeMark(attrs, mark.GetValue(), text)
 }
 
 func postProcessInlines4(pp *postProcessor, ln *sx.Pair, alst *sx.Pair) *sx.Pair {

@@ -58,11 +58,11 @@ func (enc *Encoder) execute(obj sx.Object) {
 	if !isPair {
 		return
 	}
-	sym := cmd.Car()
-	if sx.IsNil(sym) {
+	sym, isSymbol := sx.GetSymbol(cmd.Car())
+	if !isSymbol || sx.IsNil(sym) {
 		return
 	}
-	if sym.IsEqual(zsx.SymText) {
+	if sym.IsEqualSymbol(zsx.SymText) {
 		args := cmd.Tail()
 		if args == nil {
 			return
@@ -81,11 +81,14 @@ func (enc *Encoder) execute(obj sx.Object) {
 				}
 			}
 		}
-	} else if sym.IsEqual(zsx.SymSoft) {
+	} else if sym.IsEqualSymbol(zsx.SymSoft) {
 		enc.sb.WriteByte(' ')
-	} else if sym.IsEqual(zsx.SymHard) {
+	} else if sym.IsEqualSymbol(zsx.SymHard) {
 		enc.sb.WriteByte('\n')
-	} else if !sym.IsEqual(sx.SymbolQuote) {
+	} else if sym.IsEqualSymbol(zsx.SymLiteralInput) {
+		_, _, s := zsx.GetLiteral(cmd)
+		_, _ = enc.sb.WriteString(s)
+	} else {
 		enc.executeList(cmd.Tail())
 	}
 }

@@ -18,8 +18,47 @@ import (
 	"strings"
 
 	"t73f.de/r/sx"
+	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsx"
 )
+
+var mapMetaTypeS = map[*meta.DescriptionType]*sx.Symbol{
+	meta.TypeCredential: SymTypeCredential,
+	meta.TypeEmpty:      SymTypeEmpty,
+	meta.TypeID:         SymTypeID,
+	meta.TypeIDSet:      SymTypeIDSet,
+	meta.TypeNumber:     SymTypeNumber,
+	meta.TypeString:     SymTypeString,
+	meta.TypeTagSet:     SymTypeTagSet,
+	meta.TypeTimestamp:  SymTypeTimestamp,
+	meta.TypeURL:        SymTypeURL,
+	meta.TypeWord:       SymTypeWord,
+}
+
+// GetMetaSz transforms the given metadata into a sz list.
+func GetMetaSz(m *meta.Meta) *sx.Pair {
+	var lb sx.ListBuilder
+	lb.Add(SymMeta)
+	for key, val := range m.Computed() {
+		ty := m.Type(key)
+		symType, found := mapMetaTypeS[ty]
+		if !found {
+			symType = zsx.MakeSpecialNotFound(ty.String())
+		}
+		var obj sx.Object
+		if ty.IsSet {
+			var setObjs sx.ListBuilder
+			for _, val := range val.AsSlice() {
+				setObjs.Add(sx.MakeString(val))
+			}
+			obj = setObjs.List()
+		} else {
+			obj = sx.MakeString(string(val))
+		}
+		lb.Add(sx.MakeList(symType, sx.MakeSymbol(key), obj))
+	}
+	return lb.List()
+}
 
 // GetMetaContent returns the metadata and the content of a sz encoded zettel.
 func GetMetaContent(zettel sx.Object) (Meta, *sx.Pair) {

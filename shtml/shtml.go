@@ -75,15 +75,32 @@ func EvaluateAttributes(a zsx.Attributes) *sx.Pair {
 	return plist
 }
 
-// Evaluate a metadata s-expression into a list of HTML s-expressions.
+// EvaluateMetadata into a list of HTML s-expressions.
+func (ev *Evaluator) EvaluateMetadata(m *meta.Meta, env *Environment) (*sx.Pair, error) {
+	result := ev.Eval(sz.GetMetaSz(m), env)
+	if err := env.err; err != nil {
+		return nil, err
+	}
+	return checkPair(result)
+}
+
+func checkPair(result sx.Object) (*sx.Pair, error) {
+	if pair, isPair := sx.GetPair(result); isPair {
+		return pair, nil
+	}
+	return nil, fmt.Errorf("evaluation does not result in a pair, but %T/%v", result, result)
+}
+
+// Evaluate a SZ list into a list of HTML s-expressions.
 func (ev *Evaluator) Evaluate(lst *sx.Pair, env *Environment) (*sx.Pair, error) {
+	sz.AssignIdentifier(lst)
 	result := ev.Eval(lst, env)
 	if err := env.err; err != nil {
 		return nil, err
 	}
-	pair, isPair := sx.GetPair(result)
-	if !isPair {
-		return nil, fmt.Errorf("evaluation does not result in a pair, but %T/%v", result, result)
+	pair, err := checkPair(result)
+	if err != nil {
+		return nil, err
 	}
 
 	for i := 0; i < len(env.endnotes); i++ {
@@ -266,15 +283,15 @@ func (ev *Evaluator) evalMetaString(nameObj sx.Object, content string, env *Envi
 			a := make(zsx.Attributes, 2).
 				Set("name", nameSym.GetValue()).
 				Set("content", content)
-			return ev.EvaluateMeta(a)
+			return ev.EvaluateAttributesMeta(a)
 		}
 		env.err = fmt.Errorf("%v/%T is not a symbol", nameObj, nameObj)
 	}
 	return sx.Nil()
 }
 
-// EvaluateMeta returns HTML meta object for an attribute.
-func (ev *Evaluator) EvaluateMeta(a zsx.Attributes) *sx.Pair {
+// EvaluateAttributesMeta returns HTML meta object for an attribute.
+func (ev *Evaluator) EvaluateAttributesMeta(a zsx.Attributes) *sx.Pair {
 	return sx.Nil().Cons(EvaluateAttributes(a)).Cons(SymMeta)
 }
 
@@ -286,7 +303,7 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		return nil
 	})
-	ev.bind(zsx.SymHeading, 5, func(args sx.Vector, env *Environment) sx.Object {
+	ev.bind(zsx.SymHeading, 3, func(args sx.Vector, env *Environment) sx.Object {
 		nLevel := getInt64(args[1], env)
 		if nLevel <= 0 {
 			env.err = fmt.Errorf("%v is a negative heading level", nLevel)
@@ -301,13 +318,12 @@ func (ev *Evaluator) bindBlocks() {
 		headingSymbol := sxhtml.MakeSymbol("h" + sLevel)
 
 		a := GetAttributes(args[0], env)
-		env.pushAttributes(a)
-		defer env.popAttributes()
-		if fragment := getString(args[3], env).GetValue(); fragment != "" {
-			a = a.Set("id", ev.unique+fragment)
+		if headingID, found := a[zsx.SymSpecialID.GetValue()]; found && headingID != "" {
+			delete(a, zsx.SymSpecialID.GetValue())
+			a[SymAttrID.GetValue()] = headingID + ev.unique
 		}
 
-		if result, _ := ev.EvaluateList(args[4:], env); result != nil {
+		if result, _ := ev.EvaluateList(args[2:], env); result != nil {
 			if len(a) > 0 {
 				result = result.Cons(EvaluateAttributes(a))
 			}
@@ -660,13 +676,15 @@ func (ev *Evaluator) bindInlines() {
 		}
 		return result.Cons(SymSPAN)
 	})
-	ev.bind(zsx.SymMark, 3, func(args sx.Vector, env *Environment) sx.Object {
-		result := ev.evalSlice(args[3:], env)
+	ev.bind(zsx.SymMark, 2, func(args sx.Vector, env *Environment) sx.Object {
+		result := ev.evalSlice(args[2:], env)
 		if !ev.noLinks {
-			if fragment := getString(args[2], env).GetValue(); fragment != "" {
-				a := zsx.Attributes{"id": fragment + ev.unique}
-				return result.Cons(EvaluateAttributes(a)).Cons(SymA)
+			a := GetAttributes(args[0], env)
+			if markID, found := a[zsx.SymSpecialID.GetValue()]; found && markID != "" {
+				delete(a, zsx.SymSpecialID.GetValue())
+				a[SymAttrID.GetValue()] = markID + ev.unique
 			}
+			return result.Cons(EvaluateAttributes(a)).Cons(SymA)
 		}
 		if result != nil {
 			return result.Cons(SymSPAN)

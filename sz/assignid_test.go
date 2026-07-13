@@ -1,0 +1,83 @@
+//-----------------------------------------------------------------------------
+// Copyright (c) 2025-present Detlef Stern
+//
+// This file is part of Zettelstore.
+//
+// Zettelstore is licensed under the latest version of the EUPL (European Union
+// Public License). Please see file LICENSE.txt for your rights and obligations
+// under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2025-present Detlef Stern
+//-----------------------------------------------------------------------------
+
+package sz_test
+
+import (
+	"strings"
+	"testing"
+
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxreader"
+	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
+)
+
+func TestAssignIdentifier(t *testing.T) {
+	var testcases = []struct {
+		name string
+		src  string
+		exp  string
+	}{
+		{name: "nil", src: "()", exp: "()"},
+
+		{name: "simple heading",
+			src: "(HEADING () 1 (TEXT \"Heading\"))",
+			exp: "(HEADING ((*ZSX-ID* . \"heading\")) 1 (TEXT \"Heading\"))"},
+		{name: "same simple heading",
+			src: "(BLOCK (HEADING () 1 (TEXT \"Heading\")) (HEADING () 1 (TEXT \"Heading\")))",
+			exp: "(BLOCK (HEADING ((*ZSX-ID* . \"heading\")) 1 (TEXT \"Heading\")) (HEADING ((*ZSX-ID* . \"heading-1\")) 1 (TEXT \"Heading\")))"},
+
+		{name: "simple mark, no text",
+			src: "(MARK () \"m\")",
+			exp: "(MARK ((*ZSX-ID* . \"m\")) \"m\")"},
+		{name: "same simple mark, no text",
+			src: "(PARA (MARK () \"m\") (MARK () \"m\"))",
+			exp: "(PARA (MARK ((*ZSX-ID* . \"m\")) \"m\") (MARK ((*ZSX-ID* . \"m-1\")) \"m\"))"},
+		{name: "mark before heading",
+			src: "(BLOCK (HEADING () 1 (TEXT \"x\")) (PARA (MARK () \"x\")))",
+			exp: "(BLOCK (HEADING ((*ZSX-ID* . \"x\")) 1 (TEXT \"x\")) (PARA (MARK ((*ZSX-ID* . \"x-1\")) \"x\")))"},
+		{name: "mark in mark with text",
+			src: `(MARK () "m" (MARK () "m" (TEXT "x")))`,
+			exp: `(MARK ((*ZSX-ID* . "m")) "m" (MARK ((*ZSX-ID* . "m-1")) "m" (TEXT "x")))`},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			rd := sxreader.MakeReader(strings.NewReader(tc.src))
+			obj, err := rd.Read()
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			node, isPair := sx.GetPair(obj)
+			if !isPair {
+				t.Error("not a pair:", obj)
+			}
+			sz.AssignIdentifier(node)
+			if got := node.String(); got != tc.exp {
+				t.Errorf("\nexpected: %q\n but got: %q", tc.exp, got)
+			}
+		})
+	}
+}
+
+func TestDoubleAssignIdentifier(t *testing.T) {
+	heading := zsx.MakeHeading(nil, 1, sx.MakeList(zsx.MakeText("Heading")))
+	sz.AssignIdentifier(heading)
+	sHeading := heading.String()
+	sz.AssignIdentifier(heading)
+	if got := heading.String(); got != sHeading {
+		t.Errorf("double AssignIdentifier produced different result: %q vs %q", sHeading, got)
+	}
+}

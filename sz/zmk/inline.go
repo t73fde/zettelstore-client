@@ -325,9 +325,8 @@ func (cp *Parser) parseMark() (*sx.Pair, bool) {
 	} else {
 		inp.Next()
 	}
-	return zsx.MakeMark(mark, "", "", ins), true
-	// Problematisch ist, dass hier noch nicht mn.Fragment und mn.Slug gesetzt werden.
-	// Evtl. muss es ein PreMark-Symbol geben
+	attrs := parseInlineAttributes(inp)
+	return zsx.MakeMark(attrs, mark, ins), true
 }
 
 func (cp *Parser) parseLinkLikeRest() (*sx.Pair, bool) {
