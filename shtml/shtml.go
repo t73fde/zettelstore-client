@@ -279,7 +279,7 @@ func (ev *Evaluator) bindMetadata() {
 
 func (ev *Evaluator) evalMetaString(nameObj sx.Object, content string, env *Environment) sx.Object {
 	if env.err == nil {
-		if nameSym, ok := sx.GetSymbol(nameObj); ok {
+		if nameSym, isSymbol := sx.GetSymbol(nameObj); isSymbol {
 			a := make(zsx.Attributes, 2).
 				Set("name", nameSym.GetValue()).
 				Set("content", content)
@@ -887,8 +887,8 @@ func (ev *Evaluator) Eval(obj sx.Object, env *Environment) sx.Object {
 	if !isLst {
 		return obj
 	}
-	sym, found := sx.GetSymbol(lst.Car())
-	if !found {
+	sym := zsx.NodeSymbol(lst)
+	if sym == nil {
 		env.err = fmt.Errorf("symbol expected, but got %T/%v", lst.Car(), lst.Car())
 		return sx.Nil()
 	}

@@ -30,12 +30,12 @@ func (pp *postProcessor) VisitBefore(lst *sx.Pair, alst *sx.Pair) (sx.Object, bo
 	if lst == nil {
 		return nil, true
 	}
-	sym, isSym := sx.GetSymbol(lst.Car())
-	if !isSym {
+	if sym := zsx.NodeSymbol(lst); sym != nil {
+		if fn, found := symMap[sym]; found {
+			return fn(pp, lst, alst), true
+		}
+	} else {
 		panic(lst)
-	}
-	if fn, found := symMap[sym]; found {
-		return fn(pp, lst, alst), true
 	}
 	return nil, false
 }

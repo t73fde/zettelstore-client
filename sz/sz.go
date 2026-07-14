@@ -110,13 +110,13 @@ func doMakeMeta(obj sx.Object) Meta {
 }
 func makeMetaValue(mnode *sx.Pair) (MetaValue, bool) {
 	var result MetaValue
-	typeSym, isSymbol := sx.GetSymbol(mnode.Car())
-	if !isSymbol {
+	typeSym := zsx.NodeSymbol(mnode)
+	if typeSym == nil {
 		return result, false
 	}
 	next := mnode.Tail()
-	keySym, isSymbol := sx.GetSymbol(next.Car())
-	if !isSymbol {
+	keySym := zsx.NodeSymbol(next)
+	if keySym == nil {
 		return result, false
 	}
 	next = next.Tail()

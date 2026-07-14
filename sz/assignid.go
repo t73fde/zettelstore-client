@@ -40,17 +40,15 @@ type assignPhase1 struct {
 }
 
 func (v *assignPhase1) VisitItBefore(node *sx.Pair, _ *sx.Pair) bool {
-	if sym, isSymbol := sx.GetSymbol(node.Car()); isSymbol {
-		switch sym {
-		case zsx.SymHeading:
-			levelNode := node.Tail().Tail()
-			textNode := levelNode.Tail()
-			if s := text.EvaluateInlineString(textNode); s != "" {
-				v.ids.setNodeID(node, s)
-			}
-		case zsx.SymMark:
-			v.hasMark = true
+	switch sym := zsx.NodeSymbol(node); sym {
+	case zsx.SymHeading:
+		levelNode := node.Tail().Tail()
+		textNode := levelNode.Tail()
+		if s := text.EvaluateInlineString(textNode); s != "" {
+			v.ids.setNodeID(node, s)
 		}
+	case zsx.SymMark:
+		v.hasMark = true
 	}
 	return false
 }
@@ -61,7 +59,7 @@ type assignPhase2 struct {
 }
 
 func (v *assignPhase2) VisitItBefore(node *sx.Pair, _ *sx.Pair) bool {
-	if sym, isSymbol := sx.GetSymbol(node.Car()); isSymbol && sym.IsEqualSymbol(zsx.SymMark) {
+	if sym := zsx.NodeSymbol(node); sym != nil && sym.IsEqualSymbol(zsx.SymMark) {
 		stringNode := node.Tail().Tail()
 		if markString, isString := sx.GetString(stringNode.Car()); isString {
 			v.ids.setNodeID(node, markString.GetValue())
