@@ -18,6 +18,7 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/zsc/sexp"
+	"t73f.de/r/zsc/webapi"
 )
 
 func TestParseObject(t *testing.T) {
@@ -85,5 +86,49 @@ func TestParseObject(t *testing.T) {
 		t.Error("0-th must be \"a\", but got:", elems[0])
 	} else if !elems[1].IsEqual(sx.MakeList(sx.MakeString("b"), sx.MakeString("c"))) {
 		t.Error("must be nil, but got:", elems[1])
+	}
+}
+
+func TestParseEncodeRights(t *testing.T) {
+	for r := range webapi.ZettelMaxRight {
+		r &^= webapi.ZettelCanNone
+		lst := sexp.EncodeRights(r)
+		got, err := sexp.ParseRights(lst)
+		if err != nil {
+			t.Errorf("error parsing right %v: %v", r, err)
+		}
+		if r != got {
+			t.Errorf("right %v expected, but got %v", r, got)
+		}
+	}
+
+	// Some edge cases for encode
+	lst := sexp.EncodeRights(webapi.ZettelMaxRight)
+	symRights, symCreate := sx.MakeSymbol("rights"), sx.MakeSymbol("create")
+	if exp := sx.MakeList(symRights); !lst.IsEqual(exp) {
+		t.Errorf("must be %v, but got %v", exp, lst)
+	}
+	lst = sexp.EncodeRights(webapi.ZettelMaxRight + 2)
+	if exp := sx.MakeList(symRights, symCreate); !lst.IsEqual(exp) {
+		t.Errorf("must be %v, but got %v", exp, lst)
+	}
+
+	// Some edge cases for parsing
+	obj := sx.MakeList(symRights, sx.MakeSymbol("foo"))
+	got, err := sexp.ParseRights(obj)
+	if err != nil {
+		t.Errorf("parsing %v must succeed: %v", obj, err)
+	}
+	if got != 0 {
+		t.Errorf("parsing %v must result in %v, but got: %v", obj, 0, got)
+	}
+	if _, err = sexp.ParseRights(nil); err == nil {
+		t.Error("parsing nil must result in error, but got none")
+	}
+	if _, err = sexp.ParseRights(sx.MakeList(symCreate)); err == nil {
+		t.Error("parsing (create) must result in error, but got none")
+	}
+	if _, err = sexp.ParseRights(symCreate); err == nil {
+		t.Error("parsing symbol 'create' must result in error, but got none")
 	}
 }

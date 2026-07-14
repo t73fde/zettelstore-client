@@ -28,7 +28,6 @@ const (
 	ZettelCanCreate              // Current user is allowed to create a new zettel
 	ZettelCanRead                // Requesting user is allowed to read the zettel
 	ZettelCanWrite               // Requesting user is allowed to update the zettel
-	placeholdergo1               // Was assigned to rename right, which is now removed
 	ZettelCanDelete              // Requesting user is allowed to delete the zettel
 	ZettelMaxRight               // Sentinel value
 )

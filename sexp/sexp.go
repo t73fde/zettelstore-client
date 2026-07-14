@@ -23,15 +23,20 @@ import (
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxbuiltins"
 	"t73f.de/r/zsc/webapi"
+	"t73f.de/r/zsx"
 )
 
 // Often-used symbols
 var (
-	SymZettel  = sx.MakeSymbol("zettel")
-	symRights  = sx.MakeSymbol("rights")
-	symContent = sx.MakeSymbol("content")
-	SymList    = sx.MakeSymbol(sxbuiltins.List.Name)
-	symMeta    = sx.MakeSymbol("meta")
+	SymZettel      = sx.MakeSymbol("zettel")
+	symRights      = sx.MakeSymbol("rights")
+	symRightCreate = sx.MakeSymbol("create")
+	symRightRead   = sx.MakeSymbol("read")
+	symRightUpdate = sx.MakeSymbol("update")
+	symRightDelete = sx.MakeSymbol("delete")
+	symContent     = sx.MakeSymbol("content")
+	SymList        = sx.MakeSymbol(sxbuiltins.List.Name)
+	symMeta        = sx.MakeSymbol("meta")
 )
 
 // EncodeZettel transforms zettel data into a sx object.
@@ -39,7 +44,7 @@ func EncodeZettel(zettel webapi.ZettelData) sx.Object {
 	return sx.MakeList(
 		SymZettel,
 		meta2sz(zettel.Meta),
-		sx.MakeList(symRights, sx.Int64(int64(zettel.Rights))),
+		EncodeRights(zettel.Rights),
 		EncodeContent(zettel.Content, zettel.Encoding),
 	)
 }
@@ -82,8 +87,27 @@ func EncodeMetaRights(mr webapi.MetaRights) *sx.Pair {
 	return sx.MakeList(
 		SymList,
 		meta2sz(mr.Meta),
-		sx.MakeList(symRights, sx.Int64(int64(mr.Rights))),
+		EncodeRights(mr.Rights),
 	)
+}
+
+// EncodeRights translate zettel rights in a sx object.
+func EncodeRights(r webapi.ZettelRights) *sx.Pair {
+	var lb sx.ListBuilder
+	lb.Add(symRights)
+	if r&webapi.ZettelCanCreate != 0 {
+		lb.Add(symRightCreate)
+	}
+	if r&webapi.ZettelCanRead != 0 {
+		lb.Add(symRightRead)
+	}
+	if r&webapi.ZettelCanWrite != 0 {
+		lb.Add(symRightUpdate)
+	}
+	if r&webapi.ZettelCanDelete != 0 {
+		lb.Add(symRightDelete)
+	}
+	return lb.List()
 }
 
 func meta2sz(m webapi.ZettelMeta) sx.Object {
@@ -119,18 +143,27 @@ func ParseMeta(pair *sx.Pair) (webapi.ZettelMeta, error) {
 
 // ParseRights returns the rights values of the given object.
 func ParseRights(obj sx.Object) (webapi.ZettelRights, error) {
-	rVals, err := ParseList(obj, "yi")
-	if err != nil {
-		return webapi.ZettelMaxRight, err
+	lst, isPair := sx.GetPair(obj)
+	if !isPair {
+		return webapi.ZettelCanNone, fmt.Errorf("no rights list, found %v/%T", obj, obj)
 	}
-	if errSym := CheckSymbol(rVals[0], symRights); errSym != nil {
-		return webapi.ZettelMaxRight, errSym
+	if err := CheckSymbol(lst.Car(), symRights); err != nil {
+		return webapi.ZettelCanNone, err
 	}
-	i64 := int64(rVals[1].(sx.Int64))
-	if i64 < 0 && i64 >= int64(webapi.ZettelMaxRight) {
-		return webapi.ZettelMaxRight, fmt.Errorf("invalid zettel right value: %v", i64)
+	result := webapi.ZettelRights(0)
+	for node := lst.Tail(); node != nil; node = node.Tail() {
+		switch sym := zsx.NodeSymbol(node); sym {
+		case symRightCreate:
+			result |= webapi.ZettelCanCreate
+		case symRightRead:
+			result |= webapi.ZettelCanRead
+		case symRightUpdate:
+			result |= webapi.ZettelCanWrite
+		case symRightDelete:
+			result |= webapi.ZettelCanDelete
+		}
 	}
-	return webapi.ZettelRights(i64), nil
+	return result, nil
 }
 
 // EncodeContent transforms zettel content into a sx object.
