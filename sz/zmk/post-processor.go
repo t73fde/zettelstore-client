@@ -270,11 +270,12 @@ func (pp *postProcessor) visitRows(rows *sx.Pair, alst *sx.Pair) (*sx.Pair, int)
 	var pRows sx.ListBuilder
 	for node := range rows.Pairs() {
 		row := node.Head()
-		row, width := pp.visitCells(row, alst)
+		attrs, cells := zsx.GetRow(row)
+		newCells, width := pp.visitCells(cells, alst)
 		if maxWidth < width {
 			maxWidth = width
 		}
-		pRows.Add(row)
+		pRows.Add(zsx.MakeRow(attrs, newCells))
 	}
 	return pRows.List(), maxWidth
 }
@@ -302,7 +303,8 @@ func splitTableHeader(rows *sx.Pair, width int) (header, realRows *sx.Pair, alig
 	cellCount := 0
 
 	// assert: rows != nil (checked in postProcessTable)
-	for node := range rows.Head().Pairs() {
+	_, cells := zsx.GetRow(rows.Head())
+	for node := range cells.Pairs() {
 		cell := node.Head()
 		cellCount++
 		rest := cell.Tail() // attrs := rest.Head()
@@ -367,7 +369,8 @@ func alignRow(row *sx.Pair, defaultAlign []byte) {
 	}
 	var lastCellNode *sx.Pair
 	cellColumnNo := 0
-	for node := range row.Pairs() {
+	_, cells := zsx.GetRow(row)
+	for node := range cells.Pairs() {
 		lastCellNode = node
 		cell := node.Head()
 		cellColumnNo++

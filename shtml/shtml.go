@@ -544,16 +544,17 @@ func (ev *Evaluator) evalDescriptionTerm(term *sx.Pair, env *Environment) *sx.Pa
 	return result.List()
 }
 
-func (ev *Evaluator) evalTableRow(sym *sx.Symbol, pairs *sx.Pair, env *Environment) *sx.Pair {
-	if pairs == nil {
+func (ev *Evaluator) evalTableRow(sym *sx.Symbol, row *sx.Pair, env *Environment) *sx.Pair {
+	if row == nil {
 		return nil
 	}
-	var row sx.ListBuilder
-	row.Add(symTR)
-	for obj := range pairs.Values() {
-		row.Add(sx.Cons(sym, ev.Eval(obj, env)))
+	var htmlRow sx.ListBuilder
+	htmlRow.Add(symTR)
+	_, cells := zsx.GetRow(row)
+	for obj := range cells.Values() {
+		htmlRow.Add(sx.Cons(sym, ev.Eval(obj, env)))
 	}
-	return row.List()
+	return htmlRow.List()
 }
 
 func (ev *Evaluator) makeRegionFn(sym *sx.Symbol, genericToClass bool) EvalFn {

@@ -667,12 +667,12 @@ func (cp *Parser) parseRow() *sx.Pair {
 		return nil
 	}
 
-	var row sx.ListBuilder
+	var cells sx.ListBuilder
 	first := true
 	for {
 		inp.Next()
 		if cell, empty := cp.parseCell(); !empty || (cp.lastRow != nil && first) {
-			row.Add(cell)
+			cells.Add(cell)
 		}
 		switch inp.Ch {
 		case '\n', '\r':
@@ -680,16 +680,16 @@ func (cp *Parser) parseRow() *sx.Pair {
 			fallthrough
 		case input.EOS:
 			// add to table
-			lst := row.List()
+			lst := cells.List()
 			if cp.lastRow == nil {
 				if lst == nil {
 					return nil
 				}
-				cp.lastRow = sx.Cons(lst, nil)
+				cp.lastRow = sx.Cons(zsx.MakeRow(nil, lst), nil)
 				return cp.lastRow.Cons(nil).Cons(nil).Cons(zsx.SymTable)
 			}
 			if lst != nil {
-				cp.lastRow = cp.lastRow.AppendBang(lst)
+				cp.lastRow = cp.lastRow.AppendBang(zsx.MakeRow(nil, lst))
 			}
 			return nil
 		}
