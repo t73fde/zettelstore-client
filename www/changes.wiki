@@ -7,6 +7,8 @@
     too (breaking)
   * Change sz encoding of headings and marks (breaking).
   * Change sz encoding of lists: use "ITEM ()" instead of "BLOCK" (breaking)
+  * Change sz encoding of descriptions: explicit TERM, change BLOCK to DETAIL
+    and ENTRY (breaking)
   * Allow data encoding for content (minor)
 
 <a name="2_1"></a>
