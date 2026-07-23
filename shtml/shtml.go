@@ -349,9 +349,7 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		var result sx.ListBuilder
 		result.Add(symBLOCKQUOTE)
-		if attrs := EvaluateAttributes(GetAttributes(args[0], env)); attrs != nil {
-			result.Add(attrs)
-		}
+		addAttribute(&result, args[0], env)
 		isCompact := isCompactList(args[1:])
 		for _, elem := range args[1:] {
 			_, elements := zsx.GetListItem(elem.(*sx.Pair))
@@ -368,24 +366,39 @@ func (ev *Evaluator) bindBlocks() {
 		}
 		var result sx.ListBuilder
 		result.Add(symDL)
-		if attrs := EvaluateAttributes(GetAttributes(args[0], env)); attrs != nil {
-			result.Add(attrs)
-		}
+		addAttribute(&result, args[0], env)
 		for pos := 1; pos < len(args); pos++ {
-			term := ev.evalDescriptionTerm(getList(args[pos], env), env)
-			result.Add(term.Cons(symDT))
+			result.Add(ev.Eval(args[pos], env)) // Term
 			pos++
 			if pos >= len(args) {
 				break
 			}
-			ddBlock := getList(ev.Eval(args[pos], env), env)
-			if ddBlock == nil {
-				continue
+			if p, isPair := sx.GetPair(ev.Eval(args[pos], env)); isPair {
+				for entry := range p.Values() {
+					result.Add(entry)
+				}
 			}
-			for ddlst := range ddBlock.Values() {
-				dditem := getList(ddlst, env)
-				result.Add(dditem.Cons(symDD))
-			}
+		}
+		return result.List()
+	})
+	ev.bind(zsx.SymTerm, 1, func(args sx.Vector, env *Environment) sx.Object {
+		var result sx.ListBuilder
+		result.Add(symDT)
+		addAttribute(&result, args[0], env)
+		for pos := 1; pos < len(args); pos++ {
+			elem := ev.Eval(args[pos], env)
+			result.Add(elem)
+		}
+		return result.List()
+	})
+	ev.bind(zsx.SymDetail, 0, ev.evalList)
+	ev.bind(zsx.SymEntry, 1, func(args sx.Vector, env *Environment) sx.Object {
+		var result sx.ListBuilder
+		result.Add(symDD)
+		addAttribute(&result, args[0], env)
+		for pos := 1; pos < len(args); pos++ {
+			elem := ev.Eval(args[pos], env)
+			result.Add(elem)
 		}
 		return result.List()
 	})
@@ -487,9 +500,7 @@ func (ev *Evaluator) makeListFn(sym *sx.Symbol) EvalFn {
 	return func(args sx.Vector, env *Environment) sx.Object {
 		var result sx.ListBuilder
 		result.Add(sym)
-		if attrs := EvaluateAttributes(GetAttributes(args[0], env)); attrs != nil {
-			result.Add(attrs)
-		}
+		addAttribute(&result, args[0], env)
 		if len(args) > 1 {
 			isCompact := isCompactList(args[1:])
 			for _, elem := range args[1:] {
@@ -533,15 +544,6 @@ func (ev *Evaluator) makeCompactItem(isCompact bool, elements *sx.Pair, env *Env
 		return ev.Eval(zsx.MakeInlineList(elements.Head().Tail()), env)
 	}
 	return ev.Eval(zsx.MakeBlockList(elements), env)
-}
-
-func (ev *Evaluator) evalDescriptionTerm(term *sx.Pair, env *Environment) *sx.Pair {
-	var result sx.ListBuilder
-	for obj := range term.Values() {
-		elem := ev.Eval(obj, env)
-		result.Add(elem)
-	}
-	return result.List()
 }
 
 func (ev *Evaluator) evalTableRow(sym *sx.Symbol, row *sx.Pair, env *Environment) *sx.Pair {
@@ -990,6 +992,12 @@ func getInt64(val sx.Object, env *Environment) int64 {
 // the contained attributes.
 func GetAttributes(arg sx.Object, env *Environment) zsx.Attributes {
 	return zsx.GetAttributes(getList(arg, env))
+}
+
+func addAttribute(lb *sx.ListBuilder, obj sx.Object, env *Environment) {
+	if attrs := EvaluateAttributes(GetAttributes(obj, env)); attrs != nil {
+		lb.Add(attrs)
+	}
 }
 
 // GetReference returns the reference symbol and the reference value of a reference pair.

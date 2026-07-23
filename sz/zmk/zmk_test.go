@@ -88,7 +88,7 @@ func (astWalkerIt) VisitItAfter(*sx.Pair, *sx.Pair)       {}
 func TestEdges(t *testing.T) {
 	t.Parallel()
 	checkTcs(t, testCases{
-		{"\"\"\"\n; \n0{{0}}{0}\n\"\"\"", "(BLOCK (REGION-VERSE () ((DESCRIPTION () ()) (PARA (TEXT \"0\") (EMBED ((\"0\" . \"\")) (HOSTED \"0\") \"\")))))"},
+		{"\"\"\"\n; \n0{{0}}{0}\n\"\"\"", "(BLOCK (REGION-VERSE () ((DESCRIPTION () (TERM ())) (PARA (TEXT \"0\") (EMBED ((\"0\" . \"\")) (HOSTED \"0\") \"\")))))"},
 	})
 }
 
@@ -750,36 +750,45 @@ func TestDescription(t *testing.T) {
 	checkTcs(t, testCases{
 		{";", "(BLOCK (PARA (TEXT \";\")))"},
 		{"; ", "(BLOCK (PARA (TEXT \";\")))"},
-		{"; abc", "(BLOCK (DESCRIPTION () ((TEXT \"abc\"))))"},
-		{"; abc\ndef", "(BLOCK (DESCRIPTION () ((TEXT \"abc\"))) (PARA (TEXT \"def\")))"},
-		{"; abc\n def", "(BLOCK (DESCRIPTION () ((TEXT \"abc\"))) (PARA (TEXT \"def\")))"},
-		{"; abc\n  def", "(BLOCK (DESCRIPTION () ((TEXT \"abc\") (SOFT) (TEXT \"def\"))))"},
-		{"; abc\n  def\n  ghi", "(BLOCK (DESCRIPTION () ((TEXT \"abc\") (SOFT) (TEXT \"def\") (SOFT) (TEXT \"ghi\"))))"},
+		{"; abc", "(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\"))))"},
+		{"; abc\ndef", "(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\"))) (PARA (TEXT \"def\")))"},
+		{"; abc\n def", "(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\"))) (PARA (TEXT \"def\")))"},
+		{"; abc\n  def", "(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\") (SOFT) (TEXT \"def\"))))"},
+		{"; abc\n  def\n  ghi", "(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\") (SOFT) (TEXT \"def\") (SOFT) (TEXT \"ghi\"))))"},
 		{":", "(BLOCK (PARA (TEXT \":\")))"},
 		{": ", "(BLOCK (PARA (TEXT \":\")))"},
 		{": abc", "(BLOCK (PARA (TEXT \": abc\")))"},
-		{"; abc\n: def", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))))))"},
-		{"; abc\n: def\nghi", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))))) (PARA (TEXT \"ghi\")))"},
-		{"; abc\n: def\n ghi", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))))) (PARA (TEXT \"ghi\")))"},
-		{"; abc\n: def\n  ghi", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\") (SOFT) (TEXT \"ghi\"))))))"},
-		{"; abc\n: def\n\n  ghi", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\")) (PARA (TEXT \"ghi\"))))))"},
-		{"; abc\n: def\n\n  ghi\n\n  jkl", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\")) (PARA (TEXT \"ghi\")) (PARA (TEXT \"jkl\"))))))"},
-		{"; abc\n:", "(BLOCK (DESCRIPTION () ((TEXT \"abc\"))) (PARA (TEXT \":\")))"},
-		{"; abc\n: def\n: ghi", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))) (BLOCK (PARA (TEXT \"ghi\"))))))"},
-		{"; abc\n: def\n; ghi\n: jkl", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\")))) ((TEXT \"ghi\")) (BLOCK (BLOCK (PARA (TEXT \"jkl\"))))))"},
+		{"; abc\n: def",
+			"(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\")) (DETAIL (ENTRY () (PARA (TEXT \"def\"))))))"},
+		{"; abc\n: def\nghi",
+			"(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\")) (DETAIL (ENTRY () (PARA (TEXT \"def\"))))) (PARA (TEXT \"ghi\")))"},
+		{"; abc\n: def\n ghi",
+			"(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\")) (DETAIL (ENTRY () (PARA (TEXT \"def\"))))) (PARA (TEXT \"ghi\")))"},
+		{"; abc\n: def\n  ghi",
+			"(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\")) (DETAIL (ENTRY () (PARA (TEXT \"def\") (SOFT) (TEXT \"ghi\"))))))"},
+		{"; abc\n: def\n\n  ghi",
+			"(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\")) (DETAIL (ENTRY () (PARA (TEXT \"def\")) (PARA (TEXT \"ghi\"))))))"},
+		{"; abc\n: def\n\n  ghi\n\n  jkl",
+			"(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\")) (DETAIL (ENTRY () (PARA (TEXT \"def\")) (PARA (TEXT \"ghi\")) (PARA (TEXT \"jkl\"))))))"},
+		{"; abc\n:", "(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\"))) (PARA (TEXT \":\")))"},
+		{"; abc\n: def\n: ghi",
+			"(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\")) (DETAIL (ENTRY () (PARA (TEXT \"def\"))) (ENTRY () (PARA (TEXT \"ghi\"))))))"},
+		{"; abc\n: def\n; ghi\n: jkl",
+			"(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\")) (DETAIL (ENTRY () (PARA (TEXT \"def\")))) (TERM () (TEXT \"ghi\")) (DETAIL (ENTRY () (PARA (TEXT \"jkl\"))))))"},
 
 		// Empty description
-		{"; abc\n: ", "(BLOCK (DESCRIPTION () ((TEXT \"abc\"))) (PARA (TEXT \":\")))"},
-		{"; abc\n; def\n: ghi", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK) ((TEXT \"def\")) (BLOCK (BLOCK (PARA (TEXT \"ghi\"))))))"},
-		// Empty continuation of definition
-		{"; abc\n: def\n  ", "(BLOCK (DESCRIPTION () ((TEXT \"abc\")) (BLOCK (BLOCK (PARA (TEXT \"def\"))))))"},
+		{"; abc\n: ", "(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\"))) (PARA (TEXT \":\")))"},
+		{"; abc\n; def\n: ghi",
+			"(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\")) (DETAIL) (TERM () (TEXT \"def\")) (DETAIL (ENTRY () (PARA (TEXT \"ghi\"))))))"},
+		// Empty continuation of detail
+		{"; abc\n: def\n  ", "(BLOCK (DESCRIPTION () (TERM () (TEXT \"abc\")) (DETAIL (ENTRY () (PARA (TEXT \"def\"))))))"},
 
 		{src: "; T1\n: D1\n\n  D2\n: T2\n  T3",
-			exp: `(BLOCK (DESCRIPTION () ((TEXT "T1")) (BLOCK (BLOCK (PARA (TEXT "D1")) (PARA (TEXT "D2"))) (BLOCK (PARA (TEXT "T2") (SOFT) (TEXT "T3"))))))`},
+			exp: `(BLOCK (DESCRIPTION () (TERM () (TEXT "T1")) (DETAIL (ENTRY () (PARA (TEXT "D1")) (PARA (TEXT "D2"))) (ENTRY () (PARA (TEXT "T2") (SOFT) (TEXT "T3"))))))`},
 		{src: "; T1\n: D1\n\n  D2\n\n  D3\n: T2\n  T3",
-			exp: `(BLOCK (DESCRIPTION () ((TEXT "T1")) (BLOCK (BLOCK (PARA (TEXT "D1")) (PARA (TEXT "D2")) (PARA (TEXT "D3"))) (BLOCK (PARA (TEXT "T2") (SOFT) (TEXT "T3"))))))`},
+			exp: `(BLOCK (DESCRIPTION () (TERM () (TEXT "T1")) (DETAIL (ENTRY () (PARA (TEXT "D1")) (PARA (TEXT "D2")) (PARA (TEXT "D3"))) (ENTRY () (PARA (TEXT "T2") (SOFT) (TEXT "T3"))))))`},
 		{src: "; Word\n: Definition\n\n  Para\n  Line",
-			exp: `(BLOCK (DESCRIPTION () ((TEXT "Word")) (BLOCK (BLOCK (PARA (TEXT "Definition")) (PARA (TEXT "Para") (SOFT) (TEXT "Line"))))))`},
+			exp: `(BLOCK (DESCRIPTION () (TERM () (TEXT "Word")) (DETAIL (ENTRY () (PARA (TEXT "Definition")) (PARA (TEXT "Para") (SOFT) (TEXT "Line"))))))`},
 	})
 }
 

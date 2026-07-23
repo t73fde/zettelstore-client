@@ -229,13 +229,13 @@ func postProcessListItem(pp *postProcessor, li *sx.Pair, alst *sx.Pair) *sx.Pair
 }
 
 func postProcessDescription(pp *postProcessor, dl *sx.Pair, alst *sx.Pair) *sx.Pair {
-	attrs := dl.Tail().Head()
+	attrs, rest := zsx.GetDescription(dl)
 	var dList sx.ListBuilder
 	isTerm := false
-	for node := range dl.Tail().Tail().Pairs() {
+	for node := range rest.Pairs() {
 		isTerm = !isTerm
 		if isTerm {
-			dList.Add(pp.visitInlines(node.Head(), alst))
+			dList.Add(zsx.MakeTerm(nil, pp.visitInlines(node.Head(), alst)))
 		} else {
 			dList.Add(zsx.Walk(pp, node.Head(), alst.Cons(sx.Cons(symNoBlock, nil))))
 		}

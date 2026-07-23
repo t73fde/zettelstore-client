@@ -74,7 +74,7 @@ func (cp *Parser) parseBlock0(lastPara *sx.Pair) (res *sx.Pair, cont bool) {
 		case ';':
 			cp.lists = nil
 			cp.lastRow = nil
-			bn, success = cp.parseDefTerm()
+			bn, success = cp.parseDescrTerm()
 		case ' ':
 			cp.lastRow = nil
 			bn, success = nil, cp.parseIndent()
@@ -163,7 +163,7 @@ func (cp *Parser) parseColon() (*sx.Pair, bool) {
 		cp.clearStacked()
 		return cp.parseRegion()
 	}
-	return cp.parseDefDescr()
+	return cp.parseDescrDetail()
 }
 
 // parsePara parses paragraphed inline material as a sx List.
@@ -449,8 +449,10 @@ func (cp *Parser) cleanupParsedNestedList(newLnCount int) *sx.Pair {
 	return nil
 }
 
-// parseDefTerm parses a term of a definition list.
-func (cp *Parser) parseDefTerm() (res *sx.Pair, success bool) {
+// parseDescrTerm parses a term of a description list.
+func (cp *Parser) parseDescrTerm() (res *sx.Pair, success bool) {
+	// Implementation detail: in this function, no zsx.SymTerm is placed in
+	// front of the term list. This is done in the post-processor.
 	inp := cp.inp
 	if inp.Next() != ' ' {
 		return nil, false
@@ -468,20 +470,20 @@ func (cp *Parser) parseDefTerm() (res *sx.Pair, success bool) {
 		in := cp.parseInline()
 		if in == nil {
 			if pos%2 != 0 {
-				// lastPair is either the empty description list or the last block of definitions
+				// lastPair is either the empty description list or the last block of details
 				return nil, false
 			}
-			// lastPair is the definition term
+			// lastPair is the description term
 			return res, true
 		}
 		if pos%2 != 0 {
-			// lastPair is either the empty description list or the last block of definitions
+			// lastPair is either the empty description list or the last block of details
 			lastPair = lastPair.AppendBang(sx.Cons(in, nil))
 			pos++
 		} else if first {
 			// Previous term had no description
 			lastPair = lastPair.
-				AppendBang(zsx.MakeBlock()).
+				AppendBang(sx.Cons(zsx.SymDetail, nil)).
 				AppendBang(sx.Cons(in, nil))
 			pos += 2
 		} else {
@@ -494,8 +496,8 @@ func (cp *Parser) parseDefTerm() (res *sx.Pair, success bool) {
 	}
 }
 
-// parseDefDescr parses a description of a definition list.
-func (cp *Parser) parseDefDescr() (res *sx.Pair, success bool) {
+// parseDescrDetail parses the details part of a description list.
+func (cp *Parser) parseDescrDetail() (res *sx.Pair, success bool) {
 	inp := cp.inp
 	if inp.Next() != ' ' {
 		return nil, false
@@ -514,18 +516,18 @@ func (cp *Parser) parseDefDescr() (res *sx.Pair, success bool) {
 		return nil, false
 	}
 
-	newDef := zsx.MakeBlock(zsx.MakeParaList(pn))
+	newEntry := zsx.MakeEntry(nil, sx.Cons(zsx.MakeParaList(pn), nil))
 	if lpPos%2 == 0 {
 		// Just a term, but no definitions
-		lastPair.AppendBang(zsx.MakeBlock(newDef))
+		lastPair.AppendBang(sx.MakeList(zsx.SymDetail, newEntry))
 	} else {
 		// lastPara points a the last definition
 		lp := lastPair.Head().LastPair()
 		if symSeparator.IsEqual(lp.Head().Car()) {
-			// Separator now not needed any more. Replace it with newDef
-			lp.SetCar(newDef)
+			// Separator now not needed any more. Replace it with newEntry
+			lp.SetCar(newEntry)
 		} else {
-			lp.AppendBang(newDef)
+			lp.AppendBang(newEntry)
 		}
 	}
 	return nil, true
