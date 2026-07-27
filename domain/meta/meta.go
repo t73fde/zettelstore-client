@@ -182,7 +182,7 @@ func init() {
 	registerKey(KeyAuthor, TypeString, usageUser, "")
 	registerKey(KeyBack, TypeIDSet, usageProperty, "")
 	registerKey(KeyBackward, TypeIDSet, usageProperty, "")
-	registerKey(KeyBoxName, TypeString, usageProperty, "")
+	registerKey(KeyBoxName, TypeWord, usageProperty, "")
 	registerKey(KeyBoxNumber, TypeNumber, usageProperty, "")
 	registerKey(KeyCopyright, TypeString, usageUser, "")
 	registerKey(KeyCreated, TypeTimestamp, usageComputed, "")
