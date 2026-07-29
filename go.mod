@@ -10,4 +10,4 @@ require (
 	t73f.de/r/zsx v0.0.0-20260723111354-fc39b16648ed
 )
 
-require golang.org/x/text v0.39.0 // indirect
+require golang.org/x/text v0.40.0 // indirect
