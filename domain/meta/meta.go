@@ -134,7 +134,6 @@ const (
 	KeyBack          = "back"
 	KeyBackward      = "backward"
 	KeyBoxName       = "box-name"
-	KeyBoxNumber     = "box-number"
 	KeyCopyright     = "copyright"
 	KeyCreated       = "created"
 	KeyCredential    = "credential"
@@ -183,7 +182,6 @@ func init() {
 	registerKey(KeyBack, TypeIDSet, usageProperty, "")
 	registerKey(KeyBackward, TypeIDSet, usageProperty, "")
 	registerKey(KeyBoxName, TypeWord, usageProperty, "")
-	registerKey(KeyBoxNumber, TypeNumber, usageProperty, "")
 	registerKey(KeyCopyright, TypeString, usageUser, "")
 	registerKey(KeyCreated, TypeTimestamp, usageComputed, "")
 	registerKey(KeyCredential, TypeCredential, usageUser, "")
