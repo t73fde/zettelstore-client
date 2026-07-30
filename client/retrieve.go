@@ -23,6 +23,7 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxreader"
+	"t73f.de/r/zero/semver"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/sexp"
 	"t73f.de/r/zsc/webapi"
@@ -452,51 +453,29 @@ func (c *Client) GetReferences(ctx context.Context, zid id.Zid, part string) (ur
 }
 
 // GetVersionInfo returns version information of the Zettelstore that is used.
-func (c *Client) GetVersionInfo(ctx context.Context) (VersionInfo, error) {
+func (c *Client) GetVersionInfo(ctx context.Context) (semver.SemVer, error) {
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, c.NewURLBuilder('x'), nil)
 	if err != nil {
-		return VersionInfo{}, err
+		return semver.SemVer{}, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
-		return VersionInfo{}, statusToError(resp)
+		return semver.SemVer{}, statusToError(resp)
 	}
 	rdr := sxreader.MakeReader(resp.Body)
 	obj, err := rdr.Read()
 	if err == nil {
 		if vals, errVals := sexp.ParseList(obj, "iiiss"); errVals == nil {
-			return VersionInfo{
-				Major: int(vals[0].(sx.Int64)),
-				Minor: int(vals[1].(sx.Int64)),
-				Patch: int(vals[2].(sx.Int64)),
-				Info:  vals[3].(sx.String).GetValue(),
-				Hash:  vals[4].(sx.String).GetValue(),
+			return semver.SemVer{
+				Major:      int(vals[0].(sx.Int64)),
+				Minor:      int(vals[1].(sx.Int64)),
+				Patch:      int(vals[2].(sx.Int64)),
+				PreRelease: vals[3].(sx.String).GetValue(),
+				Build:      vals[4].(sx.String).GetValue(),
 			}, nil
 		}
 	}
-	return VersionInfo{}, err
-}
-
-// VersionInfo contains version information of the associated Zettelstore.
-//
-//   - Major is an integer containing the major software version of Zettelstore.
-//     If its value is greater than zero, different major versions are not compatible.
-//   - Minor is an integer specifying the minor software version for the given major version.
-//     If the major version is greater than zero, minor versions are backward compatible.
-//   - Patch is an integer that specifies a change within a minor version.
-//     A version that have equal major and minor versions and differ in patch version are
-//     always compatible, even if the major version equals zero.
-//   - Info contains some optional text, i.e. it may be the empty string. Typically, Info
-//     specifies a developer version by containing the string "dev".
-//   - Hash contains the value of the source code version stored in the Zettelstore repository.
-//     You can use it to reproduce bugs that occured, when source code was changed since
-//     its introduction.
-type VersionInfo struct {
-	Major int
-	Minor int
-	Patch int
-	Info  string
-	Hash  string
+	return semver.SemVer{}, err
 }
 
 // GetApplicationZid returns the zettel identifier used to configure a client
