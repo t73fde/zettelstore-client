@@ -52,7 +52,6 @@ func NewFromInput(zid id.Zid, inp *input.Input) *Meta {
 		if inp.Ch == '-' && inp.PeekN(0) == '-' && inp.PeekN(1) == '-' {
 			skipToEOL(inp)
 			inp.EatEOL()
-			meta.YamlSep = true
 			return meta
 		}
 	}
