@@ -405,7 +405,7 @@ func (m *Meta) Equal(o *Meta, allowComputed bool) bool {
 	}
 	tested := set.New[string]()
 	for k, v := range m.pairs {
-		tested.Add(k)
+		tested.Insert(k)
 		if !equalValue(k, v, o, allowComputed) {
 			return false
 		}

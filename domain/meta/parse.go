@@ -105,7 +105,7 @@ type predValidElem func(string) bool
 func addToSet(set *set.Set[string], it iter.Seq[string], useElem predValidElem) {
 	for e := range it {
 		if len(e) > 0 && useElem(e) {
-			set.Add(e)
+			set.Insert(e)
 		}
 	}
 }
@@ -116,12 +116,12 @@ func addSet(m *Meta, key string, val Value, useElem predValidElem) {
 
 	s := set.New[string]()
 	addToSet(s, newElems, useElem)
-	if s.Length() == 0 {
+	if s.Len() == 0 {
 		// Nothing to add. Maybe because of rejected elements.
 		return
 	}
 	addToSet(s, oldElems, useElem)
-	m.SetList(key, slices.Sorted(s.Values()))
+	m.SetList(key, slices.Sorted(s.All()))
 }
 
 func addData(m *Meta, k string, v Value) {
