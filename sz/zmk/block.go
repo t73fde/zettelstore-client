@@ -476,17 +476,18 @@ func (cp *Parser) parseDescrTerm() (res *sx.Pair, success bool) {
 			// lastPair is the description term
 			return res, true
 		}
-		if pos%2 != 0 {
+		switch {
+		case pos%2 != 0:
 			// lastPair is either the empty description list or the last block of details
 			lastPair = lastPair.AppendBang(sx.Cons(in, nil))
 			pos++
-		} else if first {
+		case first:
 			// Previous term had no description
 			lastPair = lastPair.
 				AppendBang(sx.Cons(zsx.SymDetail, nil)).
 				AppendBang(sx.Cons(in, nil))
 			pos += 2
-		} else {
+		default:
 			// lastPair is the term part and we need to append the inline list just read
 			lastPair.Head().LastPair().AppendBang(in)
 		}

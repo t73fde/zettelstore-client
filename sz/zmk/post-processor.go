@@ -500,22 +500,24 @@ func (pp *postProcessor) visitInlines(lst *sx.Pair, alst *sx.Pair) *sx.Pair {
 
 	// 2nd phase: remove (SOFT), (HARD) at the end, remove trailing spaces in (TEXT "...")
 	lastPos := len(vector) - 1
+loop:
 	for lastPos >= 0 {
 		elem := vector[lastPos]
 		elemSym := elem.Car()
-		if zsx.SymText.IsEqual(elemSym) {
+		switch {
+		case zsx.SymText.IsEqual(elemSym):
 			elemTail := elem.Tail()
 			elemText := elemTail.Car().(sx.String).GetValue()
 			newText := removeTrailingSpaces(elemText)
 			if newText != "" {
 				elemTail.SetCar(sx.MakeString(newText))
-				break
+				break loop
 			}
 			lastPos--
-		} else if isBreakSym(elemSym) {
+		case isBreakSym(elemSym):
 			lastPos--
-		} else {
-			break
+		default:
+			break loop
 		}
 	}
 	if lastPos < 0 {
