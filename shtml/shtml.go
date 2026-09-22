@@ -320,9 +320,7 @@ func (ev *Evaluator) bindBlocks() {
 		a := GetAttributes(args[0], env)
 		if headingID, found := a[zsx.SymSpecialID.GetValue()]; found {
 			delete(a, zsx.SymSpecialID.GetValue())
-			if headingID != "" {
-				a[SymAttrID.GetValue()] = headingID + ev.unique
-			}
+			a[SymAttrID.GetValue()] = headingID + ev.unique
 		}
 
 		if result, _ := ev.EvaluateList(args[2:], env); result != nil {
@@ -690,9 +688,6 @@ func (ev *Evaluator) bindInlines() {
 			a := GetAttributes(args[0], env)
 			if markID, found := a[zsx.SymSpecialID.GetValue()]; found {
 				delete(a, zsx.SymSpecialID.GetValue())
-				if markID == "" {
-					return result.Cons(EvaluateAttributes(a)).Cons(SymSPAN)
-				}
 				a[SymAttrID.GetValue()] = markID + ev.unique
 			}
 			return result.Cons(EvaluateAttributes(a)).Cons(SymA)

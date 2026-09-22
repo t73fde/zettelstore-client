@@ -45,7 +45,7 @@ func (v *assignPhase1) VisitItBefore(node *sx.Pair, _ *sx.Pair) bool {
 		levelNode := node.Tail().Tail()
 		textNode := levelNode.Tail()
 		if s := text.EvaluateInlineString(textNode); s != "" {
-			v.ids.setNodeID(node, s)
+			v.ids.setNodeID(node, s, "heading")
 		}
 	case zsx.SymMark:
 		v.hasMark = true
@@ -62,7 +62,7 @@ func (v *assignPhase2) VisitItBefore(node *sx.Pair, _ *sx.Pair) bool {
 	if sym := zsx.NodeSymbol(node); sym != nil && sym.IsEqualSymbol(zsx.SymMark) {
 		stringNode := node.Tail().Tail()
 		if markString, isString := sx.GetString(stringNode.Car()); isString {
-			v.ids.setNodeID(node, markString.GetValue())
+			v.ids.setNodeID(node, markString.GetValue(), "mark")
 		}
 	}
 	return false
@@ -71,9 +71,12 @@ func (v *assignPhase2) VisitItAfter(*sx.Pair, *sx.Pair) {}
 
 type idsNode map[string]*sx.Pair
 
-func (ids idsNode) setNodeID(node *sx.Pair, text string) {
+func (ids idsNode) setNodeID(node *sx.Pair, text, defaultSlug string) {
 	attrsNode := node.Tail()
 	slugText := zerostrings.Slugify(text)
+	if slugText == "" {
+		slugText = defaultSlug
+	}
 	fragText := ids.addIdentifier(slugText, node)
 	attrs := attrsNode.Head().RemoveAssoc(zsx.SymSpecialID)
 	attrs = sx.Cons(sx.Cons(zsx.SymSpecialID, sx.MakeString(fragText)), attrs)

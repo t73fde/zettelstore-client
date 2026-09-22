@@ -72,12 +72,20 @@ var evalTestCases = []evalTestCase{
 
 	{name: "heading-without-id",
 		sz:  `(BLOCK (HEADING () 1 (TEXT "???")))`,
-		exp: `((h4 "???"))`,
+		exp: `((h4 ((id . "heading")) "???"))`,
+	},
+	{name: "two-headings-without-id",
+		sz:  `(BLOCK (HEADING () 1 (TEXT "???")) (HEADING () 2 (TEXT "!!!")))`,
+		exp: `((h4 ((id . "heading")) "???") (h5 ((id . "heading-1")) "!!!"))`,
 	},
 
 	{name: "mark-invalid-id",
 		sz:  `(BLOCK (PARA (MARK () "!!!" (TEXT "WTF!"))))`,
-		exp: `((p (span () "WTF!")))`,
+		exp: `((p (a ((id . "mark")) "WTF!")))`,
+	},
+	{name: "two-marks-invalid-id",
+		sz:  `(BLOCK (PARA (MARK () "!!!" (TEXT "WTF!")) (MARK () "")))`,
+		exp: `((p (a ((id . "mark")) "WTF!") (a ((id . "mark-1")))))`,
 	},
 
 	{name: "nothing",
