@@ -318,9 +318,11 @@ func (ev *Evaluator) bindBlocks() {
 		headingSymbol := sxhtml.MakeSymbol("h" + sLevel)
 
 		a := GetAttributes(args[0], env)
-		if headingID, found := a[zsx.SymSpecialID.GetValue()]; found && headingID != "" {
+		if headingID, found := a[zsx.SymSpecialID.GetValue()]; found {
 			delete(a, zsx.SymSpecialID.GetValue())
-			a[SymAttrID.GetValue()] = headingID + ev.unique
+			if headingID != "" {
+				a[SymAttrID.GetValue()] = headingID + ev.unique
+			}
 		}
 
 		if result, _ := ev.EvaluateList(args[2:], env); result != nil {
@@ -686,8 +688,11 @@ func (ev *Evaluator) bindInlines() {
 		result := ev.evalSlice(args[2:], env)
 		if !ev.noLinks {
 			a := GetAttributes(args[0], env)
-			if markID, found := a[zsx.SymSpecialID.GetValue()]; found && markID != "" {
+			if markID, found := a[zsx.SymSpecialID.GetValue()]; found {
 				delete(a, zsx.SymSpecialID.GetValue())
+				if markID == "" {
+					return result.Cons(EvaluateAttributes(a)).Cons(SymSPAN)
+				}
 				a[SymAttrID.GetValue()] = markID + ev.unique
 			}
 			return result.Cons(EvaluateAttributes(a)).Cons(SymA)

@@ -75,9 +75,9 @@ var evalTestCases = []evalTestCase{
 		exp: `((h4 "???"))`,
 	},
 
-	{name: "mark-without-id",
+	{name: "mark-invalid-id",
 		sz:  `(BLOCK (PARA (MARK () "!!!" (TEXT "WTF!"))))`,
-		exp: `((p (a ((id . "!!!")) "WTF!")))`,
+		exp: `((p (span () "WTF!")))`,
 	},
 
 	{name: "nothing",
