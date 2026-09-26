@@ -5,29 +5,29 @@
 
 <a name="3_0"></a>
 <h2>Changes for Version 3.0.0 (20260925)</h2>
-  * New format for list query with data encoding (breaking)
-  * Change data encoding of zettel data: content part now containg encoding
-    too (breaking)
-  * Change sz encoding of headings and marks (breaking).
-  * Change sz encoding of lists: use "ITEM ()" instead of "BLOCK" (breaking)
-  * Change sz encoding of descriptions: explicit TERM, change BLOCK to DETAIL
-    and ENTRY (breaking)
-  * Change sz encoding of tables: add explicit "ROW"
-  * Delete metadata key "box-number", add key "box-name" (breaking)
-  * Encoding of access rights is now based on symbol list (breaking)
-  * Remove parser for syntax "none" (breaking)
-  * Replace version info with zero/semver (breaking)
-  * Remove support for storing YAML-separated metadata (breaking)
-  * Allow data encoding for content (minor)
+  *  New format for list query with data encoding (breaking)
+  *  Change data encoding of zettel data: content part now containg encoding
+     too (breaking)
+  *  Change sz encoding of headings and marks (breaking).
+  *  Change sz encoding of lists: use "ITEM ()" instead of "BLOCK" (breaking)
+  *  Change sz encoding of descriptions: explicit TERM, change BLOCK to DETAIL
+     and ENTRY (breaking)
+  *  Change sz encoding of tables: add explicit "ROW"
+  *  Delete metadata key "box-number", add key "box-name" (breaking)
+  *  Encoding of access rights is now based on symbol list (breaking)
+  *  Remove parser for syntax "none" (breaking)
+  *  Replace version info with zero/semver (breaking)
+  *  Remove support for storing YAML-separated metadata (breaking)
+  *  Allow data encoding for content (minor)
 
 <a name="2_1"></a>
 <h2>Changes for Version 2.1.0 (2026-07-07)</h2>
-  * Rename packages: api -> webapi
-  * Add constants for new zettel ids
-  * Add metadata keys predecessor and successor; rename superior ->
-    superordinate
-  * Add syntax value js
-  * Fix some zmk parsing errors
+  *  Rename packages: api -> webapi
+  *  Add constants for new zettel ids
+  *  Add metadata keys predecessor and successor; rename superior ->
+     superordinate
+  *  Add syntax value js
+  *  Fix some zmk parsing errors
 
 <a name="2_0"></a>
 <h2>Changes for Version 2.0.0 (2026-03-06)</h2>
