@@ -121,7 +121,7 @@ func addSet(m *Meta, key string, val Value, useElem predValidElem) {
 		return
 	}
 	addToSet(s, oldElems, useElem)
-	m.SetList(key, slices.Sorted(s.All()))
+	m.SetList(key, slices.Sorted(s.Values()))
 }
 
 func addData(m *Meta, k string, v Value) {
