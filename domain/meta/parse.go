@@ -115,12 +115,12 @@ func addSet(m *Meta, key string, val Value, useElem predValidElem) {
 	oldElems := m.GetFields(key)
 
 	s := set.New[string]()
-	addToSet(s, newElems, useElem)
-	if s.Len() == 0 {
+	addToSet(&s, newElems, useElem)
+	if s.Count() == 0 {
 		// Nothing to add. Maybe because of rejected elements.
 		return
 	}
-	addToSet(s, oldElems, useElem)
+	addToSet(&s, oldElems, useElem)
 	m.SetList(key, slices.Sorted(s.Values()))
 }
 
