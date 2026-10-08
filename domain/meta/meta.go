@@ -106,14 +106,15 @@ func GetDescription(name string) DescriptionKey {
 	return DescriptionKey{Type: Type(name)}
 }
 
-// GetSortedKeyDescriptions delivers all metadata key descriptions as a slice, sorted by name.
-func GetSortedKeyDescriptions() []*DescriptionKey {
-	keys := slices.Sorted(maps.Keys(registeredKeys))
-	result := make([]*DescriptionKey, 0, len(keys))
-	for _, n := range keys {
-		result = append(result, registeredKeys[n])
+// KeyDescriptionSeq delivers all metadata key descriptions as a sequence.
+func KeyDescriptionSeq() iter.Seq[DescriptionKey] {
+	return func(yield func(DescriptionKey) bool) {
+		for _, dk := range registeredKeys {
+			if !yield(*dk) {
+				return
+			}
+		}
 	}
-	return result
 }
 
 // Key is the type of metadata keys.
