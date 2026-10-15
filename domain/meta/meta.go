@@ -389,6 +389,11 @@ func (m *Meta) restKeys(addKeyPred func(Key) bool) iter.Seq2[Key, Value] {
 	}
 }
 
+// Values returns an iterator over all key/value pairs, except the zettel
+// identifier and computed values. In contrast to `All` this iterator
+// returns key/value pairs in an unspecified, mostly random order.
+func (m *Meta) Values() iter.Seq2[Key, Value] { return maps.All(m.pairs) }
+
 func notComputedKey(key string) bool { return !IsComputed(key) }
 func anyKey(string) bool             { return true }
 
