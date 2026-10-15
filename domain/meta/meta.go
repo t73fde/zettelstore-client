@@ -231,6 +231,9 @@ func NewWithData(zid id.Zid, data map[string]string) *Meta {
 	return &Meta{Zid: zid, pairs: pairs}
 }
 
+// Count returns the number of metadata key/value pairs.
+func (m *Meta) Count() int { return len(m.pairs) }
+
 // ByteSize returns the number of bytes stored for the metadata.
 func (m *Meta) ByteSize() int {
 	if m == nil {
