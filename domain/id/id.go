@@ -112,6 +112,11 @@ const (
 
 	// Default Home Zettel
 	ZidDefaultHome = Zid(10000000000)
+
+	// Minimum zettel identifier of zettel to be indexed. Zettel with identifiers
+	// smaller than this value will not have its content be included into the
+	// search index.
+	ZidMinIndex = Zid(999999900)
 )
 
 // ParseUint interprets a string as a possible zettel identifier
