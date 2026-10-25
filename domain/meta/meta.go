@@ -222,12 +222,9 @@ func New(zid id.Zid) *Meta {
 	return &Meta{Zid: zid, pairs: make(map[Key]Value, 5)}
 }
 
-// NewWithData creates metadata object with given data.
-func NewWithData(zid id.Zid, data map[string]string) *Meta {
-	pairs := make(map[Key]Value, len(data))
-	for k, v := range data {
-		pairs[k] = Value(v)
-	}
+// NewWithMap combines the parameters into a metadata. Ownership of pairs is
+// transferred to the metadata: the caller must not use pairs afterwards.
+func NewWithMap(zid id.Zid, pairs map[Key]Value) *Meta {
 	return &Meta{Zid: zid, pairs: pairs}
 }
 
