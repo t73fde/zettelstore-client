@@ -143,6 +143,7 @@ const (
 	KeyFolge         = "folge"
 	KeyFolgeRole     = "folge-role"
 	KeyForward       = "forward"
+	KeyIndexState    = "index-state"
 	KeyLang          = "lang"
 	KeyLicense       = "license"
 	KeyModified      = "modified"
@@ -190,6 +191,7 @@ func init() {
 	registerKey(KeyExpire, TypeTimestamp, usageUser, "")
 	registerKey(KeyFolgeRole, TypeWord, usageUser, "")
 	registerKey(KeyForward, TypeIDSet, usageProperty, "")
+	registerKey(KeyIndexState, TypeWord, usageProperty, "")
 	registerKey(KeyLang, TypeWord, usageUser, "")
 	registerKey(KeyLicense, TypeEmpty, usageUser, "")
 	registerKey(KeyModified, TypeTimestamp, usageComputed, "")
