@@ -26,8 +26,9 @@ import (
 
 // DescriptionType is a description of a specific key type.
 type DescriptionType struct {
-	Name  string
-	IsSet bool
+	Name     string
+	IsSet    bool // multiple values in the metadata value
+	MatchHas bool // "has" operation translates to "match" (false: to "equal")
 }
 
 // String returns the string representation of the given type
@@ -35,11 +36,11 @@ func (t DescriptionType) String() string { return t.Name }
 
 var registeredTypes = make(map[string]*DescriptionType)
 
-func registerType(name string, isSet bool) *DescriptionType {
+func registerType(name string, isSet, matchHas bool) *DescriptionType {
 	if _, ok := registeredTypes[name]; ok {
 		panic("Type '" + name + "' already registered")
 	}
-	t := &DescriptionType{name, isSet}
+	t := &DescriptionType{name, isSet, matchHas}
 	registeredTypes[name] = t
 	return t
 }
@@ -64,20 +65,20 @@ const (
 
 // Supported key types.
 var (
-	TypeCredential = registerType(MetaCredential, false)
-	TypeEmpty      = registerType(MetaEmpty, false)
-	TypeID         = registerType(MetaID, false)
-	TypeIDSet      = registerType(MetaIDSet, true)
-	TypeNumber     = registerType(MetaNumber, false)
-	TypeString     = registerType(MetaString, false)
-	TypeTagSet     = registerType(MetaTagSet, true)
-	TypeTimestamp  = registerType(MetaTimestamp, false)
-	TypeURL        = registerType(MetaURL, false)
-	TypeWord       = registerType(MetaWord, false)
+	TypeCredential = registerType(MetaCredential, false, false)
+	TypeEmpty      = registerType(MetaEmpty, false, true)
+	TypeID         = registerType(MetaID, false, false)
+	TypeIDSet      = registerType(MetaIDSet, true, false)
+	TypeNumber     = registerType(MetaNumber, false, false)
+	TypeString     = registerType(MetaString, false, true)
+	TypeTagSet     = registerType(MetaTagSet, true, false)
+	TypeTimestamp  = registerType(MetaTimestamp, false, false)
+	TypeURL        = registerType(MetaURL, false, true)
+	TypeWord       = registerType(MetaWord, false, false)
 )
 
 // Type returns a type hint for the given key. If no type hint is specified,
-// TypeUnknown is returned.
+// TypeEmpty is returned.
 func (*Meta) Type(key string) *DescriptionType {
 	return Type(key)
 }
