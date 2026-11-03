@@ -119,7 +119,7 @@ func (err *Error) Error() string {
 }
 
 func statusToError(resp *http.Response) error {
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 4096))
 	if err != nil {
 		body = nil
 	}
