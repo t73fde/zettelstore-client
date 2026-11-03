@@ -478,6 +478,26 @@ func (c *Client) GetVersionInfo(ctx context.Context) (semver.SemVer, error) {
 	return semver.SemVer{}, err
 }
 
+// IsReady returns true if Zettelstore is ready to use.
+func (c *Client) IsReady(ctx context.Context) (bool, error) {
+	ub := c.NewURLBuilder('x').AppendQuery("ready")
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
+	if err != nil {
+		return false, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	switch resp.StatusCode {
+	case http.StatusOK, http.StatusNoContent:
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
+		return true, nil
+	case http.StatusServiceUnavailable:
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
+		return false, nil
+	default:
+		return false, statusToError(resp)
+	}
+}
+
 // GetApplicationZid returns the zettel identifier used to configure a client
 // application with the given name.
 func (c *Client) GetApplicationZid(ctx context.Context, appname string) (id.Zid, error) {

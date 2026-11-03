@@ -53,6 +53,16 @@ func TestGetSzZettel(t *testing.T) {
 	}
 }
 
+func TestIsReady(t *testing.T) {
+	c := getClient()
+	value, err := c.IsReady(context.Background())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_ = value
+}
+
 var baseURL string
 
 func init() {
