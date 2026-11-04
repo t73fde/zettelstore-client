@@ -153,6 +153,7 @@ const (
 	KeyPublished     = "published"
 	KeyQuery         = "query"
 	KeyReadOnly      = "read-only"
+	KeySeeAlso       = "see-also"
 	KeySequel        = "sequel"
 	KeySubordinate   = "subordinate"
 	KeySuccessor     = "successor"
@@ -201,6 +202,7 @@ func init() {
 	registerKey(KeyPublished, TypeTimestamp, usageProperty, "")
 	registerKey(KeyQuery, TypeEmpty, usageUser, "")
 	registerKey(KeyReadOnly, TypeWord, usageUser, "")
+	registerKey(KeySeeAlso, TypeIDSet, usageUser, "")
 	registerKey(KeySummary, TypeString, usageUser, "")
 	registerKey(KeySuperordinate, TypeIDSet, usageUser, KeySubordinate)
 	registerKey(KeyURL, TypeURL, usageUser, "")
