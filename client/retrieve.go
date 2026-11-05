@@ -499,6 +499,39 @@ func (c *Client) IsReady(ctx context.Context) (bool, error) {
 	}
 }
 
+// GetSiteInfo returns some information of the Zettelstore that is used.
+func (c *Client) GetSiteInfo(ctx context.Context) (result webapi.SiteInfo, err error) {
+	ub := c.NewURLBuilder('x').AppendKVQuery("data", "site-info")
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
+	if err != nil {
+		return result, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return result, statusToError(resp)
+	}
+	rdr := sxreader.MakeReader(resp.Body)
+	obj, err := rdr.Read()
+	if err != nil {
+		return result, err
+	}
+
+	vals, err := sexp.ParseList(obj, "ssss")
+	if err != nil {
+		return result, err
+	}
+	zid, err := id.Parse(vals[2].(sx.String).GetValue())
+	if err != nil {
+		return result, err
+	}
+	return webapi.SiteInfo{
+		SiteName:    vals[0].(sx.String).GetValue(),
+		DefaultLang: vals[1].(sx.String).GetValue(),
+		HomeZettel:  zid,
+		Lang:        vals[3].(sx.String).GetValue(),
+	}, nil
+}
+
 // GetApplicationZid returns the zettel identifier used to configure a client
 // application with the given name.
 func (c *Client) GetApplicationZid(ctx context.Context, appname string) (id.Zid, error) {

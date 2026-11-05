@@ -63,6 +63,16 @@ func TestIsReady(t *testing.T) {
 	_ = value
 }
 
+func TestSiteInfo(t *testing.T) {
+	c := getClient()
+	siteInfo, err := c.GetSiteInfo(context.Background())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_ = siteInfo
+}
+
 var baseURL string
 
 func init() {

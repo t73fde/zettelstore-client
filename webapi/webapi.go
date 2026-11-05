@@ -60,3 +60,11 @@ type ZettelData struct {
 
 // Aggregate maps metadata keys to list of zettel identifier.
 type Aggregate map[string][]id.Zid
+
+// SiteInfo contains some data about a Zettelstore instance.
+type SiteInfo struct {
+	SiteName    string
+	DefaultLang string
+	HomeZettel  id.Zid
+	Lang        string
+}

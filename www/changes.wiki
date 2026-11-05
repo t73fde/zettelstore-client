@@ -4,6 +4,8 @@
 <h2>Changes for Version 3.1.0 (pending)</h2>
   *  Add client call <code>IsReady() bool</code> to check the readiness of the
      box and index service.
+  *  Add client call <code>GetSiteInfo()</code> to retrieve some information
+     about the zettelstore instance.
 
 <a name="3_0"></a>
 <h2>Changes for Version 3.0.0 (20260925)</h2>
