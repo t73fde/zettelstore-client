@@ -454,7 +454,8 @@ func (c *Client) GetReferences(ctx context.Context, zid id.Zid, part string) (ur
 
 // GetVersionInfo returns version information of the Zettelstore that is used.
 func (c *Client) GetVersionInfo(ctx context.Context) (semver.SemVer, error) {
-	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, c.NewURLBuilder('x'), nil)
+	ub := c.NewURLBuilder('x').AppendKVQuery("data", "version")
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err != nil {
 		return semver.SemVer{}, err
 	}
@@ -480,7 +481,7 @@ func (c *Client) GetVersionInfo(ctx context.Context) (semver.SemVer, error) {
 
 // IsReady returns true if Zettelstore is ready to use.
 func (c *Client) IsReady(ctx context.Context) (bool, error) {
-	ub := c.NewURLBuilder('x').AppendQuery("ready")
+	ub := c.NewURLBuilder('x').AppendKVQuery("data", "ready")
 	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
 	if err != nil {
 		return false, err
