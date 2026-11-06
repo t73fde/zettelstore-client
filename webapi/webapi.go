@@ -68,3 +68,26 @@ type SiteInfo struct {
 	HomeZettel  id.Zid
 	Lang        string
 }
+
+// MetadataKeyInfo contains some data about a metadata key.
+type MetadataKeyInfo struct {
+	Name       string // the name of the key, i.e. its string representation
+	Type       string // the name of the type
+	IsSet      bool   // is the type a set type?
+	IsComputed bool   // is the value computed?
+	IsProperty bool   // is the value a property?
+}
+
+// String constants for metadata key type names.
+var (
+	NameMetaCredential = "CREDENTIAL"
+	NameMetaEmpty      = "EMPTY-STRING"
+	NameMetaID         = "IDENTIFIER"
+	NameMetaIDSet      = "IDENTIFIER-SET"
+	NameMetaNumber     = "NUMBER"
+	NameMetaString     = "STRING"
+	NameMetaTagSet     = "TAG-SET"
+	NameMetaTimestamp  = "TIMESTAMP"
+	NameMetaURL        = "URL"
+	NameMetaWord       = "WORD"
+)

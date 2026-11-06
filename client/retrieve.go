@@ -532,6 +532,46 @@ func (c *Client) GetSiteInfo(ctx context.Context) (result webapi.SiteInfo, err e
 	}, nil
 }
 
+// GetMetadataInfo returns some information about the metadata of keys.
+func (c *Client) GetMetadataInfo(ctx context.Context, keys ...string) (result []webapi.MetadataKeyInfo, err error) {
+	ub := c.NewURLBuilder('x').AppendKVQuery("data", "meta-type")
+	for _, key := range keys {
+		ub = ub.AppendKVQuery("key", key)
+	}
+	resp, err := c.buildAndExecuteRequest(ctx, http.MethodGet, ub, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return nil, statusToError(resp)
+	}
+	rdr := sxreader.MakeReader(resp.Body)
+	obj, err := rdr.Read()
+	if err != nil {
+		return nil, err
+	}
+
+	lst, isList := sx.GetPair(obj)
+	if !isList {
+		return nil, fmt.Errorf("not a proper list: %T/%v", obj, obj)
+	}
+	for v := range lst.Values() {
+		vals, errParse := sexp.ParseList(v, "sybbb")
+		if errParse != nil {
+			return nil, errParse
+		}
+		result = append(result, webapi.MetadataKeyInfo{
+			Name:       vals[0].(sx.String).GetValue(),
+			Type:       vals[1].(*sx.Symbol).GetValue(),
+			IsSet:      sx.IsTrue(vals[2]),
+			IsComputed: sx.IsTrue(vals[3]),
+			IsProperty: sx.IsTrue(vals[4]),
+		})
+	}
+	return result, nil
+}
+
 // GetApplicationZid returns the zettel identifier used to configure a client
 // application with the given name.
 func (c *Client) GetApplicationZid(ctx context.Context, appname string) (id.Zid, error) {

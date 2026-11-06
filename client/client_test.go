@@ -22,6 +22,7 @@ import (
 
 	"t73f.de/r/zsc/client"
 	"t73f.de/r/zsc/domain/id"
+	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/webapi"
 )
 
@@ -71,6 +72,32 @@ func TestSiteInfo(t *testing.T) {
 		return
 	}
 	_ = siteInfo
+}
+
+func TestMetadataInfo(t *testing.T) {
+	c := getClient()
+	metaInfo, err := c.GetMetadataInfo(context.Background())
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(metaInfo) < 10 {
+		t.Error("not enough meta-info:", metaInfo)
+	}
+	metaInfo, err = c.GetMetadataInfo(context.Background(), meta.KeyTitle)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(metaInfo) != 1 {
+		t.Error("not just one meta-info:", metaInfo)
+	}
+	mi := metaInfo[0]
+	if mi.Name != meta.KeyTitle ||
+		mi.Type != webapi.NameMetaEmpty ||
+		mi.IsSet || mi.IsComputed || mi.IsProperty {
+		t.Error("wrong metaInfo:", mi)
+	}
 }
 
 var baseURL string
