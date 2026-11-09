@@ -557,13 +557,13 @@ func (c *Client) GetMetadataInfo(ctx context.Context, keys ...string) (result []
 		return nil, fmt.Errorf("not a proper list: %T/%v", obj, obj)
 	}
 	for v := range lst.Values() {
-		vals, errParse := sexp.ParseList(v, "sybbb")
+		vals, errParse := sexp.ParseList(v, "ssbbb")
 		if errParse != nil {
 			return nil, errParse
 		}
 		result = append(result, webapi.MetadataKeyInfo{
 			Name:       vals[0].(sx.String).GetValue(),
-			Type:       vals[1].(*sx.Symbol).GetValue(),
+			Type:       vals[1].(sx.String).GetValue(),
 			IsSet:      sx.IsTrue(vals[2]),
 			IsComputed: sx.IsTrue(vals[3]),
 			IsProperty: sx.IsTrue(vals[4]),
