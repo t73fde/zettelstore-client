@@ -94,7 +94,7 @@ func TestMetadataInfo(t *testing.T) {
 	}
 	mi := metaInfo[0]
 	if mi.Name != meta.KeyTitle ||
-		mi.Type != webapi.NameMetaEmpty ||
+		mi.Type != meta.TypeEmpty.Name ||
 		mi.IsSet || mi.IsComputed || mi.IsProperty {
 		t.Error("wrong metaInfo:", mi)
 	}
