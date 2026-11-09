@@ -14,9 +14,19 @@
 package meta
 
 import (
+	"iter"
 	"slices"
 	"strings"
 )
+
+// Seq is a sequence of metadata. It is an alias for [iter.Seq], so that it can
+// be used interchangeably with the standard library and generic iterator
+// helpers (e.g. [slices.Values], [slices.Collect]).
+//
+// The metadata is shared with its source and must not be modified while the
+// sequence is consumed. Whether a sequence can be consumed more than once
+// depends on its source.
+type Seq = iter.Seq[*Meta]
 
 // Arrangement stores metadata within its categories.
 // Typecally a category might be a tag name, a role name, a syntax value.
@@ -24,23 +34,20 @@ type Arrangement map[string][]*Meta
 
 // CreateArrangement by inspecting a given key and use the found
 // value as a category.
-func CreateArrangement(metaList []*Meta, key string) Arrangement {
-	if len(metaList) == 0 {
-		return nil
-	}
+func CreateArrangement(metaSeq Seq, key string) Arrangement {
 	descr := Type(key)
 	if descr == nil {
 		return nil
 	}
 	if descr.IsSet {
-		return createSetArrangement(metaList, key)
+		return createSetArrangement(metaSeq, key)
 	}
-	return createSimplearrangement(metaList, key)
+	return createSimplearrangement(metaSeq, key)
 }
 
-func createSetArrangement(metaList []*Meta, key string) Arrangement {
+func createSetArrangement(metaSeq Seq, key string) Arrangement {
 	a := make(Arrangement)
-	for _, m := range metaList {
+	for m := range metaSeq {
 		for val := range m.GetFields(key) {
 			a[val] = append(a[val], m)
 		}
@@ -48,9 +55,9 @@ func createSetArrangement(metaList []*Meta, key string) Arrangement {
 	return a
 }
 
-func createSimplearrangement(metaList []*Meta, key string) Arrangement {
+func createSimplearrangement(metaSeq Seq, key string) Arrangement {
 	a := make(Arrangement)
-	for _, m := range metaList {
+	for m := range metaSeq {
 		if val, ok := m.Get(key); ok && val != "" {
 			a[string(val)] = append(a[string(val)], m)
 		}
