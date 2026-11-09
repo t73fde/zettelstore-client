@@ -103,10 +103,10 @@ func GetDescription(name string) DescriptionKey {
 	if d, ok := registeredKeys[name]; ok {
 		return *d
 	}
-	return DescriptionKey{Type: Type(name)}
+	return DescriptionKey{Name: name, Type: Type(name), usage: usageUser, Inverse: ""}
 }
 
-// KeyDescriptionSeq delivers all metadata key descriptions as a sequence.
+// KeyDescriptionSeq delivers all known metadata key descriptions as a sequence.
 func KeyDescriptionSeq() iter.Seq[DescriptionKey] {
 	return func(yield func(DescriptionKey) bool) {
 		for _, dk := range registeredKeys {

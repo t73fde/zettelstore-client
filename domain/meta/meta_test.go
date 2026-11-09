@@ -22,6 +22,36 @@ import (
 	"t73f.de/r/zsc/domain/id"
 )
 
+func TestGetDescription(t *testing.T) {
+	testcases := []struct {
+		name string
+		exp  DescriptionKey
+	}{
+		{"", DescriptionKey{"", TypeEmpty, usageUser, ""}},
+		{KeyTitle, DescriptionKey{KeyTitle, TypeEmpty, usageUser, ""}},
+		{KeyPrecursor, DescriptionKey{KeyPrecursor, TypeIDSet, usageUser, KeyFolge}},
+		{KeyFolge, DescriptionKey{KeyFolge, TypeIDSet, usageProperty, ""}},
+		{"a-ref", DescriptionKey{"a-ref", TypeID, usageUser, ""}},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := GetDescription(tc.name)
+			if tc.exp.Name != got.Name {
+				t.Errorf("name %q expected, but got %q", tc.exp.Name, got.Name)
+			}
+			if tc.exp.Type != got.Type {
+				t.Errorf("type %q expected, but got %q", tc.exp.Type.Name, got.Type.Name)
+			}
+			if tc.exp.usage != got.usage {
+				t.Errorf("usage %v expected, but got %v", tc.exp.usage, got.usage)
+			}
+			if tc.exp.Inverse != got.Inverse {
+				t.Errorf("inverse %q expected, but got %q", tc.exp.Inverse, got.Inverse)
+			}
+		})
+	}
+}
+
 const testID = id.Zid(98765432101234)
 
 func TestKeyIsValid(t *testing.T) {
