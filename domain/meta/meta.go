@@ -270,6 +270,13 @@ var reKey = regexp.MustCompile("^[0-9a-z][-0-9a-z]{0,254}$")
 func KeyIsValid(s string) bool { return reKey.MatchString(s) }
 
 var firstKeys = []string{KeyTitle, KeyRole, KeyTags, KeySyntax}
+var firstKeysSet = make(map[string]struct{}, len(firstKeys))
+
+func init() {
+	for _, key := range firstKeys {
+		firstKeysSet[key] = struct{}{}
+	}
+}
 
 // Set stores the given string value under the given key.
 func (m *Meta) Set(key string, value Value) {
@@ -346,7 +353,7 @@ func (m *Meta) AllUser() iter.Seq2[Key, Value] {
 func (m *Meta) AllComputed() iter.Seq2[Key, Value] {
 	return func(yield func(Key, Value) bool) {
 		m.firstKeys()(yield)
-		m.restKeys(anyKey)(yield)
+		m.restKeys(computedKey)(yield)
 	}
 }
 
@@ -362,7 +369,7 @@ func (m *Meta) RestUser() iter.Seq2[Key, Value] {
 // zettel identifier and the main keys.
 func (m *Meta) RestComputed() iter.Seq2[Key, Value] {
 	return func(yield func(Key, Value) bool) {
-		m.restKeys(anyKey)(yield)
+		m.restKeys(computedKey)(yield)
 	}
 }
 
@@ -382,7 +389,7 @@ func (m *Meta) restKeys(addKeyPred func(Key) bool) iter.Seq2[Key, Value] {
 	return func(yield func(Key, Value) bool) {
 		keys := slices.Sorted(maps.Keys(m.pairs))
 		for _, key := range keys {
-			if !slices.Contains(firstKeys, key) && addKeyPred(key) {
+			if _, isFirstKey := firstKeysSet[key]; !isFirstKey && addKeyPred(key) {
 				if !yield(key, m.pairs[key]) {
 					return
 				}
@@ -391,13 +398,13 @@ func (m *Meta) restKeys(addKeyPred func(Key) bool) iter.Seq2[Key, Value] {
 	}
 }
 
-// Values returns an iterator over all key/value pairs, except the zettel
-// identifier and computed values. In contrast to `All` this iterator
-// returns key/value pairs in an unspecified, mostly random order.
-func (m *Meta) Values() iter.Seq2[Key, Value] { return maps.All(m.pairs) }
+// All returns an iterator over all currently stored key/value pairs, except
+// the zettel identifier. In contrast to other iterators like `AllUser` this
+// iterator returns key/value pairs in an unspecified, mostly random order.
+func (m *Meta) All() iter.Seq2[Key, Value] { return maps.All(m.pairs) }
 
-func userKey(key string) bool { return !IsComputed(key) }
-func anyKey(string) bool      { return true }
+func userKey(key string) bool     { return !IsComputed(key) }
+func computedKey(key string) bool { return !IsProperty(key) }
 
 // Delete removes a key from the data.
 func (m *Meta) Delete(key string) {
