@@ -122,7 +122,7 @@ func TestNewFromInput(t *testing.T) {
 	}
 	for i, tc := range testcases {
 		meta := parseMetaStr(tc.input)
-		if got := iter2pairs(meta.All()); !equalPairs(tc.exp, got) {
+		if got := iter2pairs(meta.AllUser()); !equalPairs(tc.exp, got) {
 			t.Errorf("TC=%d: expected=%v, got=%v", i, tc.exp, got)
 		}
 	}
@@ -131,7 +131,7 @@ func TestNewFromInput(t *testing.T) {
 	inp := input.NewInput([]byte("---\na:b\n---\nX"))
 	m := meta.NewFromInput(testID, inp)
 	exp := []pair{{"a", "b"}}
-	if got := iter2pairs(m.All()); !equalPairs(exp, got) {
+	if got := iter2pairs(m.AllUser()); !equalPairs(exp, got) {
 		t.Errorf("Expected=%v, got=%v", exp, got)
 	}
 	expCh := 'X'

@@ -27,7 +27,7 @@ func (m *Meta) WriteComputed(w io.Writer) (int, error) {
 }
 
 func (m *Meta) doWrite(w io.Writer, ignoreKeyPred func(string) bool) (length int, err error) {
-	for key, val := range m.Computed() {
+	for key, val := range m.AllComputed() {
 		if ignoreKeyPred(key) {
 			continue
 		}

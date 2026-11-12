@@ -195,7 +195,7 @@ func init() {
 	registerKey(KeyIndexState, TypeWord, usageProperty, "")
 	registerKey(KeyLang, TypeWord, usageUser, "")
 	registerKey(KeyLicense, TypeEmpty, usageUser, "")
-	registerKey(KeyModified, TypeTimestamp, usageComputed, "")
+	registerKey(KeyModified, TypeTimestamp, usageUser, "")
 	registerKey(KeyPrecursor, TypeIDSet, usageUser, KeyFolge)
 	registerKey(KeyPredecessor, TypeIDSet, usageUser, KeySuccessor)
 	registerKey(KeyPrequel, TypeIDSet, usageUser, KeySequel)
@@ -332,34 +332,35 @@ func (m *Meta) GetTitle() string {
 	return m.Zid.String()
 }
 
-// All returns an iterator over all key/value pairs, except the zettel identifier
-// and computed values.
-func (m *Meta) All() iter.Seq2[Key, Value] {
+// AllUser returns an iterator over all key/value pairs, except the zettel
+// identifier and computed values, i.e. all keys with usageUser.
+func (m *Meta) AllUser() iter.Seq2[Key, Value] {
 	return func(yield func(Key, Value) bool) {
 		m.firstKeys()(yield)
-		m.restKeys(notComputedKey)(yield)
+		m.restKeys(userKey)(yield)
 	}
 }
 
-// Computed returns an iterator over all key/value pairs, except the zettel identifier.
-func (m *Meta) Computed() iter.Seq2[Key, Value] {
+// AllComputed returns an iterator over all key/value pairs, except the zettel
+// identifier.
+func (m *Meta) AllComputed() iter.Seq2[Key, Value] {
 	return func(yield func(Key, Value) bool) {
 		m.firstKeys()(yield)
 		m.restKeys(anyKey)(yield)
 	}
 }
 
-// Rest returns an iterator over all key/value pairs, except the zettel identifier,
-// the main keys, and computed values.
-func (m *Meta) Rest() iter.Seq2[Key, Value] {
+// RestUser returns an iterator over all key/value pairs, except the zettel
+// identifier, the main keys, and computed values.
+func (m *Meta) RestUser() iter.Seq2[Key, Value] {
 	return func(yield func(Key, Value) bool) {
-		m.restKeys(notComputedKey)(yield)
+		m.restKeys(userKey)(yield)
 	}
 }
 
-// ComputedRest returns an iterator over all key/value pairs, except the zettel identifier,
-// and the main keys.
-func (m *Meta) ComputedRest() iter.Seq2[Key, Value] {
+// RestComputed returns an iterator over all key/value pairs, except the
+// zettel identifier and the main keys.
+func (m *Meta) RestComputed() iter.Seq2[Key, Value] {
 	return func(yield func(Key, Value) bool) {
 		m.restKeys(anyKey)(yield)
 	}
@@ -395,8 +396,8 @@ func (m *Meta) restKeys(addKeyPred func(Key) bool) iter.Seq2[Key, Value] {
 // returns key/value pairs in an unspecified, mostly random order.
 func (m *Meta) Values() iter.Seq2[Key, Value] { return maps.All(m.pairs) }
 
-func notComputedKey(key string) bool { return !IsComputed(key) }
-func anyKey(string) bool             { return true }
+func userKey(key string) bool { return !IsComputed(key) }
+func anyKey(string) bool      { return true }
 
 // Delete removes a key from the data.
 func (m *Meta) Delete(key string) {

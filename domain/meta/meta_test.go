@@ -184,17 +184,17 @@ func TestDefaultHeader(t *testing.T) {
 	addToMeta(m, "H2", "D2")
 	addToMeta(m, "H1", "D1.1")
 	exp := map[string]string{"h1": "d1 D1.1", "h2": "D2"}
-	checkHeader(t, exp, m.All())
+	checkHeader(t, exp, m.AllUser())
 	addToMeta(m, "", "d0")
-	checkHeader(t, exp, m.All())
+	checkHeader(t, exp, m.AllUser())
 	addToMeta(m, "h3", "")
 	exp["h3"] = ""
-	checkHeader(t, exp, m.All())
+	checkHeader(t, exp, m.AllUser())
 	addToMeta(m, "h3", "  ")
-	checkHeader(t, exp, m.All())
+	checkHeader(t, exp, m.AllUser())
 	addToMeta(m, "h4", " ")
 	exp["h4"] = ""
-	checkHeader(t, exp, m.All())
+	checkHeader(t, exp, m.AllUser())
 }
 
 func TestDelete(t *testing.T) {

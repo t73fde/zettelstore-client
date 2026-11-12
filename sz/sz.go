@@ -39,7 +39,7 @@ var mapMetaTypeS = map[*meta.DescriptionType]*sx.Symbol{
 func GetMetaSz(m *meta.Meta) *sx.Pair {
 	var lb sx.ListBuilder
 	lb.Add(SymMeta)
-	for key, val := range m.Computed() {
+	for key, val := range m.AllComputed() {
 		ty := m.Type(key)
 		symType, found := mapMetaTypeS[ty]
 		if !found {
