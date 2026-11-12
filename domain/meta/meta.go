@@ -404,7 +404,7 @@ func (m *Meta) restKeys(addKeyPred func(Key) bool) iter.Seq2[Key, Value] {
 func (m *Meta) All() iter.Seq2[Key, Value] { return maps.All(m.pairs) }
 
 func userKey(key string) bool     { return !IsComputed(key) }
-func computedKey(key string) bool { return !IsProperty(key) }
+func computedKey(key string) bool { return true }
 
 // Delete removes a key from the data.
 func (m *Meta) Delete(key string) {
