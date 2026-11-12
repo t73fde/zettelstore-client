@@ -195,7 +195,7 @@ func init() {
 	registerKey(KeyIndexState, TypeWord, usageProperty, "")
 	registerKey(KeyLang, TypeWord, usageUser, "")
 	registerKey(KeyLicense, TypeEmpty, usageUser, "")
-	registerKey(KeyModified, TypeTimestamp, usageUser, "")
+	registerKey(KeyModified, TypeTimestamp, usageComputed, "")
 	registerKey(KeyPrecursor, TypeIDSet, usageUser, KeyFolge)
 	registerKey(KeyPredecessor, TypeIDSet, usageUser, KeySuccessor)
 	registerKey(KeyPrequel, TypeIDSet, usageUser, KeySequel)
