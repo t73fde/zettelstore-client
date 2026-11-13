@@ -74,6 +74,6 @@ type MetadataKeyInfo struct {
 	Name       string // the name of the key
 	Type       string // the name of the type, see domain/meta/type.go for values
 	IsSet      bool   // is the type a set type?
-	IsComputed bool   // is the value computed?
+	IsManaged  bool   // is the value managed?
 	IsProperty bool   // is the value a property?
 }

@@ -565,7 +565,7 @@ func (c *Client) GetMetadataInfo(ctx context.Context, keys ...string) (result []
 			Name:       vals[0].(sx.String).GetValue(),
 			Type:       vals[1].(sx.String).GetValue(),
 			IsSet:      sx.IsTrue(vals[2]),
-			IsComputed: sx.IsTrue(vals[3]),
+			IsManaged:  sx.IsTrue(vals[3]),
 			IsProperty: sx.IsTrue(vals[4]),
 		})
 	}

@@ -32,8 +32,8 @@ type keyUsage int
 const (
 	_             keyUsage = iota
 	usageUser              // Key will be manipulated by the user
-	usageComputed          // Key is computed by zettelstore
-	usageProperty          // Key is computed and not stored by zettelstore
+	usageManaged           // Key is managed by zettelstore
+	usageProperty          // Key is calculated and not stored by zettelstore
 )
 
 // DescriptionKey formally describes each supported metadata key.
@@ -44,11 +44,11 @@ type DescriptionKey struct {
 	Inverse string
 }
 
-// IsComputed returns true, if metadata is computed and not set by the user.
-func (kd *DescriptionKey) IsComputed() bool { return kd.usage >= usageComputed }
+// IsManaged returns true, if metadata is managed and not set by the user.
+func (kd *DescriptionKey) IsManaged() bool { return kd.usage == usageManaged }
 
-// IsProperty returns true, if metadata is a computed property.
-func (kd *DescriptionKey) IsProperty() bool { return kd.usage >= usageProperty }
+// IsProperty returns true, if metadata is a property that will be calculated.
+func (kd *DescriptionKey) IsProperty() bool { return kd.usage == usageProperty }
 
 var registeredKeys = make(map[string]*DescriptionKey)
 
@@ -64,8 +64,8 @@ func registerKey(name string, t *DescriptionType, usage keyUsage, inverse string
 		if !ok {
 			panic("Inverse Key '" + inverse + "' not found")
 		}
-		if !inv.IsComputed() {
-			panic("Inverse Key '" + inverse + "' is not computed.")
+		if !inv.IsProperty() {
+			panic("Inverse Key '" + inverse + "' is not a property.")
 		}
 		if inv.Type != TypeIDSet {
 			panic("Inverse Key '" + inverse + "' is not an identifier set, but " + inv.Type.String())
@@ -74,10 +74,18 @@ func registerKey(name string, t *DescriptionType, usage keyUsage, inverse string
 	registeredKeys[name] = &DescriptionKey{name, t, usage, inverse}
 }
 
-// IsComputed returns true, if key denotes a computed metadata key.
-func IsComputed(name string) bool {
+// IsUser returns true, if key denotes a metadata key defined by the user.
+func IsUser(name string) bool {
 	if kd, ok := registeredKeys[name]; ok {
-		return kd.IsComputed()
+		return kd.usage == usageUser
+	}
+	return true
+}
+
+// IsManaged returns true, if key denotes a managed metadata key.
+func IsManaged(name string) bool {
+	if kd, ok := registeredKeys[name]; ok {
+		return kd.IsManaged()
 	}
 	return false
 }
@@ -168,7 +176,7 @@ const (
 
 // Supported keys.
 func init() {
-	registerKey(KeyID, TypeID, usageComputed, "")
+	registerKey(KeyID, TypeID, usageManaged, "")
 	registerKey(KeyTitle, TypeEmpty, usageUser, "")
 	registerKey(KeyRole, TypeWord, usageUser, "")
 	registerKey(KeyTags, TypeTagSet, usageUser, "")
@@ -186,7 +194,7 @@ func init() {
 	registerKey(KeyBackward, TypeIDSet, usageProperty, "")
 	registerKey(KeyBoxName, TypeWord, usageProperty, "")
 	registerKey(KeyCopyright, TypeString, usageUser, "")
-	registerKey(KeyCreated, TypeTimestamp, usageComputed, "")
+	registerKey(KeyCreated, TypeTimestamp, usageManaged, "")
 	registerKey(KeyCredential, TypeCredential, usageUser, "")
 	registerKey(KeyDead, TypeIDSet, usageProperty, "")
 	registerKey(KeyExpire, TypeTimestamp, usageUser, "")
@@ -195,7 +203,7 @@ func init() {
 	registerKey(KeyIndexState, TypeWord, usageProperty, "")
 	registerKey(KeyLang, TypeWord, usageUser, "")
 	registerKey(KeyLicense, TypeEmpty, usageUser, "")
-	registerKey(KeyModified, TypeTimestamp, usageComputed, "")
+	registerKey(KeyModified, TypeTimestamp, usageManaged, "")
 	registerKey(KeyPrecursor, TypeIDSet, usageUser, KeyFolge)
 	registerKey(KeyPredecessor, TypeIDSet, usageUser, KeySuccessor)
 	registerKey(KeyPrequel, TypeIDSet, usageUser, KeySequel)
@@ -348,12 +356,12 @@ func (m *Meta) AllUser() iter.Seq2[Key, Value] {
 	}
 }
 
-// AllComputed returns an iterator over all key/value pairs, except the zettel
+// AllAny returns an iterator over all key/value pairs, except the zettel
 // identifier.
-func (m *Meta) AllComputed() iter.Seq2[Key, Value] {
+func (m *Meta) AllAny() iter.Seq2[Key, Value] {
 	return func(yield func(Key, Value) bool) {
 		m.firstKeys()(yield)
-		m.restKeys(computedKey)(yield)
+		m.restKeys(anyKey)(yield)
 	}
 }
 
@@ -365,11 +373,11 @@ func (m *Meta) RestUser() iter.Seq2[Key, Value] {
 	}
 }
 
-// RestComputed returns an iterator over all key/value pairs, except the
+// RestAny returns an iterator over all key/value pairs, except the
 // zettel identifier and the main keys.
-func (m *Meta) RestComputed() iter.Seq2[Key, Value] {
+func (m *Meta) RestAny() iter.Seq2[Key, Value] {
 	return func(yield func(Key, Value) bool) {
-		m.restKeys(computedKey)(yield)
+		m.restKeys(anyKey)(yield)
 	}
 }
 
@@ -403,8 +411,8 @@ func (m *Meta) restKeys(addKeyPred func(Key) bool) iter.Seq2[Key, Value] {
 // iterator returns key/value pairs in an unspecified, mostly random order.
 func (m *Meta) All() iter.Seq2[Key, Value] { return maps.All(m.pairs) }
 
-func userKey(key string) bool     { return !IsComputed(key) }
-func computedKey(key string) bool { return true }
+func userKey(key string) bool { return IsUser(key) }
+func anyKey(string) bool      { return true }
 
 // Delete removes a key from the data.
 func (m *Meta) Delete(key string) {
@@ -437,7 +445,7 @@ func (m *Meta) Equal(o *Meta, allowComputed bool) bool {
 }
 
 func equalValue(key string, val Value, other *Meta, allowComputed bool) bool {
-	if allowComputed || !IsComputed(key) {
+	if allowComputed || IsUser(key) {
 		if valO, found := other.pairs[key]; !found || val != valO {
 			return false
 		}

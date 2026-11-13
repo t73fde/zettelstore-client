@@ -15,19 +15,19 @@ package meta
 
 import "io"
 
-// Write writes metadata to a writer, excluding computed and propery values.
+// Write writes metadata to a writer, excluding managed and property values.
 func (m *Meta) Write(w io.Writer) (int, error) {
-	return m.doWrite(w, IsComputed)
+	return m.doWrite(w, func(key string) bool { return !IsUser(key) })
 }
 
-// WriteComputed writes metadata to a writer, including computed values,
+// WriteManaged writes metadata to a writer, including managed values,
 // but excluding property values.
-func (m *Meta) WriteComputed(w io.Writer) (int, error) {
+func (m *Meta) WriteManaged(w io.Writer) (int, error) {
 	return m.doWrite(w, IsProperty)
 }
 
 func (m *Meta) doWrite(w io.Writer, ignoreKeyPred func(string) bool) (length int, err error) {
-	for key, val := range m.AllComputed() {
+	for key, val := range m.AllAny() {
 		if ignoreKeyPred(key) {
 			continue
 		}
